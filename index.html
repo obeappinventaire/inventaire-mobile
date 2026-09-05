@@ -12,11 +12,20 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     #reader video { border-radius: 0.75rem; object-fit: cover; width: 100% !important; }
+    /* Supprimer les flèches haut/bas natives sur le champ quantité */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
   </style>
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased">
 
-  <!-- ================= MODALE DE SÉLECTION D'AGENT (BLOCAGE INITIAL) ================= -->
+  <!-- ================= MODALE DE SÉLECTION D'AGENT ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -24,17 +33,17 @@
           <i data-lucide="user-check" class="w-6 h-6"></i>
         </div>
         <h2 class="text-xl font-bold text-white">Identification Agent</h2>
-        <p class="text-xs text-slate-400">Sélectionnez votre nom avant de démarrer l'inventaire</p>
+        <p class="text-xs text-slate-400">Sélectionnez votre nom pour démarrer l'inventaire</p>
       </div>
 
       <div class="space-y-2">
         <label class="block text-xs font-bold text-slate-400 uppercase">Agent Magasinier</label>
         <select id="modalAgentSelect" class="w-full bg-slate-800 border-2 border-blue-500/50 rounded-xl p-3.5 text-base text-white font-medium focus:ring-2 focus:ring-blue-400 focus:outline-none">
-          <option value="">-- Choisir un agent --</option>
+          <option value="">Chargement de la liste...</option>
         </select>
       </div>
 
-      <button onclick="confirmAgentSelection()" class="w-full h-14 bg-blue-600 active:bg-blue-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-base">
+      <button id="btnConfirmAgent" onclick="confirmAgentSelection()" class="w-full h-14 bg-blue-600 active:bg-blue-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-base transition">
         <span>Commencer la session</span>
         <i data-lucide="arrow-right" class="w-5 h-5"></i>
       </button>
@@ -49,8 +58,8 @@
     </div>
     <div class="flex items-center space-x-2 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
       <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
-      <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[120px]">Non défini</span>
-      <button onclick="openAgentModal()" class="text-slate-400 hover:text-white pl-1">
+      <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[120px]">Chargement...</span>
+      <button onclick="openAgentModal()" title="Changer d'agent" class="text-slate-400 hover:text-white pl-1">
         <i data-lucide="refresh-cw" class="w-3 h-3"></i>
       </button>
     </div>
@@ -99,7 +108,7 @@
           </div>
         </div>
 
-        <!-- Fiche descriptive complète de l'article identifié -->
+        <!-- Fiche descriptive de l'article -->
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
@@ -133,13 +142,17 @@
 
       </div>
 
-      <!-- Pavé de Quantité géant -->
+      <!-- Pavé de Quantité plus large et vide par défaut -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée</label>
-        <div class="flex items-center justify-between space-x-3">
-          <button onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-850 active:bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">-</button>
-          <input type="number" id="qtyInput" value="1" min="1" inputmode="numeric" class="w-28 h-16 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none">
-          <button onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-850 active:bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">+</button>
+        <div class="flex items-center justify-center space-x-4">
+          <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">-</button>
+          
+          <!-- Champ élargi sans chiffre initial -->
+          <input type="number" id="qtyInput" placeholder="0" min="1" inputmode="numeric" 
+                 class="w-36 h-16 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none placeholder-slate-600">
+          
+          <button type="button" onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">+</button>
         </div>
       </div>
 
@@ -183,27 +196,21 @@
     </button>
   </nav>
 
-  <!-- TOAST -->
+  <!-- TOAST NOTIFICATION -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
     <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-6 h-6"></i></div>
     <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
-    // ⚠️ COLLEZ ICI L'URL OBTENUE LORS DU DÉPLOIEMENT DU WEB APP GOOGLE APPS SCRIPT
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
+    // ⚠️ VEILLEZ À METTRE VOTRE URL DE DÉPLOIEMENT APPS SCRIPT CI-DESSOUS :
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3j1H6_6_placeholder/exec";
 
-    // Catalogue matériel complet en mémoire locale de secours
-    let catalog = [
-      { sapRef: "106060", designation: "VOO TOOL infraudable (7.5)", supplierRef: "TOOL-75-VOO", ean: "5412345678901", qr: "QR-106060" },
-      { sapRef: "108643", designation: "CONNECTEUR F A COMPRESSION", supplierRef: "CONN-F-CMP", ean: "5412345678918", qr: "QR-108643" },
-      { sapRef: "124331", designation: "CORRECT DB AMPLI H.", supplierRef: "CORR-AMP-H", ean: "5412345678925", qr: "QR-124331" },
-      { sapRef: "106261", designation: "PINCE D'ANCRAGE A S...", supplierRef: "PA-ANC-61", ean: "5412345678932", qr: "QR-106261" }
-    ];
-
-    let availableAgents = ["Fabian", "Thomas", "Marc"];
-    let availableContractors = ["BatiPlus SAS", "Entreprise Durand", "Axiome Rénov"];
-    let availableTrades = ["Plomberie / Chauffage", "Électricité générale", "Télécom & Réseaux"];
+    // Variables initialisées vides (les anciens faux noms ont été totalement retirés)
+    let catalog = [];
+    let availableAgents = [];
+    let availableContractors = [];
+    let availableTrades = [];
 
     let currentAgent = localStorage.getItem("inv_current_agent") || "";
     let activeItem = null;
@@ -211,59 +218,86 @@
     let isScanning = false;
     let cachedHistory = [];
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       initNetworkStatus();
       updateAgentUI();
-      populateDropdowns();
 
-      // Forcer le choix de l'agent si non défini
-      if (!currentAgent) {
+      // On lance la synchronisation Google Sheets en premier
+      await syncData();
+
+      // Si aucun agent n'est sélectionné ou s'il n'existe plus dans le Sheet, on ouvre la modale
+      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
         openAgentModal();
       }
-
-      syncData();
     });
 
     // --- GESTION DE L'AGENT ---
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
-      select.innerHTML = '<option value="">-- Choisir un agent --</option>' + 
-        availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+      if (availableAgents.length === 0) {
+        select.innerHTML = '<option value="">Aucun agent trouvé dans le Sheet</option>';
+      } else {
+        select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
+          availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+      }
       document.getElementById("userModal").classList.remove("hidden");
     }
 
     function confirmAgentSelection() {
       const select = document.getElementById("modalAgentSelect");
       if (!select.value) {
-        alert("Veuillez sélectionner votre nom d'agent pour continuer.");
+        alert("Veuillez sélectionner votre nom dans la liste.");
         return;
       }
       currentAgent = select.value;
       localStorage.setItem("inv_current_agent", currentAgent);
       updateAgentUI();
       document.getElementById("userModal").classList.add("hidden");
-      showToast(`Session ouverte : ${currentAgent}`);
+      showToast(`Session : ${currentAgent}`);
     }
 
     function updateAgentUI() {
       document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
     }
 
-    // --- POPULATION DES MENUS ---
+    // --- MENUS ENTREPRENEURS & MÉTIERS ---
     function populateDropdowns() {
       const cSelect = document.getElementById("contractorSelect");
       const tSelect = document.getElementById("tradeSelect");
-      cSelect.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      tSelect.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+
+      if (availableContractors.length > 0) {
+        cSelect.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      } else {
+        cSelect.innerHTML = '<option value="">Aucun entrepreneur</option>';
+      }
+
+      if (availableTrades.length > 0) {
+        tSelect.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      } else {
+        tSelect.innerHTML = '<option value="">Aucun métier</option>';
+      }
     }
 
-    // --- MOTEUR DE RECHERCHE D'ARTICLE (SAP / EAN / QR / FOURNISSEUR) ---
+    // --- GESTION QUANTITÉ (VIDE PAR DÉFAUT) ---
+    function adjustQuantity(delta) {
+      const input = document.getElementById("qtyInput");
+      let currentVal = parseInt(input.value, 10);
+      
+      // Si la case était vide, on part de 0 + delta (ou au minimum 1)
+      if (isNaN(currentVal) || currentVal <= 0) {
+        currentVal = delta > 0 ? delta : 1;
+      } else {
+        currentVal = Math.max(1, currentVal + delta);
+      }
+      input.value = currentVal;
+    }
+
+    // --- MOTEUR DE RECHERCHE D'ARTICLE ---
     function searchArticle(term) {
       const q = String(term).trim().toUpperCase();
       if (!q) return;
 
-      // Recherche correspondante dans le catalogue
       const match = catalog.find(item => 
         String(item.sapRef).toUpperCase() === q ||
         String(item.ean).toUpperCase() === q ||
@@ -274,17 +308,15 @@
       if (match) {
         activeItem = { ...match };
       } else {
-        // Article non catalogué : création d'une fiche libre
         activeItem = {
           sapRef: q,
-          designation: "Article personnalisé (" + q + ")",
+          designation: "Article (" + q + ")",
           supplierRef: "Non indexé",
-          ean: q.length === 13 ? q : "N/A",
+          ean: q.length >= 8 ? q : "N/A",
           qr: "N/A"
         };
       }
 
-      // Mise à jour de l'affichage
       document.getElementById("dispDesignation").innerText = activeItem.designation;
       document.getElementById("dispSap").innerText = activeItem.sapRef;
       document.getElementById("dispSupplier").innerText = activeItem.supplierRef;
@@ -294,14 +326,7 @@
       document.getElementById("badgeIdentified").classList.remove("hidden");
     }
 
-    // --- QUANTITÉ ---
-    function adjustQuantity(delta) {
-      const input = document.getElementById("qtyInput");
-      let val = parseInt(input.value, 10) || 0;
-      input.value = Math.max(1, val + delta);
-    }
-
-    // --- SCANNER UNIVERSEL (QR, CODE-BARRES 1D & 2D) ---
+    // --- SCANNER UNIVERSEL ---
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
@@ -343,7 +368,7 @@
         );
         isScanning = true;
       } catch (err) {
-        alert("Erreur caméra. Vérifiez les autorisations HTTPS.");
+        alert("Erreur caméra. Vérifiez les permissions HTTPS.");
         container.classList.add("hidden");
         btnText.innerText = "SCANNER QR OU CODE-BARRES";
       }
@@ -366,14 +391,21 @@
         return;
       }
       if (!activeItem) {
-        alert("Veuillez identifier un matériel (scan ou saisie) avant d'enregistrer.");
+        alert("Veuillez scanner ou chercher un article avant d'enregistrer.");
+        return;
+      }
+
+      const qtyInput = document.getElementById("qtyInput");
+      const qty = parseInt(qtyInput.value, 10);
+      if (isNaN(qty) || qty <= 0) {
+        alert("Veuillez renseigner une quantité valide (supérieure à 0).");
+        qtyInput.focus();
         return;
       }
 
       const btn = document.getElementById("btnSubmit");
       const contractor = document.getElementById("contractorSelect").value;
       const trade = document.getElementById("tradeSelect").value;
-      const qty = parseInt(document.getElementById("qtyInput").value, 10) || 1;
 
       const now = new Date();
       const dateId = now.toISOString().slice(0, 10).replace(/-/g, "");
@@ -409,8 +441,8 @@
         cachedHistory.unshift(payload);
         showToast(`Archivé : ${activeItem.sapRef} (x${qty})`);
 
-        // Réinitialisation de la zone de travail
-        document.getElementById("qtyInput").value = 1;
+        // Remise à zéro du formulaire avec QUANTITÉ VIDE
+        qtyInput.value = "";
         document.getElementById("articleSearchInput").value = "";
         activeItem = null;
         document.getElementById("dispDesignation").innerText = "Scannez ou recherchez un article";
@@ -421,7 +453,7 @@
         document.getElementById("badgeIdentified").classList.add("hidden");
 
       } catch (e) {
-        alert("Erreur de synchronisation.");
+        alert("Erreur de synchronisation réseau.");
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i><span>VALIDER ET ARCHIVER</span>`;
@@ -432,7 +464,6 @@
     // --- SYNCHRONISATION INITIALE & HISTORIQUE ---
     async function syncData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        renderHistory(cachedHistory);
         return;
       }
 
@@ -450,7 +481,7 @@
           renderHistory(cachedHistory);
         }
       } catch (err) {
-        renderHistory(cachedHistory);
+        console.warn("Erreur lors de la synchronisation :", err);
       }
     }
 
