@@ -12,20 +12,17 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     #reader video { border-radius: 0.75rem; object-fit: cover; width: 100% !important; }
-    /* Supprimer les flèches haut/bas natives sur le champ quantité */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
       -webkit-appearance: none; 
       margin: 0; 
     }
-    input[type=number] {
-      -moz-appearance: textfield;
-    }
+    input[type=number] { -moz-appearance: textfield; }
   </style>
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased">
 
-  <!-- ================= MODALE DE SÉLECTION D'AGENT ================= -->
+  <!-- ================= MODALE SÉLECTION AGENT ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -55,10 +52,17 @@
     <div class="flex items-center space-x-2">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
       <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">En ligne</span>
+      
+      <!-- Badge de file d'attente hors ligne -->
+      <button id="queueBadge" onclick="flushQueue()" class="hidden px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold flex items-center space-x-1 active:bg-amber-500/30">
+        <i data-lucide="cloud-upload" class="w-3 h-3"></i>
+        <span id="queueCount">0 en attente</span>
+      </button>
     </div>
+
     <div class="flex items-center space-x-2 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
       <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
-      <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[120px]">Chargement...</span>
+      <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[110px]">Chargement...</span>
       <button onclick="openAgentModal()" title="Changer d'agent" class="text-slate-400 hover:text-white pl-1">
         <i data-lucide="refresh-cw" class="w-3 h-3"></i>
       </button>
@@ -142,13 +146,12 @@
 
       </div>
 
-      <!-- Pavé de Quantité plus large et vide par défaut -->
+      <!-- Pavé de Quantité -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée</label>
         <div class="flex items-center justify-center space-x-4">
           <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">-</button>
           
-          <!-- Champ élargi sans chiffre initial -->
           <input type="number" id="qtyInput" placeholder="0" min="1" inputmode="numeric" 
                  class="w-36 h-16 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none placeholder-slate-600">
           
@@ -172,7 +175,7 @@
       </div>
 
       <div class="flex justify-between items-center text-xs text-slate-400 px-1">
-        <span>Dernières saisies synchronisées</span>
+        <span>Dernières saisies</span>
         <button onclick="syncData()" class="flex items-center space-x-1 text-indigo-400 active:text-indigo-300">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
           <span>Actualiser</span>
@@ -203,40 +206,104 @@
   </div>
 
   <script>
-    // ⚠️ VEILLEZ À METTRE VOTRE URL DE DÉPLOIEMENT APPS SCRIPT CI-DESSOUS :
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
+    // ⚠️ METTEZ BIEN VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS :
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3j1H6_6_placeholder/exec";
 
-    // Variables initialisées vides (les anciens faux noms ont été totalement retirés)
-    let catalog = [];
-    let availableAgents = [];
-    let availableContractors = [];
-    let availableTrades = [];
+    // Lecture du cache local pour un démarrage instantané hors-ligne
+    let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
+    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
+    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
+    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
+    let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
 
     let currentAgent = localStorage.getItem("inv_current_agent") || "";
     let activeItem = null;
     let html5QrCode = null;
     let isScanning = false;
-    let cachedHistory = [];
+    let isSyncingQueue = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       initNetworkStatus();
       updateAgentUI();
+      populateDropdowns();
+      renderHistory(cachedHistory);
+      updateQueueBadge();
 
-      // On lance la synchronisation Google Sheets en premier
+      // Tentative de synchronisation réseau
       await syncData();
 
-      // Si aucun agent n'est sélectionné ou s'il n'existe plus dans le Sheet, on ouvre la modale
+      // Vérification sélection agent
       if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
         openAgentModal();
       }
+
+      // Vider la file d'attente s'il y a du réseau au lancement
+      if (navigator.onLine) {
+        flushQueue();
+      }
     });
+
+    // --- GESTION DE LA FILE D'ATTENTE HORS-LIGNE ---
+    function getOfflineQueue() {
+      return JSON.parse(localStorage.getItem("inv_offline_queue") || "[]");
+    }
+
+    function saveOfflineQueue(queue) {
+      localStorage.setItem("inv_offline_queue", JSON.stringify(queue));
+      updateQueueBadge();
+    }
+
+    function updateQueueBadge() {
+      const queue = getOfflineQueue();
+      const badge = document.getElementById("queueBadge");
+      const count = document.getElementById("queueCount");
+      if (queue.length > 0) {
+        badge.classList.remove("hidden");
+        count.innerText = `${queue.length} en attente`;
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    async function flushQueue() {
+      if (isSyncingQueue || !navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
+      const queue = getOfflineQueue();
+      if (queue.length === 0) return;
+
+      isSyncingQueue = true;
+      showToast(`Envoi de ${queue.length} saisie(s) en attente...`);
+
+      const remaining = [...queue];
+      while (remaining.length > 0) {
+        const item = remaining[0];
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(item)
+          });
+          remaining.shift();
+          saveOfflineQueue(remaining);
+        } catch (err) {
+          console.warn("Échec d'envoi d'un élément, arrêt de la synchronisation :", err);
+          break;
+        }
+      }
+
+      isSyncingQueue = false;
+      if (remaining.length === 0) {
+        showToast("Synchronisation terminée !");
+      }
+      updateQueueBadge();
+    }
 
     // --- GESTION DE L'AGENT ---
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
       if (availableAgents.length === 0) {
-        select.innerHTML = '<option value="">Aucun agent trouvé dans le Sheet</option>';
+        select.innerHTML = '<option value="">Aucun agent en mémoire</option>';
       } else {
         select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
           availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
@@ -261,7 +328,6 @@
       document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
     }
 
-    // --- MENUS ENTREPRENEURS & MÉTIERS ---
     function populateDropdowns() {
       const cSelect = document.getElementById("contractorSelect");
       const tSelect = document.getElementById("tradeSelect");
@@ -279,12 +345,9 @@
       }
     }
 
-    // --- GESTION QUANTITÉ (VIDE PAR DÉFAUT) ---
     function adjustQuantity(delta) {
       const input = document.getElementById("qtyInput");
       let currentVal = parseInt(input.value, 10);
-      
-      // Si la case était vide, on part de 0 + delta (ou au minimum 1)
       if (isNaN(currentVal) || currentVal <= 0) {
         currentVal = delta > 0 ? delta : 1;
       } else {
@@ -293,7 +356,6 @@
       input.value = currentVal;
     }
 
-    // --- MOTEUR DE RECHERCHE D'ARTICLE ---
     function searchArticle(term) {
       const q = String(term).trim().toUpperCase();
       if (!q) return;
@@ -368,7 +430,7 @@
         );
         isScanning = true;
       } catch (err) {
-        alert("Erreur caméra. Vérifiez les permissions HTTPS.");
+        alert("Erreur caméra. Vérifiez les autorisations.");
         container.classList.add("hidden");
         btnText.innerText = "SCANNER QR OU CODE-BARRES";
       }
@@ -384,7 +446,7 @@
       document.getElementById("btnScanText").innerText = "SCANNER QR OU CODE-BARRES";
     }
 
-    // --- VALIDATION ET ARCHIVAGE ---
+    // --- ARCHIVAGE ET ENVOI ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -398,7 +460,7 @@
       const qtyInput = document.getElementById("qtyInput");
       const qty = parseInt(qtyInput.value, 10);
       if (isNaN(qty) || qty <= 0) {
-        alert("Veuillez renseigner une quantité valide (supérieure à 0).");
+        alert("Veuillez renseigner une quantité valide.");
         qtyInput.focus();
         return;
       }
@@ -429,66 +491,94 @@
       btn.disabled = true;
       btn.innerHTML = `<span class="inline-block animate-spin mr-2">⏳</span> Enregistrement...`;
 
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+      let sentDirectly = false;
+
+      // Tentative d'envoi immédiat si en ligne
+      if (navigator.onLine && !GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        try {
           await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           });
+          sentDirectly = true;
+        } catch (e) {
+          console.warn("Échec réseau direct, bascule en file locale.");
         }
-        
-        cachedHistory.unshift(payload);
-        showToast(`Archivé : ${activeItem.sapRef} (x${qty})`);
-
-        // Remise à zéro du formulaire avec QUANTITÉ VIDE
-        qtyInput.value = "";
-        document.getElementById("articleSearchInput").value = "";
-        activeItem = null;
-        document.getElementById("dispDesignation").innerText = "Scannez ou recherchez un article";
-        document.getElementById("dispSap").innerText = "--";
-        document.getElementById("dispSupplier").innerText = "--";
-        document.getElementById("dispEan").innerText = "--";
-        document.getElementById("dispQr").innerText = "--";
-        document.getElementById("badgeIdentified").classList.add("hidden");
-
-      } catch (e) {
-        alert("Erreur de synchronisation réseau.");
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i><span>VALIDER ET ARCHIVER</span>`;
-        lucide.createIcons();
       }
+
+      // Si non envoyé directement, stockage dans la file hors ligne
+      if (!sentDirectly) {
+        const queue = getOfflineQueue();
+        queue.push(payload);
+        saveOfflineQueue(queue);
+      }
+
+      // Mise à jour de l'historique local visible
+      cachedHistory.unshift(payload);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory.slice(0, 30)));
+      renderHistory(cachedHistory);
+
+      showToast(sentDirectly ? `Archivé : ${activeItem.sapRef} (x${qty})` : `Sauvegardé hors-ligne : ${activeItem.sapRef} (x${qty})`);
+
+      // Réinitialisation du formulaire
+      qtyInput.value = "";
+      document.getElementById("articleSearchInput").value = "";
+      activeItem = null;
+      document.getElementById("dispDesignation").innerText = "Scannez ou recherchez un article";
+      document.getElementById("dispSap").innerText = "--";
+      document.getElementById("dispSupplier").innerText = "--";
+      document.getElementById("dispEan").innerText = "--";
+      document.getElementById("dispQr").innerText = "--";
+      document.getElementById("badgeIdentified").classList.add("hidden");
+
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i><span>VALIDER ET ARCHIVER</span>`;
+      lucide.createIcons();
     }
 
-    // --- SYNCHRONISATION INITIALE & HISTORIQUE ---
+    // --- SYNCHRONISATION INITIALE DU CATALOGUE ---
     async function syncData() {
-      if (GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        return;
-      }
+      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
         if (data.status === "success") {
-          if (data.agents && data.agents.length) availableAgents = data.agents;
-          if (data.contractors && data.contractors.length) availableContractors = data.contractors;
-          if (data.trades && data.trades.length) availableTrades = data.trades;
-          if (data.catalog && data.catalog.length) catalog = data.catalog;
-          
+          if (data.agents && data.agents.length) {
+            availableAgents = data.agents;
+            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
+          }
+          if (data.contractors && data.contractors.length) {
+            availableContractors = data.contractors;
+            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
+          }
+          if (data.trades && data.trades.length) {
+            availableTrades = data.trades;
+            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
+          }
+          if (data.catalog && data.catalog.length) {
+            catalog = data.catalog;
+            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
+          }
+
           populateDropdowns();
-          cachedHistory = data.history || [];
-          renderHistory(cachedHistory);
+
+          if (data.history && data.history.length) {
+            cachedHistory = data.history;
+            localStorage.setItem("offline_history", JSON.stringify(cachedHistory.slice(0, 30)));
+            renderHistory(cachedHistory);
+          }
         }
       } catch (err) {
-        console.warn("Erreur lors de la synchronisation :", err);
+        console.warn("Impossible d'actualiser depuis Google Sheets, utilisation des données locales.");
       }
     }
 
     function renderHistory(items) {
       const container = document.getElementById("historyList");
       if (!items || items.length === 0) {
-        container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">Aucun inventaire enregistré.</div>`;
+        container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">Aucun inventaire en mémoire.</div>`;
         return;
       }
       container.innerHTML = items.map(item => `
@@ -538,6 +628,7 @@
         histView.classList.remove("hidden");
         tabHist.classList.replace("text-slate-400", "text-blue-400");
         tabInv.classList.replace("text-blue-400", "text-slate-400");
+        renderHistory(cachedHistory);
         syncData();
       }
       lucide.createIcons();
@@ -551,6 +642,10 @@
         dot.className = isOnline ? "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" : "w-2.5 h-2.5 rounded-full bg-rose-500";
         txt.className = isOnline ? "text-[11px] font-bold uppercase tracking-wider text-emerald-400" : "text-[11px] font-bold uppercase tracking-wider text-rose-400";
         txt.innerText = isOnline ? "En ligne" : "Hors-ligne";
+
+        if (isOnline) {
+          flushQueue();
+        }
       };
       window.addEventListener("online", update);
       window.addEventListener("offline", update);
@@ -565,7 +660,7 @@
       setTimeout(() => {
         toast.classList.remove("translate-y-0");
         toast.classList.add("-translate-y-28");
-      }, 2300);
+      }, 2500);
     }
   </script>
 </body>
