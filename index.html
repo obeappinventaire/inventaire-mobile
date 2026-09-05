@@ -22,7 +22,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased">
 
-  <!-- MODALE SÉLECTION D'AGENT -->
+  <!-- ================= MODALE SÉLECTION AGENT ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -30,7 +30,7 @@
           <i data-lucide="user-check" class="w-6 h-6"></i>
         </div>
         <h2 class="text-xl font-bold text-white">Identification Agent</h2>
-        <p class="text-xs text-slate-400">Sélectionnez votre nom pour commencer la session</p>
+        <p class="text-xs text-slate-400">Sélectionnez votre nom pour démarrer l'inventaire</p>
       </div>
 
       <div class="space-y-2">
@@ -47,30 +47,27 @@
     </div>
   </div>
 
-  <!-- EN-TÊTE FIXE -->
+  <!-- ================= EN-TÊTE ================= -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0">
     <div class="flex items-center space-x-2">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
       <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">En ligne</span>
-      <!-- Compteur en attente de synchronisation -->
-      <button id="btnSyncQueue" onclick="flushQueue()" class="hidden items-center space-x-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full animate-bounce">
-        <i data-lucide="cloud-off" class="w-3 h-3"></i>
-        <span id="queueBadge">0</span>
-      </button>
     </div>
+
     <div class="flex items-center space-x-2 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
       <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
-      <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[120px]">Chargement...</span>
+      <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[110px]">Chargement...</span>
+      <span id="adminBadge" class="hidden px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider">ADMIN</span>
       <button onclick="openAgentModal()" title="Changer d'agent" class="text-slate-400 hover:text-white pl-1">
         <i data-lucide="refresh-cw" class="w-3 h-3"></i>
       </button>
     </div>
   </header>
 
-  <!-- CONTENU DÉROULANT -->
+  <!-- ================= VUES PRINCIPALES ================= -->
   <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-24">
 
-    <!-- VUE 1 : SAISIE -->
+    <!-- ========== VUE 1 : SAISIE DE COMPTAGE ========== -->
     <section id="view-inventory" class="space-y-4">
       
       <!-- Contexte Entreprise & Métier -->
@@ -85,8 +82,9 @@
         </div>
       </div>
 
-      <!-- Scanner & Recherche -->
+      <!-- Module Scanner & Recherche -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
+        
         <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg">
           <i data-lucide="scan-barcode" class="w-6 h-6"></i>
           <span id="btnScanText">SCANNER QR OU CODE-BARRES</span>
@@ -109,7 +107,7 @@
           </div>
         </div>
 
-        <!-- Fiche descriptive du matériel -->
+        <!-- Fiche descriptive de l'article -->
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
@@ -140,15 +138,18 @@
             </div>
           </div>
         </div>
+
       </div>
 
-      <!-- Pavé de Quantité large et vide par défaut -->
+      <!-- Pavé de Quantité -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
-        <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité constatée</label>
+        <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée</label>
         <div class="flex items-center justify-center space-x-4">
           <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">-</button>
+          
           <input type="number" id="qtyInput" placeholder="0" min="1" inputmode="numeric" 
                  class="w-36 h-16 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none placeholder-slate-600">
+          
           <button type="button" onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">+</button>
         </div>
       </div>
@@ -161,7 +162,7 @@
 
     </section>
 
-    <!-- VUE 2 : HISTORIQUE -->
+    <!-- ========== VUE 2 : HISTORIQUE ========== -->
     <section id="view-history" class="hidden space-y-4">
       <div class="relative">
         <i data-lucide="search" class="w-5 h-5 absolute left-3 top-3.5 text-slate-400"></i>
@@ -169,7 +170,7 @@
       </div>
 
       <div class="flex justify-between items-center text-xs text-slate-400 px-1">
-        <span>Dernières saisies</span>
+        <span id="historyHeaderLabel">Mes saisies</span>
         <button onclick="syncData()" class="flex items-center space-x-1 text-indigo-400 active:text-indigo-300">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
           <span>Actualiser</span>
@@ -181,7 +182,7 @@
 
   </main>
 
-  <!-- NAVIGATION -->
+  <!-- ================= BARRE DE NAVIGATION ================= -->
   <nav class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -193,59 +194,60 @@
     </button>
   </nav>
 
-  <!-- NOTIFICATION TOAST -->
+  <!-- TOAST NOTIFICATION -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
     <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-6 h-6"></i></div>
     <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
-    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS :
+    // ⚠️ METTEZ BIEN VOTRE URL APPS SCRIPT CI-DESSOUS :
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    // Enregistrement du Service Worker pour démarrage sans réseau
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW:', err));
-    }
-
-    // Chargement immédiat du cache local (Offline-first)
-    let catalog = JSON.parse(localStorage.getItem("inv_catalog") || "[]");
-    let availableAgents = JSON.parse(localStorage.getItem("inv_agents") || "[]");
-    let availableContractors = JSON.parse(localStorage.getItem("inv_contractors") || "[]");
-    let availableTrades = JSON.parse(localStorage.getItem("inv_trades") || "[]");
-    let cachedHistory = JSON.parse(localStorage.getItem("inv_history") || "[]");
-    let offlineQueue = JSON.parse(localStorage.getItem("inv_offline_queue") || "[]");
+    let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
+    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
+    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
+    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
+    let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
+    let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
 
     let currentAgent = localStorage.getItem("inv_current_agent") || "";
     let activeItem = null;
     let html5QrCode = null;
     let isScanning = false;
-    let isSyncingQueue = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       initNetworkStatus();
-      updateQueueBadge();
-      populateDropdowns();
-      renderHistory(cachedHistory);
       updateAgentUI();
+      populateDropdowns();
 
-      // En ligne : synchroniser en arrière-plan sans bloquer
-      if (navigator.onLine) {
-        await syncData();
-        await flushQueue();
-      }
+      await syncData();
 
       if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
         openAgentModal();
       }
     });
 
-    // --- IDENTIFICATION AGENT ---
+    function isAdmin() {
+      return adminAgents.includes(currentAgent);
+    }
+
+    function updateAgentUI() {
+      document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
+      const adminBadge = document.getElementById("adminBadge");
+      if (isAdmin()) {
+        adminBadge.classList.remove("hidden");
+      } else {
+        adminBadge.classList.add("hidden");
+      }
+    }
+
+    // --- SÉLECTION DE L'AGENT ---
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
       if (availableAgents.length === 0) {
-        select.innerHTML = '<option value="">Aucun agent en cache (connectez le réseau)</option>';
+        select.innerHTML = '<option value="">Chargement de la liste...</option>';
       } else {
         select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
           availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
@@ -264,43 +266,32 @@
       updateAgentUI();
       document.getElementById("userModal").classList.add("hidden");
       showToast(`Session : ${currentAgent}`);
+      renderHistory();
     }
 
-    function updateAgentUI() {
-      document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
-    }
-
-    // --- MENUS DÉROULANTS ---
     function populateDropdowns() {
       const cSelect = document.getElementById("contractorSelect");
       const tSelect = document.getElementById("tradeSelect");
 
       if (availableContractors.length > 0) {
         cSelect.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      } else {
-        cSelect.innerHTML = '<option value="">Aucun entrepreneur</option>';
       }
-
       if (availableTrades.length > 0) {
         tSelect.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
-      } else {
-        tSelect.innerHTML = '<option value="">Aucun métier</option>';
       }
     }
 
-    // --- GESTION QUANTITÉ ---
     function adjustQuantity(delta) {
       const input = document.getElementById("qtyInput");
-      let val = parseInt(input.value, 10);
-      if (isNaN(val) || val <= 0) {
-        val = delta > 0 ? delta : 1;
+      let currentVal = parseInt(input.value, 10);
+      if (isNaN(currentVal) || currentVal <= 0) {
+        currentVal = delta > 0 ? delta : 1;
       } else {
-        val = Math.max(1, val + delta);
+        currentVal = Math.max(1, currentVal + delta);
       }
-      input.value = val;
+      input.value = currentVal;
     }
 
-    // --- RECHERCHE MULTI-ATTRIBUTS ---
     function searchArticle(term) {
       const q = String(term).trim().toUpperCase();
       if (!q) return;
@@ -333,7 +324,7 @@
       document.getElementById("badgeIdentified").classList.remove("hidden");
     }
 
-    // --- SCANNER UNIVERSEL ---
+    // --- SCANNER ---
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
@@ -375,7 +366,7 @@
         );
         isScanning = true;
       } catch (err) {
-        alert("Caméra indisponible ou permission refusée.");
+        alert("Erreur caméra. Vérifiez les permissions.");
         container.classList.add("hidden");
         btnText.innerText = "SCANNER QR OU CODE-BARRES";
       }
@@ -391,21 +382,21 @@
       document.getElementById("btnScanText").innerText = "SCANNER QR OU CODE-BARRES";
     }
 
-    // --- ENREGISTREMENT ET ARCHIVAGE HORS-LIGNE / EN LIGNE ---
+    // --- ENREGISTREMENT ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
         return;
       }
       if (!activeItem) {
-        alert("Veuillez d'abord scanner ou renseigner un article.");
+        alert("Veuillez scanner ou chercher un article avant d'enregistrer.");
         return;
       }
 
       const qtyInput = document.getElementById("qtyInput");
       const qty = parseInt(qtyInput.value, 10);
       if (isNaN(qty) || qty <= 0) {
-        alert("Veuillez renseigner une quantité valide (supérieure à 0).");
+        alert("Veuillez renseigner une quantité valide.");
         qtyInput.focus();
         return;
       }
@@ -420,6 +411,7 @@
       const invId = `INV-${dateId}-${randSuffix}`;
 
       const payload = {
+        action: "CREATE",
         id: invId,
         timestamp: now.toLocaleString("fr-FR"),
         user: currentAgent,
@@ -436,93 +428,157 @@
       btn.disabled = true;
       btn.innerHTML = `<span class="inline-block animate-spin mr-2">⏳</span> Enregistrement...`;
 
-      // Sauvegarde immédiate dans l'historique visuel local
-      cachedHistory.unshift(payload);
-      localStorage.setItem("inv_history", JSON.stringify(cachedHistory.slice(0, 50)));
-
-      // Envoi direct ou mise en file d'attente
-      if (navigator.onLine && !GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        try {
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           });
-          showToast(`Archivé en ligne : ${activeItem.sapRef} (x${qty})`);
-        } catch (e) {
-          queueLocally(payload);
         }
-      } else {
-        queueLocally(payload);
+        
+        cachedHistory.unshift(payload);
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        showToast(`Archivé : ${activeItem.sapRef} (x${qty})`);
+
+        qtyInput.value = "";
+        document.getElementById("articleSearchInput").value = "";
+        activeItem = null;
+        document.getElementById("dispDesignation").innerText = "Scannez ou recherchez un article";
+        document.getElementById("dispSap").innerText = "--";
+        document.getElementById("dispSupplier").innerText = "--";
+        document.getElementById("dispEan").innerText = "--";
+        document.getElementById("dispQr").innerText = "--";
+        document.getElementById("badgeIdentified").classList.add("hidden");
+
+      } catch (e) {
+        alert("Erreur réseau lors de la validation.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i><span>VALIDER ET ARCHIVER</span>`;
+        lucide.createIcons();
       }
-
-      // Remise à zéro du formulaire
-      qtyInput.value = "";
-      document.getElementById("articleSearchInput").value = "";
-      activeItem = null;
-      document.getElementById("dispDesignation").innerText = "Scannez ou recherchez un article";
-      document.getElementById("dispSap").innerText = "--";
-      document.getElementById("dispSupplier").innerText = "--";
-      document.getElementById("dispEan").innerText = "--";
-      document.getElementById("dispQr").innerText = "--";
-      document.getElementById("badgeIdentified").classList.add("hidden");
-
-      btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i><span>VALIDER ET ARCHIVER</span>`;
-      lucide.createIcons();
     }
 
-    function queueLocally(payload) {
-      offlineQueue.push(payload);
-      localStorage.setItem("inv_offline_queue", JSON.stringify(offlineQueue));
-      updateQueueBadge();
-      showToast(`💾 Sauvegardé en mémoire locale (Hors-ligne)`);
-    }
+    // --- MODIFICATION & SUPPRESSION DEPUIS L'HISTORIQUE ---
+    async function editHistoryItem(id, oldQty) {
+      const newQtyStr = prompt("Modifier la quantité saisie :", oldQty);
+      if (newQtyStr === null) return; // Annulé
 
-    // --- SYNCHRONISATION DE LA FILE D'ATTENTE ---
-    async function flushQueue() {
-      if (isSyncingQueue || !navigator.onLine || offlineQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("placeholder")) {
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty <= 0) {
+        alert("Quantité invalide.");
         return;
       }
-      isSyncingQueue = true;
-      showToast(`Synchronisation de ${offlineQueue.length} saisie(s)...`);
 
-      while (offlineQueue.length > 0) {
-        const item = offlineQueue[0];
-        try {
+      showToast("Mise à jour en cours...");
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(item)
+            body: JSON.stringify({ action: "UPDATE", id: id, quantity: newQty })
           });
-          offlineQueue.shift();
-          localStorage.setItem("inv_offline_queue", JSON.stringify(offlineQueue));
-          updateQueueBadge();
-        } catch (err) {
-          console.warn("Échec synchronisation réseau:", err);
-          break;
         }
-      }
-      isSyncingQueue = false;
-      if (offlineQueue.length === 0) {
-        showToast("Toutes les données sont synchronisées !");
+
+        // Mise à jour locale immédiate
+        const target = cachedHistory.find(item => item.id === id);
+        if (target) target.quantity = newQty;
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        renderHistory();
+        showToast("Quantité modifiée !");
+      } catch (err) {
+        alert("Erreur lors de la mise à jour.");
       }
     }
 
-    function updateQueueBadge() {
-      const btn = document.getElementById("btnSyncQueue");
-      const badge = document.getElementById("queueBadge");
-      if (offlineQueue.length > 0) {
-        badge.innerText = `${offlineQueue.length} en attente`;
-        btn.classList.remove("hidden");
-        btn.classList.add("flex");
+    async function deleteHistoryItem(id, designation) {
+      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) {
+        return;
+      }
+
+      showToast("Suppression en cours...");
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "DELETE", id: id })
+          });
+        }
+
+        // Retrait local immédiat
+        cachedHistory = cachedHistory.filter(item => item.id !== id);
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        renderHistory();
+        showToast("Saisie supprimée !");
+      } catch (err) {
+        alert("Erreur lors de la suppression.");
+      }
+    }
+
+    // --- AFFICHAGE DE L'HISTORIQUE AVEC FILTRE AGENT/ADMIN ---
+    function renderHistory(filteredList = null) {
+      const container = document.getElementById("historyList");
+      const label = document.getElementById("historyHeaderLabel");
+
+      // Si l'agent est Admin : il voit tout. Sinon : seulement ses validations
+      let itemsToDisplay = filteredList || cachedHistory;
+      if (!isAdmin()) {
+        itemsToDisplay = itemsToDisplay.filter(item => item.user === currentAgent);
+        label.innerText = `Mes saisies (${itemsToDisplay.length})`;
       } else {
-        btn.classList.add("hidden");
-        btn.classList.remove("flex");
+        label.innerText = `Toutes les saisies (Mode Admin - ${itemsToDisplay.length})`;
       }
+
+      if (!itemsToDisplay || itemsToDisplay.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">Aucun inventaire à afficher.</div>`;
+        return;
+      }
+
+      container.innerHTML = itemsToDisplay.map(item => `
+        <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between space-x-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-mono font-bold text-indigo-400">${item.sapRef}</span>
+              <span class="text-[10px] text-slate-400">• ${item.timestamp}</span>
+            </div>
+            <p class="text-sm font-semibold text-slate-100 truncate">${item.designation}</p>
+            <p class="text-xs text-slate-400 truncate">${item.contractor} (${item.trade})</p>
+            <p class="text-[10px] text-slate-500 pt-0.5"><i data-lucide="user" class="inline w-2.5 h-2.5 mr-0.5"></i>${item.user}</p>
+          </div>
+
+          <div class="flex items-center space-x-3 shrink-0">
+            <span class="text-lg font-black text-emerald-400">x${item.quantity}</span>
+            
+            <!-- Actions de correction -->
+            <div class="flex flex-col space-y-1 pl-1">
+              <button onclick="editHistoryItem('${item.id}', ${item.quantity})" title="Modifier la quantité" class="p-1.5 bg-slate-800 active:bg-blue-600 rounded-lg text-slate-300 hover:text-white transition">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="deleteHistoryItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" title="Supprimer la saisie" class="p-1.5 bg-slate-800 active:bg-rose-600 rounded-lg text-rose-400 hover:text-white transition">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
     }
 
-    // --- TÉLÉCHARGEMENT & MISE EN CACHE DU CATALOGUE ---
+    function filterHistory() {
+      const q = document.getElementById("searchHistoryInput").value.toLowerCase();
+      const base = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
+      const filtered = base.filter(i => 
+        (i.sapRef && i.sapRef.toLowerCase().includes(q)) ||
+        (i.designation && i.designation.toLowerCase().includes(q)) ||
+        (i.contractor && i.contractor.toLowerCase().includes(q)) ||
+        (i.user && i.user.toLowerCase().includes(q))
+      );
+      renderHistory(filtered);
+    }
+
+    // --- SYNCHRONISATION ---
     async function syncData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
@@ -532,67 +588,37 @@
         if (data.status === "success") {
           if (data.agents && data.agents.length) {
             availableAgents = data.agents;
-            localStorage.setItem("inv_agents", JSON.stringify(availableAgents));
+            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
           }
           if (data.contractors && data.contractors.length) {
             availableContractors = data.contractors;
-            localStorage.setItem("inv_contractors", JSON.stringify(availableContractors));
+            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
           }
           if (data.trades && data.trades.length) {
             availableTrades = data.trades;
-            localStorage.setItem("inv_trades", JSON.stringify(availableTrades));
+            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
+          }
+          if (data.admins) {
+            adminAgents = data.admins;
+            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
           }
           if (data.catalog && data.catalog.length) {
             catalog = data.catalog;
-            localStorage.setItem("inv_catalog", JSON.stringify(catalog));
-          }
-          if (data.history && data.history.length) {
-            cachedHistory = data.history;
-            localStorage.setItem("inv_history", JSON.stringify(cachedHistory));
+            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
 
           populateDropdowns();
-          renderHistory(cachedHistory);
+          updateAgentUI();
+
+          if (data.history) {
+            cachedHistory = data.history;
+            localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+            renderHistory();
+          }
         }
       } catch (err) {
-        console.warn("Erreur réseau lecture:", err);
+        console.warn("Erreur de synchronisation.");
       }
-    }
-
-    function renderHistory(items) {
-      const container = document.getElementById("historyList");
-      if (!items || items.length === 0) {
-        container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">Aucun inventaire enregistré.</div>`;
-        return;
-      }
-      container.innerHTML = items.map(item => `
-        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex items-center justify-between space-x-3">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-mono font-bold text-indigo-400">${item.sapRef}</span>
-              <span class="text-[10px] text-slate-400">• ${item.timestamp}</span>
-            </div>
-            <p class="text-sm font-semibold text-slate-100 truncate">${item.designation}</p>
-            <p class="text-xs text-slate-400 truncate">${item.contractor} (${item.trade})</p>
-          </div>
-          <div class="text-right shrink-0">
-            <span class="text-lg font-black text-emerald-400">x${item.quantity}</span>
-            <p class="text-[10px] text-slate-400 truncate"><i data-lucide="user" class="inline w-2.5 h-2.5 mr-0.5"></i>${item.user}</p>
-          </div>
-        </div>
-      `).join('');
-      lucide.createIcons();
-    }
-
-    function filterHistory() {
-      const q = document.getElementById("searchHistoryInput").value.toLowerCase();
-      const filtered = cachedHistory.filter(i => 
-        (i.sapRef && i.sapRef.toLowerCase().includes(q)) ||
-        (i.designation && i.designation.toLowerCase().includes(q)) ||
-        (i.contractor && i.contractor.toLowerCase().includes(q)) ||
-        (i.user && i.user.toLowerCase().includes(q))
-      );
-      renderHistory(filtered);
     }
 
     function switchTab(tab) {
@@ -612,6 +638,7 @@
         histView.classList.remove("hidden");
         tabHist.classList.replace("text-slate-400", "text-blue-400");
         tabInv.classList.replace("text-blue-400", "text-slate-400");
+        renderHistory();
         syncData();
       }
       lucide.createIcons();
@@ -625,7 +652,6 @@
         dot.className = isOnline ? "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" : "w-2.5 h-2.5 rounded-full bg-rose-500";
         txt.className = isOnline ? "text-[11px] font-bold uppercase tracking-wider text-emerald-400" : "text-[11px] font-bold uppercase tracking-wider text-rose-400";
         txt.innerText = isOnline ? "En ligne" : "Hors-ligne";
-        if (isOnline) flushQueue();
       };
       window.addEventListener("online", update);
       window.addEventListener("offline", update);
@@ -640,7 +666,7 @@
       setTimeout(() => {
         toast.classList.remove("translate-y-0");
         toast.classList.add("-translate-y-28");
-      }, 2300);
+      }, 2500);
     }
   </script>
 </body>
