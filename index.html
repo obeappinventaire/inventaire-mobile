@@ -57,7 +57,7 @@
     <div class="flex items-center space-x-2 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
       <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
       <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[110px]">Chargement...</span>
-      <span id="adminBadge" class="hidden px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider">ADMIN</span>
+      <span id="adminBadge" class="hidden px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider">ADMIN</span>
       <button onclick="openAgentModal()" title="Changer d'agent" class="text-slate-400 hover:text-white pl-1">
         <i data-lucide="refresh-cw" class="w-3 h-3"></i>
       </button>
@@ -141,13 +141,14 @@
 
       </div>
 
-      <!-- Pavé de Quantité -->
+      <!-- Pavé de Quantité (autorise 0 ou valeur positive) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
-        <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée</label>
+        <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
         <div class="flex items-center justify-center space-x-4">
           <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">-</button>
           
-          <input type="number" id="qtyInput" placeholder="0" min="1" inputmode="numeric" 
+          <input type="number" id="qtyInput" placeholder="0" min="0" inputmode="numeric" 
+                 oninput="if(this.value < 0) this.value = 0;"
                  class="w-36 h-16 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none placeholder-slate-600">
           
           <button type="button" onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">+</button>
@@ -281,13 +282,14 @@
       }
     }
 
+    // Gestion Quantité : autorise 0 ou plus (jamais négatif)
     function adjustQuantity(delta) {
       const input = document.getElementById("qtyInput");
       let currentVal = parseInt(input.value, 10);
-      if (isNaN(currentVal) || currentVal <= 0) {
-        currentVal = delta > 0 ? delta : 1;
+      if (isNaN(currentVal)) {
+        currentVal = delta > 0 ? delta : 0;
       } else {
-        currentVal = Math.max(1, currentVal + delta);
+        currentVal = Math.max(0, currentVal + delta);
       }
       input.value = currentVal;
     }
@@ -395,8 +397,8 @@
 
       const qtyInput = document.getElementById("qtyInput");
       const qty = parseInt(qtyInput.value, 10);
-      if (isNaN(qty) || qty <= 0) {
-        alert("Veuillez renseigner une quantité valide.");
+      if (isNaN(qty) || qty < 0) {
+        alert("Veuillez renseigner une quantité valide (0 ou supérieure).");
         qtyInput.focus();
         return;
       }
@@ -439,7 +441,7 @@
         
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast(`Archivé : ${activeItem.sapRef} (x${qty})`);
+        showToast(`Archivé : ${activeItem.sapRef} (${qty})`);
 
         qtyInput.value = "";
         document.getElementById("articleSearchInput").value = "";
@@ -462,12 +464,12 @@
 
     // --- MODIFICATION & SUPPRESSION DEPUIS L'HISTORIQUE ---
     async function editHistoryItem(id, oldQty) {
-      const newQtyStr = prompt("Modifier la quantité saisie :", oldQty);
-      if (newQtyStr === null) return; // Annulé
+      const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
+      if (newQtyStr === null) return; // Annulation
 
       const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty <= 0) {
-        alert("Quantité invalide.");
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide. Doit être égale à 0 ou supérieure.");
         return;
       }
 
@@ -481,7 +483,6 @@
           });
         }
 
-        // Mise à jour locale immédiate
         const target = cachedHistory.find(item => item.id === id);
         if (target) target.quantity = newQty;
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
@@ -507,7 +508,6 @@
           });
         }
 
-        // Retrait local immédiat
         cachedHistory = cachedHistory.filter(item => item.id !== id);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         renderHistory();
@@ -517,12 +517,11 @@
       }
     }
 
-    // --- AFFICHAGE DE L'HISTORIQUE AVEC FILTRE AGENT/ADMIN ---
+    // --- AFFICHAGE DE L'HISTORIQUE AVEC BOUTONS AGRANDIS & QUANTITÉ SANS LE SIGNE X ---
     function renderHistory(filteredList = null) {
       const container = document.getElementById("historyList");
       const label = document.getElementById("historyHeaderLabel");
 
-      // Si l'agent est Admin : il voit tout. Sinon : seulement ses validations
       let itemsToDisplay = filteredList || cachedHistory;
       if (!isAdmin()) {
         itemsToDisplay = itemsToDisplay.filter(item => item.user === currentAgent);
@@ -537,7 +536,7 @@
       }
 
       container.innerHTML = itemsToDisplay.map(item => `
-        <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between space-x-3">
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center justify-between space-x-3 shadow-md">
           <div class="min-w-0 flex-1">
             <div class="flex items-center space-x-2">
               <span class="text-xs font-mono font-bold text-indigo-400">${item.sapRef}</span>
@@ -549,15 +548,18 @@
           </div>
 
           <div class="flex items-center space-x-3 shrink-0">
-            <span class="text-lg font-black text-emerald-400">x${item.quantity}</span>
+            <!-- Chiffre uniquement, pas de X -->
+            <span class="text-2xl font-black text-emerald-400 min-w-[3rem] text-right">${item.quantity}</span>
             
-            <!-- Actions de correction -->
-            <div class="flex flex-col space-y-1 pl-1">
-              <button onclick="editHistoryItem('${item.id}', ${item.quantity})" title="Modifier la quantité" class="p-1.5 bg-slate-800 active:bg-blue-600 rounded-lg text-slate-300 hover:text-white transition">
-                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            <!-- Gros boutons d'action tactiles (w-11 h-11) -->
+            <div class="flex items-center space-x-1.5 pl-1">
+              <button onclick="editHistoryItem('${item.id}', ${item.quantity})" title="Modifier" 
+                      class="w-11 h-11 bg-slate-800 active:bg-blue-600 rounded-xl text-slate-200 active:text-white flex items-center justify-center transition border border-slate-700 shadow">
+                <i data-lucide="pencil" class="w-5 h-5"></i>
               </button>
-              <button onclick="deleteHistoryItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" title="Supprimer la saisie" class="p-1.5 bg-slate-800 active:bg-rose-600 rounded-lg text-rose-400 hover:text-white transition">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <button onclick="deleteHistoryItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
+                      class="w-11 h-11 bg-slate-800 active:bg-rose-600 rounded-xl text-rose-400 active:text-white flex items-center justify-center transition border border-slate-700 shadow">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
               </button>
             </div>
           </div>
