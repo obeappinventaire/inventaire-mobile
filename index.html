@@ -4,29 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inventaire Logistique Terrain</title>
-
-  <!-- ================= BALISES DE PARTAGE DU LIEN & FAVICON ================= -->
-  <!-- 1. Favicon navigateur et icône d'installation smartphone -->
-  <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
-  <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
-  <meta name="theme-color" content="#0f172a">
-
-  <!-- 2. Aperçu dans les partages de lien (WhatsApp, SMS, Teams, Slack, LinkedIn) -->
-  <meta property="og:title" content="Inventaire Logistique Terrain">
-  <meta property="og:description" content="Application mobile de comptage rapide de matériel et inventaire terrain.">
-  <meta property="og:image" content="https://obeappinventaire.github.io/app_icon_co2h2o.png">
-  <meta property="og:image:type" content="image/png">
-  <meta property="og:image:width" content="512">
-  <meta property="og:image:height" content="512">
-  <meta property="og:type" content="website">
-
-  <!-- 3. Aperçu Twitter / X -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Inventaire Logistique Terrain">
-  <meta name="twitter:description" content="Application mobile de comptage de matériel.">
-  <meta name="twitter:image" content="https://obeappinventaire.github.io/app_icon_co2h2o.png">
-
-  <!-- Librairies Tailwind, Lucide Icons & Scanner -->
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -44,7 +22,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased">
 
-  <!-- ================= MODALE SÉLECTION AGENT ================= -->
+  <!-- MODALE SÉLECTION AGENT -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -69,7 +47,7 @@
     </div>
   </div>
 
-  <!-- ================= EN-TÊTE ================= -->
+  <!-- EN-TÊTE -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0">
     <div class="flex items-center space-x-2">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -86,10 +64,10 @@
     </div>
   </header>
 
-  <!-- ================= CONTENU PRINCIPAL ================= -->
-  <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-28">
+  <!-- CONTENU -->
+  <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-24">
 
-    <!-- ========== VUE 1 : COMPTAGE ========== -->
+    <!-- VUE 1 : COMPTAGE -->
     <section id="view-inventory" class="space-y-4">
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <div>
@@ -113,7 +91,7 @@
           <p class="text-[11px] text-center text-slate-400 py-1.5">Centrez le code (QR, EAN-13, Code 128)</p>
         </div>
 
-        <!-- ZONE DE RECHERCHE -->
+        <!-- ZONE DE RECHERCHE REHAUSSÉE -->
         <div class="relative">
           <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche (Désignation, Réf Fourn., SAP, EAN)</label>
           <div class="relative flex items-center">
@@ -129,7 +107,7 @@
             </button>
           </div>
 
-          <!-- LISTE DÉROULANTE DES SUGGESTIONS -->
+          <!-- LISTE DÉROULANTE DES SUGGESTIONS COMPLÈTE SANS LIMITE DE 10 -->
           <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-30 divide-y divide-slate-800">
           </div>
         </div>
@@ -177,7 +155,7 @@
       </button>
     </section>
 
-    <!-- ========== VUE 2 : HISTORIQUE ========== -->
+    <!-- VUE 2 : HISTORIQUE -->
     <section id="view-history" class="hidden space-y-4">
       <div class="relative">
         <i data-lucide="search" class="w-5 h-5 absolute left-3 top-3.5 text-slate-400"></i>
@@ -195,7 +173,7 @@
       <div id="historyList" class="space-y-2"></div>
     </section>
 
-    <!-- ========== VUE 3 : MONITORING MOBILE (ADMIN) ========== -->
+    <!-- VUE 3 : MONITORING MOBILE (ADMIN AVEC MOT DE PASSE) -->
     <section id="view-monitoring" class="hidden space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -223,16 +201,9 @@
       <div id="mobMonitoringList" class="space-y-2"></div>
     </section>
 
-    <!-- ================= MENTION COMMUNE DISCRÈTE (TOUTES LES PAGES) ================= -->
-    <div class="text-center pt-8 pb-3">
-      <span class="text-[10px] font-medium text-slate-500 tracking-wider">
-        &copy; made by CO2H2O srlu
-      </span>
-    </div>
-
   </main>
 
-  <!-- ================= BARRE DE NAVIGATION INFÉRIEURE ================= -->
+  <!-- NAVIGATION INFÉRIEURE -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -248,7 +219,7 @@
     </button>
   </nav>
 
-  <!-- TOAST DE NOTIFICATION -->
+  <!-- NOTIFICATION TOAST -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
     <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-6 h-6"></i></div>
     <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
@@ -278,6 +249,7 @@
       updateAgentUI();
       populateDropdowns();
 
+      // Fermeture des suggestions si on clique hors du champ
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
@@ -369,11 +341,13 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
+    // --- RECHERCHE ET RÉINITIALISATION DE LA MÉMOIRE ---
     function onSearchInput(rawVal) {
       const val = rawVal.trim();
       const dd = document.getElementById("suggestionsDropdown");
       const clearBtn = document.getElementById("clearSearchBtn");
 
+      // ⚠️ EFFACEMENT DE LA MÉMOIRE ARTICLE DÈS LA MODIFICATION DU CHAMP
       activeItem = null;
       document.getElementById("dispDesignation").innerText = "Scannez ou tapez un mot-clé";
       document.getElementById("dispSupplier").innerText = "--";
@@ -395,11 +369,13 @@
 
       const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
 
+      // Recherche universelle (Désignation, Fournisseur, SAP, EAN, QR)
       const filtered = catalog.filter(item => {
         const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""} ${item.sapRef || ""} ${item.ean || ""} ${item.qr || ""}`);
         return searchTerms.every(term => textTarget.includes(term));
       });
 
+      // Tri alphabétique sur la désignation
       const sortedResults = filtered.sort((a, b) => {
         return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
       });
@@ -407,6 +383,7 @@
       renderSuggestions(sortedResults);
     }
 
+    // --- AFFICHAGE DE TOUTES LES SUGGESTIONS SANS RESTRICTION ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
 
@@ -416,6 +393,7 @@
         return;
       }
 
+      // En-tête indiquant le nombre total d'articles trouvés
       let html = `
         <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold text-slate-400 flex justify-between">
           <span>${results.length} article(s) trouvé(s)</span>
@@ -423,6 +401,7 @@
         </div>
       `;
 
+      // Affichage de TOUS les résultats (avec défilement fluide)
       html += results.map(item => `
         <div onclick="selectArticleBySap('${item.sapRef}')" 
              class="p-3.5 hover:bg-slate-800 active:bg-indigo-600/30 cursor-pointer transition">
@@ -474,6 +453,7 @@
       document.getElementById("badgeIdentified").classList.add("hidden");
     }
 
+    // --- RECHERCHE PAR CODE DIRECT (Scan Caméra) ---
     function searchArticleByExactCode(code) {
       const q = String(code).trim().toUpperCase();
       if (!q) return;
@@ -504,6 +484,7 @@
       }
     }
 
+    // --- SCANNER CAMÉRA ---
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
@@ -561,6 +542,7 @@
       document.getElementById("btnScanText").innerText = "SCANNER QR OU CODE-BARRES";
     }
 
+    // --- SOUMISSION & ARCHIVAGE ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
