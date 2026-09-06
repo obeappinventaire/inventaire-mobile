@@ -19,13 +19,35 @@
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
+    /* Style sombre des infobulles Leaflet */
     .leaflet-popup-content-wrapper {
       background: #0f172a;
       color: #f8fafc;
       border: 1px solid #334155;
       border-radius: 0.75rem;
+      padding: 0;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+    }
+    .leaflet-popup-content {
+      margin: 12px 14px;
+      line-height: 1.4;
     }
     .leaflet-popup-tip { background: #0f172a; }
+
+    /* Tooltip personnalisé affiché au survol */
+    .custom-agent-tooltip {
+      background: #1e1b4b !important;
+      border: 1px solid #6366f1 !important;
+      color: #ffffff !important;
+      font-weight: 800 !important;
+      font-size: 11px !important;
+      padding: 3px 8px !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+    }
+    .custom-agent-tooltip::before {
+      border-top-color: #6366f1 !important;
+    }
   </style>
 </head>
 <body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950" onclick="closeAllDropdowns(event)">
@@ -213,7 +235,7 @@
           </div>
         </div>
 
-        <!-- RUBRIQUE : FILTRES COMPLÉMENTAIRES & EXTRACTION (MULTI-CHOIX CHECKBOXES) -->
+        <!-- RUBRIQUE : FILTRES COMPLÉMENTAIRES & EXTRACTION -->
         <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtres complémentaires & Extraction</span>
@@ -352,19 +374,25 @@
         <div class="absolute top-4 right-4 z-[1000] bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-xl space-y-2 text-xs shadow-xl pointer-events-auto">
           <div class="font-bold text-white border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
             <i data-lucide="map" class="w-3.5 h-3.5 text-indigo-400"></i>
-            <span>Légende Carte</span>
+            <span>Interactions Carte</span>
           </div>
-          <div class="flex items-center space-x-2">
-            <span class="w-3 h-3 rounded-full bg-blue-500 inline-block border border-white/50"></span>
-            <span>Agent (Dernier scan validé)</span>
+          <div class="text-[11px] text-slate-400 space-y-1">
+            <p>• <strong>Survol :</strong> Nom de l'agent</p>
+            <p>• <strong>Clic :</strong> Chantiers, métiers, lignes & statut</p>
           </div>
-          <div class="flex items-center space-x-2">
-            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-            <span>Chantier terminé (≥ 3 lignes)</span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-            <span>Chantier en cours / partiel</span>
+          <div class="pt-1.5 border-t border-slate-800 space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block border border-white/50"></span>
+              <span>Dernier scan agent</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+              <span>Inventaire terminé (≥ 3 lignes)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+              <span>Inventaire en cours / partiel</span>
+            </div>
           </div>
         </div>
         <div id="mapContainer" class="w-full h-full"></div>
@@ -471,7 +499,6 @@
       const btnAgents = document.getElementById("navTabAgents");
       const btnMap = document.getElementById("navTabMap");
 
-      // Masquage général
       secGlobal.classList.add("hidden");
       secAgents.classList.add("hidden");
       secMap.classList.add("hidden");
@@ -549,7 +576,7 @@
       location.reload();
     }
 
-    // --- GESTION DES MENUS DÉROULANTS MULTI-CHOIX (CHECKBOXES) ---
+    // --- MENUS DÉROULANTS MULTI-CHOIX ---
     function toggleFilterDropdown(id) {
       const el = document.getElementById(id);
       const isHidden = el.classList.contains("hidden");
@@ -568,7 +595,6 @@
     }
 
     function buildMultiSelectCheckboxes() {
-      // 1. Entrepreneurs
       const containerC = document.getElementById("checkboxesContractors");
       containerC.innerHTML = availableContractors.map(c => `
         <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
@@ -577,7 +603,6 @@
         </label>
       `).join('');
 
-      // 2. Métiers
       const containerT = document.getElementById("checkboxesTrades");
       containerT.innerHTML = availableTrades.map(t => `
         <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
@@ -742,19 +767,13 @@
           if (!matchSearch) return false;
         }
 
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) {
-          return false;
-        }
-
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) {
-          return false;
-        }
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
 
         if (selectedAlerts.length > 0) {
           let itemStatut = "OK";
           if (q === 0) itemStatut = "ZERO";
           else if (q > 50) itemStatut = "HIGH";
-
           if (!selectedAlerts.includes(itemStatut)) return false;
         }
 
@@ -770,11 +789,7 @@
     }
 
     function toggleAgentDrawer(agentName, drawerType) {
-      if (openDrawers[agentName] === drawerType) {
-        openDrawers[agentName] = null;
-      } else {
-        openDrawers[agentName] = drawerType;
-      }
+      openDrawers[agentName] = (openDrawers[agentName] === drawerType) ? null : drawerType;
       renderAgentAccordions();
     }
 
@@ -1083,7 +1098,7 @@
       lucide.createIcons();
     }
 
-    // --- MOTEUR CARTOGRAPHIQUE (LEAFLET.JS) ---
+    // ================= MOTEUR CARTOGRAPHIQUE AVEC HOVER (AGENT) ET CLIC (DÉTAILS) =================
     function renderMap() {
       if (!map) {
         map = L.map('mapContainer').setView([50.85, 4.35], 8);
@@ -1097,7 +1112,7 @@
       mapMarkersLayer.clearLayers();
       const bounds = [];
 
-      // 1. Position GPS des Agents (Dernier scan horodaté)
+      // 1. POSITION GPS RÉCENTE DES AGENTS
       availableAgents.forEach(agent => {
         const agentEntries = periodFilteredHistory.filter(r => r.user === agent && r.lat && r.lng);
         if (agentEntries.length > 0) {
@@ -1105,25 +1120,52 @@
           const last = sorted[0];
           bounds.push([last.lat, last.lng]);
 
+          // Recensement des métiers traités par cet agent chez cet entrepreneur
+          const tradesList = Array.from(new Set(agentEntries.filter(i => i.contractor === last.contractor).map(i => i.trade))).filter(Boolean);
+
           const agentIcon = L.divIcon({
             className: 'custom-icon-agent',
-            html: `<div class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-lg text-xs font-bold">👤</div>`,
+            html: `<div class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-lg text-xs font-bold ring-2 ring-blue-400/50">👤</div>`,
             iconSize: [28, 28]
           });
 
-          L.marker([last.lat, last.lng], { icon: agentIcon }).addTo(mapMarkersLayer)
-            .bindPopup(`
-              <div class="text-xs p-1 space-y-1">
-                <div class="font-bold text-blue-400">${agent} (Dernier scan)</div>
-                <div>Chez : <strong>${last.contractor}</strong></div>
-                <div class="text-slate-400">Heure : ${last.timestamp}</div>
-                <div class="text-slate-400 font-mono text-[10px]">${last.lat.toFixed(5)}, ${last.lng.toFixed(5)}</div>
+          const marker = L.marker([last.lat, last.lng], { icon: agentIcon }).addTo(mapMarkersLayer);
+
+          // RÈGLE 1 : AU SURVOL -> AFFICHE LE NOM DE L'AGENT
+          marker.bindTooltip(`👤 Agent : ${agent}`, {
+            permanent: false,
+            direction: 'top',
+            offset: [0, -14],
+            className: 'custom-agent-tooltip'
+          });
+
+          // RÈGLE 2 : AU CLIC -> AFFICHE L'ENTREPRENEUR, LES MÉTIERS, LES LIGNES ET LE STATUT DÉTAILLÉ
+          marker.bindPopup(`
+            <div class="text-xs space-y-2">
+              <div class="border-b border-slate-700 pb-1.5 flex justify-between items-center">
+                <span class="font-bold text-blue-400 text-sm">👤 ${agent}</span>
+                <span class="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.5 rounded">AGENT</span>
               </div>
-            `);
+              <div class="space-y-1">
+                <div><span class="text-slate-400">Entrepreneur :</span> <strong class="text-white">${last.contractor}</strong></div>
+                <div><span class="text-slate-400">Métier(s) :</span> <span class="text-indigo-300">${tradesList.join(', ') || 'Non précisé'}</span></div>
+                <div><span class="text-slate-400">Lignes validées :</span> <strong class="text-emerald-400 font-bold">${agentEntries.length} ligne(s)</strong></div>
+                <div class="flex items-center gap-1.5 pt-0.5">
+                  <span class="text-slate-400">Statut :</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    🟢 En cours (${last.timestamp})
+                  </span>
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-800">
+                GPS : ${last.lat.toFixed(5)}, ${last.lng.toFixed(5)}
+              </div>
+            </div>
+          `);
         }
       });
 
-      // 2. Chantiers / Inventaires par Entrepreneur
+      // 2. POSITION DES CHANTIERS / ENTREPRENEURS
       const contractorMap = {};
       periodFilteredHistory.forEach(item => {
         if (item.lat && item.lng && item.contractor) {
@@ -1133,10 +1175,17 @@
               lat: item.lat,
               lng: item.lng,
               linesCount: 0,
-              lastTimestamp: item.timestamp
+              lastTimestamp: item.timestamp,
+              agents: new Set(),
+              trades: new Set()
             };
           }
           contractorMap[item.contractor].linesCount++;
+          if (item.user) contractorMap[item.contractor].agents.add(item.user);
+          if (item.trade) contractorMap[item.contractor].trades.add(item.trade);
+          if (parseItemDate(item.timestamp) > parseItemDate(contractorMap[item.contractor].lastTimestamp)) {
+            contractorMap[item.contractor].lastTimestamp = item.timestamp;
+          }
         }
       });
 
@@ -1144,7 +1193,8 @@
         bounds.push([site.lat, site.lng]);
         const isDone = site.linesCount >= 3;
         const color = isDone ? 'bg-emerald-500' : 'bg-amber-500';
-        const label = isDone ? 'Inventaire terminé' : 'Inventaire en cours';
+        const labelStatut = isDone ? 'Terminé (Validé)' : 'En cours';
+        const badgeClass = isDone ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30';
 
         const siteIcon = L.divIcon({
           className: 'custom-icon-site',
@@ -1152,19 +1202,36 @@
           iconSize: [24, 24]
         });
 
-        L.marker([site.lat, site.lng], { icon: siteIcon }).addTo(mapMarkersLayer)
-          .bindPopup(`
-            <div class="text-xs p-1 space-y-1">
-              <div class="font-bold text-white">${site.contractor}</div>
-              <div class="text-[11px] font-semibold ${isDone ? 'text-emerald-400' : 'text-amber-400'}">${label}</div>
-              <div class="text-slate-400">${site.linesCount} ligne(s) validée(s)</div>
-              <div class="text-slate-500 text-[10px]">Dernier scan : ${site.lastTimestamp}</div>
+        const marker = L.marker([site.lat, site.lng], { icon: siteIcon }).addTo(mapMarkersLayer);
+
+        // RÈGLE 1 : AU SURVOL -> AFFICHE LE NOM DE L'AGENT QUI EST INTERVENU (OU LES AGENTS)
+        const agentNames = Array.from(site.agents).join(', ') || 'Inconnu';
+        marker.bindTooltip(`👤 Agent(s) : ${agentNames}`, {
+          permanent: false,
+          direction: 'top',
+          offset: [0, -12],
+          className: 'custom-agent-tooltip'
+        });
+
+        // RÈGLE 2 : AU CLIC -> AFFICHE L'ENTREPRENEUR, MÉTIERS, LIGNES ET STATUT COMPLET
+        marker.bindPopup(`
+          <div class="text-xs space-y-2">
+            <div class="border-b border-slate-700 pb-1.5 flex justify-between items-center">
+              <span class="font-bold text-white text-sm">📦 ${site.contractor}</span>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeClass}">${labelStatut}</span>
             </div>
-          `);
+            <div class="space-y-1">
+              <div><span class="text-slate-400">Agent(s) présent(s) :</span> <strong class="text-indigo-300">${agentNames}</strong></div>
+              <div><span class="text-slate-400">Métier(s) traité(s) :</span> <span class="text-slate-200">${Array.from(site.trades).join(', ') || 'Tous corps'}</span></div>
+              <div><span class="text-slate-400">Lignes constatées :</span> <strong class="text-white font-bold">${site.linesCount} ligne(s)</strong></div>
+              <div><span class="text-slate-400">Dernier scan :</span> <strong class="text-slate-200">${site.lastTimestamp}</strong></div>
+            </div>
+          </div>
+        `);
       });
 
       if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [40, 40] });
+        map.fitBounds(bounds, { padding: [50, 50] });
       }
     }
 
@@ -1226,7 +1293,7 @@
       }
     }
 
-    // --- EXPORT CSV (SUR LA PÉRIODE SÉLECTIONNÉE) ---
+    // --- EXPORT CSV SUR LA PÉRIODE SÉLECTIONNÉE ---
     function exportToCSV() {
       if (filteredData.length === 0) {
         alert("Aucune donnée à exporter.");
