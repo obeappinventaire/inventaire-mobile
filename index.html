@@ -30,7 +30,7 @@
           <i data-lucide="user-check" class="w-6 h-6"></i>
         </div>
         <h2 class="text-xl font-bold text-white">Identification Agent</h2>
-        <p class="text-xs text-slate-400">Sélectionnez votre nom pour démarrer l'inventaire</p>
+        <p class="text-xs text-slate-400">Sélectionnez votre nom pour démarrer</p>
       </div>
 
       <div class="space-y-2">
@@ -84,7 +84,6 @@
 
       <!-- Module Scanner & Recherche -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
-        
         <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg">
           <i data-lucide="scan-barcode" class="w-6 h-6"></i>
           <span id="btnScanText">SCANNER QR OU CODE-BARRES</span>
@@ -138,10 +137,9 @@
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- Pavé de Quantité (>= 0) -->
+      <!-- Pavé de Quantité (autorise 0 ou valeur positive) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
         <div class="flex items-center justify-center space-x-4">
@@ -163,7 +161,7 @@
 
     </section>
 
-    <!-- ========== VUE 2 : HISTORIQUE ========== -->
+    <!-- ========== VUE 2 : HISTORIQUE AGENT ========== -->
     <section id="view-history" class="hidden space-y-4">
       <div class="relative">
         <i data-lucide="search" class="w-5 h-5 absolute left-3 top-3.5 text-slate-400"></i>
@@ -181,10 +179,74 @@
       <div id="historyList" class="space-y-2"></div>
     </section>
 
+    <!-- ========== VUE 3 : MONITORING MANAGER (ADMIN ONLY) ========== -->
+    <section id="view-monitoring" class="hidden space-y-4">
+      
+      <!-- En-tête supervision -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-1.5">
+            <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
+            Supervision Magasin
+          </h3>
+          <p class="text-[11px] text-slate-400">Activités en temps réel des magasiniers</p>
+        </div>
+        <button onclick="syncData()" class="text-xs bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-indigo-400 flex items-center gap-1">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+          Actualiser
+        </button>
+      </div>
+
+      <!-- Compteurs KPIs Synthétiques -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-center">
+          <span class="text-[10px] text-slate-400 font-bold block uppercase">Total Lignes</span>
+          <span id="kpiTotalRows" class="text-xl font-black text-white">0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-center">
+          <span class="text-[10px] text-slate-400 font-bold block uppercase">Total Pièces</span>
+          <span id="kpiTotalQty" class="text-xl font-black text-indigo-400">0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-center">
+          <span class="text-[10px] text-amber-400 font-bold block uppercase">Anomalies</span>
+          <span id="kpiAlertCount" class="text-xl font-black text-amber-400">0</span>
+        </div>
+      </div>
+
+      <!-- Filtres du monitoring -->
+      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Agent</label>
+            <select id="monFilterAgent" onchange="renderMonitoring()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+              <option value="">Tous les agents</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Filtre Anomalie</label>
+            <select id="monFilterAlert" onchange="renderMonitoring()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+              <option value="ALL">Toutes les saisies</option>
+              <option value="ALERT_ONLY">⚠️ Anomalies uniquement</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste des saisies sous supervision -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-xs text-slate-400 px-1">
+          <span id="monCountLabel">0 saisie(s)</span>
+          <span class="text-[10px] text-slate-500">Tri chrono inverse</span>
+        </div>
+        <div id="monitoringList" class="space-y-2"></div>
+      </div>
+
+    </section>
+
   </main>
 
   <!-- ================= BARRE DE NAVIGATION ================= -->
-  <nav class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto">
+  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Comptage</span>
@@ -192,6 +254,11 @@
     <button id="tabNavHistory" onclick="switchTab('history')" class="flex flex-col items-center justify-center text-slate-400">
       <i data-lucide="history" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Historique</span>
+    </button>
+    <!-- Bouton Monitoring (affiché uniquement si admin) -->
+    <button id="tabNavMonitoring" onclick="switchTab('monitoring')" class="hidden flex-col items-center justify-center text-slate-400">
+      <i data-lucide="activity" class="w-5 h-5"></i>
+      <span class="text-xs font-semibold mt-1">Monitoring</span>
     </button>
   </nav>
 
@@ -202,7 +269,7 @@
   </div>
 
   <script>
-    // ⚠️ REMPLACEZ CETTE VALEUR PAR VOTRE URL DE DÉPLOIEMENT GOOGLE APPS SCRIPT :
+    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS :
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -237,10 +304,19 @@
     function updateAgentUI() {
       document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
       const adminBadge = document.getElementById("adminBadge");
+      const monNavBtn = document.getElementById("tabNavMonitoring");
+      const navContainer = document.getElementById("bottomNav");
+
       if (isAdmin()) {
         adminBadge.classList.remove("hidden");
+        monNavBtn.classList.remove("hidden");
+        monNavBtn.classList.add("flex");
+        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-3 h-16 max-w-md mx-auto";
       } else {
         adminBadge.classList.add("hidden");
+        monNavBtn.classList.add("hidden");
+        monNavBtn.classList.remove("flex");
+        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto";
       }
     }
 
@@ -268,11 +344,13 @@
       document.getElementById("userModal").classList.add("hidden");
       showToast(`Session : ${currentAgent}`);
       renderHistory();
+      if (isAdmin()) renderMonitoring();
     }
 
     function populateDropdowns() {
       const cSelect = document.getElementById("contractorSelect");
       const tSelect = document.getElementById("tradeSelect");
+      const monAgent = document.getElementById("monFilterAgent");
 
       if (availableContractors.length > 0) {
         cSelect.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -280,9 +358,12 @@
       if (availableTrades.length > 0) {
         tSelect.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
       }
+      if (availableAgents.length > 0) {
+        monAgent.innerHTML = '<option value="">Tous les agents</option>' + 
+          availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
     }
 
-    // Gestion Quantité : 0 minimum
     function adjustQuantity(delta) {
       const input = document.getElementById("qtyInput");
       let currentVal = parseInt(input.value, 10);
@@ -462,7 +543,7 @@
       }
     }
 
-    // --- MODIFICATION TRACÉE DANS L'AUDIT ---
+    // --- MODIFICATION & SUPPRESSION AVEC TRACE AUDIT ---
     async function editHistoryItem(id, oldQty) {
       const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
       if (newQtyStr === null) return;
@@ -492,13 +573,13 @@
         if (target) target.quantity = newQty;
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         renderHistory();
-        showToast("Quantité modifiée et auditée !");
+        if (isAdmin()) renderMonitoring();
+        showToast("Quantité modifiée !");
       } catch (err) {
         alert("Erreur lors de la mise à jour.");
       }
     }
 
-    // --- SUPPRESSION TRACÉE DANS L'AUDIT ---
     async function deleteHistoryItem(id, designation) {
       if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) {
         return;
@@ -513,7 +594,7 @@
             body: JSON.stringify({ 
               action: "DELETE", 
               id: id,
-              user: currentAgent 
+              user: currentAgent
             })
           });
         }
@@ -521,13 +602,14 @@
         cachedHistory = cachedHistory.filter(item => item.id !== id);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         renderHistory();
-        showToast("Saisie supprimée et auditée !");
+        if (isAdmin()) renderMonitoring();
+        showToast("Saisie supprimée !");
       } catch (err) {
         alert("Erreur lors de la suppression.");
       }
     }
 
-    // --- AFFICHAGE DE L'HISTORIQUE ---
+    // --- HISTORIQUE STANDARD (AGENTS ET ADMIN) ---
     function renderHistory(filteredList = null) {
       const container = document.getElementById("historyList");
       const label = document.getElementById("historyHeaderLabel");
@@ -559,7 +641,6 @@
 
           <div class="flex items-center space-x-3 shrink-0">
             <span class="text-2xl font-black text-emerald-400 min-w-[3rem] text-right">${item.quantity}</span>
-            
             <div class="flex items-center space-x-1.5 pl-1">
               <button onclick="editHistoryItem('${item.id}', ${item.quantity})" title="Modifier" 
                       class="w-11 h-11 bg-slate-800 active:bg-blue-600 rounded-xl text-slate-200 active:text-white flex items-center justify-center transition border border-slate-700 shadow">
@@ -586,6 +667,86 @@
         (i.user && i.user.toLowerCase().includes(q))
       );
       renderHistory(filtered);
+    }
+
+    // --- MONITORING SUPERVISION (OPTION A - ADMIN ONLY) ---
+    function renderMonitoring() {
+      if (!isAdmin()) return;
+
+      const filterAgent = document.getElementById("monFilterAgent").value;
+      const filterAlert = document.getElementById("monFilterAlert").value;
+      const container = document.getElementById("monitoringList");
+      const countLabel = document.getElementById("monCountLabel");
+
+      // Calcul des KPIs globaux
+      const totalRows = cachedHistory.length;
+      const totalQty = cachedHistory.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+      const alertItems = cachedHistory.filter(item => Number(item.quantity) === 0 || Number(item.quantity) > 50);
+
+      document.getElementById("kpiTotalRows").innerText = totalRows;
+      document.getElementById("kpiTotalQty").innerText = totalQty;
+      document.getElementById("kpiAlertCount").innerText = alertItems.length;
+
+      // Filtrage dynamique de la liste
+      let list = [...cachedHistory];
+      if (filterAgent) {
+        list = list.filter(item => item.user === filterAgent);
+      }
+      if (filterAlert === "ALERT_ONLY") {
+        list = list.filter(item => Number(item.quantity) === 0 || Number(item.quantity) > 50);
+      }
+
+      countLabel.innerText = `${list.length} saisie(s) affichée(s)`;
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">Aucune activité ne correspond aux filtres.</div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        const isQtyZero = Number(item.quantity) === 0;
+        const isQtyHigh = Number(item.quantity) > 50;
+        let alertBadge = "";
+        if (isQtyZero) {
+          alertBadge = `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[9px] font-black px-1.5 py-0.5 rounded">STOCK 0</span>`;
+        } else if (isQtyHigh) {
+          alertBadge = `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-black px-1.5 py-0.5 rounded">> 50 PCS</span>`;
+        }
+
+        return `
+          <div class="bg-slate-900 p-3.5 rounded-xl border ${alertBadge ? 'border-amber-500/40' : 'border-slate-800'} space-y-2.5 shadow">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-1.5">
+                <span class="px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded text-[11px] font-bold">
+                  <i data-lucide="user" class="inline w-3 h-3 mr-0.5"></i>${item.user}
+                </span>
+                <span class="text-[10px] text-slate-400">${item.timestamp}</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                ${alertBadge}
+                <span class="text-xl font-black ${isQtyZero ? 'text-rose-400' : 'text-emerald-400'}">${item.quantity}</span>
+              </div>
+            </div>
+
+            <div class="text-xs">
+              <div class="font-bold text-slate-200 truncate">${item.designation}</div>
+              <div class="text-[11px] text-slate-400 font-mono">SAP : ${item.sapRef} • Fourn : ${item.supplierRef || '--'}</div>
+              <div class="text-[11px] text-slate-400 truncate mt-0.5">${item.contractor} (${item.trade})</div>
+            </div>
+
+            <!-- Actions de régulation directe par le superviseur -->
+            <div class="flex justify-end items-center gap-2 pt-1 border-t border-slate-800/80">
+              <button onclick="editHistoryItem('${item.id}', ${item.quantity})" class="text-[11px] px-2.5 py-1 bg-slate-800 active:bg-blue-600 rounded text-slate-300 font-semibold flex items-center gap-1">
+                <i data-lucide="pencil" class="w-3 h-3"></i> Corriger
+              </button>
+              <button onclick="deleteHistoryItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="text-[11px] px-2.5 py-1 bg-slate-800 active:bg-rose-600 rounded text-rose-400 active:text-white font-semibold flex items-center gap-1">
+                <i data-lucide="trash-2" class="w-3 h-3"></i> Supprimer
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
     }
 
     // --- SYNCHRONISATION ---
@@ -624,6 +785,7 @@
             cachedHistory = data.history;
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
             renderHistory();
+            if (isAdmin()) renderMonitoring();
           }
         }
       } catch (err) {
@@ -634,23 +796,38 @@
     function switchTab(tab) {
       const invView = document.getElementById("view-inventory");
       const histView = document.getElementById("view-history");
+      const monView = document.getElementById("view-monitoring");
+
       const tabInv = document.getElementById("tabNavInventory");
       const tabHist = document.getElementById("tabNavHistory");
+      const tabMon = document.getElementById("tabNavMonitoring");
+
+      // Masquer toutes les vues
+      invView.classList.add("hidden");
+      histView.classList.add("hidden");
+      monView.classList.add("hidden");
+
+      // Réinitialiser les couleurs de navigation
+      tabInv.classList.replace("text-blue-400", "text-slate-400");
+      tabHist.classList.replace("text-blue-400", "text-slate-400");
+      if (tabMon) tabMon.classList.replace("text-blue-400", "text-slate-400");
 
       if (tab === 'inventory') {
         invView.classList.remove("hidden");
-        histView.classList.add("hidden");
         tabInv.classList.replace("text-slate-400", "text-blue-400");
-        tabHist.classList.replace("text-blue-400", "text-slate-400");
-      } else {
+      } else if (tab === 'history') {
         if (isScanning) stopScanner();
-        invView.classList.add("hidden");
         histView.classList.remove("hidden");
         tabHist.classList.replace("text-slate-400", "text-blue-400");
-        tabInv.classList.replace("text-blue-400", "text-slate-400");
         renderHistory();
-        syncData();
+      } else if (tab === 'monitoring') {
+        if (isScanning) stopScanner();
+        monView.classList.remove("hidden");
+        if (tabMon) tabMon.classList.replace("text-slate-400", "text-blue-400");
+        renderMonitoring();
       }
+
+      syncData();
       lucide.createIcons();
     }
 
