@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision & Pilotage Inventaire - Manager PC</title>
 
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -15,9 +16,9 @@
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
 </head>
-<body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950">
+<body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950" onclick="closeAllDropdowns(event)">
 
-  <!-- MODALE AUTHENTIFICATION ADMIN AVEC MOT DE PASSE -->
+  <!-- ================= MODALE AUTHENTIFICATION ADMIN ================= -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -50,7 +51,7 @@
     </div>
   </div>
 
-  <!-- EN-TÊTE FIXE -->
+  <!-- ================= EN-TÊTE FIXE ================= -->
   <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
     <div class="flex items-center space-x-3">
       <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
@@ -81,7 +82,7 @@
     </div>
   </header>
 
-  <!-- STRUCTURE PRINCIPALE : SIDEBAR + VUES -->
+  <!-- ================= STRUCTURE : SIDEBAR + VUES ================= -->
   <div class="flex-1 flex overflow-hidden">
 
     <!-- MENU VERTICAL GAUCHE -->
@@ -101,7 +102,7 @@
           </button>
         </div>
 
-        <!-- FILTRE PÉRIODE MAÎTRE (COMMUN AUX 2 ONGLETS) -->
+        <!-- FILTRE PÉRIODE MAÎTRE -->
         <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl space-y-2.5 shadow-inner">
           <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
             <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période active
@@ -144,7 +145,7 @@
       </div>
     </aside>
 
-    <!-- CONTENU SCROLLABLE -->
+    <!-- ZONE DE CONTENU -->
     <main class="flex-1 overflow-y-auto p-6 bg-slate-950">
 
       <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
@@ -194,6 +195,7 @@
           </div>
         </div>
 
+        <!-- RUBRIQUE : FILTRES COMPLÉMENTAIRES & EXTRACTION (MULTI-CHOIX CHECKBOXES) -->
         <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtres complémentaires & Extraction</span>
@@ -202,11 +204,12 @@
                 <i data-lucide="download" class="w-3.5 h-3.5"></i>
                 <span>Exporter la sélection (CSV)</span>
               </button>
-              <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser les sous-filtres</button>
+              <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser tous les filtres</button>
             </div>
           </div>
 
           <div class="grid grid-cols-4 gap-3 items-end text-xs">
+            <!-- 1. Recherche mot-clé -->
             <div>
               <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche mot-clé</label>
               <div class="relative">
@@ -215,32 +218,73 @@
               </div>
             </div>
 
-            <div>
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
-              <select id="filterContractor" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                <option value="">Tous les entrepreneurs</option>
-              </select>
+            <!-- 2. Multi-choix Entrepreneurs -->
+            <div class="relative" onclick="event.stopPropagation()">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs</label>
+              <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
+                <span id="btnLabelContractors" class="truncate font-medium">Tous les entrepreneurs</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              </button>
+
+              <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
+                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
+                  <button type="button" onclick="selectAll('contractors', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                  <button type="button" onclick="selectAll('contractors', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+                </div>
+                <div id="checkboxesContractors" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
+              </div>
             </div>
 
-            <div>
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
-              <select id="filterTrade" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                <option value="">Tous les métiers</option>
-              </select>
+            <!-- 3. Multi-choix Métiers -->
+            <div class="relative" onclick="event.stopPropagation()">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métiers</label>
+              <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
+                <span id="btnLabelTrades" class="truncate font-medium">Tous les métiers</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              </button>
+
+              <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
+                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
+                  <button type="button" onclick="selectAll('trades', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                  <button type="button" onclick="selectAll('trades', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+                </div>
+                <div id="checkboxesTrades" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
+              </div>
             </div>
 
-            <div>
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Filtre Anomalies</label>
-              <select id="filterAlert" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                <option value="ALL">Toutes les saisies</option>
-                <option value="ZERO">Stock à 0 uniquement</option>
-                <option value="HIGH">Quantités > 50 pièces</option>
-                <option value="ANY_ALERT">Toutes les alertes (0 ou >50)</option>
-              </select>
+            <!-- 4. Multi-choix Statuts / Anomalies -->
+            <div class="relative" onclick="event.stopPropagation()">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Statuts / Anomalies</label>
+              <button type="button" onclick="toggleFilterDropdown('dropdownAlerts')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
+                <span id="btnLabelAlerts" class="truncate font-medium">Tous les statuts</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              </button>
+
+              <div id="dropdownAlerts" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
+                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
+                  <button type="button" onclick="selectAll('alerts', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                  <button type="button" onclick="selectAll('alerts', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+                </div>
+                <div class="space-y-1">
+                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" name="chkAlert" value="OK" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0">
+                    <span class="text-slate-200">Conformes</span>
+                  </label>
+                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" name="chkAlert" value="ZERO" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-rose-500 focus:ring-0">
+                    <span class="text-rose-400 font-bold">Stocks à 0</span>
+                  </label>
+                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" name="chkAlert" value="HIGH" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-amber-500 focus:ring-0">
+                    <span class="text-amber-400 font-bold">Volumes > 50 pièces</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- TABLEAU DES DONNÉES -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
           <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
             <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
@@ -316,6 +360,7 @@
       checkAuth();
     });
 
+    // --- GESTION DU FILTRE DE PÉRIODE MAÎTRE ---
     function initDefaultPeriod() {
       applyPeriodPreset("WEEK");
     }
@@ -394,6 +439,7 @@
       lucide.createIcons();
     }
 
+    // --- AUTHENTIFICATION SUPERVISEUR ---
     function checkAuth() {
       if (!currentAdmin || !adminAgents.includes(currentAdmin)) {
         openAuthModal();
@@ -447,6 +493,97 @@
       location.reload();
     }
 
+    // --- GESTION DES MENUS DÉROULANTS MULTI-CHOIX (CHECKBOXES) ---
+    function toggleFilterDropdown(id) {
+      const el = document.getElementById(id);
+      const isHidden = el.classList.contains("hidden");
+      closeAllDropdowns();
+      if (isHidden) el.classList.remove("hidden");
+    }
+
+    function closeAllDropdowns() {
+      ["dropdownContractors", "dropdownTrades", "dropdownAlerts"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
+    }
+
+    function buildMultiSelectCheckboxes() {
+      // 1. Entrepreneurs
+      const containerC = document.getElementById("checkboxesContractors");
+      containerC.innerHTML = availableContractors.map(c => `
+        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+          <input type="checkbox" name="chkContractor" value="${c}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
+          <span class="text-slate-200 truncate" title="${c}">${c}</span>
+        </label>
+      `).join('');
+
+      // 2. Métiers
+      const containerT = document.getElementById("checkboxesTrades");
+      containerT.innerHTML = availableTrades.map(t => `
+        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+          <input type="checkbox" name="chkTrade" value="${t}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
+          <span class="text-slate-200 truncate" title="${t}">${t}</span>
+        </label>
+      `).join('');
+
+      updateDropdownButtonLabels();
+    }
+
+    function selectAll(type, check) {
+      let selector = "";
+      if (type === 'contractors') selector = 'input[name="chkContractor"]';
+      if (type === 'trades') selector = 'input[name="chkTrade"]';
+      if (type === 'alerts') selector = 'input[name="chkAlert"]';
+
+      document.querySelectorAll(selector).forEach(chk => chk.checked = check);
+      onCheckboxChange();
+    }
+
+    function onCheckboxChange() {
+      updateDropdownButtonLabels();
+      applyFilters();
+    }
+
+    function updateDropdownButtonLabels() {
+      // Entrepreneurs
+      const checkedC = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked'));
+      const lblC = document.getElementById("btnLabelContractors");
+      if (checkedC.length === 0 || checkedC.length === availableContractors.length) {
+        lblC.innerText = "Tous les entrepreneurs";
+      } else {
+        lblC.innerText = `${checkedC.length} entrepreneur(s) sélectionné(s)`;
+      }
+
+      // Métiers
+      const checkedT = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked'));
+      const lblT = document.getElementById("btnLabelTrades");
+      if (checkedT.length === 0 || checkedT.length === availableTrades.length) {
+        lblT.innerText = "Tous les métiers";
+      } else {
+        lblT.innerText = `${checkedT.length} métier(s) sélectionné(s)`;
+      }
+
+      // Anomalies
+      const checkedA = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked'));
+      const lblA = document.getElementById("btnLabelAlerts");
+      if (checkedA.length === 0 || checkedA.length === 3) {
+        lblA.innerText = "Tous les statuts";
+      } else {
+        lblA.innerText = `${checkedA.length} statut(s) sélectionné(s)`;
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById("filterSearch").value = "";
+      document.querySelectorAll('input[name="chkContractor"]').forEach(c => c.checked = false);
+      document.querySelectorAll('input[name="chkTrade"]').forEach(c => c.checked = false);
+      document.querySelectorAll('input[name="chkAlert"]').forEach(c => c.checked = false);
+      updateDropdownButtonLabels();
+      applyFilters();
+    }
+
+    // --- SYNCHRONISATION ---
     async function syncData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
@@ -461,27 +598,12 @@
           adminPasswords = data.adminPasswords || {};
           historyData = data.history || [];
 
-          populateFilterSelects();
+          buildMultiSelectCheckboxes();
           applyFilters();
         }
       } catch (err) {
         console.warn("Erreur de synchronisation :", err);
       }
-    }
-
-    function populateFilterSelects() {
-      document.getElementById("filterContractor").innerHTML = '<option value="">Tous les entrepreneurs</option>' + 
-        availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      document.getElementById("filterTrade").innerHTML = '<option value="">Tous les métiers</option>' + 
-        availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
-    }
-
-    function resetFilters() {
-      document.getElementById("filterSearch").value = "";
-      document.getElementById("filterContractor").value = "";
-      document.getElementById("filterTrade").value = "";
-      document.getElementById("filterAlert").value = "ALL";
-      applyFilters();
     }
 
     function getAgentLiveStatus(agentName, agentEntries) {
@@ -495,10 +617,7 @@
         };
       }
 
-      const sorted = [...agentEntries].sort((a, b) => {
-        return parseItemDate(b.timestamp) - parseItemDate(a.timestamp);
-      });
-
+      const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
       const lastEntry = sorted[0];
       const lastTime = lastEntry.timestamp ? (lastEntry.timestamp.split(' ')[1] || lastEntry.timestamp) : '--';
       const activeContractor = lastEntry.contractor || "Entrepreneur indéterminé";
@@ -512,13 +631,14 @@
       };
     }
 
+    // --- FILTRAGE CUMULATIF (DATE + CHECKBOXES) ---
     function applyFilters() {
       const dStartStr = document.getElementById("dateStart").value;
       const dEndStr = document.getElementById("dateEnd").value;
       const dStart = dStartStr ? new Date(dStartStr + "T00:00:00") : null;
       const dEnd = dEndStr ? new Date(dEndStr + "T23:59:59") : null;
 
-      // Filtrage période maître
+      // 1. Filtrer base par la période maître
       periodFilteredHistory = historyData.filter(item => {
         const itemDate = parseItemDate(item.timestamp);
         if (dStart && itemDate < dStart) return false;
@@ -551,25 +671,44 @@
       document.getElementById("sideTotalCount").innerText = totalRows;
       document.getElementById("sideAlertCount").innerText = totalAlerts;
 
+      // 2. Récupérer les cases cochées
       const search = document.getElementById("filterSearch").value.trim().toLowerCase();
-      const contractor = document.getElementById("filterContractor").value;
-      const trade = document.getElementById("filterTrade").value;
-      const alertFilter = document.getElementById("filterAlert").value;
+      const selectedContractors = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked')).map(c => c.value);
+      const selectedTrades = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked')).map(c => c.value);
+      const selectedAlerts = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked')).map(c => c.value);
 
       filteredData = periodFilteredHistory.filter(item => {
         const q = Number(item.quantity) || 0;
-        const matchSearch = !search || 
-          (item.sapRef && item.sapRef.toLowerCase().includes(search)) ||
-          (item.designation && item.designation.toLowerCase().includes(search)) ||
-          (item.id && item.id.toLowerCase().includes(search));
-        const matchContractor = !contractor || item.contractor === contractor;
-        const matchTrade = !trade || item.trade === trade;
-        let matchAlert = true;
-        if (alertFilter === "ZERO") matchAlert = (q === 0);
-        else if (alertFilter === "HIGH") matchAlert = (q > 50);
-        else if (alertFilter === "ANY_ALERT") matchAlert = (q === 0 || q > 50);
+        
+        // Filtre mot-clé
+        if (search) {
+          const matchSearch = 
+            (item.sapRef && item.sapRef.toLowerCase().includes(search)) ||
+            (item.designation && item.designation.toLowerCase().includes(search)) ||
+            (item.id && item.id.toLowerCase().includes(search));
+          if (!matchSearch) return false;
+        }
 
-        return matchSearch && matchContractor && matchTrade && matchAlert;
+        // Filtre multi-entrepreneurs (si aucun coché => tous affichés)
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) {
+          return false;
+        }
+
+        // Filtre multi-métiers (si aucun coché => tous affichés)
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) {
+          return false;
+        }
+
+        // Filtre multi-statuts / anomalies (si aucun coché => tous affichés)
+        if (selectedAlerts.length > 0) {
+          let itemStatut = "OK";
+          if (q === 0) itemStatut = "ZERO";
+          else if (q > 50) itemStatut = "HIGH";
+
+          if (!selectedAlerts.includes(itemStatut)) return false;
+        }
+
+        return true;
       });
 
       renderTable();
@@ -597,7 +736,6 @@
         const totalQty = agentEntries.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
         const status = getAgentLiveStatus(agent, agentEntries);
 
-        // 1. Cadence
         let cadence = agentEntries.length;
         let firstScanTime = "--";
         let lastScanTime = "--";
@@ -614,14 +752,12 @@
           firstScanTime = lastScanTime = agentEntries[0].timestamp.split(' ')[1] || agentEntries[0].timestamp;
         }
 
-        // 2. Anomalies
         const suspiciousEntries = agentEntries.filter(i => {
           const q = Number(i.quantity);
           return q === 0 || q > 50;
         });
         const anomalyRate = agentEntries.length > 0 ? Math.round((suspiciousEntries.length / agentEntries.length) * 100) : 0;
 
-        // 3. Périmètre traité uniquement
         const treatedContractorMap = {};
         const treatedTradeMap = {};
 
@@ -827,6 +963,7 @@
       lucide.createIcons();
     }
 
+    // --- TABLEAU DE SUPERVISION ---
     function renderTable() {
       const tbody = document.getElementById("inventoryTableBody");
       document.getElementById("tableCountLabel").innerText = `${filteredData.length} ligne(s) affichée(s) sur ${periodFilteredHistory.length} (période active)`;
