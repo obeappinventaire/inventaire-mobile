@@ -17,7 +17,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- Moteur OCR Tesseract.js pour la lecture des chiffres et textes de bacs -->
+  <!-- Moteur OCR Tesseract.js pour la lecture des bacs -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
@@ -29,7 +29,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- ================= MODALE D'IDENTIFICATION ================= -->
+  <!-- ================= MODALE D'IDENTIFICATION AGENT ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto">
@@ -98,10 +98,10 @@
         </div>
       </div>
 
-      <!-- Module Scanner Unique (Codes-barres + QR + OCR) -->
+      <!-- Module Scanner Unique (Code-barres / QR / OCR) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         
-        <!-- LE BOUTON UNIQUE DE SCAN UNIVERSEL -->
+        <!-- Bouton unique de déclenchement du scan -->
         <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg text-sm transition">
           <i data-lucide="scan-barcode" class="w-5 h-5"></i>
           <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
@@ -111,10 +111,13 @@
         <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
           <div id="reader" class="w-full"></div>
           <canvas id="ocrCanvas" class="hidden"></canvas>
+          
+          <!-- Bandeau de statut et bouton capture manuelle -->
           <div class="p-2 bg-slate-900/90 flex items-center justify-between border-t border-slate-800">
             <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[200px]">Lecture Code-barres / QR / Chiffres...</span>
-            <button onclick="triggerManualOcrCapture()" class="px-2.5 py-1 bg-amber-500 active:bg-amber-600 text-slate-950 font-black rounded-lg text-[11px] shadow">
-              Lire Réf Bac
+            <button onclick="triggerManualOcrCapture()" class="px-3 py-1.5 bg-amber-500 active:bg-amber-600 text-slate-950 font-black rounded-lg text-xs shadow flex items-center gap-1">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              <span>Lire Réf Bac (6 chiffres)</span>
             </button>
           </div>
         </div>
@@ -224,7 +227,7 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE DYNAMIQUE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -240,14 +243,16 @@
     </button>
   </nav>
 
-  <!-- TOAST -->
+  <!-- TOAST NOTIFICATION -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
     <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-5 h-5"></i></div>
     <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
-    // ⚠️ URL DE VOTRE APPLICATION WEB GOOGLE APPS SCRIPT (/exec)
+    // =========================================================================
+    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (se terminant par /exec)
+    // =========================================================================
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -511,7 +516,7 @@
     }
 
     // =========================================================================
-    // SCANNER HYBRIDE UNIQUE : CODE-BARRES + QR + OCR EN DIRECT
+    // SCANNER HYBRIDE : CODE-BARRES / QR + OCR OPTIMISÉ (6 CHIFFRES SAP STRICTS)
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -531,7 +536,7 @@
           { facingMode: "environment" },
           { fps: 20, qrbox: { width: 280, height: 160 } },
           (decodedText) => {
-            // 1. Détection prioritaire : Code optique trouvé (EAN ou QR)
+            // 1. Détection prioritaire : Code-barres optique ou QR Code
             handleExactCodeMatch(decodedText);
             stopScanner();
           },
@@ -539,7 +544,7 @@
         );
         isScanning = true;
 
-        // 2. OCR en arrière-plan : analyse automatique périodique du flux vidéo
+        // 2. Analyse OCR automatique en arrière-plan (toutes les 1.8 secondes)
         startBackgroundOcr();
 
       } catch (err) {
@@ -565,16 +570,15 @@
     }
 
     function startBackgroundOcr() {
-      // Analyse le flux de la caméra toutes les 2 secondes pour y détecter des chiffres
       ocrInterval = setInterval(async () => {
         if (!isScanning || isOcrBusy) return;
-        await processVideoOcr();
-      }, 2000);
+        await processVideoOcr(false);
+      }, 1800);
     }
 
     async function triggerManualOcrCapture() {
       if (!isScanning) return;
-      document.getElementById("scanStatusMsg").innerText = "⏳ Analyse OCR en cours...";
+      document.getElementById("scanStatusMsg").innerText = "⏳ Analyse OCR haute précision...";
       await processVideoOcr(true);
     }
 
@@ -583,25 +587,49 @@
       if (!video || video.readyState < 2) return;
 
       const canvas = document.getElementById("ocrCanvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // 1. Découpage ciblé (ROI) : Bande centrale 70% de largeur, 25% de hauteur
+      const cropWidth = video.videoWidth * 0.70;
+      const cropHeight = video.videoHeight * 0.25;
+      const startX = (video.videoWidth - cropWidth) / 2;
+      const startY = (video.videoHeight - cropHeight) / 2;
+
+      canvas.width = cropWidth;
+      canvas.height = cropHeight;
+
+      ctx.drawImage(video, startX, startY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+      // 2. Traitement d'image : Passage en niveaux de gris et binarisation (supprime les reflets)
+      const imgData = ctx.getImageData(0, 0, cropWidth, cropHeight);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+        const val = gray > 125 ? 255 : 0; // Seuil noir et blanc pur
+        d[i] = val;
+        d[i + 1] = val;
+        d[i + 2] = val;
+      }
+      ctx.putImageData(imgData, 0, 0);
 
       isOcrBusy = true;
       try {
+        // 3. Reconnaissance bridée sur les chiffres uniquement
         const result = await Tesseract.recognize(canvas, 'eng', {
-          logger: () => {}
+          tessedit_char_whitelist: '0123456789',
+          tessedit_pageseg_mode: '7' // Traitement ligne unique
         });
 
         const rawText = result.data.text || "";
-        // Recherche de séquences de chiffres (ex. références SAP de 4 à 10 chiffres)
-        const numberMatches = rawText.match(/\b\d{4,10}\b/g);
 
-        if (numberMatches && numberMatches.length > 0) {
-          const detected = numberMatches[0];
-          // Vérifier si cette référence existe dans notre catalogue
-          const match = catalog.find(i => String(i.sapRef) === String(detected));
+        // 4. Recherche stricte d'une séquence de 6 chiffres
+        const sapMatches = rawText.match(/\b\d{6}\b/g);
+
+        if (sapMatches && sapMatches.length > 0) {
+          const detectedSap = sapMatches[0];
+          
+          // Recherche immédiate dans le catalogue
+          const match = catalog.find(i => String(i.sapRef).trim() === String(detectedSap));
           if (match) {
             stopScanner();
             selectArticleBySap(match.sapRef);
@@ -609,14 +637,14 @@
             return;
           } else if (forceToast) {
             stopScanner();
-            handleExactCodeMatch(detected);
+            handleExactCodeMatch(detectedSap);
             return;
           }
         } else if (forceToast) {
-          document.getElementById("scanStatusMsg").innerText = "⚠️ Rapprochez la caméra du texte du bac";
+          document.getElementById("scanStatusMsg").innerText = "⚠️ Rapprochez la caméra du numéro (6 chiffres)";
         }
       } catch (e) {
-        console.warn("OCR en arrière-plan ignoré :", e);
+        console.warn("OCR en tâche de fond :", e);
       } finally {
         isOcrBusy = false;
       }
@@ -645,7 +673,7 @@
       }
     }
 
-    // --- SOUMISSION STRICTE : ENTREPRENEUR ET MÉTIER OBLIGATOIRES ---
+    // --- VALIDATION STRICTE (ENTREPRENEUR ET MÉTIER OBLIGATOIRES) ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -655,7 +683,7 @@
       const contractor = document.getElementById("contractorSelect").value;
       const trade = document.getElementById("tradeSelect").value;
 
-      // VERROUILLAGE FORMEL DE SÉCURITÉ
+      // VERROUILLAGE FORMEL : IMPOSSIBLE DE VALIDER SANS ENTREPRENEUR ET MÉTIER
       if (!contractor || contractor.trim() === "") {
         alert("Action impossible :\nVeuillez impérativement sélectionner un Entrepreneur avant de valider.");
         document.getElementById("contractorSelect").focus();
