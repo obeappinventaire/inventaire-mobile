@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supervision & Audit Inventaire - Manager PC</title>
+  <title>Supervision & Pilotage Inventaire - Manager PC</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+
   <style>
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -15,7 +17,7 @@
 </head>
 <body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950">
 
-  <!-- AUTHENTIFICATION ADMIN -->
+  <!-- MODALE AUTHENTIFICATION ADMIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -25,12 +27,14 @@
         <h2 class="text-xl font-bold text-white tracking-wide">Accès Réservé Supervision</h2>
         <p class="text-xs text-slate-400">Identifiez-vous avec votre compte administrateur</p>
       </div>
+
       <div class="space-y-2">
         <label class="block text-xs font-bold text-slate-400 uppercase">Administrateur / Manager</label>
         <select id="authSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500">
           <option value="">Chargement des comptes...</option>
         </select>
       </div>
+
       <button onclick="loginAdmin()" class="w-full h-12 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 transition">
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -38,7 +42,7 @@
     </div>
   </div>
 
-  <!-- HEADER -->
+  <!-- EN-TÊTE PC -->
   <header class="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between shrink-0 shadow-lg">
     <div class="flex items-center space-x-4">
       <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
@@ -46,72 +50,101 @@
       </div>
       <div>
         <h1 class="text-base font-bold text-white flex items-center gap-2">
-          Dashboard de Supervision & Audit
+          Dashboard de Supervision & Pilotage
           <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-500/30">Admin PC</span>
         </h1>
-        <p class="text-xs text-slate-400">Suivi des inventaires, cadences et détection des anomalies</p>
+        <p class="text-xs text-slate-400">Suivi des agents, cadences horaires, détection des anomalies et traçabilité</p>
       </div>
     </div>
+
     <div class="flex items-center space-x-3">
       <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
         <i data-lucide="user-check" class="w-3.5 h-3.5 text-indigo-400"></i>
         <span id="displayAdminName" class="font-bold text-white">--</span>
       </div>
+
       <button onclick="syncData()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-400"></i>
         <span>Actualiser</span>
       </button>
+
       <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
         <i data-lucide="download" class="w-3.5 h-3.5"></i>
-        <span>Exporter en CSV</span>
+        <span>Exporter CSV</span>
       </button>
+
       <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 text-slate-400 hover:text-rose-400 transition">
         <i data-lucide="log-out" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
 
-  <!-- DASHBOARD BODY -->
-  <main class="flex-1 overflow-hidden flex flex-col p-6 space-y-5 max-w-7xl mx-auto w-full">
-    <!-- 4 KPIS STANDARD -->
-    <div class="grid grid-cols-4 gap-4 shrink-0">
-      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-        <div class="flex items-center justify-between text-slate-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Lignes comptées</span>
-          <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+  <!-- CORPS DU DASHBOARD -->
+  <main class="flex-1 overflow-y-auto p-6 space-y-6 max-w-7xl mx-auto w-full">
+
+    <!-- 1. KPIS GLOBAUX FIXES (100% Historique) -->
+    <div>
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Activité Globale Entrepôt</span>
+      <div class="grid grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+          <div class="flex items-center justify-between text-slate-400 mb-1">
+            <span class="text-xs font-bold uppercase tracking-wider">Lignes comptées</span>
+            <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+          </div>
+          <div id="kpiRows" class="text-2xl font-black text-white">0</div>
+          <span class="text-[11px] text-slate-500">Totalité des saisies</span>
         </div>
-        <div id="kpiRows" class="text-2xl font-black text-white">0</div>
-        <span class="text-[11px] text-slate-500">Total des saisies</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-        <div class="flex items-center justify-between text-slate-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Quantité Cumulée</span>
-          <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
+
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+          <div class="flex items-center justify-between text-slate-400 mb-1">
+            <span class="text-xs font-bold uppercase tracking-wider">Quantité Cumulée</span>
+            <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
+          <span class="text-[11px] text-slate-500">Volume total inventorié</span>
         </div>
-        <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
-        <span class="text-[11px] text-slate-500">Somme des pièces</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-        <div class="flex items-center justify-between text-amber-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Stocks à 0</span>
-          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+          <div class="flex items-center justify-between text-amber-400 mb-1">
+            <span class="text-xs font-bold uppercase tracking-wider">Stocks à 0</span>
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div id="kpiZeroStock" class="text-2xl font-black text-amber-400">0</div>
+          <span class="text-[11px] text-slate-500">Ruptures signalées</span>
         </div>
-        <div id="kpiZeroStock" class="text-2xl font-black text-amber-400">0</div>
-        <span class="text-[11px] text-slate-500">Ruptures signalées</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-        <div class="flex items-center justify-between text-rose-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Volumes > 50 pcs</span>
-          <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
+
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+          <div class="flex items-center justify-between text-rose-400 mb-1">
+            <span class="text-xs font-bold uppercase tracking-wider">Volumes > 50 pcs</span>
+            <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <div id="kpiHighStock" class="text-2xl font-black text-rose-400">0</div>
+          <span class="text-[11px] text-slate-500">Quantités atypiques</span>
         </div>
-        <div id="kpiHighStock" class="text-2xl font-black text-rose-400">0</div>
-        <span class="text-[11px] text-slate-500">Quantités atypiques</span>
       </div>
     </div>
 
-    <!-- FILTRES SIMPLE ACCÈS -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow shrink-0">
-      <div class="grid grid-cols-5 gap-3 items-end">
+    <!-- 2. PILOTAGE DES AGENTS (TIROIRS ACCORDÉONS) -->
+    <div class="space-y-3">
+      <div>
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i>
+          Suivi Terrain par Agent & Statut Entrepreneur
+        </h2>
+        <p class="text-xs text-slate-400">Cliquez sur une tuile KPI pour déplier le détail en accordéon</p>
+      </div>
+
+      <div id="agentAccordionContainer" class="space-y-3"></div>
+    </div>
+
+    <!-- 3. BARRE DE FILTRES DU TABLEAU -->
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Recherche & Filtres Avancés</span>
+        <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline">Réinitialiser les filtres</button>
+      </div>
+
+      <div class="grid grid-cols-5 gap-3 items-end text-xs">
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche globale</label>
           <div class="relative">
@@ -119,26 +152,30 @@
             <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="SAP, désignation, ID..." class="w-full bg-slate-950 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-indigo-500">
           </div>
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Agent Magasinier</label>
           <select id="filterAgent" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
             <option value="">Tous les agents</option>
           </select>
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
           <select id="filterContractor" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
             <option value="">Tous les entrepreneurs</option>
           </select>
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
           <select id="filterTrade" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
             <option value="">Tous les métiers</option>
           </select>
         </div>
+
         <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Filtre Anomalies</label>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Anomalies</label>
           <select id="filterAlert" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
             <option value="ALL">Toutes les saisies</option>
             <option value="ZERO">Stock à 0 uniquement</option>
@@ -149,15 +186,16 @@
       </div>
     </div>
 
-    <!-- TABLEAU -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl shadow flex-1 overflow-hidden flex flex-col">
+    <!-- 4. GRAND TABLEAU DENSE DE SUPERVISION -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
       <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
-        <span id="tableCountLabel">0 ligne(s) affichée(s)</span>
-        <span class="text-[11px] text-slate-500">Synchronisé en direct avec Audit_Logs</span>
+        <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
+        <span class="text-[11px] text-slate-500">Toutes les modifications et suppressions sont archivées dans Audit_Logs</span>
       </div>
-      <div class="flex-1 overflow-auto">
+
+      <div class="overflow-x-auto max-h-[500px]">
         <table class="w-full text-left border-collapse text-xs">
-          <thead class="bg-slate-950/80 sticky top-0 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider z-10 backdrop-blur-sm">
+          <thead class="bg-slate-950 sticky top-0 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider z-10">
             <tr>
               <th class="p-3">Horodatage / ID</th>
               <th class="p-3">Agent</th>
@@ -174,14 +212,17 @@
         </table>
       </div>
     </div>
+
   </main>
 
+  <!-- TOAST -->
   <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-24 transition-transform duration-300 z-50 pointer-events-none">
     <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
     <div class="text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
+    // ⚠️ METTEZ BIEN VOTRE URL APPS SCRIPT CI-DESSOUS :
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let historyData = [];
@@ -190,7 +231,9 @@
     let availableContractors = [];
     let availableTrades = [];
     let adminAgents = [];
+
     let currentAdmin = localStorage.getItem("inv_current_admin") || "";
+    let openDrawers = {};
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
@@ -211,9 +254,9 @@
     function openAuthModal() {
       const select = document.getElementById("authSelect");
       if (adminAgents.length === 0) {
-        select.innerHTML = '<option value="">Aucun administrateur configuré</option>';
+        select.innerHTML = '<option value="">Aucun compte administrateur configuré</option>';
       } else {
-        select.innerHTML = '<option value="">-- Choisir un compte administrateur --</option>' +
+        select.innerHTML = '<option value="">-- Choisir votre profil --</option>' +
           adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
       }
       document.getElementById("authModal").classList.remove("hidden");
@@ -221,21 +264,27 @@
 
     function loginAdmin() {
       const val = document.getElementById("authSelect").value;
-      if (!val) return alert("Veuillez choisir un administrateur.");
+      if (!val) {
+        alert("Veuillez sélectionner un compte administrateur.");
+        return;
+      }
       currentAdmin = val;
       localStorage.setItem("inv_current_admin", currentAdmin);
       document.getElementById("displayAdminName").innerText = currentAdmin;
       document.getElementById("authModal").classList.add("hidden");
+      showToast(`Session Superviseur : ${currentAdmin}`);
       applyFilters();
     }
 
     function logoutAdmin() {
       localStorage.removeItem("inv_current_admin");
+      currentAdmin = "";
       location.reload();
     }
 
     async function syncData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
@@ -245,19 +294,80 @@
           availableTrades = data.trades || [];
           adminAgents = data.admins || [];
           historyData = data.history || [];
-          populateFilters();
+
+          populateFilterSelects();
           applyFilters();
         }
-      } catch (err) { console.warn(err); }
+      } catch (err) {
+        console.warn("Erreur de synchronisation :", err);
+      }
     }
 
-    function populateFilters() {
-      document.getElementById("filterAgent").innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      document.getElementById("filterContractor").innerHTML = '<option value="">Tous les entrepreneurs</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      document.getElementById("filterTrade").innerHTML = '<option value="">Tous les métiers</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+    function populateFilterSelects() {
+      document.getElementById("filterAgent").innerHTML = '<option value="">Tous les agents</option>' + 
+        availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      document.getElementById("filterContractor").innerHTML = '<option value="">Tous les entrepreneurs</option>' + 
+        availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById("filterTrade").innerHTML = '<option value="">Tous les métiers</option>' + 
+        availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+
+    function resetFilters() {
+      document.getElementById("filterSearch").value = "";
+      document.getElementById("filterAgent").value = "";
+      document.getElementById("filterContractor").value = "";
+      document.getElementById("filterTrade").value = "";
+      document.getElementById("filterAlert").value = "ALL";
+      applyFilters();
+    }
+
+    function parseItemDate(timestampStr) {
+      if (!timestampStr) return new Date(0);
+      if (timestampStr.includes('/')) {
+        const parts = timestampStr.split(' ');
+        const dateParts = parts[0].split('/');
+        const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
+        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+      }
+      return new Date(timestampStr);
+    }
+
+    function getAgentLiveStatus(agentName, agentEntries) {
+      if (!agentEntries || agentEntries.length === 0) {
+        return {
+          code: "WAITING",
+          label: "En attente",
+          contractor: "Aucun entrepreneur débuté",
+          detail: "0 scan",
+          badgeClass: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+          dotClass: "bg-amber-400"
+        };
+      }
+
+      const sorted = [...agentEntries].sort((a, b) => {
+        return parseItemDate(b.timestamp) - parseItemDate(a.timestamp);
+      });
+
+      const lastEntry = sorted[0];
+      const lastTime = lastEntry.timestamp ? (lastEntry.timestamp.split(' ')[1] || lastEntry.timestamp) : '--';
+      const activeContractor = lastEntry.contractor || "Entrepreneur indéterminé";
+
+      return {
+        code: "IN_PROGRESS",
+        label: "En cours",
+        contractor: activeContractor,
+        detail: lastTime,
+        badgeClass: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+        dotClass: "bg-emerald-400 animate-pulse"
+      };
     }
 
     function applyFilters() {
+      document.getElementById("kpiRows").innerText = historyData.length;
+      document.getElementById("kpiTotalQty").innerText = historyData.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
+      document.getElementById("kpiZeroStock").innerText = historyData.filter(i => Number(i.quantity) === 0).length;
+      document.getElementById("kpiHighStock").innerText = historyData.filter(i => Number(i.quantity) > 50).length;
+
       const search = document.getElementById("filterSearch").value.trim().toLowerCase();
       const agent = document.getElementById("filterAgent").value;
       const contractor = document.getElementById("filterContractor").value;
@@ -281,15 +391,220 @@
         return matchSearch && matchAgent && matchContractor && matchTrade && matchAlert;
       });
 
-      updateKPIs();
+      renderAgentAccordions();
       renderTable();
     }
 
-    function updateKPIs() {
-      document.getElementById("kpiRows").innerText = historyData.length;
-      document.getElementById("kpiTotalQty").innerText = historyData.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
-      document.getElementById("kpiZeroStock").innerText = historyData.filter(i => Number(i.quantity) === 0).length;
-      document.getElementById("kpiHighStock").innerText = historyData.filter(i => Number(i.quantity) > 50).length;
+    function toggleAgentDrawer(agentName, drawerType) {
+      if (openDrawers[agentName] === drawerType) {
+        openDrawers[agentName] = null;
+      } else {
+        openDrawers[agentName] = drawerType;
+      }
+      renderAgentAccordions();
+    }
+
+    function renderAgentAccordions() {
+      const container = document.getElementById("agentAccordionContainer");
+      if (availableAgents.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">Aucun agent configuré.</div>`;
+        return;
+      }
+
+      container.innerHTML = availableAgents.map(agent => {
+        const agentEntries = historyData.filter(i => i.user === agent);
+        const totalQty = agentEntries.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
+        const status = getAgentLiveStatus(agent, agentEntries);
+
+        // 1. Cadence
+        let cadence = agentEntries.length;
+        let firstScanTime = "--";
+        let lastScanTime = "--";
+        let durationHours = 0;
+        if (agentEntries.length > 1) {
+          const timestamps = agentEntries.map(i => parseItemDate(i.timestamp).getTime());
+          const minT = Math.min(...timestamps);
+          const maxT = Math.max(...timestamps);
+          durationHours = (maxT - minT) / (1000 * 60 * 60);
+          cadence = durationHours > 0.05 ? Math.round(agentEntries.length / durationHours) : agentEntries.length;
+          firstScanTime = new Date(minT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
+          lastScanTime = new Date(maxT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
+        } else if (agentEntries.length === 1) {
+          firstScanTime = lastScanTime = agentEntries[0].timestamp.split(' ')[1] || agentEntries[0].timestamp;
+        }
+
+        // 2. Anomalies
+        const suspiciousEntries = agentEntries.filter(i => {
+          const q = Number(i.quantity);
+          return q === 0 || q > 50;
+        });
+        const anomalyRate = agentEntries.length > 0 ? Math.round((suspiciousEntries.length / agentEntries.length) * 100) : 0;
+
+        // 3. Périmètre
+        const treatedContractors = new Set(agentEntries.map(i => i.contractor).filter(Boolean));
+        const treatedTrades = new Set(agentEntries.map(i => i.trade).filter(Boolean));
+
+        const activeDrawer = openDrawers[agent];
+
+        let drawerContent = "";
+        if (activeDrawer === 'cadence') {
+          drawerContent = `
+            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-2">
+              <div class="font-bold text-indigo-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <span>⚡ Rythme & Amplitude de comptage (${agent})</span>
+                <span class="text-[11px] text-slate-400 font-normal">Vitesse moyenne : <strong class="text-white">${cadence} lignes / h</strong></span>
+              </div>
+              <div class="grid grid-cols-3 gap-3 text-slate-300 pt-1">
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Premier scan</span><strong class="text-emerald-400">${firstScanTime}</strong></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Dernier scan</span><strong class="text-emerald-400">${lastScanTime}</strong></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Temps de session</span><strong>${durationHours > 0 ? durationHours.toFixed(1) + ' heure(s)' : 'En cours'}</strong></div>
+              </div>
+            </div>
+          `;
+        } else if (activeDrawer === 'anomalies') {
+          const rowsHtml = suspiciousEntries.length === 0 
+            ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie détectée pour cet agent.</div>`
+            : suspiciousEntries.map(item => `
+                <div class="flex items-center justify-between py-2 border-b border-slate-850 last:border-0 text-xs">
+                  <div class="min-w-0 flex-1 pr-2">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-mono font-bold text-indigo-400">${item.sapRef}</span>
+                      <span class="text-[10px] text-slate-400">• ${item.timestamp}</span>
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${Number(item.quantity) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
+                        ${Number(item.quantity) === 0 ? 'STOCK 0' : '> 50 PCS'}
+                      </span>
+                    </div>
+                    <div class="text-slate-200 font-semibold truncate">${item.designation}</div>
+                    <div class="text-[11px] text-slate-400 truncate">${item.contractor} (${item.trade})</div>
+                  </div>
+                  <div class="flex items-center space-x-2 shrink-0">
+                    <span class="text-base font-black ${Number(item.quantity) === 0 ? 'text-rose-400' : 'text-amber-400'}">${item.quantity}</span>
+                    <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300" title="Corriger"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                    <button onclick="deleteItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1 rounded bg-slate-800 hover:bg-rose-600 text-rose-400" title="Supprimer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                </div>
+              `).join('');
+
+          drawerContent = `
+            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-rose-500/30 text-xs space-y-2">
+              <div class="font-bold text-rose-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <span>⚠️ Détail des ${suspiciousEntries.length} saisie(s) non conforme(s)</span>
+                <span class="text-[10px] text-slate-400">Actions synchronisées dans Audit_Logs</span>
+              </div>
+              <div class="divide-y divide-slate-800/80 max-h-60 overflow-y-auto">${rowsHtml}</div>
+            </div>
+          `;
+        } else if (activeDrawer === 'perimetre') {
+          const contractorBadges = availableContractors.map(c => {
+            const isDone = treatedContractors.has(c);
+            const count = agentEntries.filter(i => i.contractor === c).length;
+            return `
+              <div class="p-2 rounded-lg border text-xs flex justify-between items-center ${isDone ? 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300' : 'bg-slate-950/60 border-slate-800 text-slate-500'}">
+                <span>${isDone ? '✅' : '⬜'} ${c}</span>
+                <span class="font-mono text-[10px]">${isDone ? count + ' lignes' : 'À faire'}</span>
+              </div>
+            `;
+          }).join('');
+
+          const tradeBadges = availableTrades.map(t => {
+            const isDone = treatedTrades.has(t);
+            const count = agentEntries.filter(i => i.trade === t).length;
+            return `
+              <div class="p-2 rounded-lg border text-xs flex justify-between items-center ${isDone ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : 'bg-slate-950/60 border-slate-800 text-slate-500'}">
+                <span>${isDone ? '✅' : '⬜'} ${t}</span>
+                <span class="font-mono text-[10px]">${isDone ? count + ' lignes' : 'En attente'}</span>
+              </div>
+            `;
+          }).join('');
+
+          drawerContent = `
+            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-3">
+              <div class="font-bold text-indigo-300 border-b border-slate-800 pb-1.5">
+                🌐 Couverture du périmètre affecté (${agent})
+              </div>
+              <div>
+                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Entrepreneurs (${treatedContractors.size} / ${availableContractors.length}) :</span>
+                <div class="grid grid-cols-2 gap-2">${contractorBadges}</div>
+              </div>
+              <div>
+                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Corps d'état / Métiers (${treatedTrades.size} / ${availableTrades.length}) :</span>
+                <div class="grid grid-cols-2 gap-2">${tradeBadges}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow transition">
+            <!-- EN-TÊTE : NOM AGENT + STATUT TEMPS RÉEL + ENTREPRENEUR EN COURS -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center space-x-3">
+                <span class="text-sm font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
+                  ${agent}
+                </span>
+
+                <!-- Badge dynamique enrichi -->
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${status.badgeClass}">
+                  <span class="w-1.5 h-1.5 rounded-full ${status.dotClass}"></span>
+                  <span>${status.label}</span>
+                  <span class="text-slate-400">•</span>
+                  <span class="text-slate-100 font-extrabold truncate max-w-[160px]" title="${status.contractor}">
+                    ${status.contractor}
+                  </span>
+                  <span class="text-slate-400">(${status.detail})</span>
+                </span>
+              </div>
+
+              <span class="text-xs font-bold text-slate-400">
+                ${agentEntries.length} ligne(s) • <span class="text-emerald-400 font-black">${totalQty} pc(s)</span>
+              </span>
+            </div>
+
+            <!-- LES 3 TUILES ACCORDÉONS CLIQUABLES -->
+            <div class="grid grid-cols-3 gap-3 pt-3">
+              <!-- Tuile 1 : Cadence -->
+              <button onclick="toggleAgentDrawer('${agent}', 'cadence')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'cadence' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
+                  <span>⚡ Cadence</span>
+                  <span>${activeDrawer === 'cadence' ? '▲' : '▼'}</span>
+                </div>
+                <div class="text-sm font-black text-emerald-400">${cadence} <span class="text-[10px] font-normal text-slate-400">l/h</span></div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'cadence' ? 'Fermer amplitude' : 'Déplier amplitude'}</div>
+              </button>
+
+              <!-- Tuile 2 : Anomalies -->
+              <button onclick="toggleAgentDrawer('${agent}', 'anomalies')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'anomalies' ? 'bg-rose-950/60 border-rose-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
+                  <span>🛡️ Anomalies</span>
+                  <span>${activeDrawer === 'anomalies' ? '▲' : '▼'}</span>
+                </div>
+                <div class="text-sm font-black ${anomalyRate > 10 ? 'text-rose-400' : 'text-amber-400'}">
+                  ${anomalyRate}% <span class="text-[10px] font-normal text-slate-400">(${suspiciousEntries.length} alertes)</span>
+                </div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'anomalies' ? 'Fermer la liste' : 'Déplier les alertes'}</div>
+              </button>
+
+              <!-- Tuile 3 : Périmètre -->
+              <button onclick="toggleAgentDrawer('${agent}', 'perimetre')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'perimetre' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
+                  <span>🌐 Périmètre</span>
+                  <span>${activeDrawer === 'perimetre' ? '▲' : '▼'}</span>
+                </div>
+                <div class="text-sm font-black text-slate-200">
+                  ${treatedContractors.size} <span class="text-[10px] font-normal text-slate-400">ent. / ${treatedTrades.size} mét.</span>
+                </div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'perimetre' ? 'Fermer avancement' : 'Déplier avancement'}</div>
+              </button>
+            </div>
+
+            <!-- TIROIR ACCORDÉON DÉPLIÉ -->
+            ${drawerContent}
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
     }
 
     function renderTable() {
@@ -303,79 +618,144 @@
 
       tbody.innerHTML = filteredData.map(item => {
         const q = Number(item.quantity) || 0;
-        let badge = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">CONFORME</span>`;
-        if (q === 0) badge = `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">STOCK 0</span>`;
-        else if (q > 50) badge = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">> 50 PCS</span>`;
+        let badgeStatus = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">CONFORME</span>`;
+        if (q === 0) {
+          badgeStatus = `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">STOCK 0</span>`;
+        } else if (q > 50) {
+          badgeStatus = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">> 50 PCS</span>`;
+        }
 
         return `
           <tr class="hover:bg-slate-800/40 transition">
-            <td class="p-3"><div class="text-white font-mono font-bold">${item.timestamp}</div><div class="text-[10px] text-slate-500 font-mono">${item.id}</div></td>
-            <td class="p-3"><span class="inline-flex items-center gap-1 font-bold text-indigo-300"><i data-lucide="user" class="w-3 h-3"></i> ${item.user}</span></td>
-            <td class="p-3"><div class="font-bold text-slate-200">${item.contractor}</div><div class="text-[11px] text-slate-400">${item.trade}</div></td>
+            <td class="p-3">
+              <div class="text-white font-mono font-bold">${item.timestamp}</div>
+              <div class="text-[10px] text-slate-500 font-mono">${item.id}</div>
+            </td>
+            <td class="p-3">
+              <span class="inline-flex items-center gap-1 font-bold text-indigo-300">
+                <i data-lucide="user" class="w-3 h-3"></i> ${item.user}
+              </span>
+            </td>
+            <td class="p-3">
+              <div class="font-bold text-slate-200">${item.contractor}</div>
+              <div class="text-[11px] text-slate-400">${item.trade}</div>
+            </td>
             <td class="p-3 font-mono font-bold text-indigo-400">${item.sapRef}</td>
-            <td class="p-3 max-w-xs"><div class="truncate font-semibold text-slate-100">${item.designation}</div><div class="text-[11px] text-slate-400 font-mono">Fourn: ${item.supplierRef || '--'}</div></td>
-            <td class="p-3 text-[11px] font-mono text-slate-400"><div>EAN: ${item.ean || '--'}</div><div>QR: ${item.qr || '--'}</div></td>
-            <td class="p-3 text-center"><span class="text-base font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'}">${q}</span></td>
-            <td class="p-3 text-center">${badge}</td>
+            <td class="p-3 max-w-xs">
+              <div class="truncate font-semibold text-slate-100" title="${item.designation}">${item.designation}</div>
+              <div class="text-[11px] text-slate-400 font-mono">Fourn: ${item.supplierRef || '--'}</div>
+            </td>
+            <td class="p-3 text-[11px] font-mono text-slate-400">
+              <div>EAN: ${item.ean || '--'}</div>
+              <div>QR: ${item.qr || '--'}</div>
+            </td>
+            <td class="p-3 text-center">
+              <span class="text-base font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'}">${q}</span>
+            </td>
+            <td class="p-3 text-center">${badgeStatus}</td>
             <td class="p-3 text-right space-x-1 whitespace-nowrap">
-              <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1.5 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white transition"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-              <button onclick="deleteItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 rounded bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1.5 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white transition" title="Modifier la quantité">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="deleteItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 rounded bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white transition" title="Supprimer la saisie">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
             </td>
           </tr>
         `;
       }).join('');
+
       lucide.createIcons();
     }
 
     async function editItem(id, currentQty) {
-      const newQtyStr = prompt("Superviseur : Nouvelle quantité (>= 0) :", currentQty);
+      const newQtyStr = prompt("Superviseur : Nouvelle quantité constatée (>= 0) :", currentQty);
       if (newQtyStr === null) return;
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) return alert("Quantité invalide.");
 
-      showToast("Mise à jour...");
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide (>= 0 attendue).");
+        return;
+      }
+
+      showToast("Mise à jour dans Google Sheets...");
       try {
         await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "UPDATE", id, quantity: newQty, user: `${currentAdmin} (Admin PC)` })
+          body: JSON.stringify({
+            action: "UPDATE",
+            id: id,
+            quantity: newQty,
+            user: `${currentAdmin} (Admin PC)`
+          })
         });
+
         const target = historyData.find(i => i.id === id);
         if (target) target.quantity = newQty;
         applyFilters();
-        showToast("Quantité modifiée !");
-      } catch (err) { alert("Erreur."); }
+        showToast("Quantité modifiée et auditée !");
+      } catch (err) {
+        alert("Erreur lors de la modification.");
+      }
     }
 
     async function deleteItem(id, designation) {
-      if (!confirm(`Supprimer définitivement :\n"${designation}" ?`)) return;
-      showToast("Suppression...");
+      if (!confirm(`Superviseur : Confirmer la suppression définitive de la saisie ?\n\n"${designation}"\n\nCette action sera tracée dans Audit_Logs.`)) {
+        return;
+      }
+
+      showToast("Suppression en cours...");
       try {
         await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "DELETE", id, user: `${currentAdmin} (Admin PC)` })
+          body: JSON.stringify({
+            action: "DELETE",
+            id: id,
+            user: `${currentAdmin} (Admin PC)`
+          })
         });
+
         historyData = historyData.filter(i => i.id !== id);
         applyFilters();
         showToast("Saisie supprimée !");
-      } catch (err) { alert("Erreur."); }
+      } catch (err) {
+        alert("Erreur lors de la suppression.");
+      }
     }
 
     function exportToCSV() {
-      if (filteredData.length === 0) return alert("Aucune donnée à exporter.");
+      if (filteredData.length === 0) {
+        alert("Aucune donnée à exporter.");
+        return;
+      }
+
       const headers = ["ID Inventaire", "Horodatage", "Magasinier", "Entrepreneur", "Metier", "Ref SAP", "Designation", "Ref Fournisseur", "EAN", "QR", "Quantite"];
       const rows = filteredData.map(i => [
-        `"${i.id || ''}"`, `"${i.timestamp || ''}"`, `"${i.user || ''}"`, `"${i.contractor || ''}"`, `"${i.trade || ''}"`,
-        `"${i.sapRef || ''}"`, `"${(i.designation || '').replace(/"/g, '""')}"`, `"${i.supplierRef || ''}"`, `"${i.ean || ''}"`, `"${i.qr || ''}"`, i.quantity
+        `"${i.id || ''}"`,
+        `"${i.timestamp || ''}"`,
+        `"${i.user || ''}"`,
+        `"${i.contractor || ''}"`,
+        `"${i.trade || ''}"`,
+        `"${i.sapRef || ''}"`,
+        `"${(i.designation || '').replace(/"/g, '""')}"`,
+        `"${i.supplierRef || ''}"`,
+        `"${i.ean || ''}"`,
+        `"${i.qr || ''}"`,
+        i.quantity
       ]);
+
       const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.download = `Inventaires_Export_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Inventaires_Supervision_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      showToast("Export CSV généré !");
     }
 
     function showToast(msg) {
