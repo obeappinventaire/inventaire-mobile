@@ -106,12 +106,12 @@
             </button>
           </div>
 
-          <!-- LISTE DÉROULANTE DES SUGGESTIONS AGRANDIE -->
+          <!-- LISTE DÉROULANTE DES SUGGESTIONS AGRANDIE & TRIÉE ALPHABÉTIQUEMENT -->
           <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-30 divide-y divide-slate-800">
           </div>
         </div>
 
-        <!-- FICHE DESCRIPTIVE DU MATÉRIEL IDENTIFIÉ (SANS EAN NI QR CODE) -->
+        <!-- FICHE DESCRIPTIVE DU MATÉRIEL IDENTIFIÉ -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
@@ -341,7 +341,7 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
-    // --- RECHERCHE STRICTEMENT SUR DÉSIGNATION & RÉF FOURNISSEUR ---
+    // --- RECHERCHE ET TRI ALPHABÉTIQUE ---
     function onSearchInput(rawVal) {
       const val = rawVal.trim();
       const dd = document.getElementById("suggestionsDropdown");
@@ -362,15 +362,21 @@
 
       const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
 
-      const results = catalog.filter(item => {
+      // Filtre sur Désignation & Réf Fournisseur
+      const filtered = catalog.filter(item => {
         const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""}`);
         return searchTerms.every(term => textTarget.includes(term));
       });
 
-      renderSuggestions(results);
+      // Tri alphabétique sur la Désignation
+      const sortedResults = filtered.sort((a, b) => {
+        return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
+      });
+
+      renderSuggestions(sortedResults);
     }
 
-    // --- AFFICHAGE AGRANDI DES SUGGESTIONS AVEC RÉF SAP ORANGE GRAS ---
+    // --- SUGGESTIONS : DÉSIGNATION EN PLEINE LARGEUR & RÉF SAP EN FACE DE FOURN ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
 
@@ -380,18 +386,22 @@
         return;
       }
 
-      // Top 10 des résultats avec présentation élargie et SAP en orange gras
+      // Top 10 des résultats ordonnés de A à Z
       dd.innerHTML = results.slice(0, 10).map(item => `
         <div onclick="selectArticleBySap('${item.sapRef}')" 
              class="p-3.5 hover:bg-slate-800 active:bg-indigo-600/30 cursor-pointer transition">
-          <div class="flex justify-between items-start gap-3">
-            <span class="text-sm font-bold text-slate-100 truncate">${item.designation || 'Sans désignation'}</span>
-            <span class="text-xs font-mono font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 shrink-0">
-              SAP: ${item.sapRef}
-            </span>
+          <!-- 1. Désignation sur toute la largeur sans être masquée -->
+          <div class="text-sm font-bold text-slate-100 leading-snug">
+            ${item.designation || 'Sans désignation'}
           </div>
-          <div class="flex items-center gap-2 text-xs mt-1">
-            <span class="text-blue-400 font-semibold truncate">Réf Fourn : <span class="font-mono text-blue-300">${item.supplierRef || 'N/A'}</span></span>
+          <!-- 2. Réf Fournisseur à gauche et Référence SAP décalée en face à droite en orange gras (sans 'SAP:') -->
+          <div class="flex items-center justify-between text-xs mt-1.5 pt-1 border-t border-slate-850">
+            <span class="text-blue-400 font-semibold truncate">
+              Réf Fourn : <span class="font-mono text-blue-300 font-bold">${item.supplierRef || 'N/A'}</span>
+            </span>
+            <span class="font-mono font-extrabold text-amber-400 text-sm tracking-wide shrink-0 ml-3">
+              ${item.sapRef}
+            </span>
           </div>
         </div>
       `).join('');
