@@ -25,7 +25,7 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Réticule de visée calibré pour la lecture OCR des 6 chiffres SAP */
+    /* Réticule de visée centré et calibré */
     .ocr-reticle {
       position: absolute;
       top: 42%;
@@ -77,7 +77,6 @@
       <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800" onerror="this.style.display='none'">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
       <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">En ligne</span>
-      <!-- Indicateur de synchronisation en attente -->
       <span id="syncBadge" class="hidden text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded">0 en attente</span>
     </div>
 
@@ -161,7 +160,6 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
               </button>
             </div>
-            <!-- Menu déroulant des suggestions -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
                  onscroll="blurSearchInput()"
@@ -189,19 +187,22 @@
           </div>
         </div>
 
-        <!-- Saisie de quantité (>= 0) -->
+        <!-- Saisie de quantité avec bouton Clear rapide -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
-          <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-[11px] font-bold text-slate-400 uppercase">Quantité inventoriée</span>
+            <button type="button" onclick="document.getElementById('qtyInput').value = 0" class="text-[10px] font-bold text-amber-400 hover:text-amber-300">Remettre à 0</button>
+          </div>
           <div class="flex items-center justify-center space-x-4">
             <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-850 active:bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white border border-slate-750">-</button>
-            <input type="number" id="qtyInput" placeholder="0" min="0" class="w-36 h-16 bg-slate-900 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none font-mono">
+            <input type="number" id="qtyInput" placeholder="0" min="0" value="0" class="w-36 h-16 bg-slate-900 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none font-mono">
             <button type="button" onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-850 active:bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white border border-slate-750">+</button>
           </div>
         </div>
 
         <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
-          <i data-lucide="check-circle" class="w-6 h-6"></i>
-          <span>VALIDER ET ARCHIVER</span>
+          <i data-lucide="check-circle" id="submitIcon" class="w-6 h-6"></i>
+          <span id="submitLabel">VALIDER ET ARCHIVER</span>
         </button>
       </section>
 
@@ -246,7 +247,7 @@
       </section>
     </div>
 
-    <!-- ================= MENTION DE PIED DE PAGE ================= -->
+    <!-- ================= PIED DE PAGE ================= -->
     <div class="text-center pt-6 pb-2 mb-1">
       <span class="text-[10px] font-medium text-slate-400 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -279,7 +280,6 @@
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    // Modèle de données & Persistance
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
@@ -287,8 +287,6 @@
     let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
     let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
-    
-    // File d'attente d'envoi hors-ligne (Outbox)
     let syncQueue = JSON.parse(localStorage.getItem("offline_sync_queue") || "[]");
 
     let currentAgent = localStorage.getItem("inv_current_agent") || "";
@@ -299,11 +297,9 @@
     let ocrInterval = null;
     let isOcrBusy = false;
     let isTorchOn = false;
+    let isStartingScanner = false;
 
-    // Instance unique Worker OCR persistant (évite les fuites mémoire)
     let ocrWorker = null;
-
-    // Cache GPS en continu (latence 0 ms au clic)
     let latestCoords = { lat: null, lng: null };
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -313,7 +309,6 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // Fermeture des suggestions au clic externe
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
@@ -322,16 +317,13 @@
         }
       });
 
-      // Écouteurs de connectivité réseau
       window.addEventListener("online", () => {
         updateNetworkStatus(true);
         processSyncQueue();
       });
       window.addEventListener("offline", () => updateNetworkStatus(false));
 
-      // Initialisation du worker OCR persistant en tâche de fond
       initOcrWorker();
-
       await syncData();
 
       if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
@@ -339,7 +331,6 @@
       }
     });
 
-    // Initialisation continue de la position GPS
     function initContinuousGps() {
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(
@@ -347,13 +338,12 @@
             latestCoords.lat = pos.coords.latitude;
             latestCoords.lng = pos.coords.longitude;
           },
-          (err) => console.warn("GPS watch error:", err.message),
+          (err) => console.warn("GPS tracking:", err.message),
           { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
         );
       }
     }
 
-    // Gestion du statut réseau visuel
     function updateNetworkStatus(isOnline) {
       const dot = document.getElementById("statusDot");
       const txt = document.getElementById("statusText");
@@ -368,7 +358,6 @@
       }
     }
 
-    // Initialisation du worker Tesseract unique
     async function initOcrWorker() {
       try {
         ocrWorker = await Tesseract.createWorker('eng');
@@ -377,7 +366,7 @@
           tessedit_pageseg_mode: '7'
         });
       } catch (err) {
-        console.warn("Échec pré-chargement Worker OCR:", err);
+        console.warn("Worker OCR initialisation warning:", err);
       }
     }
 
@@ -467,7 +456,6 @@
       }
     }
 
-    // Traitement de la file d'attente hors-ligne (Outbox Queue)
     async function processSyncQueue() {
       if (!navigator.onLine || syncQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
@@ -479,13 +467,12 @@
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(item)
           });
-          // Retrait après confirmation serveur
-          syncQueue = syncQueue.filter(q => q.id !== item.id || q.action !== item.action);
+          syncQueue = syncQueue.filter(q => !(q.id === item.id && q.action === item.action));
           localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
           updateSyncBadge();
         } catch (e) {
-          console.warn("Échec d'envoi d'une saisie en file d'attente :", e);
-          break; // Sortie si le réseau coupe à nouveau
+          console.warn("Échec synchronisation queue :", e);
+          break;
         }
       }
     }
@@ -493,10 +480,8 @@
     async function syncData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
-      // 1. Vider d'abord la file d'attente locale vers le serveur
       await processSyncQueue();
 
-      // 2. Récupérer les données fraîches
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
@@ -527,13 +512,15 @@
             localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
           
-          // Fusion sécurisée : On ne perd pas les éléments locaux non encore traités
           if (data.history) {
-            const pendingIds = new Set(syncQueue.map(q => q.id));
-            const localPendingItems = cachedHistory.filter(i => pendingIds.has(i.id));
+            // Maintien strict des saisies locales non synchronisées
+            const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
+            const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
             
-            // Les données distantes complétées des éléments locaux en attente
-            cachedHistory = [...localPendingItems, ...data.history.filter(remoteItem => !pendingIds.has(remoteItem.id))];
+            const localCreatedItems = cachedHistory.filter(i => pendingCreateIds.has(i.id));
+            const cleanRemote = data.history.filter(r => !pendingDeletedIds.has(r.id) && !pendingCreateIds.has(r.id));
+            
+            cachedHistory = [...localCreatedItems, ...cleanRemote];
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
 
@@ -550,7 +537,7 @@
           if (isAdmin()) renderMobileMonitoring();
         }
       } catch (err) {
-        console.warn("Erreur synchronisation réseau :", err);
+        console.warn("Synchronisation échouée :", err);
       }
     }
 
@@ -672,17 +659,18 @@
     }
 
     // =========================================================================
-    // SCANNER HYBRIDE : CODES-BARRES / QR + OCR STRICT SAP
+    // SCANNER HYBRIDE ROBUSTE
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
 
-      if (isScanning) {
+      if (isScanning || isStartingScanner) {
         await stopScanner();
         return;
       }
 
+      isStartingScanner = true;
       container.classList.remove("hidden");
       btnText.innerText = "FERMER CAMERA";
 
@@ -721,31 +709,18 @@
             () => {}
           );
         }
+        
         isScanning = true;
         resetTorchUI();
         startBackgroundOcr();
 
       } catch (err) {
-        console.warn("Échec capteur dorsal, bascule mode standard...", err);
-        try {
-          await html5QrCode.start(
-            { facingMode: "environment" },
-            qrConfig,
-            (decodedText) => {
-              handleExactCodeMatch(decodedText);
-              stopScanner();
-            },
-            () => {}
-          );
-          isScanning = true;
-          resetTorchUI();
-          startBackgroundOcr();
-        } catch (fallbackErr) {
-          console.error("Erreur caméra :", fallbackErr);
-          alert("Accès caméra impossible :\n- Vérifiez les autorisations Safari / Chrome.\n- Assurez-vous d'être en HTTPS.");
-          container.classList.add("hidden");
-          btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-        }
+        console.warn("Erreur démarrage capteur :", err);
+        container.classList.add("hidden");
+        btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
+        alert("Accès caméra impossible : Vérifiez les autorisations et le protocole HTTPS.");
+      } finally {
+        isStartingScanner = false;
       }
     }
 
@@ -754,9 +729,11 @@
         clearInterval(ocrInterval);
         ocrInterval = null;
       }
+
       if (isTorchOn) {
         await setTorch(false);
       }
+
       if (html5QrCode && isScanning) {
         try {
           await html5QrCode.stop();
@@ -764,7 +741,6 @@
         } catch(e){}
       }
 
-      // Neutralisation matérielle des flux vidéo
       const video = document.querySelector("#reader video");
       if (video && video.srcObject) {
         try {
@@ -788,15 +764,13 @@
         updateTorchUI();
         showToast(isTorchOn ? "Lumière allumée" : "Lumière éteinte");
       } else {
-        alert("La torche n'est pas supportée par ce capteur ou ce navigateur.");
+        alert("La torche n'est pas supportée par ce matériel.");
       }
     }
 
     async function setTorch(enable) {
       try {
-        await html5QrCode.applyVideoConstraints({
-          advanced: [{ torch: enable }]
-        });
+        await html5QrCode.applyVideoConstraints({ advanced: [{ torch: enable }] });
         return true;
       } catch (e) {
         const video = document.querySelector("#reader video");
@@ -884,23 +858,23 @@
 
     async function processVideoOcr(forceToast = false) {
       const video = document.querySelector("#reader video");
-      // Vérification de la disponibilité effective de la frame vidéo
       if (!video || video.readyState < 2 || !video.videoWidth) return;
 
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
+      // Alignement géométrique calculé sur la résolution vidéo réelle
       const cropW = Math.floor(video.videoWidth * 0.86);
       const cropH = Math.floor(video.videoHeight * 0.28);
       const startX = Math.floor((video.videoWidth - cropW) / 2);
-      const startY = Math.floor((video.videoHeight * 0.42) - (cropH / 2));
+      const startY = Math.max(0, Math.floor((video.videoHeight * 0.42) - (cropH / 2)));
 
       canvas.width = cropW * 2;
       canvas.height = cropH * 2;
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(video, startX, Math.max(0, startY), cropW, cropH, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const d = imgData.data;
@@ -927,8 +901,6 @@
       isOcrBusy = true;
       try {
         let textResult = "";
-
-        // Utilisation prioritaire du Worker pré-chargé
         if (ocrWorker) {
           const ret = await ocrWorker.recognize(canvas);
           textResult = ret.data.text || "";
@@ -940,7 +912,6 @@
           textResult = ret.data.text || "";
         }
 
-        // Annulation si le scanner a été fermé pendant l'analyse
         if (!isScanning) return;
 
         const rawDigits = textResult.replace(/\D/g, "");
@@ -950,7 +921,6 @@
 
         let bestSapMatch = null;
 
-        // Recherche directe
         const direct6Matches = rawDigits.match(/\d{6}/g) || [];
         for (const candidate of direct6Matches) {
           if (validCatalogSaps.includes(candidate)) {
@@ -959,7 +929,6 @@
           }
         }
 
-        // Fenêtre glissante
         if (!bestSapMatch && rawDigits.length >= 6) {
           for (let i = 0; i <= rawDigits.length - 6; i++) {
             const slice = rawDigits.substring(i, i + 6);
@@ -970,7 +939,6 @@
           }
         }
 
-        // Distance d'édition Levenshtein (Tolérance 1 chiffre)
         if (!bestSapMatch && validCatalogSaps.length > 0) {
           const candidates = rawDigits.match(/\d{5,7}/g) || [];
           for (const cand of candidates) {
@@ -1054,6 +1022,12 @@
         user: currentAgent 
       };
 
+      const target = cachedHistory.find(item => item.id === id);
+      if (target) {
+        target.quantity = newQty;
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      }
+
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
@@ -1064,15 +1038,11 @@
         }
         showToast("Quantité modifiée !");
       } catch (err) {
-        // Enregistrement dans la file d'attente hors-ligne
         syncQueue.push(payload);
         localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
         updateSyncBadge();
         showToast("Modifié en attente de synchronisation.");
       } finally {
-        const target = cachedHistory.find(item => item.id === id);
-        if (target) target.quantity = newQty;
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
       }
@@ -1088,6 +1058,9 @@
         user: currentAgent 
       };
 
+      cachedHistory = cachedHistory.filter(item => item.id !== id);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
@@ -1098,20 +1071,16 @@
         }
         showToast("Saisie supprimée !");
       } catch (err) {
-        // Enregistrement dans la file d'attente hors-ligne
         syncQueue.push(payload);
         localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
         updateSyncBadge();
         showToast("Supprimé en attente de synchronisation.");
       } finally {
-        cachedHistory = cachedHistory.filter(item => item.id !== id);
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
       }
     }
 
-    // Validation principale avec synchronisation résiliente
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1146,9 +1115,14 @@
       }
 
       const btn = document.getElementById("btnSubmit");
-      btn.disabled = true; // Anti-rebond
+      const label = document.getElementById("submitLabel");
+      const icon = document.getElementById("submitIcon");
 
-      // Coordonnées GPS immédiates (sans bloquer le thread)
+      // Anti-rebond
+      btn.disabled = true;
+      label.innerText = "ENREGISTREMENT...";
+      icon.className = "w-6 h-6 animate-spin";
+
       const payload = {
         action: "CREATE",
         id: "INV-" + Date.now().toString(36).toUpperCase(),
@@ -1180,17 +1154,19 @@
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         showToast("Inventaire archivé avec succès !");
       } catch (e) {
-        // Sauvegarde locale + file d'attente pour synchronisation ultérieure
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         syncQueue.push(payload);
         localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
         updateSyncBadge();
-        showToast("Enregistré localement (hors-ligne).");
+        showToast("Enregistré localement (en attente réseau).");
       } finally {
-        qtyInput.value = "";
+        qtyInput.value = 0;
         clearSearch();
         btn.disabled = false;
+        label.innerText = "VALIDER ET ARCHIVER";
+        icon.className = "w-6 h-6";
+        lucide.createIcons();
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
       }
