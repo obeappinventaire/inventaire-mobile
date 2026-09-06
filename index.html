@@ -25,20 +25,22 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
+    /* Réticule de visée centré et élargi pour 6 chiffres */
     .ocr-reticle {
       position: absolute;
-      top: 50%;
+      top: 45%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 75%;
-      height: 24%;
-      border: 2px dashed #10b981;
-      border-radius: 10px;
-      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55);
+      width: 88%;
+      height: 36%;
+      border: 2px solid #10b981;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.5);
       pointer-events: none;
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
+      padding-bottom: 6px;
     }
   </style>
 </head>
@@ -118,19 +120,29 @@
           <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
         </button>
 
+        <!-- Fenêtre caméra avec réticule de centrage élargi et barre d'actions -->
         <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
           <div id="reader" class="w-full relative"></div>
           <div class="ocr-reticle">
-            <span class="text-[10px] font-mono text-emerald-400 bg-slate-950/80 px-2 py-0.5 rounded">CADRER 6 CHIFFRES SAP</span>
+            <span class="text-[10px] font-mono text-emerald-300 bg-slate-950/85 px-2.5 py-0.5 rounded border border-emerald-500/40 tracking-wide font-bold">CADRER LES 6 CHIFFRES SAP</span>
           </div>
           <canvas id="ocrCanvas" class="hidden"></canvas>
           
+          <!-- Barre d'outils caméra : Statut + Bouton Torche + Bouton Lire Réf Bac -->
           <div class="p-2.5 bg-slate-900/95 flex items-center justify-between border-t border-slate-800 z-10 relative">
-            <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[190px]">Visez les 6 chiffres du bac...</span>
-            <button onclick="triggerManualOcrCapture()" class="px-3 py-2 bg-amber-500 active:bg-amber-600 text-slate-950 font-black rounded-lg text-xs shadow flex items-center gap-1.5">
-              <i data-lucide="camera" class="w-4 h-4"></i>
-              <span>Lire Réf Bac</span>
-            </button>
+            <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[120px]">Cadrez le bac...</span>
+            <div class="flex items-center space-x-2">
+              <!-- BOUTON LUMIÈRE / TORCHE -->
+              <button id="btnTorch" onclick="toggleTorch()" title="Allumer/Éteindre la lumière" class="px-2.5 py-2 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs shadow flex items-center gap-1 border border-slate-700 transition">
+                <i data-lucide="flashlight" id="torchIcon" class="w-4 h-4"></i>
+                <span id="torchLabel">Flash</span>
+              </button>
+              <!-- BOUTON LIRE RÉF BAC (OCR) -->
+              <button onclick="triggerManualOcrCapture()" class="px-3 py-2 bg-amber-500 active:bg-amber-600 text-slate-950 font-black rounded-lg text-xs shadow flex items-center gap-1.5">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+                <span>Lire Réf Bac</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -235,7 +247,7 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE DYNAMIQUE ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -258,9 +270,7 @@
   </div>
 
   <script>
-    // =========================================================================
-    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (se terminant par /exec)
-    // =========================================================================
+    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (/exec)[cite: 1, 2]
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -278,6 +288,7 @@
     let isScanning = false;
     let ocrInterval = null;
     let isOcrBusy = false;
+    let isTorchOn = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
@@ -524,7 +535,7 @@
     }
 
     // =========================================================================
-    // SCANNER HYBRIDE : COMPATIBILITÉ UNIVERSELLE (iOS/Android) + OCR PRÉCIS
+    // SCANNER HYBRIDE : CODES-BARRES / QR + OCR 6 CHIFFRES + TORCHE LUMIÈRE
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -545,7 +556,7 @@
 
       const qrConfig = {
         fps: 15,
-        qrbox: { width: 260, height: 150 },
+        qrbox: { width: 270, height: 160 },
         aspectRatio: 1.777778
       };
 
@@ -574,10 +585,11 @@
           );
         }
         isScanning = true;
+        resetTorchUI();
         startBackgroundOcr();
 
       } catch (err) {
-        console.warn("Échec caméra spécifique, bascule standard...", err);
+        console.warn("Échec capteur dorsal, bascule mode standard...", err);
         try {
           await html5QrCode.start(
             { facingMode: "environment" },
@@ -589,10 +601,11 @@
             () => {}
           );
           isScanning = true;
+          resetTorchUI();
           startBackgroundOcr();
         } catch (fallbackErr) {
-          console.error("Erreur fatale caméra :", fallbackErr);
-          alert("Accès caméra impossible :\n- Vérifiez les autorisations de votre navigateur (Safari/Chrome).\n- Assurez-vous d'utiliser une connexion HTTPS.\n- Fermez toute autre application utilisant l'appareil photo.");
+          console.error("Erreur caméra :", fallbackErr);
+          alert("Accès caméra impossible :\n- Vérifiez les autorisations Safari / Chrome.\n- Assurez-vous d'être en HTTPS.");
           container.classList.add("hidden");
           btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
         }
@@ -604,16 +617,87 @@
         clearInterval(ocrInterval);
         ocrInterval = null;
       }
+      if (isTorchOn) {
+        await setTorch(false);
+      }
       if (html5QrCode && isScanning) {
         await html5QrCode.stop();
         html5QrCode.clear();
       }
       isScanning = false;
+      resetTorchUI();
       document.getElementById("scannerContainer").classList.add("hidden");
       document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-      document.getElementById("scanStatusMsg").innerText = "Visez les 6 chiffres du bac...";
+      document.getElementById("scanStatusMsg").innerText = "Placez la réf du bac dans le cadre...";
     }
 
+    // --- CONTRÔLE DE LA LUMIÈRE / TORCHE MATÉRIELLE ---
+    async function toggleTorch() {
+      if (!isScanning || !html5QrCode) return;
+      const targetState = !isTorchOn;
+      const success = await setTorch(targetState);
+      if (success) {
+        isTorchOn = targetState;
+        updateTorchUI();
+        showToast(isTorchOn ? "Lumière allumée" : "Lumière éteinte");
+      } else {
+        alert("La torche / flash n'est pas disponible sur ce capteur ou ce navigateur.");
+      }
+    }
+
+    async function setTorch(enable) {
+      // Méthode 1 : Via l'API Html5Qrcode si supportée
+      try {
+        await html5QrCode.applyVideoConstraints({
+          advanced: [{ torch: enable }]
+        });
+        return true;
+      } catch (e) {
+        // Méthode 2 : Directement sur la piste vidéo active
+        const video = document.querySelector("#reader video");
+        if (video && video.srcObject) {
+          const track = video.srcObject.getVideoTracks()[0];
+          if (track && typeof track.applyConstraints === "function") {
+            try {
+              await track.applyConstraints({
+                advanced: [{ torch: enable }]
+              });
+              return true;
+            } catch (err2) {
+              return false;
+            }
+          }
+        }
+        return false;
+      }
+    }
+
+    function updateTorchUI() {
+      const btn = document.getElementById("btnTorch");
+      const icon = document.getElementById("torchIcon");
+      const label = document.getElementById("torchLabel");
+
+      if (isTorchOn) {
+        btn.className = "px-2.5 py-2 bg-amber-400 active:bg-amber-500 text-slate-950 font-black rounded-lg text-xs shadow flex items-center gap-1 border border-amber-300 transition";
+        label.innerText = "Allumé";
+      } else {
+        btn.className = "px-2.5 py-2 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs shadow flex items-center gap-1 border border-slate-700 transition";
+        label.innerText = "Flash";
+      }
+      lucide.createIcons();
+    }
+
+    function resetTorchUI() {
+      isTorchOn = false;
+      const btn = document.getElementById("btnTorch");
+      const label = document.getElementById("torchLabel");
+      if (btn && label) {
+        btn.className = "px-2.5 py-2 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs shadow flex items-center gap-1 border border-slate-700 transition";
+        label.innerText = "Flash";
+      }
+    }
+
+    // --- RECONNAISSANCE OPTIQUE OCR ---
     function startBackgroundOcr() {
       ocrInterval = setInterval(async () => {
         if (!isScanning || isOcrBusy) return;
@@ -634,8 +718,8 @@
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      const cropWidth = Math.floor(video.videoWidth * 0.70);
-      const cropHeight = Math.floor(video.videoHeight * 0.22);
+      const cropWidth = Math.floor(video.videoWidth * 0.88);
+      const cropHeight = Math.floor(video.videoHeight * 0.36);
       const startX = Math.floor((video.videoWidth - cropWidth) / 2);
       const startY = Math.floor((video.videoHeight - cropHeight) / 2);
 
@@ -655,7 +739,7 @@
         totalLum += (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114);
       }
       const meanLum = totalLum / count;
-      const threshold = Math.max(75, Math.min(165, meanLum - 10));
+      const threshold = Math.max(70, Math.min(170, meanLum - 8));
 
       for (let i = 0; i < d.length; i += 4) {
         const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
@@ -671,19 +755,31 @@
           tessedit_pageseg_mode: '7'
         });
 
-        const rawText = (result.data.text || "").replace(/\s+/g, "");
+        const rawText = (result.data.text || "").replace(/\D/g, "");
         const candidates = rawText.match(/\d{6}/g) || [];
 
         for (const code of candidates) {
           let match = catalog.find(i => String(i.sapRef).trim() === code);
 
+          if (!match && code.includes("4")) {
+            const alt = code.replace(/4/g, "7");
+            match = catalog.find(i => String(i.sapRef).trim() === alt);
+          }
+          if (!match && code.includes("7")) {
+            const alt = code.replace(/7/g, "4");
+            match = catalog.find(i => String(i.sapRef).trim() === alt);
+          }
           if (!match && code.includes("3")) {
-            const alternateCode = code.replace(/3/g, "9");
-            match = catalog.find(i => String(i.sapRef).trim() === alternateCode);
+            const alt = code.replace(/3/g, "9");
+            match = catalog.find(i => String(i.sapRef).trim() === alt);
           }
           if (!match && code.includes("9")) {
-            const alternateCode = code.replace(/9/g, "3");
-            match = catalog.find(i => String(i.sapRef).trim() === alternateCode);
+            const alt = code.replace(/9/g, "3");
+            match = catalog.find(i => String(i.sapRef).trim() === alt);
+          }
+          if (!match && code.includes("0")) {
+            const alt = code.replace(/0/g, "8");
+            match = catalog.find(i => String(i.sapRef).trim() === alt);
           }
 
           if (match) {
@@ -699,10 +795,10 @@
         }
 
         if (forceToast) {
-          document.getElementById("scanStatusMsg").innerText = "⚠️ Non reconnu. Cadrez les 6 chiffres dans le rectangle.";
+          document.getElementById("scanStatusMsg").innerText = "⚠️ Non reconnu. Rapprochez légèrement le bac.";
         }
       } catch (e) {
-        console.warn("OCR en tâche de fond :", e);
+        console.warn("OCR en arrière-plan :", e);
       } finally {
         isOcrBusy = false;
       }
