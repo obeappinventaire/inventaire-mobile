@@ -89,7 +89,7 @@
     </div>
   </header>
 
-  <!-- ================= CONTENU PRINCIPAL (FOND DÉFILANT PLUS CLAIR & ZONE ÉTENDUE) ================= -->
+  <!-- ================= CONTENU PRINCIPAL ================= -->
   <main class="flex-1 overflow-y-auto bg-slate-900 border-x border-slate-800/60 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
 
     <div class="space-y-4">
@@ -159,7 +159,7 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
               </button>
             </div>
-            <!-- Menu déroulant grand format avec masquage de clavier tactile -->
+            <!-- Menu déroulant avec défilement tactile optimisé -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
                  onscroll="blurSearchInput()"
@@ -244,7 +244,7 @@
       </section>
     </div>
 
-    <!-- ================= MENTION DE PIED DE PAGE (PLU BAS DANS L'AFFICHAGE) ================= -->
+    <!-- ================= MENTION DE PIED DE PAGE ================= -->
     <div class="text-center pt-6 pb-2 mb-1">
       <span class="text-[10px] font-medium text-slate-400 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -275,6 +275,7 @@
   </div>
 
   <script>
+    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (/exec)
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -516,6 +517,7 @@
       renderSuggestions(sortedResults);
     }
 
+    // --- AFFICHAGE AVEC RÉF SAP À GAUCHE ET RÉF FOURNISSEUR À DROITE ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
 
@@ -536,8 +538,16 @@
         <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 hover:bg-slate-800 active:bg-slate-800/80 cursor-pointer transition">
           <p class="text-base font-bold text-slate-100 leading-snug">${item.designation || 'Sans désignation'}</p>
           <div class="flex justify-between items-center text-xs mt-2 pt-1 border-t border-slate-800/60">
-            <span class="text-slate-400">Réf Fourn : <strong class="font-mono text-blue-400 text-sm">${item.supplierRef || 'N/A'}</strong></span>
-            <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-950 px-2.5 py-0.5 rounded border border-amber-500/20">${item.sapRef}</span>
+            <!-- RÉF SAP INVERSÉE À GAUCHE -->
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">SAP :</span>
+              <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-950 px-2.5 py-0.5 rounded border border-amber-500/20">${item.sapRef}</span>
+            </div>
+            <!-- RÉF FOURNISSEUR INVERSÉE À DROITE -->
+            <div class="text-right truncate max-w-[170px]">
+              <span class="text-slate-400">Fourn : </span>
+              <strong class="font-mono text-blue-400 text-sm">${item.supplierRef || 'N/A'}</strong>
+            </div>
           </div>
         </div>
       `).join('');
@@ -666,6 +676,7 @@
         } catch(e){}
       }
 
+      // Neutralisation matérielle complète des pistes vidéo
       const video = document.querySelector("#reader video");
       if (video && video.srcObject) {
         try {
