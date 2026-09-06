@@ -78,45 +78,84 @@
   <div class="flex-1 flex overflow-hidden">
 
     <!-- MENU VERTICAL GAUCHE -->
-    <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between p-3 shrink-0">
-      <div class="space-y-1.5">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2 block">Vues de Supervision</span>
-        
-        <!-- Onglet 1 : Activité globale -->
-        <button id="navTabGlobal" onclick="switchMainTab('global')" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
-          <i data-lucide="activity" class="w-4 h-4"></i>
-          <span class="truncate">Activité Globale</span>
-        </button>
+    <aside class="w-64 bg-slate-900/95 border-r border-slate-800 flex flex-col justify-between p-3.5 shrink-0 overflow-y-auto space-y-4">
+      <div class="space-y-4">
+        <!-- Vues de navigation -->
+        <div class="space-y-1.5">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">Vues de Supervision</span>
+          
+          <button id="navTabGlobal" onclick="switchMainTab('global')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+            <span class="truncate">Activité Globale</span>
+          </button>
 
-        <!-- Onglet 2 : Suivi Terrain Agents -->
-        <button id="navTabAgents" onclick="switchMainTab('agents')" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60">
-          <i data-lucide="users" class="w-4 h-4"></i>
-          <span class="truncate">Suivi Terrain & Agents</span>
-        </button>
+          <button id="navTabAgents" onclick="switchMainTab('agents')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span class="truncate">Suivi Terrain & Agents</span>
+          </button>
+        </div>
+
+        <!-- BLOC FILTRE DE PÉRIODE MAÎTRE (COMMUN AUX 2 ONGLETS) -->
+        <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl space-y-2.5 shadow-inner">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période active
+            </span>
+          </div>
+
+          <!-- Raccourcis de période -->
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Raccourci rapide</label>
+            <select id="periodPreset" onchange="applyPeriodPreset(this.value)" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-1.5 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">Tout l'historique</option>
+              <option value="TODAY">Aujourd'hui</option>
+              <option value="WEEK" selected>Semaine en cours (Lun-Dim)</option>
+              <option value="LAST_WEEK">Semaine précédente</option>
+              <option value="MONTH">Mois en cours</option>
+              <option value="CUSTOM">Personnalisé...</option>
+            </select>
+          </div>
+
+          <!-- Dates début / fin -->
+          <div class="space-y-1.5 pt-1">
+            <div>
+              <span class="text-[9px] text-slate-400 uppercase font-semibold block">Date début</span>
+              <input type="date" id="dateStart" onchange="onManualDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+              <span class="text-[9px] text-slate-400 uppercase font-semibold block">Date fin</span>
+              <input type="date" id="dateEnd" onchange="onManualDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Résumé compact bas de menu -->
       <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
         <div class="flex justify-between">
-          <span>Base inventaire :</span>
+          <span>Saisies période :</span>
           <strong id="sideTotalCount" class="text-white">0</strong>
         </div>
         <div class="flex justify-between">
-          <span>Alertes actives :</span>
+          <span>Alertes période :</span>
           <strong id="sideAlertCount" class="text-amber-400">0</strong>
         </div>
       </div>
     </aside>
 
-    <!-- ZONE DE CONTENU SCROLLABLE -->
+    <!-- ZONE DE CONTENU -->
     <main class="flex-1 overflow-y-auto p-6 bg-slate-950">
 
       <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE, RECHERCHE & EXTRAIT ================= -->
       <section id="sectionGlobalView" class="space-y-6">
 
-        <!-- 1. KPIS GLOBAUX -->
+        <!-- 1. KPIS GLOBAUX SUR LA PÉRIODE -->
         <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Activité Globale Entrepôt</span>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Activité Entrepôt sur la période sélectionnée</span>
+            <span id="periodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold">--</span>
+          </div>
+
           <div class="grid grid-cols-4 gap-4">
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
               <div class="flex items-center justify-between text-slate-400 mb-1">
@@ -124,7 +163,7 @@
                 <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
               </div>
               <div id="kpiRows" class="text-2xl font-black text-white">0</div>
-              <span class="text-[11px] text-slate-500">Totalité des saisies</span>
+              <span class="text-[11px] text-slate-500">Saisies de la période</span>
             </div>
 
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
@@ -133,7 +172,7 @@
                 <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
               </div>
               <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
-              <span class="text-[11px] text-slate-500">Volume total inventorié</span>
+              <span class="text-[11px] text-slate-500">Pièces sur la période</span>
             </div>
 
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
@@ -159,30 +198,23 @@
         <!-- 2. RECHERCHE, FILTRES & EXTRACT -->
         <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Recherche et Extraction</span>
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtres complémentaires & Extraction</span>
             <div class="flex items-center space-x-2">
               <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
                 <i data-lucide="download" class="w-3.5 h-3.5"></i>
                 <span>Exporter la sélection (CSV)</span>
               </button>
-              <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser</button>
+              <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser les sous-filtres</button>
             </div>
           </div>
 
-          <div class="grid grid-cols-5 gap-3 items-end text-xs">
+          <div class="grid grid-cols-4 gap-3 items-end text-xs">
             <div>
               <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche mot-clé</label>
               <div class="relative">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
                 <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="SAP, désignation, ID..." class="w-full bg-slate-950 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-indigo-500">
               </div>
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Agent Magasinier</label>
-              <select id="filterAgent" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                <option value="">Tous les agents</option>
-              </select>
             </div>
 
             <div>
@@ -215,7 +247,7 @@
         <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
           <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
             <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
-            <span class="text-[11px] text-slate-500">Synchronisation active avec Audit_Logs</span>
+            <span class="text-[11px] text-slate-500">Données synchronisées avec Google Sheets & Audit_Logs</span>
           </div>
 
           <div class="overflow-x-auto max-h-[520px]">
@@ -242,12 +274,15 @@
 
       <!-- ================= ONGLET 2 : SUIVI TERRAIN AGENTS & STATUT ENTREPRENEUR ================= -->
       <section id="sectionAgentsView" class="hidden space-y-4">
-        <div>
-          <h2 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
-            Suivi Terrain par Agent & Statut Entrepreneur
-          </h2>
-          <p class="text-xs text-slate-400">Supervision en direct : cadence, alertes et périmètres traités avec horodatages</p>
+        <div class="flex justify-between items-end">
+          <div>
+            <h2 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
+              Suivi Terrain par Agent & Statut Entrepreneur
+            </h2>
+            <p class="text-xs text-slate-400">Activité bornée sur la période sélectionnée dans le menu latéral</p>
+          </div>
+          <span id="agentsPeriodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">--</span>
         </div>
 
         <div id="agentAccordionContainer" class="space-y-3">
@@ -269,6 +304,7 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let historyData = [];
+    let periodFilteredHistory = [];
     let filteredData = [];
     let availableAgents = [];
     let availableContractors = [];
@@ -280,9 +316,68 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
+      initDefaultPeriod();
       await syncData();
       checkAuth();
     });
+
+    // --- GESTION DU FILTRE DE PÉRIODE MAÎTRE ---
+    function initDefaultPeriod() {
+      applyPeriodPreset("WEEK");
+    }
+
+    function applyPeriodPreset(preset) {
+      const now = new Date();
+      let start = new Date();
+      let end = new Date();
+
+      if (preset === "ALL") {
+        document.getElementById("dateStart").value = "";
+        document.getElementById("dateEnd").value = "";
+      } else if (preset === "TODAY") {
+        document.getElementById("dateStart").value = now.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = now.toISOString().slice(0, 10);
+      } else if (preset === "WEEK") {
+        const day = now.getDay();
+        const diffToMon = (day === 0 ? -6 : 1) - day;
+        start.setDate(now.getDate() + diffToMon);
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
+      } else if (preset === "LAST_WEEK") {
+        const day = now.getDay();
+        const diffToMon = (day === 0 ? -6 : 1) - day - 7;
+        start.setDate(now.getDate() + diffToMon);
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
+      } else if (preset === "MONTH") {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
+      }
+
+      applyFilters();
+    }
+
+    function onManualDateChange() {
+      document.getElementById("periodPreset").value = "CUSTOM";
+      applyFilters();
+    }
+
+    function parseItemDate(timestampStr) {
+      if (!timestampStr) return new Date(0);
+      if (timestampStr.includes('/')) {
+        const parts = timestampStr.split(' ');
+        const dateParts = parts[0].split('/');
+        const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
+        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+      }
+      return new Date(timestampStr);
+    }
 
     // --- NAVIGATION MENU VERTICAL GAUCHE ---
     function switchMainTab(tab) {
@@ -294,13 +389,13 @@
       if (tab === 'global') {
         secGlobal.classList.remove("hidden");
         secAgents.classList.add("hidden");
-        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
-        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
+        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
       } else {
         secGlobal.classList.add("hidden");
         secAgents.classList.remove("hidden");
-        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
-        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
+        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
         renderAgentAccordions();
       }
       lucide.createIcons();
@@ -348,7 +443,7 @@
       location.reload();
     }
 
-    // --- SYNCHRONISATION INITIALE ---
+    // --- SYNCHRONISATION ---
     async function syncData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
@@ -371,8 +466,6 @@
     }
 
     function populateFilterSelects() {
-      document.getElementById("filterAgent").innerHTML = '<option value="">Tous les agents</option>' + 
-        availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
       document.getElementById("filterContractor").innerHTML = '<option value="">Tous les entrepreneurs</option>' + 
         availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
       document.getElementById("filterTrade").innerHTML = '<option value="">Tous les métiers</option>' + 
@@ -381,22 +474,10 @@
 
     function resetFilters() {
       document.getElementById("filterSearch").value = "";
-      document.getElementById("filterAgent").value = "";
       document.getElementById("filterContractor").value = "";
       document.getElementById("filterTrade").value = "";
       document.getElementById("filterAlert").value = "ALL";
       applyFilters();
-    }
-
-    function parseItemDate(timestampStr) {
-      if (!timestampStr) return new Date(0);
-      if (timestampStr.includes('/')) {
-        const parts = timestampStr.split(' ');
-        const dateParts = parts[0].split('/');
-        const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
-      }
-      return new Date(timestampStr);
     }
 
     function getAgentLiveStatus(agentName, agentEntries) {
@@ -427,11 +508,38 @@
       };
     }
 
+    // --- FILTRAGE CUMULATIF (DATE + SOUS-FILTRES) ---
     function applyFilters() {
-      const totalRows = historyData.length;
-      const totalQty = historyData.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
-      const zeroStockCount = historyData.filter(i => Number(i.quantity) === 0).length;
-      const highStockCount = historyData.filter(i => Number(i.quantity) > 50).length;
+      const dStartStr = document.getElementById("dateStart").value;
+      const dEndStr = document.getElementById("dateEnd").value;
+      const dStart = dStartStr ? new Date(dStartStr + "T00:00:00") : null;
+      const dEnd = dEndStr ? new Date(dEndStr + "T23:59:59") : null;
+
+      // 1. Filtrer la base par la période maître
+      periodFilteredHistory = historyData.filter(item => {
+        const itemDate = parseItemDate(item.timestamp);
+        if (dStart && itemDate < dStart) return false;
+        if (dEnd && itemDate > dEnd) return false;
+        return true;
+      });
+
+      // Libellé de période
+      let labelP = "Tout l'historique";
+      if (dStartStr && dEndStr) {
+        labelP = `Du ${new Date(dStartStr).toLocaleDateString("fr-FR")} au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
+      } else if (dStartStr) {
+        labelP = `À partir du ${new Date(dStartStr).toLocaleDateString("fr-FR")}`;
+      } else if (dEndStr) {
+        labelP = `Jusqu'au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
+      }
+      document.getElementById("periodLabelBadge").innerText = labelP;
+      document.getElementById("agentsPeriodLabelBadge").innerText = labelP;
+
+      // 2. KPIs sur la période
+      const totalRows = periodFilteredHistory.length;
+      const totalQty = periodFilteredHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
+      const zeroStockCount = periodFilteredHistory.filter(i => Number(i.quantity) === 0).length;
+      const highStockCount = periodFilteredHistory.filter(i => Number(i.quantity) > 50).length;
       const totalAlerts = zeroStockCount + highStockCount;
 
       document.getElementById("kpiRows").innerText = totalRows;
@@ -442,19 +550,18 @@
       document.getElementById("sideTotalCount").innerText = totalRows;
       document.getElementById("sideAlertCount").innerText = totalAlerts;
 
+      // 3. Sous-filtres spécifiques à l'onglet 1 (Recherche mot-clé, entrepreneur, métier, alertes)
       const search = document.getElementById("filterSearch").value.trim().toLowerCase();
-      const agent = document.getElementById("filterAgent").value;
       const contractor = document.getElementById("filterContractor").value;
       const trade = document.getElementById("filterTrade").value;
       const alertFilter = document.getElementById("filterAlert").value;
 
-      filteredData = historyData.filter(item => {
+      filteredData = periodFilteredHistory.filter(item => {
         const q = Number(item.quantity) || 0;
         const matchSearch = !search || 
           (item.sapRef && item.sapRef.toLowerCase().includes(search)) ||
           (item.designation && item.designation.toLowerCase().includes(search)) ||
           (item.id && item.id.toLowerCase().includes(search));
-        const matchAgent = !agent || item.user === agent;
         const matchContractor = !contractor || item.contractor === contractor;
         const matchTrade = !trade || item.trade === trade;
         let matchAlert = true;
@@ -462,7 +569,7 @@
         else if (alertFilter === "HIGH") matchAlert = (q > 50);
         else if (alertFilter === "ANY_ALERT") matchAlert = (q === 0 || q > 50);
 
-        return matchSearch && matchAgent && matchContractor && matchTrade && matchAlert;
+        return matchSearch && matchContractor && matchTrade && matchAlert;
       });
 
       renderTable();
@@ -478,7 +585,7 @@
       renderAgentAccordions();
     }
 
-    // --- GESTION DU TIROIR ACCORDÉON (AVEC PÉRIMÈTRE TRAITÉ SEULEMENT) ---
+    // --- TIROIRS ACCORDÉONS PAR AGENT (BASÉS SUR LA PÉRIODE MAÎTRE) ---
     function renderAgentAccordions() {
       const container = document.getElementById("agentAccordionContainer");
       if (availableAgents.length === 0) {
@@ -487,7 +594,8 @@
       }
 
       container.innerHTML = availableAgents.map(agent => {
-        const agentEntries = historyData.filter(i => i.user === agent);
+        // Filtré sur la période sélectionnée
+        const agentEntries = periodFilteredHistory.filter(i => i.user === agent);
         const totalQty = agentEntries.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
         const status = getAgentLiveStatus(agent, agentEntries);
 
@@ -508,14 +616,14 @@
           firstScanTime = lastScanTime = agentEntries[0].timestamp.split(' ')[1] || agentEntries[0].timestamp;
         }
 
-        // 2. Anomalies
+        // 2. Anomalies sur la période
         const suspiciousEntries = agentEntries.filter(i => {
           const q = Number(i.quantity);
           return q === 0 || q > 50;
         });
         const anomalyRate = agentEntries.length > 0 ? Math.round((suspiciousEntries.length / agentEntries.length) * 100) : 0;
 
-        // 3. Périmètre DÉMARRÉ / TRAITÉ UNIQUEMENT (avec date/heure de dernière saisie)
+        // 3. Périmètre DÉMARRÉ / TRAITÉ SUR LA PÉRIODE
         const treatedContractorMap = {};
         const treatedTradeMap = {};
 
@@ -560,7 +668,7 @@
           drawerContent = `
             <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-2">
               <div class="font-bold text-indigo-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <span>⚡ Rythme & Amplitude (${agent})</span>
+                <span>⚡ Rythme & Amplitude sur la période (${agent})</span>
                 <span class="text-[11px] text-slate-400">Vitesse : <strong class="text-white">${cadence} lignes / h</strong></span>
               </div>
               <div class="grid grid-cols-3 gap-3 text-slate-300 pt-1">
@@ -572,7 +680,7 @@
           `;
         } else if (activeDrawer === 'anomalies') {
           const rowsHtml = suspiciousEntries.length === 0 
-            ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie constatée pour cet agent.</div>`
+            ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie constatée sur cette période.</div>`
             : suspiciousEntries.map(item => `
                 <div class="flex items-center justify-between py-2 border-b border-slate-850 last:border-0 text-xs">
                   <div class="min-w-0 flex-1 pr-2">
@@ -597,8 +705,8 @@
           drawerContent = `
             <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-rose-500/30 text-xs space-y-2">
               <div class="font-bold text-rose-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <span>⚠️ ${suspiciousEntries.length} saisie(s) non conforme(s)</span>
-                <span class="text-[10px] text-slate-400">Actions tracées dans Audit_Logs</span>
+                <span>⚠️ ${suspiciousEntries.length} saisie(s) non conforme(s) sur la période</span>
+                <span class="text-[10px] text-slate-400">Tracé dans Audit_Logs</span>
               </div>
               <div class="divide-y divide-slate-800/80 max-h-60 overflow-y-auto">${rowsHtml}</div>
             </div>
@@ -608,7 +716,7 @@
           const tradeKeys = Object.keys(treatedTradeMap);
 
           const contractorListHtml = contractorKeys.length === 0
-            ? `<div class="text-slate-500 text-xs py-1">Aucun entrepreneur entamé.</div>`
+            ? `<div class="text-slate-500 text-xs py-1">Aucun entrepreneur entamé sur cette période.</div>`
             : contractorKeys.map(c => `
                 <div class="p-2 rounded-lg bg-indigo-950/40 border border-indigo-500/40 text-xs space-y-1">
                   <div class="flex justify-between items-center">
@@ -623,7 +731,7 @@
               `).join('');
 
           const tradeListHtml = tradeKeys.length === 0
-            ? `<div class="text-slate-500 text-xs py-1">Aucun corps d'état entamé.</div>`
+            ? `<div class="text-slate-500 text-xs py-1">Aucun corps d'état entamé sur cette période.</div>`
             : tradeKeys.map(t => `
                 <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-1">
                   <div class="flex justify-between items-center">
@@ -640,8 +748,8 @@
           drawerContent = `
             <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-3">
               <div class="font-bold text-indigo-300 border-b border-slate-800 pb-1.5 flex justify-between items-center">
-                <span>🌐 Entrepreneurs & Métiers Démarrés / Traités (${agent})</span>
-                <span class="text-[10px] text-slate-400 font-normal">Affichage des dates de passage</span>
+                <span>🌐 Entrepreneurs & Métiers traités sur la période (${agent})</span>
+                <span class="text-[10px] text-slate-400 font-normal">Dates et heures de passage</span>
               </div>
               <div>
                 <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Entrepreneurs traités (${contractorKeys.length}) :</span>
@@ -657,7 +765,6 @@
 
         return `
           <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow transition">
-            <!-- EN-TÊTE DE CARTE : AGENT + STATUT TEMPS RÉEL + ENTREPRENEUR EN COURS -->
             <div class="flex items-center justify-between pb-3 border-b border-slate-800">
               <div class="flex items-center space-x-3">
                 <span class="text-sm font-bold text-white flex items-center gap-1.5">
@@ -681,7 +788,6 @@
               </span>
             </div>
 
-            <!-- TUILES ACCORDÉONS -->
             <div class="grid grid-cols-3 gap-3 pt-3">
               <button onclick="toggleAgentDrawer('${agent}', 'cadence')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'cadence' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
                 <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
@@ -723,13 +829,13 @@
       lucide.createIcons();
     }
 
-    // --- RENDU DU TABLEAU DES INVENTAIRES ---
+    // --- TABLEAU DE SUPERVISION ---
     function renderTable() {
       const tbody = document.getElementById("inventoryTableBody");
-      document.getElementById("tableCountLabel").innerText = `${filteredData.length} ligne(s) affichée(s) sur ${historyData.length}`;
+      document.getElementById("tableCountLabel").innerText = `${filteredData.length} ligne(s) affichée(s) sur ${periodFilteredHistory.length} (période active)`;
 
       if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-500 text-xs">Aucune saisie ne correspond aux filtres.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-500 text-xs">Aucune saisie ne correspond aux filtres et à la période sélectionnée.</td></tr>`;
         return;
       }
 
@@ -792,7 +898,7 @@
 
       const newQty = parseInt(newQtyStr, 10);
       if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide (>= 0 attendue).");
+        alert("Quantité invalide. Doit être égale à 0 ou supérieure.");
         return;
       }
 
@@ -843,7 +949,7 @@
       }
     }
 
-    // --- EXPORT CSV DIRECT ---
+    // --- EXPORT CSV (SUR LA PÉRIODE SÉLECTIONNÉE) ---
     function exportToCSV() {
       if (filteredData.length === 0) {
         alert("Aucune donnée à exporter.");
@@ -869,8 +975,9 @@
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
+      const dateStr = new Date().toISOString().slice(0, 10);
       link.setAttribute("href", url);
-      link.setAttribute("download", `Inventaires_Extraction_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `Inventaires_Extraction_${dateStr}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
