@@ -25,7 +25,7 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Réticule de visée centré et calibré */
+    /* Réticule de visée calibré pour la lecture OCR des 6 chiffres SAP */
     .ocr-reticle {
       position: absolute;
       top: 42%;
@@ -160,10 +160,12 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
               </button>
             </div>
+            
+            <!-- Zone de sélection plus étendue (max-h-[26rem]) et plus claire (bg-slate-800) -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
                  onscroll="blurSearchInput()"
-                 class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-30 divide-y divide-slate-800"></div>
+                 class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[26rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
           </div>
 
           <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
@@ -187,16 +189,19 @@
           </div>
         </div>
 
-        <!-- Saisie de quantité avec bouton Clear rapide -->
+        <!-- Saisie de quantité avec BOUTON RESET REMPLACANT LES BOUTONS - ET + -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-[11px] font-bold text-slate-400 uppercase">Quantité inventoriée</span>
-            <button type="button" onclick="document.getElementById('qtyInput').value = 0" class="text-[10px] font-bold text-amber-400 hover:text-amber-300">Remettre à 0</button>
-          </div>
-          <div class="flex items-center justify-center space-x-4">
-            <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-850 active:bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white border border-slate-750">-</button>
-            <input type="number" id="qtyInput" placeholder="0" min="0" value="0" class="w-36 h-16 bg-slate-900 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none font-mono">
-            <button type="button" onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-850 active:bg-slate-800 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white border border-slate-750">+</button>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
+          <div class="flex items-center justify-center space-x-3">
+            <input type="number" id="qtyInput" placeholder="0" min="0" value="0" 
+                   onfocus="if(this.value==='0') this.value='';" 
+                   onblur="if(this.value==='') this.value='0';"
+                   class="flex-1 max-w-[200px] h-16 bg-slate-900 border-2 border-slate-700 rounded-2xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none font-mono">
+            <button type="button" onclick="resetQuantity()" title="Remettre à 0" 
+                    class="h-16 px-5 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 border border-rose-500/40 font-bold rounded-2xl shadow flex items-center justify-center space-x-2 transition">
+              <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+              <span class="text-xs uppercase tracking-wider font-extrabold">Reset</span>
+            </button>
           </div>
         </div>
 
@@ -309,11 +314,18 @@
       initContinuousGps();
       updateSyncBadge();
 
+      // Écouteur global pour fermer et effacer la saisie si clic en dehors sans sélection
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
-        if (dd && !dd.contains(e.target) && e.target !== searchInput) {
+        const clearBtn = document.getElementById("clearSearchBtn");
+        
+        if (dd && !dd.contains(e.target) && e.target !== searchInput && (!clearBtn || !clearBtn.contains(e.target))) {
           dd.classList.add("hidden");
+          // Si rien n'a été sélectionné dans le catalogue, effacement complet du texte
+          if (!activeItem && searchInput.value.trim() !== "") {
+            clearSearch();
+          }
         }
       });
 
@@ -375,6 +387,12 @@
       if (input && document.activeElement === input) {
         input.blur();
       }
+    }
+
+    function resetQuantity() {
+      const input = document.getElementById("qtyInput");
+      input.value = 0;
+      if (navigator.vibrate) navigator.vibrate(30);
     }
 
     function isAdmin() {
@@ -513,7 +531,6 @@
           }
           
           if (data.history) {
-            // Maintien strict des saisies locales non synchronisées
             const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
             const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
             
@@ -545,14 +562,6 @@
       showToast("Actualisation...");
       await syncData();
       showToast("Données synchronisées");
-    }
-
-    function adjustQuantity(delta) {
-      const el = document.getElementById("qtyInput");
-      let val = parseInt(el.value, 10);
-      if (isNaN(val)) val = delta > 0 ? delta : 0;
-      else val = Math.max(0, val + delta);
-      el.value = val;
     }
 
     function normalizeStr(str) {
@@ -594,33 +603,36 @@
       renderSuggestions(sortedResults);
     }
 
+    // --- ZONE DE SÉLECTION ÉTENDUE ET FOND PLUS CLAIR ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
 
       if (!results || results.length === 0) {
-        dd.innerHTML = `<div class="p-4 text-sm text-slate-400 text-center">Aucun article correspondant.</div>`;
+        dd.innerHTML = `<div class="p-4 text-sm text-slate-300 text-center font-medium">Aucun article correspondant dans le catalogue.</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
       let html = `
-        <div class="px-4 py-2 bg-slate-950/90 text-xs font-bold text-slate-400 flex justify-between border-b border-slate-800">
+        <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between border-b border-slate-700">
           <span>${results.length} article(s) trouvé(s)</span>
-          <span class="text-amber-400">Touchez pour sélectionner</span>
+          <span class="text-amber-400 font-bold">Touchez pour sélectionner</span>
         </div>
       `;
 
       html += results.map(item => `
-        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 hover:bg-slate-800 active:bg-slate-800/80 cursor-pointer transition">
-          <p class="text-base font-bold text-slate-100 leading-snug">${item.designation || 'Sans désignation'}</p>
-          <div class="flex justify-between items-center text-xs mt-2 pt-1 border-t border-slate-800/60">
+        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-650 cursor-pointer transition">
+          <p class="text-base font-bold text-white leading-snug">${item.designation || 'Sans désignation'}</p>
+          <div class="flex justify-between items-center text-xs mt-2 pt-1.5 border-t border-slate-700/70">
+            <!-- RÉF SAP À GAUCHE -->
             <div class="flex items-center space-x-1.5">
-              <span class="text-[11px] text-slate-400 uppercase font-semibold">SAP :</span>
-              <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-950 px-2.5 py-0.5 rounded border border-amber-500/20">${item.sapRef}</span>
+              <span class="text-[11px] text-slate-300 uppercase font-bold">SAP :</span>
+              <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-900 px-2.5 py-0.5 rounded border border-amber-500/30">${item.sapRef}</span>
             </div>
+            <!-- RÉF FOURNISSEUR À DROITE -->
             <div class="text-right truncate max-w-[170px]">
-              <span class="text-slate-400">Fourn : </span>
-              <strong class="font-mono text-blue-400 text-sm">${item.supplierRef || 'N/A'}</strong>
+              <span class="text-slate-300">Fourn : </span>
+              <strong class="font-mono text-blue-300 text-sm">${item.supplierRef || 'N/A'}</strong>
             </div>
           </div>
         </div>
@@ -659,7 +671,7 @@
     }
 
     // =========================================================================
-    // SCANNER HYBRIDE ROBUSTE
+    // SCANNER HYBRIDE : CODES-BARRES / QR + OCR STRICT SAP
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -863,7 +875,6 @@
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      // Alignement géométrique calculé sur la résolution vidéo réelle
       const cropW = Math.floor(video.videoWidth * 0.86);
       const cropH = Math.floor(video.videoHeight * 0.28);
       const startX = Math.floor((video.videoWidth - cropW) / 2);
@@ -1118,7 +1129,6 @@
       const label = document.getElementById("submitLabel");
       const icon = document.getElementById("submitIcon");
 
-      // Anti-rebond
       btn.disabled = true;
       label.innerText = "ENREGISTREMENT...";
       icon.className = "w-6 h-6 animate-spin";
