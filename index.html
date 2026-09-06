@@ -22,7 +22,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased">
 
-  <!-- ================= MODALE SÉLECTION AGENT ================= -->
+  <!-- MODALE SÉLECTION AGENT -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -30,7 +30,7 @@
           <i data-lucide="user-check" class="w-6 h-6"></i>
         </div>
         <h2 class="text-xl font-bold text-white">Identification Agent</h2>
-        <p class="text-xs text-slate-400">Sélectionnez votre nom pour démarrer</p>
+        <p class="text-xs text-slate-400">Sélectionnez votre nom pour débuter</p>
       </div>
 
       <div class="space-y-2">
@@ -47,7 +47,7 @@
     </div>
   </div>
 
-  <!-- ================= EN-TÊTE ================= -->
+  <!-- EN-TÊTE -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0">
     <div class="flex items-center space-x-2">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -64,13 +64,11 @@
     </div>
   </header>
 
-  <!-- ================= VUES PRINCIPALES ================= -->
+  <!-- CONTENU -->
   <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-24">
 
-    <!-- ========== VUE 1 : SAISIE DE COMPTAGE ========== -->
+    <!-- VUE 1 : COMPTAGE -->
     <section id="view-inventory" class="space-y-4">
-      
-      <!-- Contexte Entreprise & Métier -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
@@ -82,7 +80,6 @@
         </div>
       </div>
 
-      <!-- Module Scanner & Recherche -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg">
           <i data-lucide="scan-barcode" class="w-6 h-6"></i>
@@ -106,7 +103,6 @@
           </div>
         </div>
 
-        <!-- Fiche descriptive de l'article -->
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
@@ -139,29 +135,24 @@
         </div>
       </div>
 
-      <!-- Pavé de Quantité (autorise 0 ou valeur positive) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
         <div class="flex items-center justify-center space-x-4">
           <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">-</button>
-          
           <input type="number" id="qtyInput" placeholder="0" min="0" inputmode="numeric" 
                  oninput="if(this.value < 0) this.value = 0;"
                  class="w-36 h-16 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none placeholder-slate-600">
-          
           <button type="button" onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">+</button>
         </div>
       </div>
 
-      <!-- Validation -->
       <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-lg rounded-2xl shadow-xl flex items-center justify-center space-x-3 transition">
         <i data-lucide="check-circle" class="w-7 h-7"></i>
         <span>VALIDER ET ARCHIVER</span>
       </button>
-
     </section>
 
-    <!-- ========== VUE 2 : HISTORIQUE AGENT ========== -->
+    <!-- VUE 2 : HISTORIQUE -->
     <section id="view-history" class="hidden space-y-4">
       <div class="relative">
         <i data-lucide="search" class="w-5 h-5 absolute left-3 top-3.5 text-slate-400"></i>
@@ -179,73 +170,37 @@
       <div id="historyList" class="space-y-2"></div>
     </section>
 
-    <!-- ========== VUE 3 : MONITORING MANAGER (ADMIN ONLY) ========== -->
+    <!-- VUE 3 : MONITORING MOBILE (ADMIN AVEC MOT DE PASSE) -->
     <section id="view-monitoring" class="hidden space-y-4">
-      
-      <!-- En-tête supervision -->
       <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-base font-bold text-white flex items-center gap-1.5">
-            <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
-            Supervision Magasin
-          </h3>
-          <p class="text-[11px] text-slate-400">Activités en temps réel des magasiniers</p>
-        </div>
-        <button onclick="syncData()" class="text-xs bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-indigo-400 flex items-center gap-1">
-          <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-          Actualiser
-        </button>
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
+          Supervision Magasin
+        </h3>
+        <button onclick="syncData()" class="text-xs bg-slate-800 px-2.5 py-1 rounded text-indigo-400">Actualiser</button>
       </div>
 
-      <!-- Compteurs KPIs Synthétiques -->
-      <div class="grid grid-cols-3 gap-2">
-        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-center">
-          <span class="text-[10px] text-slate-400 font-bold block uppercase">Total Lignes</span>
-          <span id="kpiTotalRows" class="text-xl font-black text-white">0</span>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow">
+          <span class="text-[10px] text-slate-400 block font-bold uppercase">Lignes</span>
+          <span id="mobKpiRows" class="text-xl font-black text-white">0</span>
         </div>
-        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-center">
-          <span class="text-[10px] text-slate-400 font-bold block uppercase">Total Pièces</span>
-          <span id="kpiTotalQty" class="text-xl font-black text-indigo-400">0</span>
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow">
+          <span class="text-[10px] text-slate-400 block font-bold uppercase">Pièces</span>
+          <span id="mobKpiQty" class="text-xl font-black text-emerald-400">0</span>
         </div>
-        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-center">
-          <span class="text-[10px] text-amber-400 font-bold block uppercase">Anomalies</span>
-          <span id="kpiAlertCount" class="text-xl font-black text-amber-400">0</span>
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow">
+          <span class="text-[10px] text-amber-400 block font-bold uppercase">Alertes</span>
+          <span id="mobKpiAlerts" class="text-xl font-black text-amber-400">0</span>
         </div>
       </div>
 
-      <!-- Filtres du monitoring -->
-      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Agent</label>
-            <select id="monFilterAgent" onchange="renderMonitoring()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-              <option value="">Tous les agents</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Filtre Anomalie</label>
-            <select id="monFilterAlert" onchange="renderMonitoring()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-              <option value="ALL">Toutes les saisies</option>
-              <option value="ALERT_ONLY">⚠️ Anomalies uniquement</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Liste des saisies sous supervision -->
-      <div class="space-y-2">
-        <div class="flex justify-between items-center text-xs text-slate-400 px-1">
-          <span id="monCountLabel">0 saisie(s)</span>
-          <span class="text-[10px] text-slate-500">Tri chrono inverse</span>
-        </div>
-        <div id="monitoringList" class="space-y-2"></div>
-      </div>
-
+      <div id="mobMonitoringList" class="space-y-2"></div>
     </section>
 
   </main>
 
-  <!-- ================= BARRE DE NAVIGATION ================= -->
+  <!-- NAVIGATION INFÉRIEURE -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -255,21 +210,20 @@
       <i data-lucide="history" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Historique</span>
     </button>
-    <!-- Bouton Monitoring (affiché uniquement si admin) -->
     <button id="tabNavMonitoring" onclick="switchTab('monitoring')" class="hidden flex-col items-center justify-center text-slate-400">
       <i data-lucide="activity" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Monitoring</span>
     </button>
   </nav>
 
-  <!-- TOAST NOTIFICATION -->
+  <!-- NOTIFICATION TOAST -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
     <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-6 h-6"></i></div>
     <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
-    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS :
+    // ⚠️ METTEZ VOTRE VRAIE URL WEB APP ICI :
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -277,9 +231,11 @@
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
     let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
     let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
+    let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
 
     let currentAgent = localStorage.getItem("inv_current_agent") || "";
+    let isMonitoringUnlocked = false;
     let activeItem = null;
     let html5QrCode = null;
     let isScanning = false;
@@ -320,7 +276,6 @@
       }
     }
 
-    // --- SÉLECTION DE L'AGENT ---
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
       if (availableAgents.length === 0) {
@@ -335,22 +290,21 @@
     function confirmAgentSelection() {
       const select = document.getElementById("modalAgentSelect");
       if (!select.value) {
-        alert("Veuillez sélectionner votre nom dans la liste.");
+        alert("Veuillez sélectionner votre nom d'agent.");
         return;
       }
       currentAgent = select.value;
       localStorage.setItem("inv_current_agent", currentAgent);
+      isMonitoringUnlocked = false; // Réinitialise le déverrouillage
       updateAgentUI();
       document.getElementById("userModal").classList.add("hidden");
       showToast(`Session : ${currentAgent}`);
       renderHistory();
-      if (isAdmin()) renderMonitoring();
     }
 
     function populateDropdowns() {
       const cSelect = document.getElementById("contractorSelect");
       const tSelect = document.getElementById("tradeSelect");
-      const monAgent = document.getElementById("monFilterAgent");
 
       if (availableContractors.length > 0) {
         cSelect.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -358,21 +312,14 @@
       if (availableTrades.length > 0) {
         tSelect.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
       }
-      if (availableAgents.length > 0) {
-        monAgent.innerHTML = '<option value="">Tous les agents</option>' + 
-          availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
     }
 
     function adjustQuantity(delta) {
       const input = document.getElementById("qtyInput");
-      let currentVal = parseInt(input.value, 10);
-      if (isNaN(currentVal)) {
-        currentVal = delta > 0 ? delta : 0;
-      } else {
-        currentVal = Math.max(0, currentVal + delta);
-      }
-      input.value = currentVal;
+      let val = parseInt(input.value, 10);
+      if (isNaN(val)) val = delta > 0 ? delta : 0;
+      else val = Math.max(0, val + delta);
+      input.value = val;
     }
 
     function searchArticle(term) {
@@ -407,7 +354,6 @@
       document.getElementById("badgeIdentified").classList.remove("hidden");
     }
 
-    // --- SCANNER ---
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
@@ -449,7 +395,7 @@
         );
         isScanning = true;
       } catch (err) {
-        alert("Erreur caméra. Vérifiez les permissions.");
+        alert("Erreur caméra. Vérifiez les autorisations du navigateur.");
         container.classList.add("hidden");
         btnText.innerText = "SCANNER QR OU CODE-BARRES";
       }
@@ -465,7 +411,6 @@
       document.getElementById("btnScanText").innerText = "SCANNER QR OU CODE-BARRES";
     }
 
-    // --- ENREGISTREMENT ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -479,7 +424,7 @@
       const qtyInput = document.getElementById("qtyInput");
       const qty = parseInt(qtyInput.value, 10);
       if (isNaN(qty) || qty < 0) {
-        alert("Veuillez renseigner une quantité valide (0 ou supérieure).");
+        alert("Veuillez renseigner une quantité valide (>= 0).");
         qtyInput.focus();
         return;
       }
@@ -543,18 +488,17 @@
       }
     }
 
-    // --- MODIFICATION & SUPPRESSION AVEC TRACE AUDIT ---
     async function editHistoryItem(id, oldQty) {
       const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
       if (newQtyStr === null) return;
 
       const newQty = parseInt(newQtyStr, 10);
       if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide. Doit être égale à 0 ou supérieure.");
+        alert("Quantité invalide (>= 0 attendue).");
         return;
       }
 
-      showToast("Mise à jour en cours...");
+      showToast("Mise à jour...");
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
@@ -573,7 +517,7 @@
         if (target) target.quantity = newQty;
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         renderHistory();
-        if (isAdmin()) renderMonitoring();
+        if (isAdmin()) renderMobileMonitoring();
         showToast("Quantité modifiée !");
       } catch (err) {
         alert("Erreur lors de la mise à jour.");
@@ -581,11 +525,9 @@
     }
 
     async function deleteHistoryItem(id, designation) {
-      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) {
-        return;
-      }
+      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
 
-      showToast("Suppression en cours...");
+      showToast("Suppression...");
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
@@ -602,32 +544,31 @@
         cachedHistory = cachedHistory.filter(item => item.id !== id);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         renderHistory();
-        if (isAdmin()) renderMonitoring();
+        if (isAdmin()) renderMobileMonitoring();
         showToast("Saisie supprimée !");
       } catch (err) {
         alert("Erreur lors de la suppression.");
       }
     }
 
-    // --- HISTORIQUE STANDARD (AGENTS ET ADMIN) ---
     function renderHistory(filteredList = null) {
       const container = document.getElementById("historyList");
       const label = document.getElementById("historyHeaderLabel");
 
-      let itemsToDisplay = filteredList || cachedHistory;
+      let items = filteredList || cachedHistory;
       if (!isAdmin()) {
-        itemsToDisplay = itemsToDisplay.filter(item => item.user === currentAgent);
-        label.innerText = `Mes saisies (${itemsToDisplay.length})`;
+        items = items.filter(i => i.user === currentAgent);
+        label.innerText = `Mes saisies (${items.length})`;
       } else {
-        label.innerText = `Toutes les saisies (Mode Admin - ${itemsToDisplay.length})`;
+        label.innerText = `Toutes les saisies (Mode Admin - ${items.length})`;
       }
 
-      if (!itemsToDisplay || itemsToDisplay.length === 0) {
+      if (!items || items.length === 0) {
         container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">Aucun inventaire à afficher.</div>`;
         return;
       }
 
-      container.innerHTML = itemsToDisplay.map(item => `
+      container.innerHTML = items.map(item => `
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center justify-between space-x-3 shadow-md">
           <div class="min-w-0 flex-1">
             <div class="flex items-center space-x-2">
@@ -669,87 +610,29 @@
       renderHistory(filtered);
     }
 
-    // --- MONITORING SUPERVISION (OPTION A - ADMIN ONLY) ---
-    function renderMonitoring() {
+    function renderMobileMonitoring() {
       if (!isAdmin()) return;
+      document.getElementById("mobKpiRows").innerText = cachedHistory.length;
+      document.getElementById("mobKpiQty").innerText = cachedHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
+      document.getElementById("mobKpiAlerts").innerText = cachedHistory.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50).length;
 
-      const filterAgent = document.getElementById("monFilterAgent").value;
-      const filterAlert = document.getElementById("monFilterAlert").value;
-      const container = document.getElementById("monitoringList");
-      const countLabel = document.getElementById("monCountLabel");
-
-      // Calcul des KPIs globaux
-      const totalRows = cachedHistory.length;
-      const totalQty = cachedHistory.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
-      const alertItems = cachedHistory.filter(item => Number(item.quantity) === 0 || Number(item.quantity) > 50);
-
-      document.getElementById("kpiTotalRows").innerText = totalRows;
-      document.getElementById("kpiTotalQty").innerText = totalQty;
-      document.getElementById("kpiAlertCount").innerText = alertItems.length;
-
-      // Filtrage dynamique de la liste
-      let list = [...cachedHistory];
-      if (filterAgent) {
-        list = list.filter(item => item.user === filterAgent);
-      }
-      if (filterAlert === "ALERT_ONLY") {
-        list = list.filter(item => Number(item.quantity) === 0 || Number(item.quantity) > 50);
-      }
-
-      countLabel.innerText = `${list.length} saisie(s) affichée(s)`;
-
-      if (list.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">Aucune activité ne correspond aux filtres.</div>`;
-        return;
-      }
-
-      container.innerHTML = list.map(item => {
-        const isQtyZero = Number(item.quantity) === 0;
-        const isQtyHigh = Number(item.quantity) > 50;
-        let alertBadge = "";
-        if (isQtyZero) {
-          alertBadge = `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[9px] font-black px-1.5 py-0.5 rounded">STOCK 0</span>`;
-        } else if (isQtyHigh) {
-          alertBadge = `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-black px-1.5 py-0.5 rounded">> 50 PCS</span>`;
-        }
-
+      const container = document.getElementById("mobMonitoringList");
+      container.innerHTML = cachedHistory.slice(0, 15).map(item => {
+        const q = Number(item.quantity);
+        const isAlert = (q === 0 || q > 50);
         return `
-          <div class="bg-slate-900 p-3.5 rounded-xl border ${alertBadge ? 'border-amber-500/40' : 'border-slate-800'} space-y-2.5 shadow">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-1.5">
-                <span class="px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded text-[11px] font-bold">
-                  <i data-lucide="user" class="inline w-3 h-3 mr-0.5"></i>${item.user}
-                </span>
-                <span class="text-[10px] text-slate-400">${item.timestamp}</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                ${alertBadge}
-                <span class="text-xl font-black ${isQtyZero ? 'text-rose-400' : 'text-emerald-400'}">${item.quantity}</span>
-              </div>
+          <div class="bg-slate-900 p-3 rounded-xl border ${isAlert ? 'border-amber-500/40' : 'border-slate-800'} text-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-indigo-300">${item.user} • ${item.timestamp}</span>
+              <span class="font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${q}</span>
             </div>
-
-            <div class="text-xs">
-              <div class="font-bold text-slate-200 truncate">${item.designation}</div>
-              <div class="text-[11px] text-slate-400 font-mono">SAP : ${item.sapRef} • Fourn : ${item.supplierRef || '--'}</div>
-              <div class="text-[11px] text-slate-400 truncate mt-0.5">${item.contractor} (${item.trade})</div>
-            </div>
-
-            <!-- Actions de régulation directe par le superviseur -->
-            <div class="flex justify-end items-center gap-2 pt-1 border-t border-slate-800/80">
-              <button onclick="editHistoryItem('${item.id}', ${item.quantity})" class="text-[11px] px-2.5 py-1 bg-slate-800 active:bg-blue-600 rounded text-slate-300 font-semibold flex items-center gap-1">
-                <i data-lucide="pencil" class="w-3 h-3"></i> Corriger
-              </button>
-              <button onclick="deleteHistoryItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="text-[11px] px-2.5 py-1 bg-slate-800 active:bg-rose-600 rounded text-rose-400 active:text-white font-semibold flex items-center gap-1">
-                <i data-lucide="trash-2" class="w-3 h-3"></i> Supprimer
-              </button>
-            </div>
+            <div class="truncate text-slate-200">${item.designation}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${item.contractor} (${item.trade})</div>
           </div>
         `;
       }).join('');
-      lucide.createIcons();
     }
 
-    // --- SYNCHRONISATION ---
     async function syncData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
@@ -757,15 +640,15 @@
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
         if (data.status === "success") {
-          if (data.agents && data.agents.length) {
+          if (data.agents) {
             availableAgents = data.agents;
             localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
           }
-          if (data.contractors && data.contractors.length) {
+          if (data.contractors) {
             availableContractors = data.contractors;
             localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
           }
-          if (data.trades && data.trades.length) {
+          if (data.trades) {
             availableTrades = data.trades;
             localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
           }
@@ -773,7 +656,11 @@
             adminAgents = data.admins;
             localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
           }
-          if (data.catalog && data.catalog.length) {
+          if (data.adminPasswords) {
+            adminPasswords = data.adminPasswords;
+            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
+          }
+          if (data.catalog) {
             catalog = data.catalog;
             localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
@@ -785,11 +672,11 @@
             cachedHistory = data.history;
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
             renderHistory();
-            if (isAdmin()) renderMonitoring();
+            if (isAdmin()) renderMobileMonitoring();
           }
         }
       } catch (err) {
-        console.warn("Erreur de synchronisation.");
+        console.warn("Erreur de synchronisation réseau.");
       }
     }
 
@@ -802,12 +689,28 @@
       const tabHist = document.getElementById("tabNavHistory");
       const tabMon = document.getElementById("tabNavMonitoring");
 
-      // Masquer toutes les vues
+      // Contrôle par mot de passe pour le monitoring
+      if (tab === 'monitoring') {
+        if (!isAdmin()) {
+          alert("Accès réservé aux comptes superviseurs.");
+          return;
+        }
+        if (!isMonitoringUnlocked) {
+          const expected = adminPasswords[currentAgent] || "1234";
+          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe / code PIN :`);
+          if (entered === null) return;
+          if (entered !== expected) {
+            alert("Mot de passe incorrect.");
+            return;
+          }
+          isMonitoringUnlocked = true;
+        }
+      }
+
       invView.classList.add("hidden");
       histView.classList.add("hidden");
       monView.classList.add("hidden");
 
-      // Réinitialiser les couleurs de navigation
       tabInv.classList.replace("text-blue-400", "text-slate-400");
       tabHist.classList.replace("text-blue-400", "text-slate-400");
       if (tabMon) tabMon.classList.replace("text-blue-400", "text-slate-400");
@@ -824,7 +727,7 @@
         if (isScanning) stopScanner();
         monView.classList.remove("hidden");
         if (tabMon) tabMon.classList.replace("text-slate-400", "text-blue-400");
-        renderMonitoring();
+        renderMobileMonitoring();
       }
 
       syncData();
