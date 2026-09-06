@@ -3,54 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supervision & Pilotage Inventaire - Manager PC</title>
+  <title>Supervision & Audit - Dashboard Manager</title>
 
-  <!-- Tailwind CSS & Lucide Icons -->
+  <!-- Favicon officiel -->
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Leaflet CSS & JS pour la cartographie -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-    /* Style sombre des infobulles Leaflet */
-    .leaflet-popup-content-wrapper {
-      background: #0f172a;
-      color: #f8fafc;
-      border: 1px solid #334155;
-      border-radius: 0.75rem;
-      padding: 0;
-      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
-    }
-    .leaflet-popup-content {
-      margin: 12px 14px;
-      line-height: 1.4;
-    }
-    .leaflet-popup-tip { background: #0f172a; }
-
-    /* Tooltip personnalisé affiché au survol */
-    .custom-agent-tooltip {
-      background: #1e1b4b !important;
-      border: 1px solid #6366f1 !important;
-      color: #ffffff !important;
-      font-weight: 800 !important;
-      font-size: 11px !important;
-      padding: 3px 8px !important;
-      border-radius: 6px !important;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
-    }
-    .custom-agent-tooltip::before {
-      border-top-color: #6366f1 !important;
-    }
   </style>
 </head>
-<body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950" onclick="closeAllDropdowns(event)">
+<body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
   <!-- ================= MODALE AUTHENTIFICATION ADMIN ================= -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
@@ -72,9 +40,7 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mot de passe / Code PIN</label>
-          <input type="password" id="authPassword" placeholder="••••" 
-                 onkeydown="if(event.key==='Enter') loginAdmin()"
-                 class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono">
+          <input type="password" id="authPassword" placeholder="••••" onkeydown="if(event.key==='Enter') loginAdmin()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono">
         </div>
       </div>
 
@@ -85,11 +51,11 @@
     </div>
   </div>
 
-  <!-- ================= EN-TÊTE FIXE ================= -->
+  <!-- ================= EN-TÊTE FIXE PC ================= -->
   <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
     <div class="flex items-center space-x-3">
-      <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
-        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <div class="w-9 h-9 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden shadow">
+        <img src="icon.svg" alt="Logo" class="w-6 h-6">
       </div>
       <div>
         <h1 class="text-base font-bold text-white flex items-center gap-2">
@@ -104,1241 +70,201 @@
         <i data-lucide="user-check" class="w-3.5 h-3.5 text-indigo-400"></i>
         <span id="displayAdminName" class="font-bold text-white">--</span>
       </div>
-
       <button onclick="syncData()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-400"></i>
         <span>Actualiser</span>
       </button>
-
       <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 text-slate-400 hover:text-rose-400 transition">
         <i data-lucide="log-out" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
 
-  <!-- ================= STRUCTURE : SIDEBAR + VUES ================= -->
+  <!-- ================= CONTENEUR PRINCIPAL ================= -->
   <div class="flex-1 flex overflow-hidden">
-
-    <!-- MENU VERTICAL GAUCHE -->
+    <!-- MENU LATÉRAL GAUCHE -->
     <aside class="w-64 bg-slate-900/95 border-r border-slate-800 flex flex-col justify-between p-3.5 shrink-0 overflow-y-auto space-y-4">
       <div class="space-y-4">
         <div class="space-y-1.5">
-          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">Vues de Supervision</span>
-          
-          <button id="navTabGlobal" onclick="switchMainTab('global')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">Vues</span>
+          <button class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
             <i data-lucide="activity" class="w-4 h-4"></i>
-            <span class="truncate">Activité Globale</span>
-          </button>
-
-          <button id="navTabAgents" onclick="switchMainTab('agents')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60">
-            <i data-lucide="users" class="w-4 h-4"></i>
-            <span class="truncate">Suivi Terrain & Agents</span>
-          </button>
-
-          <!-- 3e Onglet Cartographie -->
-          <button id="navTabMap" onclick="switchMainTab('map')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60">
-            <i data-lucide="map-pin" class="w-4 h-4"></i>
-            <span class="truncate">Carte & Géolocalisation</span>
+            <span>Activité Globale</span>
           </button>
         </div>
 
-        <!-- FILTRE PÉRIODE MAÎTRE -->
-        <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl space-y-2.5 shadow-inner">
+        <!-- Filtre Période -->
+        <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl space-y-2 shadow-inner">
           <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
             <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période active
           </span>
-
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Raccourci rapide</label>
-            <select id="periodPreset" onchange="applyPeriodPreset(this.value)" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-1.5 focus:outline-none focus:border-indigo-500">
-              <option value="ALL">Tout l'historique</option>
-              <option value="TODAY">Aujourd'hui</option>
-              <option value="WEEK" selected>Semaine en cours (Lun-Dim)</option>
-              <option value="LAST_WEEK">Semaine précédente</option>
-              <option value="MONTH">Mois en cours</option>
-              <option value="CUSTOM">Personnalisé...</option>
-            </select>
-          </div>
-
-          <div class="space-y-1.5 pt-1">
-            <div>
-              <span class="text-[9px] text-slate-400 uppercase font-semibold block">Date début</span>
-              <input type="date" id="dateStart" onchange="onManualDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
-            </div>
-            <div>
-              <span class="text-[9px] text-slate-400 uppercase font-semibold block">Date fin</span>
-              <input type="date" id="dateEnd" onchange="onManualDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
-            </div>
-          </div>
+          <select id="periodPreset" onchange="applyPeriodPreset(this.value)" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-1.5 focus:outline-none">
+            <option value="ALL">Tout l'historique</option>
+            <option value="TODAY">Aujourd'hui</option>
+            <option value="WEEK" selected>Cette semaine</option>
+            <option value="MONTH">Ce mois</option>
+          </select>
         </div>
       </div>
 
-      <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
-        <div class="flex justify-between">
-          <span>Saisies période :</span>
-          <strong id="sideTotalCount" class="text-white">0</strong>
-        </div>
-        <div class="flex justify-between">
-          <span>Alertes période :</span>
-          <strong id="sideAlertCount" class="text-amber-400">0</strong>
-        </div>
+      <!-- Mention Légale en bas de barre latérale -->
+      <div class="text-center pt-4 border-t border-slate-800/80">
+        <span class="text-[9px] font-semibold text-slate-500 tracking-wider uppercase block">designed by CO2H2O srlu</span>
       </div>
     </aside>
 
-    <!-- ZONE DE CONTENU -->
-    <main class="flex-1 overflow-y-auto p-6 bg-slate-950 relative">
-
-      <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
-      <section id="sectionGlobalView" class="space-y-6">
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Activité Entrepôt sur la période sélectionnée</span>
-            <span id="periodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold">--</span>
-          </div>
-
-          <div class="grid grid-cols-4 gap-4">
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-              <div class="flex items-center justify-between text-slate-400 mb-1">
-                <span class="text-xs font-bold uppercase tracking-wider">Lignes comptées</span>
-                <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
-              </div>
-              <div id="kpiRows" class="text-2xl font-black text-white">0</div>
-              <span class="text-[11px] text-slate-500">Saisies de la période</span>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-              <div class="flex items-center justify-between text-slate-400 mb-1">
-                <span class="text-xs font-bold uppercase tracking-wider">Quantité Cumulée</span>
-                <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
-              </div>
-              <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
-              <span class="text-[11px] text-slate-500">Pièces sur la période</span>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-              <div class="flex items-center justify-between text-amber-400 mb-1">
-                <span class="text-xs font-bold uppercase tracking-wider">Stocks à 0</span>
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
-              </div>
-              <div id="kpiZeroStock" class="text-2xl font-black text-amber-400">0</div>
-              <span class="text-[11px] text-slate-500">Ruptures signalées</span>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-              <div class="flex items-center justify-between text-rose-400 mb-1">
-                <span class="text-xs font-bold uppercase tracking-wider">Volumes > 50 pcs</span>
-                <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
-              </div>
-              <div id="kpiHighStock" class="text-2xl font-black text-rose-400">0</div>
-              <span class="text-[11px] text-slate-500">Quantités atypiques</span>
-            </div>
-          </div>
+    <!-- ZONE DE TABLEAU DE BORD -->
+    <main class="flex-1 overflow-y-auto p-6 space-y-5">
+      <!-- 4 KPIS GLOBAUX -->
+      <div class="grid grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+          <span class="text-xs font-bold text-slate-400 uppercase block">Total Lignes</span>
+          <span id="kpiRows" class="text-2xl font-black text-white mt-1 block">0</span>
         </div>
-
-        <!-- RUBRIQUE : FILTRES COMPLÉMENTAIRES & EXTRACTION -->
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtres complémentaires & Extraction</span>
-            <div class="flex items-center space-x-2">
-              <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                <span>Exporter la sélection (CSV)</span>
-              </button>
-              <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser tous les filtres</button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-4 gap-3 items-end text-xs">
-            <!-- 1. Recherche mot-clé -->
-            <div>
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche mot-clé</label>
-              <div class="relative">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
-                <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="SAP, désignation, ID..." class="w-full bg-slate-950 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-indigo-500">
-              </div>
-            </div>
-
-            <!-- 2. Multi-choix Entrepreneurs -->
-            <div class="relative" onclick="event.stopPropagation()">
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs</label>
-              <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
-                <span id="btnLabelContractors" class="truncate font-medium">Tous les entrepreneurs</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-              </button>
-
-              <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
-                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
-                  <button type="button" onclick="selectAll('contractors', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
-                  <button type="button" onclick="selectAll('contractors', false)" class="text-slate-400 hover:underline">Tout décocher</button>
-                </div>
-                <div id="checkboxesContractors" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
-              </div>
-            </div>
-
-            <!-- 3. Multi-choix Métiers -->
-            <div class="relative" onclick="event.stopPropagation()">
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métiers</label>
-              <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
-                <span id="btnLabelTrades" class="truncate font-medium">Tous les métiers</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-              </button>
-
-              <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
-                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
-                  <button type="button" onclick="selectAll('trades', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
-                  <button type="button" onclick="selectAll('trades', false)" class="text-slate-400 hover:underline">Tout décocher</button>
-                </div>
-                <div id="checkboxesTrades" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
-              </div>
-            </div>
-
-            <!-- 4. Multi-choix Statuts / Anomalies -->
-            <div class="relative" onclick="event.stopPropagation()">
-              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Statuts / Anomalies</label>
-              <button type="button" onclick="toggleFilterDropdown('dropdownAlerts')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
-                <span id="btnLabelAlerts" class="truncate font-medium">Tous les statuts</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-              </button>
-
-              <div id="dropdownAlerts" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
-                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
-                  <button type="button" onclick="selectAll('alerts', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
-                  <button type="button" onclick="selectAll('alerts', false)" class="text-slate-400 hover:underline">Tout décocher</button>
-                </div>
-                <div class="space-y-1">
-                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-                    <input type="checkbox" name="chkAlert" value="OK" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0">
-                    <span class="text-slate-200">Conformes</span>
-                  </label>
-                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-                    <input type="checkbox" name="chkAlert" value="ZERO" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-rose-500 focus:ring-0">
-                    <span class="text-rose-400 font-bold">Stocks à 0</span>
-                  </label>
-                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-                    <input type="checkbox" name="chkAlert" value="HIGH" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-amber-500 focus:ring-0">
-                    <span class="text-amber-400 font-bold">Volumes > 50 pièces</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+          <span class="text-xs font-bold text-slate-400 uppercase block">Total Pièces</span>
+          <span id="kpiQty" class="text-2xl font-black text-indigo-400 mt-1 block">0</span>
         </div>
-
-        <!-- TABLEAU DES DONNÉES -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
-          <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
-            <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
-            <span class="text-[11px] text-slate-500">Données synchronisées avec Google Sheets & Audit_Logs</span>
-          </div>
-
-          <div class="overflow-x-auto max-h-[520px]">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead class="bg-slate-950 sticky top-0 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider z-10">
-                <tr>
-                  <th class="p-3">Horodatage / ID</th>
-                  <th class="p-3">Agent</th>
-                  <th class="p-3">Entrepreneur & Métier</th>
-                  <th class="p-3">Réf SAP</th>
-                  <th class="p-3">Désignation Matériel</th>
-                  <th class="p-3">Codes Barres</th>
-                  <th class="p-3 text-center">Quantité</th>
-                  <th class="p-3 text-center">GPS</th>
-                  <th class="p-3 text-center">Statut</th>
-                  <th class="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="inventoryTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
-            </table>
-          </div>
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+          <span class="text-xs font-bold text-amber-400 uppercase block">Stocks à 0</span>
+          <span id="kpiZero" class="text-2xl font-black text-amber-400 mt-1 block">0</span>
         </div>
-      </section>
-
-      <!-- ================= ONGLET 2 : SUIVI TERRAIN AGENTS ================= -->
-      <section id="sectionAgentsView" class="hidden space-y-4">
-        <div class="flex justify-between items-end">
-          <div>
-            <h2 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
-              Suivi Terrain par Agent & Statut Entrepreneur
-            </h2>
-            <p class="text-xs text-slate-400">Activité bornée sur la période sélectionnée dans le menu latéral</p>
-          </div>
-          <span id="agentsPeriodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">--</span>
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+          <span class="text-xs font-bold text-rose-400 uppercase block">Quantités > 50</span>
+          <span id="kpiHigh" class="text-2xl font-black text-rose-400 mt-1 block">0</span>
         </div>
+      </div>
 
-        <div id="agentAccordionContainer" class="space-y-3"></div>
-      </section>
-
-      <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
-      <section id="sectionMapView" class="hidden absolute inset-0 z-10">
-        <div class="absolute top-4 right-4 z-[1000] bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-xl space-y-2 text-xs shadow-xl pointer-events-auto">
-          <div class="font-bold text-white border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
-            <i data-lucide="map" class="w-3.5 h-3.5 text-indigo-400"></i>
-            <span>Interactions Carte</span>
-          </div>
-          <div class="text-[11px] text-slate-400 space-y-1">
-            <p>• <strong>Survol :</strong> Nom de l'agent</p>
-            <p>• <strong>Clic :</strong> Chantiers, métiers, lignes & statut</p>
-          </div>
-          <div class="pt-1.5 border-t border-slate-800 space-y-1">
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block border border-white/50"></span>
-              <span>Dernier scan agent</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-              <span>Inventaire terminé (≥ 3 lignes)</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-              <span>Inventaire en cours / partiel</span>
-            </div>
-          </div>
+      <!-- TABLEAU DES INVENTAIRES -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-bold text-white">Saisies de terrain</h3>
+          <button onclick="exportCSV()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-emerald-400 border border-slate-700 rounded-xl flex items-center gap-1.5">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Export Excel (CSV)
+          </button>
         </div>
-        <div id="mapContainer" class="w-full h-full"></div>
-      </section>
-
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="p-2.5">Date</th>
+                <th class="p-2.5">Magasinier</th>
+                <th class="p-2.5">Entrepreneur</th>
+                <th class="p-2.5">Métier</th>
+                <th class="p-2.5">Réf SAP</th>
+                <th class="p-2.5">Désignation</th>
+                <th class="p-2.5 text-right">Quantité</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="divide-y divide-slate-850 font-medium"></tbody>
+          </table>
+        </div>
+      </div>
     </main>
   </div>
 
-  <!-- TOAST -->
-  <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-24 transition-transform duration-300 z-50 pointer-events-none">
-    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
-    <div class="text-sm font-medium" id="toastMessage">Action validée</div>
-  </div>
-
   <script>
-    // ⚠️ METTEZ VOTRE VRAIE URL WEB APP ICI :
+    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (/exec)
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let historyData = [];
-    let periodFilteredHistory = [];
-    let filteredData = [];
-    let availableAgents = [];
-    let availableContractors = [];
-    let availableTrades = [];
     let adminAgents = [];
     let adminPasswords = {};
+    let loggedAdmin = sessionStorage.getItem("logged_admin") || "";
 
-    let currentAdmin = localStorage.getItem("inv_current_admin") || "";
-    let openDrawers = {};
-
-    let map = null;
-    let mapMarkersLayer = null;
-
-    document.addEventListener("DOMContentLoaded", async () => {
+    document.addEventListener("DOMContentLoaded", () => {
       lucide.createIcons();
-      initDefaultPeriod();
-      await syncData();
-      checkAuth();
+      syncData();
     });
 
-    // --- GESTION DU FILTRE DE PÉRIODE MAÎTRE ---
-    function initDefaultPeriod() {
-      applyPeriodPreset("WEEK");
-    }
-
-    function applyPeriodPreset(preset) {
-      const now = new Date();
-      let start = new Date();
-      let end = new Date();
-
-      if (preset === "ALL") {
-        document.getElementById("dateStart").value = "";
-        document.getElementById("dateEnd").value = "";
-      } else if (preset === "TODAY") {
-        document.getElementById("dateStart").value = now.toISOString().slice(0, 10);
-        document.getElementById("dateEnd").value = now.toISOString().slice(0, 10);
-      } else if (preset === "WEEK") {
-        const day = now.getDay();
-        const diffToMon = (day === 0 ? -6 : 1) - day;
-        start.setDate(now.getDate() + diffToMon);
-        end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
-        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
-      } else if (preset === "LAST_WEEK") {
-        const day = now.getDay();
-        const diffToMon = (day === 0 ? -6 : 1) - day - 7;
-        start.setDate(now.getDate() + diffToMon);
-        end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
-        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
-      } else if (preset === "MONTH") {
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
-        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
-      }
-
-      applyFilters();
-    }
-
-    function onManualDateChange() {
-      document.getElementById("periodPreset").value = "CUSTOM";
-      applyFilters();
-    }
-
-    function parseItemDate(timestampStr) {
-      if (!timestampStr) return new Date(0);
-      if (timestampStr.includes('/')) {
-        const parts = timestampStr.split(' ');
-        const dateParts = parts[0].split('/');
-        const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
-      }
-      return new Date(timestampStr);
-    }
-
-    function switchMainTab(tab) {
-      const secGlobal = document.getElementById("sectionGlobalView");
-      const secAgents = document.getElementById("sectionAgentsView");
-      const secMap = document.getElementById("sectionMapView");
-      const btnGlobal = document.getElementById("navTabGlobal");
-      const btnAgents = document.getElementById("navTabAgents");
-      const btnMap = document.getElementById("navTabMap");
-
-      secGlobal.classList.add("hidden");
-      secAgents.classList.add("hidden");
-      secMap.classList.add("hidden");
-
-      btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
-      btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
-      btnMap.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
-
-      if (tab === 'global') {
-        secGlobal.classList.remove("hidden");
-        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
-      } else if (tab === 'agents') {
-        secAgents.classList.remove("hidden");
-        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
-        renderAgentAccordions();
-      } else if (tab === 'map') {
-        secMap.classList.remove("hidden");
-        btnMap.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
-        setTimeout(renderMap, 150);
-      }
-      lucide.createIcons();
-    }
-
-    // --- AUTHENTIFICATION SUPERVISEUR ---
-    function checkAuth() {
-      if (!currentAdmin || !adminAgents.includes(currentAdmin)) {
-        openAuthModal();
-      } else {
-        document.getElementById("displayAdminName").innerText = currentAdmin;
-        document.getElementById("authModal").classList.add("hidden");
-        applyFilters();
-      }
-    }
-
-    function openAuthModal() {
-      const select = document.getElementById("authSelect");
-      if (adminAgents.length === 0) {
-        select.innerHTML = '<option value="">Aucun compte administrateur configuré</option>';
-      } else {
-        select.innerHTML = '<option value="">-- Choisir votre profil --</option>' +
-          adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
-      document.getElementById("authPassword").value = "";
-      document.getElementById("authModal").classList.remove("hidden");
-    }
-
-    function loginAdmin() {
-      const selectedAdmin = document.getElementById("authSelect").value;
-      const enteredPassword = document.getElementById("authPassword").value;
-
-      if (!selectedAdmin) {
-        alert("Veuillez sélectionner un compte administrateur.");
-        return;
-      }
-
-      const expectedPassword = adminPasswords[selectedAdmin] || "1234";
-      if (enteredPassword !== expectedPassword) {
-        alert("Mot de passe incorrect.");
-        document.getElementById("authPassword").value = "";
-        document.getElementById("authPassword").focus();
-        return;
-      }
-
-      currentAdmin = selectedAdmin;
-      localStorage.setItem("inv_current_admin", currentAdmin);
-      document.getElementById("displayAdminName").innerText = currentAdmin;
-      document.getElementById("authModal").classList.add("hidden");
-      showToast(`Session Superviseur : ${currentAdmin}`);
-      applyFilters();
-    }
-
-    function logoutAdmin() {
-      localStorage.removeItem("inv_current_admin");
-      currentAdmin = "";
-      location.reload();
-    }
-
-    // --- MENUS DÉROULANTS MULTI-CHOIX ---
-    function toggleFilterDropdown(id) {
-      const el = document.getElementById(id);
-      const isHidden = el.classList.contains("hidden");
-      closeAllDropdowns();
-      if (isHidden) el.classList.remove("hidden");
-    }
-
-    function closeAllDropdowns(event) {
-      if (event && event.target && event.target.closest && (event.target.closest('#dropdownContractors') || event.target.closest('#dropdownTrades') || event.target.closest('#dropdownAlerts'))) {
-        return;
-      }
-      ["dropdownContractors", "dropdownTrades", "dropdownAlerts"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add("hidden");
-      });
-    }
-
-    function buildMultiSelectCheckboxes() {
-      const containerC = document.getElementById("checkboxesContractors");
-      containerC.innerHTML = availableContractors.map(c => `
-        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-          <input type="checkbox" name="chkContractor" value="${c}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
-          <span class="text-slate-200 truncate" title="${c}">${c}</span>
-        </label>
-      `).join('');
-
-      const containerT = document.getElementById("checkboxesTrades");
-      containerT.innerHTML = availableTrades.map(t => `
-        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-          <input type="checkbox" name="chkTrade" value="${t}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
-          <span class="text-slate-200 truncate" title="${t}">${t}</span>
-        </label>
-      `).join('');
-
-      updateDropdownButtonLabels();
-    }
-
-    function selectAll(type, check) {
-      let selector = "";
-      if (type === 'contractors') selector = 'input[name="chkContractor"]';
-      if (type === 'trades') selector = 'input[name="chkTrade"]';
-      if (type === 'alerts') selector = 'input[name="chkAlert"]';
-
-      document.querySelectorAll(selector).forEach(chk => chk.checked = check);
-      onCheckboxChange();
-    }
-
-    function onCheckboxChange() {
-      updateDropdownButtonLabels();
-      applyFilters();
-    }
-
-    function updateDropdownButtonLabels() {
-      const checkedC = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked'));
-      const lblC = document.getElementById("btnLabelContractors");
-      if (checkedC.length === 0 || checkedC.length === availableContractors.length) {
-        lblC.innerText = "Tous les entrepreneurs";
-      } else {
-        lblC.innerText = `${checkedC.length} entrepreneur(s) sélectionné(s)`;
-      }
-
-      const checkedT = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked'));
-      const lblT = document.getElementById("btnLabelTrades");
-      if (checkedT.length === 0 || checkedT.length === availableTrades.length) {
-        lblT.innerText = "Tous les métiers";
-      } else {
-        lblT.innerText = `${checkedT.length} métier(s) sélectionné(s)`;
-      }
-
-      const checkedA = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked'));
-      const lblA = document.getElementById("btnLabelAlerts");
-      if (checkedA.length === 0 || checkedA.length === 3) {
-        lblA.innerText = "Tous les statuts";
-      } else {
-        lblA.innerText = `${checkedA.length} statut(s) sélectionné(s)`;
-      }
-    }
-
-    function resetFilters() {
-      document.getElementById("filterSearch").value = "";
-      document.querySelectorAll('input[name="chkContractor"]').forEach(c => c.checked = false);
-      document.querySelectorAll('input[name="chkTrade"]').forEach(c => c.checked = false);
-      document.querySelectorAll('input[name="chkAlert"]').forEach(c => c.checked = false);
-      updateDropdownButtonLabels();
-      applyFilters();
-    }
-
-    // --- SYNCHRONISATION ---
     async function syncData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
-
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
         if (data.status === "success") {
-          availableAgents = data.agents || [];
-          availableContractors = data.contractors || [];
-          availableTrades = data.trades || [];
           adminAgents = data.admins || [];
           adminPasswords = data.adminPasswords || {};
           historyData = data.history || [];
 
-          buildMultiSelectCheckboxes();
-          applyFilters();
+          populateAuthSelect();
+          if (loggedAdmin && adminAgents.includes(loggedAdmin)) {
+            document.getElementById("authModal").classList.add("hidden");
+            document.getElementById("displayAdminName").innerText = loggedAdmin;
+            renderDashboard();
+          } else {
+            document.getElementById("authModal").classList.remove("hidden");
+          }
         }
       } catch (err) {
-        console.warn("Erreur de synchronisation :", err);
+        console.warn("Erreur réseau :", err);
       }
     }
 
-    function getAgentLiveStatus(agentName, agentEntries) {
-      if (!agentEntries || agentEntries.length === 0) {
-        return {
-          label: "En attente",
-          contractor: "Aucun entrepreneur débuté",
-          detail: "0 scan",
-          badgeClass: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-          dotClass: "bg-amber-400"
-        };
-      }
-
-      const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
-      const lastEntry = sorted[0];
-      const lastTime = lastEntry.timestamp ? (lastEntry.timestamp.split(' ')[1] || lastEntry.timestamp) : '--';
-      const activeContractor = lastEntry.contractor || "Entrepreneur indéterminé";
-
-      return {
-        label: "En cours",
-        contractor: activeContractor,
-        detail: lastTime,
-        badgeClass: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-        dotClass: "bg-emerald-400 animate-pulse"
-      };
+    function populateAuthSelect() {
+      const select = document.getElementById("authSelect");
+      select.innerHTML = '<option value="">Sélectionnez votre compte...</option>' + adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
     }
 
-    // --- FILTRAGE CUMULATIF (DATE + CHECKBOXES) ---
-    function applyFilters() {
-      const dStartStr = document.getElementById("dateStart").value;
-      const dEndStr = document.getElementById("dateEnd").value;
-      const dStart = dStartStr ? new Date(dStartStr + "T00:00:00") : null;
-      const dEnd = dEndStr ? new Date(dEndStr + "T23:59:59") : null;
+    function loginAdmin() {
+      const admin = document.getElementById("authSelect").value;
+      const pass = document.getElementById("authPassword").value.trim();
+      const expected = adminPasswords[admin] || "1234";
 
-      periodFilteredHistory = historyData.filter(item => {
-        const itemDate = parseItemDate(item.timestamp);
-        if (dStart && itemDate < dStart) return false;
-        if (dEnd && itemDate > dEnd) return false;
-        return true;
-      });
-
-      let labelP = "Tout l'historique";
-      if (dStartStr && dEndStr) {
-        labelP = `Du ${new Date(dStartStr).toLocaleDateString("fr-FR")} au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
-      } else if (dStartStr) {
-        labelP = `À partir du ${new Date(dStartStr).toLocaleDateString("fr-FR")}`;
-      } else if (dEndStr) {
-        labelP = `Jusqu'au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
-      }
-      document.getElementById("periodLabelBadge").innerText = labelP;
-      document.getElementById("agentsPeriodLabelBadge").innerText = labelP;
-
-      const totalRows = periodFilteredHistory.length;
-      const totalQty = periodFilteredHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
-      const zeroStockCount = periodFilteredHistory.filter(i => Number(i.quantity) === 0).length;
-      const highStockCount = periodFilteredHistory.filter(i => Number(i.quantity) > 50).length;
-      const totalAlerts = zeroStockCount + highStockCount;
-
-      document.getElementById("kpiRows").innerText = totalRows;
-      document.getElementById("kpiTotalQty").innerText = totalQty;
-      document.getElementById("kpiZeroStock").innerText = zeroStockCount;
-      document.getElementById("kpiHighStock").innerText = highStockCount;
-
-      document.getElementById("sideTotalCount").innerText = totalRows;
-      document.getElementById("sideAlertCount").innerText = totalAlerts;
-
-      const search = document.getElementById("filterSearch").value.trim().toLowerCase();
-      const selectedContractors = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked')).map(c => c.value);
-      const selectedTrades = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked')).map(c => c.value);
-      const selectedAlerts = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked')).map(c => c.value);
-
-      filteredData = periodFilteredHistory.filter(item => {
-        const q = Number(item.quantity) || 0;
-        
-        if (search) {
-          const matchSearch = 
-            (item.sapRef && item.sapRef.toLowerCase().includes(search)) ||
-            (item.designation && item.designation.toLowerCase().includes(search)) ||
-            (item.id && item.id.toLowerCase().includes(search));
-          if (!matchSearch) return false;
-        }
-
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-
-        if (selectedAlerts.length > 0) {
-          let itemStatut = "OK";
-          if (q === 0) itemStatut = "ZERO";
-          else if (q > 50) itemStatut = "HIGH";
-          if (!selectedAlerts.includes(itemStatut)) return false;
-        }
-
-        return true;
-      });
-
-      renderTable();
-      renderAgentAccordions();
-
-      if (!document.getElementById("sectionMapView").classList.contains("hidden")) {
-        renderMap();
-      }
-    }
-
-    function toggleAgentDrawer(agentName, drawerType) {
-      openDrawers[agentName] = (openDrawers[agentName] === drawerType) ? null : drawerType;
-      renderAgentAccordions();
-    }
-
-    // --- RENDU TIROIRS ACCORDÉONS PAR AGENT ---
-    function renderAgentAccordions() {
-      const container = document.getElementById("agentAccordionContainer");
-      if (availableAgents.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Aucun agent configuré.</div>`;
+      if (!admin || pass !== expected) {
+        alert("Mot de passe ou identifiant incorrect.");
         return;
       }
 
-      container.innerHTML = availableAgents.map(agent => {
-        const agentEntries = periodFilteredHistory.filter(i => i.user === agent);
-        const totalQty = agentEntries.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
-        const status = getAgentLiveStatus(agent, agentEntries);
+      loggedAdmin = admin;
+      sessionStorage.setItem("logged_admin", admin);
+      document.getElementById("authModal").classList.add("hidden");
+      document.getElementById("displayAdminName").innerText = admin;
+      renderDashboard();
+    }
 
-        let cadence = agentEntries.length;
-        let firstScanTime = "--";
-        let lastScanTime = "--";
-        let durationHours = 0;
-        if (agentEntries.length > 1) {
-          const timestamps = agentEntries.map(i => parseItemDate(i.timestamp).getTime());
-          const minT = Math.min(...timestamps);
-          const maxT = Math.max(...timestamps);
-          durationHours = (maxT - minT) / (1000 * 60 * 60);
-          cadence = durationHours > 0.05 ? Math.round(agentEntries.length / durationHours) : agentEntries.length;
-          firstScanTime = new Date(minT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
-          lastScanTime = new Date(maxT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
-        } else if (agentEntries.length === 1) {
-          firstScanTime = lastScanTime = agentEntries[0].timestamp.split(' ')[1] || agentEntries[0].timestamp;
-        }
+    function logoutAdmin() {
+      sessionStorage.removeItem("logged_admin");
+      location.reload();
+    }
 
-        const suspiciousEntries = agentEntries.filter(i => {
-          const q = Number(i.quantity);
-          return q === 0 || q > 50;
-        });
-        const anomalyRate = agentEntries.length > 0 ? Math.round((suspiciousEntries.length / agentEntries.length) * 100) : 0;
+    function renderDashboard() {
+      let rows = historyData;
+      document.getElementById("kpiRows").innerText = rows.length;
+      document.getElementById("kpiQty").innerText = rows.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
+      document.getElementById("kpiZero").innerText = rows.filter(r => Number(r.quantity) === 0).length;
+      document.getElementById("kpiHigh").innerText = rows.filter(r => Number(r.quantity) > 50).length;
 
-        const treatedContractorMap = {};
-        const treatedTradeMap = {};
-
-        agentEntries.forEach(item => {
-          const c = item.contractor;
-          const t = item.trade;
-          const d = parseItemDate(item.timestamp);
-
-          if (c) {
-            if (!treatedContractorMap[c] || d > treatedContractorMap[c].lastDate) {
-              treatedContractorMap[c] = {
-                lastDate: d,
-                lastTimeStr: item.timestamp,
-                lines: (treatedContractorMap[c]?.lines || 0) + 1,
-                qty: (treatedContractorMap[c]?.qty || 0) + (Number(item.quantity) || 0)
-              };
-            } else {
-              treatedContractorMap[c].lines += 1;
-              treatedContractorMap[c].qty += (Number(item.quantity) || 0);
-            }
-          }
-
-          if (t) {
-            if (!treatedTradeMap[t] || d > treatedTradeMap[t].lastDate) {
-              treatedTradeMap[t] = {
-                lastDate: d,
-                lastTimeStr: item.timestamp,
-                lines: (treatedTradeMap[t]?.lines || 0) + 1,
-                qty: (treatedTradeMap[t]?.qty || 0) + (Number(item.quantity) || 0)
-              };
-            } else {
-              treatedTradeMap[t].lines += 1;
-              treatedTradeMap[t].qty += (Number(item.quantity) || 0);
-            }
-          }
-        });
-
-        const activeDrawer = openDrawers[agent];
-
-        let drawerContent = "";
-        if (activeDrawer === 'cadence') {
-          drawerContent = `
-            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-2">
-              <div class="font-bold text-indigo-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <span>⚡ Rythme & Amplitude sur la période (${agent})</span>
-                <span class="text-[11px] text-slate-400">Vitesse : <strong class="text-white">${cadence} lignes / h</strong></span>
-              </div>
-              <div class="grid grid-cols-3 gap-3 text-slate-300 pt-1">
-                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Premier scan</span><strong class="text-emerald-400">${firstScanTime}</strong></div>
-                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Dernier scan</span><strong class="text-emerald-400">${lastScanTime}</strong></div>
-                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Durée active</span><strong>${durationHours > 0 ? durationHours.toFixed(1) + ' heure(s)' : 'En cours'}</strong></div>
-              </div>
-            </div>
-          `;
-        } else if (activeDrawer === 'anomalies') {
-          const rowsHtml = suspiciousEntries.length === 0 
-            ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie constatée sur cette période.</div>`
-            : suspiciousEntries.map(item => `
-                <div class="flex items-center justify-between py-2 border-b border-slate-850 last:border-0 text-xs">
-                  <div class="min-w-0 flex-1 pr-2">
-                    <div class="flex items-center space-x-2">
-                      <span class="font-mono font-bold text-indigo-400">${item.sapRef}</span>
-                      <span class="text-[10px] text-slate-400">• ${item.timestamp}</span>
-                      <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${Number(item.quantity) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
-                        ${Number(item.quantity) === 0 ? 'STOCK 0' : '> 50 PCS'}
-                      </span>
-                    </div>
-                    <div class="text-slate-200 font-semibold truncate">${item.designation}</div>
-                    <div class="text-[11px] text-slate-400 truncate">${item.contractor} (${item.trade})</div>
-                  </div>
-                  <div class="flex items-center space-x-2 shrink-0">
-                    <span class="text-base font-black ${Number(item.quantity) === 0 ? 'text-rose-400' : 'text-amber-400'}">${item.quantity}</span>
-                    <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300" title="Corriger"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-                    <button onclick="deleteItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1 rounded bg-slate-800 hover:bg-rose-600 text-rose-400" title="Supprimer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                  </div>
-                </div>
-              `).join('');
-
-          drawerContent = `
-            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-rose-500/30 text-xs space-y-2">
-              <div class="font-bold text-rose-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <span>⚠️ ${suspiciousEntries.length} saisie(s) non conforme(s) sur la période</span>
-                <span class="text-[10px] text-slate-400">Tracé dans Audit_Logs</span>
-              </div>
-              <div class="divide-y divide-slate-800/80 max-h-60 overflow-y-auto">${rowsHtml}</div>
-            </div>
-          `;
-        } else if (activeDrawer === 'perimetre') {
-          const contractorKeys = Object.keys(treatedContractorMap);
-          const tradeKeys = Object.keys(treatedTradeMap);
-
-          const contractorListHtml = contractorKeys.length === 0
-            ? `<div class="text-slate-500 text-xs py-1">Aucun entrepreneur entamé sur cette période.</div>`
-            : contractorKeys.map(c => `
-                <div class="p-2 rounded-lg bg-indigo-950/40 border border-indigo-500/40 text-xs space-y-1">
-                  <div class="flex justify-between items-center">
-                    <span class="font-bold text-indigo-300 truncate">${c}</span>
-                    <span class="font-mono text-[10px] text-slate-400">${treatedContractorMap[c].lines} lig. (${treatedContractorMap[c].qty} pcs)</span>
-                  </div>
-                  <div class="text-[10px] text-slate-400 flex items-center gap-1">
-                    <i data-lucide="calendar" class="w-3 h-3 text-indigo-400"></i>
-                    Dernière saisie : <strong class="text-slate-200">${treatedContractorMap[c].lastTimeStr}</strong>
-                  </div>
-                </div>
-              `).join('');
-
-          const tradeListHtml = tradeKeys.length === 0
-            ? `<div class="text-slate-500 text-xs py-1">Aucun corps d'état entamé sur cette période.</div>`
-            : tradeKeys.map(t => `
-                <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-1">
-                  <div class="flex justify-between items-center">
-                    <span class="font-bold text-emerald-300 truncate">${t}</span>
-                    <span class="font-mono text-[10px] text-slate-400">${treatedTradeMap[t].lines} lig. (${treatedTradeMap[t].qty} pcs)</span>
-                  </div>
-                  <div class="text-[10px] text-slate-400 flex items-center gap-1">
-                    <i data-lucide="clock" class="w-3 h-3 text-emerald-400"></i>
-                    Dernière saisie : <strong class="text-slate-200">${treatedTradeMap[t].lastTimeStr}</strong>
-                  </div>
-                </div>
-              `).join('');
-
-          drawerContent = `
-            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-3">
-              <div class="font-bold text-indigo-300 border-b border-slate-800 pb-1.5 flex justify-between items-center">
-                <span>🌐 Entrepreneurs & Métiers traités sur la période (${agent})</span>
-                <span class="text-[10px] text-slate-400 font-normal">Dates et heures de passage</span>
-              </div>
-              <div>
-                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Entrepreneurs traités (${contractorKeys.length}) :</span>
-                <div class="grid grid-cols-2 gap-2">${contractorListHtml}</div>
-              </div>
-              <div>
-                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Corps d'état / Métiers traités (${tradeKeys.length}) :</span>
-                <div class="grid grid-cols-2 gap-2">${tradeListHtml}</div>
-              </div>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow transition">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div class="flex items-center space-x-3">
-                <span class="text-sm font-bold text-white flex items-center gap-1.5">
-                  <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
-                  ${agent}
-                </span>
-
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${status.badgeClass}">
-                  <span class="w-1.5 h-1.5 rounded-full ${status.dotClass}"></span>
-                  <span>${status.label}</span>
-                  <span class="text-slate-400">•</span>
-                  <span class="text-slate-100 font-extrabold truncate max-w-[160px]" title="${status.contractor}">
-                    ${status.contractor}
-                  </span>
-                  <span class="text-slate-400">(${status.detail})</span>
-                </span>
-              </div>
-
-              <span class="text-xs font-bold text-slate-400">
-                ${agentEntries.length} ligne(s) • <span class="text-emerald-400 font-black">${totalQty} pc(s)</span>
-              </span>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3 pt-3">
-              <button onclick="toggleAgentDrawer('${agent}', 'cadence')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'cadence' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
-                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
-                  <span>⚡ Cadence</span>
-                  <span>${activeDrawer === 'cadence' ? '▲' : '▼'}</span>
-                </div>
-                <div class="text-sm font-black text-emerald-400">${cadence} <span class="text-[10px] font-normal text-slate-400">l/h</span></div>
-                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'cadence' ? 'Fermer' : 'Déplier'}</div>
-              </button>
-
-              <button onclick="toggleAgentDrawer('${agent}', 'anomalies')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'anomalies' ? 'bg-rose-950/60 border-rose-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
-                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
-                  <span>🛡️ Anomalies</span>
-                  <span>${activeDrawer === 'anomalies' ? '▲' : '▼'}</span>
-                </div>
-                <div class="text-sm font-black ${anomalyRate > 10 ? 'text-rose-400' : 'text-amber-400'}">
-                  ${anomalyRate}% <span class="text-[10px] font-normal text-slate-400">(${suspiciousEntries.length})</span>
-                </div>
-                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'anomalies' ? 'Fermer' : 'Déplier'}</div>
-              </button>
-
-              <button onclick="toggleAgentDrawer('${agent}', 'perimetre')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'perimetre' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
-                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
-                  <span>🌐 Traités</span>
-                  <span>${activeDrawer === 'perimetre' ? '▲' : '▼'}</span>
-                </div>
-                <div class="text-sm font-black text-slate-200">
-                  ${Object.keys(treatedContractorMap).length} <span class="text-[10px] font-normal text-slate-400">ent. démarrés</span>
-                </div>
-                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'perimetre' ? 'Fermer' : 'Voir dates'}</div>
-              </button>
-            </div>
-
-            ${drawerContent}
-          </div>
-        `;
-      }).join('');
-
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = rows.map(r => `
+        <tr class="hover:bg-slate-900/60">
+          <td class="p-2.5 text-slate-400 font-mono">${r.timestamp}</td>
+          <td class="p-2.5 font-bold text-indigo-300">${r.user}</td>
+          <td class="p-2.5">${r.contractor}</td>
+          <td class="p-2.5 text-slate-400">${r.trade}</td>
+          <td class="p-2.5 font-mono text-amber-400 font-bold">${r.sapRef}</td>
+          <td class="p-2.5 text-white truncate max-w-xs">${r.designation}</td>
+          <td class="p-2.5 text-right font-black ${Number(r.quantity) === 0 ? 'text-amber-400' : 'text-white'} font-mono">${r.quantity}</td>
+        </tr>
+      `).join('');
       lucide.createIcons();
     }
 
-    // --- TABLEAU DE SUPERVISION ---
-    function renderTable() {
-      const tbody = document.getElementById("inventoryTableBody");
-      document.getElementById("tableCountLabel").innerText = `${filteredData.length} ligne(s) affichée(s) sur ${periodFilteredHistory.length} (période active)`;
-
-      if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 text-xs">Aucune saisie ne correspond aux filtres et à la période sélectionnée.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filteredData.map(item => {
-        const q = Number(item.quantity) || 0;
-        let badgeStatus = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">CONFORME</span>`;
-        if (q === 0) {
-          badgeStatus = `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">STOCK 0</span>`;
-        } else if (q > 50) {
-          badgeStatus = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">> 50 PCS</span>`;
-        }
-
-        return `
-          <tr class="hover:bg-slate-800/40 transition">
-            <td class="p-3">
-              <div class="text-white font-mono font-bold">${item.timestamp}</div>
-              <div class="text-[10px] text-slate-500 font-mono">${item.id}</div>
-            </td>
-            <td class="p-3">
-              <span class="inline-flex items-center gap-1 font-bold text-indigo-300">
-                <i data-lucide="user" class="w-3 h-3"></i> ${item.user}
-              </span>
-            </td>
-            <td class="p-3">
-              <div class="font-bold text-slate-200">${item.contractor}</div>
-              <div class="text-[11px] text-slate-400">${item.trade}</div>
-            </td>
-            <td class="p-3 font-mono font-bold text-indigo-400">${item.sapRef}</td>
-            <td class="p-3 max-w-xs">
-              <div class="truncate font-semibold text-slate-100" title="${item.designation}">${item.designation}</div>
-              <div class="text-[11px] text-slate-400 font-mono">Fourn: ${item.supplierRef || '--'}</div>
-            </td>
-            <td class="p-3 text-[11px] font-mono text-slate-400">
-              <div>EAN: ${item.ean || '--'}</div>
-              <div>QR: ${item.qr || '--'}</div>
-            </td>
-            <td class="p-3 text-center">
-              <span class="text-base font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'}">${q}</span>
-            </td>
-            <td class="p-3 text-center">
-              ${item.lat && item.lng ? `<span class="text-emerald-400 font-mono text-[10px]" title="${item.lat},${item.lng}">📍 GPS</span>` : `<span class="text-slate-600">--</span>`}
-            </td>
-            <td class="p-3 text-center">${badgeStatus}</td>
-            <td class="p-3 text-right space-x-1 whitespace-nowrap">
-              <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1.5 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white transition" title="Modifier la quantité">
-                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-              </button>
-              <button onclick="deleteItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 rounded bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white transition" title="Supprimer la saisie">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      lucide.createIcons();
-    }
-
-    // ================= MOTEUR CARTOGRAPHIQUE AVEC HOVER (AGENT) ET CLIC (DÉTAILS) =================
-    function renderMap() {
-      if (!map) {
-        map = L.map('mapContainer').setView([50.85, 4.35], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
-        mapMarkersLayer = L.layerGroup().addTo(map);
-      }
-
-      mapMarkersLayer.clearLayers();
-      const bounds = [];
-
-      // 1. POSITION GPS RÉCENTE DES AGENTS
-      availableAgents.forEach(agent => {
-        const agentEntries = periodFilteredHistory.filter(r => r.user === agent && r.lat && r.lng);
-        if (agentEntries.length > 0) {
-          const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
-          const last = sorted[0];
-          bounds.push([last.lat, last.lng]);
-
-          // Recensement des métiers traités par cet agent chez cet entrepreneur
-          const tradesList = Array.from(new Set(agentEntries.filter(i => i.contractor === last.contractor).map(i => i.trade))).filter(Boolean);
-
-          const agentIcon = L.divIcon({
-            className: 'custom-icon-agent',
-            html: `<div class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-lg text-xs font-bold ring-2 ring-blue-400/50">👤</div>`,
-            iconSize: [28, 28]
-          });
-
-          const marker = L.marker([last.lat, last.lng], { icon: agentIcon }).addTo(mapMarkersLayer);
-
-          // RÈGLE 1 : AU SURVOL -> AFFICHE LE NOM DE L'AGENT
-          marker.bindTooltip(`👤 Agent : ${agent}`, {
-            permanent: false,
-            direction: 'top',
-            offset: [0, -14],
-            className: 'custom-agent-tooltip'
-          });
-
-          // RÈGLE 2 : AU CLIC -> AFFICHE L'ENTREPRENEUR, LES MÉTIERS, LES LIGNES ET LE STATUT DÉTAILLÉ
-          marker.bindPopup(`
-            <div class="text-xs space-y-2">
-              <div class="border-b border-slate-700 pb-1.5 flex justify-between items-center">
-                <span class="font-bold text-blue-400 text-sm">👤 ${agent}</span>
-                <span class="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.5 rounded">AGENT</span>
-              </div>
-              <div class="space-y-1">
-                <div><span class="text-slate-400">Entrepreneur :</span> <strong class="text-white">${last.contractor}</strong></div>
-                <div><span class="text-slate-400">Métier(s) :</span> <span class="text-indigo-300">${tradesList.join(', ') || 'Non précisé'}</span></div>
-                <div><span class="text-slate-400">Lignes validées :</span> <strong class="text-emerald-400 font-bold">${agentEntries.length} ligne(s)</strong></div>
-                <div class="flex items-center gap-1.5 pt-0.5">
-                  <span class="text-slate-400">Statut :</span>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    🟢 En cours (${last.timestamp})
-                  </span>
-                </div>
-              </div>
-              <div class="text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-800">
-                GPS : ${last.lat.toFixed(5)}, ${last.lng.toFixed(5)}
-              </div>
-            </div>
-          `);
-        }
+    function exportCSV() {
+      if (historyData.length === 0) return alert("Aucune donnée à exporter.");
+      let csv = "\uFEFFHorodatage;Magasinier;Entrepreneur;Métier;Réf SAP;Désignation;Quantité\n";
+      historyData.forEach(r => {
+        csv += `"${r.timestamp}";"${r.user}";"${r.contractor}";"${r.trade}";"${r.sapRef}";"${r.designation}";${r.quantity}\n`;
       });
-
-      // 2. POSITION DES CHANTIERS / ENTREPRENEURS
-      const contractorMap = {};
-      periodFilteredHistory.forEach(item => {
-        if (item.lat && item.lng && item.contractor) {
-          if (!contractorMap[item.contractor]) {
-            contractorMap[item.contractor] = {
-              contractor: item.contractor,
-              lat: item.lat,
-              lng: item.lng,
-              linesCount: 0,
-              lastTimestamp: item.timestamp,
-              agents: new Set(),
-              trades: new Set()
-            };
-          }
-          contractorMap[item.contractor].linesCount++;
-          if (item.user) contractorMap[item.contractor].agents.add(item.user);
-          if (item.trade) contractorMap[item.contractor].trades.add(item.trade);
-          if (parseItemDate(item.timestamp) > parseItemDate(contractorMap[item.contractor].lastTimestamp)) {
-            contractorMap[item.contractor].lastTimestamp = item.timestamp;
-          }
-        }
-      });
-
-      Object.values(contractorMap).forEach(site => {
-        bounds.push([site.lat, site.lng]);
-        const isDone = site.linesCount >= 3;
-        const color = isDone ? 'bg-emerald-500' : 'bg-amber-500';
-        const labelStatut = isDone ? 'Terminé (Validé)' : 'En cours';
-        const badgeClass = isDone ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-
-        const siteIcon = L.divIcon({
-          className: 'custom-icon-site',
-          html: `<div class="${color} text-white w-6 h-6 rounded-md flex items-center justify-center border border-slate-900 shadow-md text-[10px] font-black">📦</div>`,
-          iconSize: [24, 24]
-        });
-
-        const marker = L.marker([site.lat, site.lng], { icon: siteIcon }).addTo(mapMarkersLayer);
-
-        // RÈGLE 1 : AU SURVOL -> AFFICHE LE NOM DE L'AGENT QUI EST INTERVENU (OU LES AGENTS)
-        const agentNames = Array.from(site.agents).join(', ') || 'Inconnu';
-        marker.bindTooltip(`👤 Agent(s) : ${agentNames}`, {
-          permanent: false,
-          direction: 'top',
-          offset: [0, -12],
-          className: 'custom-agent-tooltip'
-        });
-
-        // RÈGLE 2 : AU CLIC -> AFFICHE L'ENTREPRENEUR, MÉTIERS, LIGNES ET STATUT COMPLET
-        marker.bindPopup(`
-          <div class="text-xs space-y-2">
-            <div class="border-b border-slate-700 pb-1.5 flex justify-between items-center">
-              <span class="font-bold text-white text-sm">📦 ${site.contractor}</span>
-              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeClass}">${labelStatut}</span>
-            </div>
-            <div class="space-y-1">
-              <div><span class="text-slate-400">Agent(s) présent(s) :</span> <strong class="text-indigo-300">${agentNames}</strong></div>
-              <div><span class="text-slate-400">Métier(s) traité(s) :</span> <span class="text-slate-200">${Array.from(site.trades).join(', ') || 'Tous corps'}</span></div>
-              <div><span class="text-slate-400">Lignes constatées :</span> <strong class="text-white font-bold">${site.linesCount} ligne(s)</strong></div>
-              <div><span class="text-slate-400">Dernier scan :</span> <strong class="text-slate-200">${site.lastTimestamp}</strong></div>
-            </div>
-          </div>
-        `);
-      });
-
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [50, 50] });
-      }
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `inventaire_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
     }
 
-    // --- ACTIONS D'AUDIT MODIFIER / SUPPRIMER ---
-    async function editItem(id, currentQty) {
-      const newQtyStr = prompt("Superviseur : Nouvelle quantité constatée (>= 0) :", currentQty);
-      if (newQtyStr === null) return;
-
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide. Doit être égale à 0 ou supérieure.");
-        return;
-      }
-
-      showToast("Mise à jour dans Google Sheets...");
-      try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "UPDATE",
-            id: id,
-            quantity: newQty,
-            user: `${currentAdmin} (Admin PC)`
-          })
-        });
-
-        const target = historyData.find(i => i.id === id);
-        if (target) target.quantity = newQty;
-        applyFilters();
-        showToast("Quantité modifiée et auditée !");
-      } catch (err) {
-        alert("Erreur lors de la modification.");
-      }
-    }
-
-    async function deleteItem(id, designation) {
-      if (!confirm(`Superviseur : Confirmer la suppression définitive de la saisie ?\n\n"${designation}"\n\nCette action sera tracée dans Audit_Logs.`)) {
-        return;
-      }
-
-      showToast("Suppression en cours...");
-      try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "DELETE",
-            id: id,
-            user: `${currentAdmin} (Admin PC)`
-          })
-        });
-
-        historyData = historyData.filter(i => i.id !== id);
-        applyFilters();
-        showToast("Saisie supprimée !");
-      } catch (err) {
-        alert("Erreur lors de la suppression.");
-      }
-    }
-
-    // --- EXPORT CSV SUR LA PÉRIODE SÉLECTIONNÉE ---
-    function exportToCSV() {
-      if (filteredData.length === 0) {
-        alert("Aucune donnée à exporter.");
-        return;
-      }
-
-      const headers = ["ID Inventaire", "Horodatage", "Magasinier", "Entrepreneur", "Metier", "Ref SAP", "Designation", "Ref Fournisseur", "EAN", "QR", "Quantite", "Latitude", "Longitude"];
-      const rows = filteredData.map(i => [
-        `"${i.id || ''}"`,
-        `"${i.timestamp || ''}"`,
-        `"${i.user || ''}"`,
-        `"${i.contractor || ''}"`,
-        `"${i.trade || ''}"`,
-        `"${i.sapRef || ''}"`,
-        `"${(i.designation || '').replace(/"/g, '""')}"`,
-        `"${i.supplierRef || ''}"`,
-        `"${i.ean || ''}"`,
-        `"${i.qr || ''}"`,
-        i.quantity,
-        `"${i.lat || ''}"`,
-        `"${i.lng || ''}"`
-      ]);
-
-      const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const dateStr = new Date().toISOString().slice(0, 10);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Inventaires_Extraction_${dateStr}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast("Extraction CSV téléchargée !");
-    }
-
-    function showToast(msg) {
-      const toast = document.getElementById("toast");
-      document.getElementById("toastMessage").innerText = msg;
-      toast.classList.remove("translate-y-24");
-      toast.classList.add("translate-y-0");
-      setTimeout(() => {
-        toast.classList.remove("translate-y-0");
-        toast.classList.add("translate-y-24");
-      }, 2500);
+    function applyPeriodPreset(preset) {
+      renderDashboard();
     }
   </script>
 </body>
