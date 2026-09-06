@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision & Pilotage Inventaire - Manager PC</title>
 
-  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -18,7 +17,7 @@
 </head>
 <body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950">
 
-  <!-- ================= MODALE AUTHENTIFICATION ADMIN ================= -->
+  <!-- MODALE AUTHENTIFICATION ADMIN AVEC MOT DE PASSE -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -29,11 +28,19 @@
         <p class="text-xs text-slate-400">Identifiez-vous avec votre compte administrateur</p>
       </div>
 
-      <div class="space-y-2">
-        <label class="block text-xs font-bold text-slate-400 uppercase">Administrateur / Manager</label>
-        <select id="authSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500">
-          <option value="">Chargement des comptes...</option>
-        </select>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Administrateur / Manager</label>
+          <select id="authSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+            <option value="">Chargement des comptes...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mot de passe / Code PIN</label>
+          <input type="password" id="authPassword" placeholder="••••" 
+                 onkeydown="if(event.key==='Enter') loginAdmin()"
+                 class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono">
+        </div>
       </div>
 
       <button onclick="loginAdmin()" class="w-full h-12 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 transition">
@@ -43,7 +50,7 @@
     </div>
   </div>
 
-  <!-- ================= EN-TÊTE FIXE ================= -->
+  <!-- EN-TÊTE FIXE -->
   <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
     <div class="flex items-center space-x-3">
       <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
@@ -74,13 +81,12 @@
     </div>
   </header>
 
-  <!-- ================= STRUCTURE PRINCIPALE : MENU LATÉRAL + CONTENU ================= -->
+  <!-- STRUCTURE PRINCIPALE : SIDEBAR + VUES -->
   <div class="flex-1 flex overflow-hidden">
 
     <!-- MENU VERTICAL GAUCHE -->
     <aside class="w-64 bg-slate-900/95 border-r border-slate-800 flex flex-col justify-between p-3.5 shrink-0 overflow-y-auto space-y-4">
       <div class="space-y-4">
-        <!-- Vues de navigation -->
         <div class="space-y-1.5">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">Vues de Supervision</span>
           
@@ -95,15 +101,12 @@
           </button>
         </div>
 
-        <!-- BLOC FILTRE DE PÉRIODE MAÎTRE (COMMUN AUX 2 ONGLETS) -->
+        <!-- FILTRE PÉRIODE MAÎTRE (COMMUN AUX 2 ONGLETS) -->
         <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl space-y-2.5 shadow-inner">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
-              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période active
-            </span>
-          </div>
+          <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période active
+          </span>
 
-          <!-- Raccourcis de période -->
           <div>
             <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Raccourci rapide</label>
             <select id="periodPreset" onchange="applyPeriodPreset(this.value)" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-1.5 focus:outline-none focus:border-indigo-500">
@@ -116,7 +119,6 @@
             </select>
           </div>
 
-          <!-- Dates début / fin -->
           <div class="space-y-1.5 pt-1">
             <div>
               <span class="text-[9px] text-slate-400 uppercase font-semibold block">Date début</span>
@@ -130,7 +132,6 @@
         </div>
       </div>
 
-      <!-- Résumé compact bas de menu -->
       <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
         <div class="flex justify-between">
           <span>Saisies période :</span>
@@ -143,13 +144,11 @@
       </div>
     </aside>
 
-    <!-- ZONE DE CONTENU -->
+    <!-- CONTENU SCROLLABLE -->
     <main class="flex-1 overflow-y-auto p-6 bg-slate-950">
 
-      <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE, RECHERCHE & EXTRAIT ================= -->
+      <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
       <section id="sectionGlobalView" class="space-y-6">
-
-        <!-- 1. KPIS GLOBAUX SUR LA PÉRIODE -->
         <div>
           <div class="flex justify-between items-center mb-2">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Activité Entrepôt sur la période sélectionnée</span>
@@ -195,7 +194,6 @@
           </div>
         </div>
 
-        <!-- 2. RECHERCHE, FILTRES & EXTRACT -->
         <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtres complémentaires & Extraction</span>
@@ -243,7 +241,6 @@
           </div>
         </div>
 
-        <!-- 3. TABLEAU DES DONNÉES -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
           <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
             <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
@@ -269,10 +266,9 @@
             </table>
           </div>
         </div>
-
       </section>
 
-      <!-- ================= ONGLET 2 : SUIVI TERRAIN AGENTS & STATUT ENTREPRENEUR ================= -->
+      <!-- ================= ONGLET 2 : SUIVI TERRAIN AGENTS ================= -->
       <section id="sectionAgentsView" class="hidden space-y-4">
         <div class="flex justify-between items-end">
           <div>
@@ -285,9 +281,7 @@
           <span id="agentsPeriodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">--</span>
         </div>
 
-        <div id="agentAccordionContainer" class="space-y-3">
-          <!-- Rendu dynamique via renderAgentAccordions() -->
-        </div>
+        <div id="agentAccordionContainer" class="space-y-3"></div>
       </section>
 
     </main>
@@ -300,7 +294,7 @@
   </div>
 
   <script>
-    // ⚠️ METTEZ BIEN VOTRE URL APPS SCRIPT CI-DESSOUS :
+    // ⚠️ METTEZ VOTRE VRAIE URL WEB APP ICI :
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let historyData = [];
@@ -310,6 +304,7 @@
     let availableContractors = [];
     let availableTrades = [];
     let adminAgents = [];
+    let adminPasswords = {};
 
     let currentAdmin = localStorage.getItem("inv_current_admin") || "";
     let openDrawers = {};
@@ -321,7 +316,6 @@
       checkAuth();
     });
 
-    // --- GESTION DU FILTRE DE PÉRIODE MAÎTRE ---
     function initDefaultPeriod() {
       applyPeriodPreset("WEEK");
     }
@@ -379,7 +373,6 @@
       return new Date(timestampStr);
     }
 
-    // --- NAVIGATION MENU VERTICAL GAUCHE ---
     function switchMainTab(tab) {
       const secGlobal = document.getElementById("sectionGlobalView");
       const secAgents = document.getElementById("sectionAgentsView");
@@ -401,7 +394,6 @@
       lucide.createIcons();
     }
 
-    // --- AUTHENTIFICATION SUPERVISEUR ---
     function checkAuth() {
       if (!currentAdmin || !adminAgents.includes(currentAdmin)) {
         openAuthModal();
@@ -420,16 +412,28 @@
         select.innerHTML = '<option value="">-- Choisir votre profil --</option>' +
           adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
       }
+      document.getElementById("authPassword").value = "";
       document.getElementById("authModal").classList.remove("hidden");
     }
 
     function loginAdmin() {
-      const val = document.getElementById("authSelect").value;
-      if (!val) {
+      const selectedAdmin = document.getElementById("authSelect").value;
+      const enteredPassword = document.getElementById("authPassword").value;
+
+      if (!selectedAdmin) {
         alert("Veuillez sélectionner un compte administrateur.");
         return;
       }
-      currentAdmin = val;
+
+      const expectedPassword = adminPasswords[selectedAdmin] || "1234";
+      if (enteredPassword !== expectedPassword) {
+        alert("Mot de passe incorrect.");
+        document.getElementById("authPassword").value = "";
+        document.getElementById("authPassword").focus();
+        return;
+      }
+
+      currentAdmin = selectedAdmin;
       localStorage.setItem("inv_current_admin", currentAdmin);
       document.getElementById("displayAdminName").innerText = currentAdmin;
       document.getElementById("authModal").classList.add("hidden");
@@ -443,7 +447,6 @@
       location.reload();
     }
 
-    // --- SYNCHRONISATION ---
     async function syncData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
@@ -455,6 +458,7 @@
           availableContractors = data.contractors || [];
           availableTrades = data.trades || [];
           adminAgents = data.admins || [];
+          adminPasswords = data.adminPasswords || {};
           historyData = data.history || [];
 
           populateFilterSelects();
@@ -508,14 +512,13 @@
       };
     }
 
-    // --- FILTRAGE CUMULATIF (DATE + SOUS-FILTRES) ---
     function applyFilters() {
       const dStartStr = document.getElementById("dateStart").value;
       const dEndStr = document.getElementById("dateEnd").value;
       const dStart = dStartStr ? new Date(dStartStr + "T00:00:00") : null;
       const dEnd = dEndStr ? new Date(dEndStr + "T23:59:59") : null;
 
-      // 1. Filtrer la base par la période maître
+      // Filtrage période maître
       periodFilteredHistory = historyData.filter(item => {
         const itemDate = parseItemDate(item.timestamp);
         if (dStart && itemDate < dStart) return false;
@@ -523,7 +526,6 @@
         return true;
       });
 
-      // Libellé de période
       let labelP = "Tout l'historique";
       if (dStartStr && dEndStr) {
         labelP = `Du ${new Date(dStartStr).toLocaleDateString("fr-FR")} au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
@@ -535,7 +537,6 @@
       document.getElementById("periodLabelBadge").innerText = labelP;
       document.getElementById("agentsPeriodLabelBadge").innerText = labelP;
 
-      // 2. KPIs sur la période
       const totalRows = periodFilteredHistory.length;
       const totalQty = periodFilteredHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
       const zeroStockCount = periodFilteredHistory.filter(i => Number(i.quantity) === 0).length;
@@ -550,7 +551,6 @@
       document.getElementById("sideTotalCount").innerText = totalRows;
       document.getElementById("sideAlertCount").innerText = totalAlerts;
 
-      // 3. Sous-filtres spécifiques à l'onglet 1 (Recherche mot-clé, entrepreneur, métier, alertes)
       const search = document.getElementById("filterSearch").value.trim().toLowerCase();
       const contractor = document.getElementById("filterContractor").value;
       const trade = document.getElementById("filterTrade").value;
@@ -585,7 +585,6 @@
       renderAgentAccordions();
     }
 
-    // --- TIROIRS ACCORDÉONS PAR AGENT (BASÉS SUR LA PÉRIODE MAÎTRE) ---
     function renderAgentAccordions() {
       const container = document.getElementById("agentAccordionContainer");
       if (availableAgents.length === 0) {
@@ -594,7 +593,6 @@
       }
 
       container.innerHTML = availableAgents.map(agent => {
-        // Filtré sur la période sélectionnée
         const agentEntries = periodFilteredHistory.filter(i => i.user === agent);
         const totalQty = agentEntries.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
         const status = getAgentLiveStatus(agent, agentEntries);
@@ -616,14 +614,14 @@
           firstScanTime = lastScanTime = agentEntries[0].timestamp.split(' ')[1] || agentEntries[0].timestamp;
         }
 
-        // 2. Anomalies sur la période
+        // 2. Anomalies
         const suspiciousEntries = agentEntries.filter(i => {
           const q = Number(i.quantity);
           return q === 0 || q > 50;
         });
         const anomalyRate = agentEntries.length > 0 ? Math.round((suspiciousEntries.length / agentEntries.length) * 100) : 0;
 
-        // 3. Périmètre DÉMARRÉ / TRAITÉ SUR LA PÉRIODE
+        // 3. Périmètre traité uniquement
         const treatedContractorMap = {};
         const treatedTradeMap = {};
 
@@ -829,7 +827,6 @@
       lucide.createIcons();
     }
 
-    // --- TABLEAU DE SUPERVISION ---
     function renderTable() {
       const tbody = document.getElementById("inventoryTableBody");
       document.getElementById("tableCountLabel").innerText = `${filteredData.length} ligne(s) affichée(s) sur ${periodFilteredHistory.length} (période active)`;
@@ -891,7 +888,6 @@
       lucide.createIcons();
     }
 
-    // --- ACTIONS D'AUDIT MODIFIER / SUPPRIMER ---
     async function editItem(id, currentQty) {
       const newQtyStr = prompt("Superviseur : Nouvelle quantité constatée (>= 0) :", currentQty);
       if (newQtyStr === null) return;
@@ -949,7 +945,6 @@
       }
     }
 
-    // --- EXPORT CSV (SUR LA PÉRIODE SÉLECTIONNÉE) ---
     function exportToCSV() {
       if (filteredData.length === 0) {
         alert("Aucune donnée à exporter.");
