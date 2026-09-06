@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Inventaire Logistique Mobile</title>
+  <title>Inventaire Logistique Terrain</title>
 
-  <!-- ICÔNE SMARTPHONE (Ajouter à l'écran d'accueil) -->
+  <!-- ICÔNE SMARTPHONE & FAVICON -->
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
   <meta name="mobile-web-app-capable" content="yes">
@@ -13,6 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
 
+  <!-- SCRIPTS EXTERNES -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -27,7 +28,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- MODALE SÉLECTION AGENT -->
+  <!-- ================= MODALE SÉLECTION AGENT ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto">
@@ -35,22 +36,24 @@
       </div>
       <div>
         <h2 class="text-lg font-bold text-white">Identification Agent</h2>
-        <p class="text-xs text-slate-400 mt-1">Sélectionnez votre profil pour débuter</p>
+        <p class="text-xs text-slate-400 mt-1">Sélectionnez votre nom pour débuter</p>
       </div>
 
       <div class="text-left space-y-1">
         <label class="block text-[11px] font-bold text-slate-400 uppercase">Magasinier</label>
-        <select id="modalAgentSelect" class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl p-3 text-sm text-white font-medium focus:border-blue-500 focus:outline-none"></select>
+        <select id="modalAgentSelect" class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl p-3 text-sm text-white font-medium focus:border-blue-500 focus:outline-none">
+          <option value="">Chargement depuis Google Sheets...</option>
+        </select>
       </div>
 
       <button id="btnConfirmAgent" onclick="confirmAgentSelection()" class="w-full h-12 bg-blue-600 active:bg-blue-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-sm transition">
-        <span>Valider mon profil</span>
+        <span>Commencer la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
     </div>
   </div>
 
-  <!-- EN-TÊTE -->
+  <!-- ================= EN-TÊTE FIXE ================= -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0">
     <div class="flex items-center space-x-2">
       <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800" onerror="this.style.display='none'">
@@ -62,25 +65,29 @@
       <span id="adminBadge" class="hidden px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider border border-amber-500/30">ADMIN</span>
       <button onclick="openAgentModal()" class="flex items-center space-x-1.5 bg-slate-800/90 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-200">
         <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
-        <span id="currentAgentName" class="font-bold truncate max-w-[110px]">Non défini</span>
+        <span id="currentAgentName" class="font-bold truncate max-w-[110px]">Chargement...</span>
         <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400 ml-0.5"></i>
       </button>
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL -->
+  <!-- ================= CONTENU PRINCIPAL ================= -->
   <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-24">
 
-    <!-- ================= ONGLET 1 : COMPTAGE ================= -->
+    <!-- ========== VUE 1 : COMPTAGE ========== -->
     <section id="view-inventory" class="space-y-4">
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
-          <select id="contractorSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500"></select>
+          <select id="contractorSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
+            <option value="">Chargement des entrepreneurs...</option>
+          </select>
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
-          <select id="tradeSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500"></select>
+          <select id="tradeSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
+            <option value="">Chargement des métiers...</option>
+          </select>
         </div>
       </div>
 
@@ -92,18 +99,30 @@
 
         <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
           <div id="reader" class="w-full"></div>
-          <p class="text-[11px] text-center text-slate-400 py-1.5">Centrez le code</p>
+          <p class="text-[11px] text-center text-slate-400 py-1.5">Centrez le code (QR, EAN-13, Code 128)</p>
         </div>
 
+        <!-- ZONE DE RECHERCHE UNIVERSELLE -->
         <div class="relative">
-          <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
+          <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue (Désignation, Réf Fourn., SAP, EAN)</label>
           <div class="relative flex items-center">
             <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-slate-400 pointer-events-none"></i>
-            <input type="text" id="articleSearchInput" oninput="onSearchInput(this.value)" onfocus="this.select()" placeholder="Tapez une référence ou désignation..." class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white font-medium focus:outline-none focus:border-indigo-500">
+            <input type="text" id="articleSearchInput" 
+                   oninput="onSearchInput(this.value)" 
+                   onfocus="this.select()"
+                   placeholder="Tapez un mot-clé ou un chiffre..." 
+                   autocomplete="off"
+                   class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl py-3 pl-11 pr-10 text-sm text-white font-medium focus:outline-none focus:border-indigo-500">
+            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
           </div>
-          <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-30 divide-y divide-slate-800"></div>
+
+          <!-- LISTE DÉROULANTE DES SUGGESTIONS SANS RESTRICTION -->
+          <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-30 divide-y divide-slate-800"></div>
         </div>
 
+        <!-- FICHE DESCRIPTIVE -->
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
@@ -125,6 +144,7 @@
         </div>
       </div>
 
+      <!-- Saisie de quantité (élargie, sans 0 par défaut) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
         <div class="flex items-center justify-center space-x-4">
@@ -134,13 +154,14 @@
         </div>
       </div>
 
+      <!-- Bouton Validation -->
       <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
         <i data-lucide="check-circle" class="w-6 h-6"></i>
         <span>VALIDER ET ARCHIVER</span>
       </button>
     </section>
 
-    <!-- ================= ONGLET 2 : HISTORIQUE ================= -->
+    <!-- ========== VUE 2 : HISTORIQUE ========== -->
     <section id="view-history" class="hidden space-y-4">
       <div class="flex justify-between items-center text-xs text-slate-400 px-1">
         <span id="historyHeaderLabel">Mes saisies</span>
@@ -152,7 +173,7 @@
       <div id="historyList" class="space-y-2"></div>
     </section>
 
-    <!-- ================= ONGLET 3 : MONITORING MOBILE (ADMIN) ================= -->
+    <!-- ========== VUE 3 : MONITORING MOBILE (ADMIN) ========== -->
     <section id="view-monitoring" class="hidden space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -180,7 +201,7 @@
       <div id="mobMonitoringList" class="space-y-2"></div>
     </section>
 
-    <!-- MENTION DE PIED DE PAGE -->
+    <!-- ================= MENTION BAS DE PAGE ================= -->
     <div class="text-center pt-8 pb-3">
       <span class="text-[10px] font-medium text-slate-500 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -188,7 +209,7 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE DYNAMIQUE ================= -->
+  <!-- ================= BARRE DE NAVIGATION INFÉRIEURE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -198,7 +219,6 @@
       <i data-lucide="history" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Historique</span>
     </button>
-    <!-- Bouton Monitoring affiché dynamiquement si profil Admin -->
     <button id="tabNavMonitoring" onclick="switchTab('monitoring')" class="hidden flex-col items-center justify-center text-slate-400">
       <i data-lucide="activity" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Monitoring</span>
@@ -212,13 +232,10 @@
   </div>
 
   <script>
-    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (/exec)
+    // =========================================================================
+    // ⚠️ METTEZ VOTRE VRAIE URL GOOGLE APPS SCRIPT CI-DESSOUS (finissant par /exec)
+    // =========================================================================
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3j1H6_6_placeholder/exec";
-
-    const DEFAULT_AGENTS = ["Dawson", "Fabrice", "Fred", "Sylvie", "Marc", "Thomas"];
-    const DEFAULT_CONTRACTORS = ["BatiPlus SAS", "Axiome Rénov", "Entreprise Durand"];
-    const DEFAULT_TRADES = ["Électricité générale", "Plomberie / Chauffage", "Télécom & Réseaux"];
-    const DEFAULT_ADMINS = ["Dawson", "Sylvie"];
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
@@ -234,29 +251,34 @@
     let html5QrCode = null;
     let isScanning = false;
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
-
-      if (availableAgents.length === 0) availableAgents = [...DEFAULT_AGENTS];
-      if (availableContractors.length === 0) availableContractors = [...DEFAULT_CONTRACTORS];
-      if (availableTrades.length === 0) availableTrades = [...DEFAULT_TRADES];
-      if (adminAgents.length === 0) adminAgents = [...DEFAULT_ADMINS];
-
+      updateAgentUI();
       populateDropdowns();
-      updateAgentDisplay();
 
-      if (!currentAgent) {
+      // Fermeture du dropdown lors d'un clic extérieur
+      document.addEventListener("click", (e) => {
+        const dd = document.getElementById("suggestionsDropdown");
+        const searchInput = document.getElementById("articleSearchInput");
+        if (dd && !dd.contains(e.target) && e.target !== searchInput) {
+          dd.classList.add("hidden");
+        }
+      });
+
+      // 1. Récupération prioritaire des données réelles du Google Sheet
+      await syncData();
+
+      // 2. Affichage de la sélection d'agent si aucun agent n'est enregistré
+      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
         openAgentModal();
       }
-
-      syncData();
     });
 
     function isAdmin() {
       return adminAgents.includes(currentAgent);
     }
 
-    function updateAgentDisplay() {
+    function updateAgentUI() {
       document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
       const adminBadge = document.getElementById("adminBadge");
       const monNavBtn = document.getElementById("tabNavMonitoring");
@@ -277,57 +299,71 @@
 
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
-      const list = availableAgents.length > 0 ? availableAgents : DEFAULT_AGENTS;
-      select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
-        list.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+      if (availableAgents.length === 0) {
+        select.innerHTML = '<option value="">Aucun agent reçu. Vérifiez l\'URL du script.</option>';
+      } else {
+        select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
+          availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+      }
       document.getElementById("userModal").classList.remove("hidden");
     }
 
     function confirmAgentSelection() {
       const val = document.getElementById("modalAgentSelect").value;
       if (!val) {
-        alert("Veuillez sélectionner un nom.");
+        alert("Veuillez sélectionner votre nom d'agent.");
         return;
       }
       currentAgent = val;
       localStorage.setItem("inv_current_agent", currentAgent);
       isMonitoringUnlocked = false;
-      updateAgentDisplay();
+      updateAgentUI();
       document.getElementById("userModal").classList.add("hidden");
       renderHistory();
-      showToast(`Connecté : ${currentAgent}`);
+      showToast(`Session : ${currentAgent}`);
     }
 
     function populateDropdowns() {
-      const c = document.getElementById("contractorSelect");
-      const t = document.getElementById("tradeSelect");
-      const cList = availableContractors.length > 0 ? availableContractors : DEFAULT_CONTRACTORS;
-      const tList = availableTrades.length > 0 ? availableTrades : DEFAULT_TRADES;
-      
-      c.innerHTML = '<option value="">Sélectionner...</option>' + cList.map(x => `<option value="${x}">${x}</option>`).join('');
-      t.innerHTML = '<option value="">Sélectionner...</option>' + tList.map(x => `<option value="${x}">${x}</option>`).join('');
+      const cSelect = document.getElementById("contractorSelect");
+      const tSelect = document.getElementById("tradeSelect");
+
+      if (availableContractors.length > 0) {
+        cSelect.innerHTML = '<option value="">Sélectionner l\'entrepreneur...</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      } else {
+        cSelect.innerHTML = '<option value="">En attente des données...</option>';
+      }
+
+      if (availableTrades.length > 0) {
+        tSelect.innerHTML = '<option value="">Sélectionner le métier...</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      } else {
+        tSelect.innerHTML = '<option value="">En attente des données...</option>';
+      }
     }
 
     async function syncData() {
-      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+      if (!navigator.onLine) {
+        console.warn("Appareil hors-ligne. Utilisation des données locales.");
+        return;
+      }
 
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
+        
         if (data.status === "success") {
-          if (data.agents && data.agents.length) {
+          if (data.agents && Array.isArray(data.agents)) {
             availableAgents = data.agents;
             localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
           }
-          if (data.contractors && data.contractors.length) {
+          if (data.contractors && Array.isArray(data.contractors)) {
             availableContractors = data.contractors;
             localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
           }
-          if (data.trades && data.trades.length) {
+          if (data.trades && Array.isArray(data.trades)) {
             availableTrades = data.trades;
             localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
           }
-          if (data.admins && data.admins.length) {
+          if (data.admins && Array.isArray(data.admins)) {
             adminAgents = data.admins;
             localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
           }
@@ -335,22 +371,30 @@
             adminPasswords = data.adminPasswords;
             localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
           }
-          if (data.catalog && data.catalog.length) {
+          if (data.catalog && Array.isArray(data.catalog)) {
             catalog = data.catalog;
             localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
-          if (data.history) {
+          if (data.history && Array.isArray(data.history)) {
             cachedHistory = data.history;
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
 
+          // Rafraîchissement des sélecteurs avec les vraies données
           populateDropdowns();
-          updateAgentDisplay();
+          updateAgentUI();
+
+          const modalSelect = document.getElementById("modalAgentSelect");
+          if (modalSelect && availableAgents.length > 0) {
+            modalSelect.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
+              availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+          }
+
           renderHistory();
           if (isAdmin()) renderMobileMonitoring();
         }
-      } catch (e) {
-        console.warn("Mode hors ligne actif :", e);
+      } catch (err) {
+        console.error("Erreur de liaison avec Google Apps Script :", err);
       }
     }
 
@@ -362,93 +406,154 @@
       el.value = val;
     }
 
-    function onSearchInput(rawVal) {
-      const val = rawVal.trim().toLowerCase();
-      const dd = document.getElementById("suggestionsDropdown");
+    function normalizeStr(str) {
+      return String(str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
 
+    // --- RECHERCHE ET EFFACEMENT DE MÉMOIRE ---
+    function onSearchInput(rawVal) {
+      const val = rawVal.trim();
+      const dd = document.getElementById("suggestionsDropdown");
+      const clearBtn = document.getElementById("clearSearchBtn");
+
+      // Effacement direct de la mémoire article dès la frappe
       activeItem = null;
       document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
       document.getElementById("dispSupplier").innerText = "--";
       document.getElementById("dispSap").innerText = "--";
       document.getElementById("badgeIdentified").classList.add("hidden");
 
-      if (val.length < 1) {
+      if (val.length > 0) {
+        clearBtn.classList.remove("hidden");
+      } else {
+        clearBtn.classList.add("hidden");
         dd.classList.add("hidden");
         return;
       }
 
-      const words = val.split(/\s+/);
-      const matches = catalog.filter(it => {
-        const fullTxt = `${it.designation || ''} ${it.supplierRef || ''} ${it.sapRef || ''} ${it.ean || ''} ${it.qr || ''}`.toLowerCase();
-        return words.every(w => fullTxt.includes(w));
-      }).sort((a, b) => (a.designation || '').localeCompare(b.designation || ''));
+      const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
 
-      if (matches.length === 0) {
-        dd.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">Aucun article trouvé</div>';
+      const filtered = catalog.filter(item => {
+        const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""} ${item.sapRef || ""} ${item.ean || ""} ${item.qr || ""}`);
+        return searchTerms.every(term => textTarget.includes(term));
+      });
+
+      const sortedResults = filtered.sort((a, b) => {
+        return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
+      });
+
+      renderSuggestions(sortedResults);
+    }
+
+    function renderSuggestions(results) {
+      const dd = document.getElementById("suggestionsDropdown");
+
+      if (!results || results.length === 0) {
+        dd.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Aucun article trouvé dans le catalogue Google Sheets.</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
-      dd.innerHTML = matches.map(it => `
-        <div onclick="selectArticleBySap('${it.sapRef}')" class="p-3 hover:bg-slate-800 cursor-pointer">
-          <p class="text-xs font-bold text-white truncate">${it.designation}</p>
-          <div class="flex justify-between items-center mt-1">
-            <span class="text-xs font-mono font-extrabold text-amber-500">${it.sapRef}</span>
-            <span class="text-[10px] text-blue-400">${it.supplierRef || ''}</span>
+      let html = `
+        <div class="px-3.5 py-1.5 bg-slate-950/90 text-[11px] font-bold text-slate-400 flex justify-between border-b border-slate-800">
+          <span>${results.length} article(s) trouvé(s)</span>
+          <span class="text-indigo-400">Sélectionnez</span>
+        </div>
+      `;
+
+      html += results.map(item => `
+        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-3 hover:bg-slate-800 cursor-pointer transition">
+          <p class="text-xs font-bold text-slate-100 truncate">${item.designation || 'Sans désignation'}</p>
+          <div class="flex justify-between items-center text-xs mt-1">
+            <span class="text-[10px] text-blue-400 truncate">Fourn : ${item.supplierRef || 'N/A'}</span>
+            <span class="font-mono font-extrabold text-amber-400 text-xs">${item.sapRef}</span>
           </div>
         </div>
       `).join('');
+
+      dd.innerHTML = html;
       dd.classList.remove("hidden");
     }
 
-    function selectArticleBySap(sap) {
-      const it = catalog.find(i => String(i.sapRef) === String(sap));
-      if (!it) return;
-      activeItem = { ...it };
-      document.getElementById("dispDesignation").innerText = it.designation;
-      document.getElementById("dispSupplier").innerText = it.supplierRef || "--";
-      document.getElementById("dispSap").innerText = it.sapRef;
-      document.getElementById("articleSearchInput").value = it.designation;
+    function selectArticleBySap(sapRef) {
+      const item = catalog.find(i => String(i.sapRef) === String(sapRef));
+      if (!item) return;
+      activeItem = { ...item };
+
+      document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
+      document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
+      document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
+      document.getElementById("articleSearchInput").value = activeItem.designation || activeItem.supplierRef;
       document.getElementById("badgeIdentified").classList.remove("hidden");
       document.getElementById("suggestionsDropdown").classList.add("hidden");
+      document.getElementById("clearSearchBtn").classList.remove("hidden");
     }
 
+    function clearSearch() {
+      document.getElementById("articleSearchInput").value = "";
+      document.getElementById("clearSearchBtn").classList.add("hidden");
+      document.getElementById("suggestionsDropdown").classList.add("hidden");
+      activeItem = null;
+      document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
+      document.getElementById("dispSupplier").innerText = "--";
+      document.getElementById("dispSap").innerText = "--";
+      document.getElementById("badgeIdentified").classList.add("hidden");
+    }
+
+    // --- SCANNER CAMÉRA ---
     async function toggleScanner() {
-      const box = document.getElementById("scannerContainer");
-      const btn = document.getElementById("btnScanText");
+      const container = document.getElementById("scannerContainer");
+      const btnText = document.getElementById("btnScanText");
+
       if (isScanning) {
         await stopScanner();
         return;
       }
-      box.classList.remove("hidden");
-      btn.innerText = "FERMER LE SCAN";
+
+      container.classList.remove("hidden");
+      btnText.innerText = "FERMER LA CAMÉRA";
       html5QrCode = new Html5Qrcode("reader");
+
+      const config = {
+        fps: 20,
+        qrbox: { width: 280, height: 160 }
+      };
 
       try {
         await html5QrCode.start(
           { facingMode: "environment" },
-          { fps: 20, qrbox: { width: 260, height: 160 } },
-          (decoded) => {
-            const found = catalog.find(i => i.ean === decoded || i.qr === decoded || i.sapRef === decoded);
-            if (found) {
-              selectArticleBySap(found.sapRef);
-              showToast("Trouvé : " + found.designation);
+          config,
+          (decodedText) => {
+            const match = catalog.find(item => 
+              String(item.sapRef).toUpperCase() === decodedText.toUpperCase() ||
+              String(item.ean).toUpperCase() === decodedText.toUpperCase() ||
+              String(item.qr).toUpperCase() === decodedText.toUpperCase() ||
+              String(item.supplierRef).toUpperCase() === decodedText.toUpperCase()
+            );
+
+            if (match) {
+              selectArticleBySap(match.sapRef);
+              showToast("Trouvé : " + match.designation);
             } else {
-              activeItem = { sapRef: decoded, designation: "Article " + decoded, supplierRef: "N/A" };
+              activeItem = { sapRef: decodedText, designation: "Article (" + decodedText + ")", supplierRef: "N/A" };
               document.getElementById("dispDesignation").innerText = activeItem.designation;
               document.getElementById("dispSap").innerText = activeItem.sapRef;
+              document.getElementById("dispSupplier").innerText = "--";
               document.getElementById("badgeIdentified").classList.remove("hidden");
-              showToast("Scanné : " + decoded);
+              showToast("Scanné : " + decodedText);
             }
             stopScanner();
           },
           () => {}
         );
         isScanning = true;
-      } catch (e) {
-        alert("Accès caméra refusé.");
-        box.classList.add("hidden");
-        btn.innerText = "SCANNER CODE-BARRES / QR";
+      } catch (err) {
+        alert("Erreur d'accès à la caméra.");
+        container.classList.add("hidden");
+        btnText.innerText = "SCANNER CODE-BARRES / QR";
       }
     }
 
@@ -462,27 +567,35 @@
       document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR";
     }
 
+    // --- VALIDATION & SAISIE ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
         return;
       }
       if (!activeItem) {
-        alert("Veuillez sélectionner ou scanner un article.");
+        alert("Veuillez sélectionner un article (par recherche ou scan).");
         return;
       }
+
+      const qtyInput = document.getElementById("qtyInput");
+      const qty = parseInt(qtyInput.value, 10);
+      if (isNaN(qty) || qty < 0) {
+        alert("Veuillez renseigner une quantité valide (>= 0).");
+        qtyInput.focus();
+        return;
+      }
+
       const contractor = document.getElementById("contractorSelect").value;
       const trade = document.getElementById("tradeSelect").value;
-      const qty = parseInt(document.getElementById("qtyInput").value, 10);
 
       if (!contractor || !trade) {
-        alert("Veuillez choisir un entrepreneur et un corps d'état.");
+        alert("Veuillez sélectionner un entrepreneur et un métier.");
         return;
       }
-      if (isNaN(qty) || qty < 0) {
-        alert("Indiquez une quantité valide (>= 0).");
-        return;
-      }
+
+      const btn = document.getElementById("btnSubmit");
+      btn.disabled = true;
 
       const payload = {
         action: "CREATE",
@@ -494,35 +607,27 @@
         sapRef: activeItem.sapRef,
         designation: activeItem.designation,
         supplierRef: activeItem.supplierRef || "",
+        ean: activeItem.ean || "",
+        qr: activeItem.qr || "",
         quantity: qty
       };
 
-      const btn = document.getElementById("btnSubmit");
-      btn.disabled = true;
-
       try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Inventaire archivé !");
+        showToast("Inventaire archivé avec succès !");
 
-        document.getElementById("qtyInput").value = "";
-        document.getElementById("articleSearchInput").value = "";
-        activeItem = null;
-        document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
-        document.getElementById("dispSap").innerText = "--";
-        document.getElementById("dispSupplier").innerText = "--";
-        document.getElementById("badgeIdentified").classList.add("hidden");
-      } catch (err) {
+        qtyInput.value = "";
+        clearSearch();
+      } catch (e) {
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Enregistré localement.");
+        showToast("Sauvegardé en local (hors ligne).");
       } finally {
         btn.disabled = false;
         renderHistory();
@@ -591,7 +696,7 @@
         }
         if (!isMonitoringUnlocked) {
           const expected = adminPasswords[currentAgent] || "1234";
-          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe / code PIN :`);
+          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe :`);
           if (entered === null) return;
           if (entered !== expected) {
             alert("Mot de passe incorrect.");
