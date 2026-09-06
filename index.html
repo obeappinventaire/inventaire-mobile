@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inventaire Logistique Terrain</title>
 
-  <!-- ICÔNE SMARTPHONE & FAVICON -->
+  <!-- ICÔNE SMARTPHONE & PWA -->
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
   <meta name="mobile-web-app-capable" content="yes">
@@ -17,18 +17,19 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- Moteur OCR Tesseract.js pour la lecture des chiffres et textes de bacs -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     #reader video { border-radius: 0.75rem; object-fit: cover; width: 100% !important; }
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
   </style>
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- ================= MODALE SÉLECTION AGENT ================= -->
+  <!-- ================= MODALE D'IDENTIFICATION ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto">
@@ -36,7 +37,7 @@
       </div>
       <div>
         <h2 class="text-lg font-bold text-white">Identification Agent</h2>
-        <p class="text-xs text-slate-400 mt-1">Sélectionnez votre nom pour débuter</p>
+        <p class="text-xs text-slate-400 mt-1">Sélectionnez votre profil pour débuter</p>
       </div>
 
       <div class="text-left space-y-1">
@@ -76,35 +77,51 @@
 
     <!-- ========== VUE 1 : COMPTAGE ========== -->
     <section id="view-inventory" class="space-y-4">
+      
+      <!-- Sélection Contexte obligatoire -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+            Entrepreneur <span class="text-rose-400 font-bold">*</span>
+          </label>
           <select id="contractorSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
-            <option value="">Chargement des entrepreneurs...</option>
+            <option value="">-- Sélectionner l'entrepreneur (Obligatoire) --</option>
           </select>
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+            Corps d'état / Métier <span class="text-rose-400 font-bold">*</span>
+          </label>
           <select id="tradeSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
-            <option value="">Chargement des métiers...</option>
+            <option value="">-- Sélectionner le métier (Obligatoire) --</option>
           </select>
         </div>
       </div>
 
-      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4 shadow">
-        <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg">
-          <i data-lucide="scan-barcode" class="w-6 h-6"></i>
-          <span id="btnScanText">SCANNER CODE-BARRES / QR</span>
+      <!-- Module Scanner Unique (Codes-barres + QR + OCR) -->
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
+        
+        <!-- LE BOUTON UNIQUE DE SCAN UNIVERSEL -->
+        <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg text-sm transition">
+          <i data-lucide="scan-barcode" class="w-5 h-5"></i>
+          <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
         </button>
 
+        <!-- Fenêtre caméra unique -->
         <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
           <div id="reader" class="w-full"></div>
-          <p class="text-[11px] text-center text-slate-400 py-1.5">Centrez le code (QR, EAN-13, Code 128)</p>
+          <canvas id="ocrCanvas" class="hidden"></canvas>
+          <div class="p-2 bg-slate-900/90 flex items-center justify-between border-t border-slate-800">
+            <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[200px]">Lecture Code-barres / QR / Chiffres...</span>
+            <button onclick="triggerManualOcrCapture()" class="px-2.5 py-1 bg-amber-500 active:bg-amber-600 text-slate-950 font-black rounded-lg text-[11px] shadow">
+              Lire Réf Bac
+            </button>
+          </div>
         </div>
 
-        <!-- ZONE DE RECHERCHE UNIVERSELLE -->
+        <!-- Zone de Recherche Manuelle -->
         <div class="relative">
-          <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue (Désignation, Réf Fourn., SAP, EAN)</label>
+          <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
           <div class="relative flex items-center">
             <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-slate-400 pointer-events-none"></i>
             <input type="text" id="articleSearchInput" 
@@ -117,12 +134,10 @@
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
-
-          <!-- LISTE DÉROULANTE DES SUGGESTIONS SANS RESTRICTION -->
           <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-30 divide-y divide-slate-800"></div>
         </div>
 
-        <!-- FICHE DESCRIPTIVE -->
+        <!-- Fiche descriptive du matériel identifié -->
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
@@ -144,7 +159,7 @@
         </div>
       </div>
 
-      <!-- Saisie de quantité (élargie, sans 0 par défaut) -->
+      <!-- Saisie de quantité (>= 0) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
         <div class="flex items-center justify-center space-x-4">
@@ -154,7 +169,7 @@
         </div>
       </div>
 
-      <!-- Bouton Validation -->
+      <!-- Bouton Validation Principal -->
       <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
         <i data-lucide="check-circle" class="w-6 h-6"></i>
         <span>VALIDER ET ARCHIVER</span>
@@ -201,7 +216,7 @@
       <div id="mobMonitoringList" class="space-y-2"></div>
     </section>
 
-    <!-- ================= MENTION BAS DE PAGE ================= -->
+    <!-- ================= MENTION DE PIED DE PAGE ================= -->
     <div class="text-center pt-8 pb-3">
       <span class="text-[10px] font-medium text-slate-500 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -209,7 +224,7 @@
     </div>
   </main>
 
-  <!-- ================= BARRE DE NAVIGATION INFÉRIEURE ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -232,9 +247,7 @@
   </div>
 
   <script>
-    // =========================================================================
-    // ⚠️ METTEZ VOTRE VRAIE URL GOOGLE APPS SCRIPT CI-DESSOUS (finissant par /exec)
-    // =========================================================================
+    // ⚠️ URL DE VOTRE APPLICATION WEB GOOGLE APPS SCRIPT (/exec)
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -250,13 +263,14 @@
     let activeItem = null;
     let html5QrCode = null;
     let isScanning = false;
+    let ocrInterval = null;
+    let isOcrBusy = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       updateAgentUI();
       populateDropdowns();
 
-      // Fermeture du dropdown lors d'un clic extérieur
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
@@ -265,10 +279,8 @@
         }
       });
 
-      // 1. Récupération prioritaire des données réelles du Google Sheet
       await syncData();
 
-      // 2. Affichage de la sélection d'agent si aucun agent n'est enregistré
       if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
         openAgentModal();
       }
@@ -300,7 +312,7 @@
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
       if (availableAgents.length === 0) {
-        select.innerHTML = '<option value="">Aucun agent reçu. Vérifiez l\'URL du script.</option>';
+        select.innerHTML = '<option value="">En attente de connexion Google Sheets...</option>';
       } else {
         select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
           availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
@@ -328,42 +340,41 @@
       const tSelect = document.getElementById("tradeSelect");
 
       if (availableContractors.length > 0) {
-        cSelect.innerHTML = '<option value="">Sélectionner l\'entrepreneur...</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+        cSelect.innerHTML = '<option value="">-- Sélectionner l\'entrepreneur (Obligatoire) --</option>' + 
+          availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
       } else {
-        cSelect.innerHTML = '<option value="">En attente des données...</option>';
+        cSelect.innerHTML = '<option value="">Chargement des entrepreneurs...</option>';
       }
 
       if (availableTrades.length > 0) {
-        tSelect.innerHTML = '<option value="">Sélectionner le métier...</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+        tSelect.innerHTML = '<option value="">-- Sélectionner le métier (Obligatoire) --</option>' + 
+          availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
       } else {
-        tSelect.innerHTML = '<option value="">En attente des données...</option>';
+        tSelect.innerHTML = '<option value="">Chargement des métiers...</option>';
       }
     }
 
     async function syncData() {
-      if (!navigator.onLine) {
-        console.warn("Appareil hors-ligne. Utilisation des données locales.");
-        return;
-      }
+      if (!navigator.onLine) return;
 
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
         
         if (data.status === "success") {
-          if (data.agents && Array.isArray(data.agents)) {
+          if (data.agents) {
             availableAgents = data.agents;
             localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
           }
-          if (data.contractors && Array.isArray(data.contractors)) {
+          if (data.contractors) {
             availableContractors = data.contractors;
             localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
           }
-          if (data.trades && Array.isArray(data.trades)) {
+          if (data.trades) {
             availableTrades = data.trades;
             localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
           }
-          if (data.admins && Array.isArray(data.admins)) {
+          if (data.admins) {
             adminAgents = data.admins;
             localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
           }
@@ -371,16 +382,15 @@
             adminPasswords = data.adminPasswords;
             localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
           }
-          if (data.catalog && Array.isArray(data.catalog)) {
+          if (data.catalog) {
             catalog = data.catalog;
             localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
-          if (data.history && Array.isArray(data.history)) {
+          if (data.history) {
             cachedHistory = data.history;
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
 
-          // Rafraîchissement des sélecteurs avec les vraies données
           populateDropdowns();
           updateAgentUI();
 
@@ -394,7 +404,7 @@
           if (isAdmin()) renderMobileMonitoring();
         }
       } catch (err) {
-        console.error("Erreur de liaison avec Google Apps Script :", err);
+        console.warn("Erreur synchronisation réseau :", err);
       }
     }
 
@@ -413,13 +423,11 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
-    // --- RECHERCHE ET EFFACEMENT DE MÉMOIRE ---
     function onSearchInput(rawVal) {
       const val = rawVal.trim();
       const dd = document.getElementById("suggestionsDropdown");
       const clearBtn = document.getElementById("clearSearchBtn");
 
-      // Effacement direct de la mémoire article dès la frappe
       activeItem = null;
       document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
       document.getElementById("dispSupplier").innerText = "--";
@@ -435,7 +443,6 @@
       }
 
       const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
-
       const filtered = catalog.filter(item => {
         const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""} ${item.sapRef || ""} ${item.ean || ""} ${item.qr || ""}`);
         return searchTerms.every(term => textTarget.includes(term));
@@ -452,7 +459,7 @@
       const dd = document.getElementById("suggestionsDropdown");
 
       if (!results || results.length === 0) {
-        dd.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Aucun article trouvé dans le catalogue Google Sheets.</div>`;
+        dd.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Aucun article correspondant dans le catalogue.</div>`;
         dd.classList.remove("hidden");
         return;
       }
@@ -503,7 +510,9 @@
       document.getElementById("badgeIdentified").classList.add("hidden");
     }
 
-    // --- SCANNER CAMÉRA ---
+    // =========================================================================
+    // SCANNER HYBRIDE UNIQUE : CODE-BARRES + QR + OCR EN DIRECT
+    // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
@@ -514,67 +523,152 @@
       }
 
       container.classList.remove("hidden");
-      btnText.innerText = "FERMER LA CAMÉRA";
+      btnText.innerText = "FERMER CAMERA";
       html5QrCode = new Html5Qrcode("reader");
-
-      const config = {
-        fps: 20,
-        qrbox: { width: 280, height: 160 }
-      };
 
       try {
         await html5QrCode.start(
           { facingMode: "environment" },
-          config,
+          { fps: 20, qrbox: { width: 280, height: 160 } },
           (decodedText) => {
-            const match = catalog.find(item => 
-              String(item.sapRef).toUpperCase() === decodedText.toUpperCase() ||
-              String(item.ean).toUpperCase() === decodedText.toUpperCase() ||
-              String(item.qr).toUpperCase() === decodedText.toUpperCase() ||
-              String(item.supplierRef).toUpperCase() === decodedText.toUpperCase()
-            );
-
-            if (match) {
-              selectArticleBySap(match.sapRef);
-              showToast("Trouvé : " + match.designation);
-            } else {
-              activeItem = { sapRef: decodedText, designation: "Article (" + decodedText + ")", supplierRef: "N/A" };
-              document.getElementById("dispDesignation").innerText = activeItem.designation;
-              document.getElementById("dispSap").innerText = activeItem.sapRef;
-              document.getElementById("dispSupplier").innerText = "--";
-              document.getElementById("badgeIdentified").classList.remove("hidden");
-              showToast("Scanné : " + decodedText);
-            }
+            // 1. Détection prioritaire : Code optique trouvé (EAN ou QR)
+            handleExactCodeMatch(decodedText);
             stopScanner();
           },
           () => {}
         );
         isScanning = true;
+
+        // 2. OCR en arrière-plan : analyse automatique périodique du flux vidéo
+        startBackgroundOcr();
+
       } catch (err) {
         alert("Erreur d'accès à la caméra.");
         container.classList.add("hidden");
-        btnText.innerText = "SCANNER CODE-BARRES / QR";
+        btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
       }
     }
 
     async function stopScanner() {
+      if (ocrInterval) {
+        clearInterval(ocrInterval);
+        ocrInterval = null;
+      }
       if (html5QrCode && isScanning) {
         await html5QrCode.stop();
         html5QrCode.clear();
       }
       isScanning = false;
       document.getElementById("scannerContainer").classList.add("hidden");
-      document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR";
+      document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
+      document.getElementById("scanStatusMsg").innerText = "Lecture Code-barres / QR / Chiffres...";
     }
 
-    // --- VALIDATION & SAISIE ---
+    function startBackgroundOcr() {
+      // Analyse le flux de la caméra toutes les 2 secondes pour y détecter des chiffres
+      ocrInterval = setInterval(async () => {
+        if (!isScanning || isOcrBusy) return;
+        await processVideoOcr();
+      }, 2000);
+    }
+
+    async function triggerManualOcrCapture() {
+      if (!isScanning) return;
+      document.getElementById("scanStatusMsg").innerText = "⏳ Analyse OCR en cours...";
+      await processVideoOcr(true);
+    }
+
+    async function processVideoOcr(forceToast = false) {
+      const video = document.querySelector("#reader video");
+      if (!video || video.readyState < 2) return;
+
+      const canvas = document.getElementById("ocrCanvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      isOcrBusy = true;
+      try {
+        const result = await Tesseract.recognize(canvas, 'eng', {
+          logger: () => {}
+        });
+
+        const rawText = result.data.text || "";
+        // Recherche de séquences de chiffres (ex. références SAP de 4 à 10 chiffres)
+        const numberMatches = rawText.match(/\b\d{4,10}\b/g);
+
+        if (numberMatches && numberMatches.length > 0) {
+          const detected = numberMatches[0];
+          // Vérifier si cette référence existe dans notre catalogue
+          const match = catalog.find(i => String(i.sapRef) === String(detected));
+          if (match) {
+            stopScanner();
+            selectArticleBySap(match.sapRef);
+            showToast(`Réf SAP identifiée : ${match.sapRef}`);
+            return;
+          } else if (forceToast) {
+            stopScanner();
+            handleExactCodeMatch(detected);
+            return;
+          }
+        } else if (forceToast) {
+          document.getElementById("scanStatusMsg").innerText = "⚠️ Rapprochez la caméra du texte du bac";
+        }
+      } catch (e) {
+        console.warn("OCR en arrière-plan ignoré :", e);
+      } finally {
+        isOcrBusy = false;
+      }
+    }
+
+    function handleExactCodeMatch(code) {
+      const match = catalog.find(item => 
+        String(item.sapRef).toUpperCase() === String(code).toUpperCase() ||
+        String(item.ean).toUpperCase() === String(code).toUpperCase() ||
+        String(item.qr).toUpperCase() === String(code).toUpperCase() ||
+        String(item.supplierRef).toUpperCase() === String(code).toUpperCase()
+      );
+
+      if (match) {
+        selectArticleBySap(match.sapRef);
+        showToast("Identifié : " + match.designation);
+      } else {
+        activeItem = { sapRef: code, designation: "Article (" + code + ")", supplierRef: "Non indexé" };
+        document.getElementById("dispDesignation").innerText = activeItem.designation;
+        document.getElementById("dispSap").innerText = activeItem.sapRef;
+        document.getElementById("dispSupplier").innerText = "--";
+        document.getElementById("articleSearchInput").value = code;
+        document.getElementById("badgeIdentified").classList.remove("hidden");
+        document.getElementById("clearSearchBtn").classList.remove("hidden");
+        showToast("Code : " + code);
+      }
+    }
+
+    // --- SOUMISSION STRICTE : ENTREPRENEUR ET MÉTIER OBLIGATOIRES ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
         return;
       }
+
+      const contractor = document.getElementById("contractorSelect").value;
+      const trade = document.getElementById("tradeSelect").value;
+
+      // VERROUILLAGE FORMEL DE SÉCURITÉ
+      if (!contractor || contractor.trim() === "") {
+        alert("Action impossible :\nVeuillez impérativement sélectionner un Entrepreneur avant de valider.");
+        document.getElementById("contractorSelect").focus();
+        return;
+      }
+      if (!trade || trade.trim() === "") {
+        alert("Action impossible :\nVeuillez impérativement sélectionner un Corps d'état / Métier avant de valider.");
+        document.getElementById("tradeSelect").focus();
+        return;
+      }
+
       if (!activeItem) {
-        alert("Veuillez sélectionner un article (par recherche ou scan).");
+        alert("Veuillez sélectionner ou scanner un article.");
         return;
       }
 
@@ -583,14 +677,6 @@
       if (isNaN(qty) || qty < 0) {
         alert("Veuillez renseigner une quantité valide (>= 0).");
         qtyInput.focus();
-        return;
-      }
-
-      const contractor = document.getElementById("contractorSelect").value;
-      const trade = document.getElementById("tradeSelect").value;
-
-      if (!contractor || !trade) {
-        alert("Veuillez sélectionner un entrepreneur et un métier.");
         return;
       }
 
@@ -627,7 +713,7 @@
       } catch (e) {
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Sauvegardé en local (hors ligne).");
+        showToast("Enregistré localement (hors-ligne).");
       } finally {
         btn.disabled = false;
         renderHistory();
