@@ -3,14 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Inventaire Logistique Mobile</title>
-
-  <!-- Icônes d'application et favicon -->
-  <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <meta name="theme-color" content="#0f172a">
-
-  <!-- Tailwind CSS & Lucide Icons & Scanner -->
+  <title>Inventaire Logistique Terrain</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -18,131 +12,154 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     #reader video { border-radius: 0.75rem; object-fit: cover; width: 100% !important; }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] { -moz-appearance: textfield; }
   </style>
 </head>
-<body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
+<body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased">
 
-  <!-- ================= MODALE SÉLECTION AGENT ================= -->
-  <div id="agentModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md hidden">
-    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 text-center">
-      <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center mx-auto border border-indigo-500/30">
-        <i data-lucide="user-check" class="w-6 h-6"></i>
+  <!-- MODALE SÉLECTION AGENT -->
+  <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto mb-2">
+          <i data-lucide="user-check" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Identification Agent</h2>
+        <p class="text-xs text-slate-400">Sélectionnez votre nom pour débuter</p>
       </div>
-      <div>
-        <h3 class="text-base font-bold text-white">Identification Magasinier</h3>
-        <p class="text-xs text-slate-400 mt-1">Sélectionnez votre nom pour démarrer les inventaires</p>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-400 uppercase">Agent Magasinier</label>
+        <select id="modalAgentSelect" class="w-full bg-slate-800 border-2 border-blue-500/50 rounded-xl p-3.5 text-base text-white font-medium focus:ring-2 focus:ring-blue-400 focus:outline-none">
+          <option value="">Chargement de la liste...</option>
+        </select>
       </div>
-      <select id="modalAgentSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500">
-        <option value="">Chargement de l'équipe...</option>
-      </select>
-      <button onclick="confirmAgentSelection()" class="w-full h-12 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 font-bold rounded-xl text-white shadow-lg transition">
-        Valider et continuer
+
+      <button id="btnConfirmAgent" onclick="confirmAgentSelection()" class="w-full h-14 bg-blue-600 active:bg-blue-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-base transition">
+        <span>Commencer la session</span>
+        <i data-lucide="arrow-right" class="w-5 h-5"></i>
       </button>
     </div>
   </div>
 
-  <!-- ================= EN-TÊTE FIXE ================= -->
+  <!-- EN-TÊTE -->
   <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0">
-    <div class="flex items-center space-x-2.5">
-      <img src="icon.svg" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800">
+    <div class="flex items-center space-x-2">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
       <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">En ligne</span>
     </div>
-    <div class="flex items-center space-x-2">
-      <span id="adminBadge" class="hidden px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-bold tracking-wide uppercase border border-indigo-500/30">ADMIN</span>
-      <button onclick="openAgentModal()" class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 text-xs text-slate-200">
-        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
-        <span id="displayUserName" class="font-medium truncate max-w-[100px]">Magasinier</span>
+
+    <div class="flex items-center space-x-2 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
+      <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
+      <span id="currentAgentName" class="text-xs font-bold text-slate-200 truncate max-w-[110px]">Chargement...</span>
+      <span id="adminBadge" class="hidden px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider">ADMIN</span>
+      <button onclick="openAgentModal()" title="Changer d'agent" class="text-slate-400 hover:text-white pl-1">
+        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
       </button>
     </div>
   </header>
 
-  <!-- ================= CONTENU PRINCIPAL ================= -->
+  <!-- CONTENU -->
   <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-24">
 
-    <!-- ========== VUE 1 : COMPTAGE ========== -->
+    <!-- VUE 1 : COMPTAGE -->
     <section id="view-inventory" class="space-y-4">
-
-      <!-- Sélections Entrepreneur & Métier -->
-      <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-3 shadow">
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
-          <select id="contractorSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-            <option value="">Sélectionner l'entrepreneur...</option>
-          </select>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
+          <select id="contractorSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500"></select>
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
-          <select id="tradeSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-            <option value="">Sélectionner le corps d'état...</option>
-          </select>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
+          <select id="tradeSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500"></select>
         </div>
       </div>
 
-      <!-- Module Identification Article & Scan -->
-      <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-3 shadow">
-        
-        <!-- Bouton Caméra -->
-        <button id="btnScan" onclick="toggleScanner()" class="w-full h-12 bg-indigo-600 active:bg-indigo-700 hover:bg-indigo-500 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg transition">
-          <i data-lucide="scan-barcode" class="w-5 h-5"></i>
-          <span id="btnScanText" class="text-sm tracking-wide">SCANNER CODE-BARRES / QR</span>
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4 shadow">
+        <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg">
+          <i data-lucide="scan-barcode" class="w-6 h-6"></i>
+          <span id="btnScanText">SCANNER QR OU CODE-BARRES</span>
         </button>
 
-        <!-- Fenêtre Caméra -->
         <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
           <div id="reader" class="w-full"></div>
-          <p class="text-[11px] text-center text-slate-400 py-1.5">Visez le QR Code ou le Code-barres</p>
+          <p class="text-[11px] text-center text-slate-400 py-1.5">Centrez le code (QR, EAN-13, Code 128)</p>
         </div>
 
-        <!-- Recherche prédictive multi-champs -->
+        <!-- ZONE DE RECHERCHE REHAUSSÉE -->
         <div class="relative">
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Recherche (Réf SAP, Désignation, Fournisseur)</label>
-          <div class="relative">
-            <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
-            <input type="text" id="searchInput" oninput="handleSearchInput(this.value)" onfocus="this.select()" placeholder="Tapez une référence ou un mot-clé..." class="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-indigo-500 font-medium">
+          <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche (Désignation, Réf Fourn., SAP, EAN)</label>
+          <div class="relative flex items-center">
+            <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-slate-400 pointer-events-none"></i>
+            <input type="text" id="articleSearchInput" 
+                   oninput="onSearchInput(this.value)" 
+                   onfocus="this.select()"
+                   placeholder="Tapez un mot, un chiffre ou une référence..." 
+                   autocomplete="off"
+                   class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl py-4 pl-11 pr-10 text-base text-white font-medium focus:outline-none focus:border-indigo-500 placeholder-slate-500 shadow-inner">
+            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
           </div>
-          <!-- Dropdown des suggestions -->
-          <div id="searchSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-30 divide-y divide-slate-800"></div>
+
+          <!-- LISTE DÉROULANTE DES SUGGESTIONS COMPLÈTE SANS LIMITE DE 10 -->
+          <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-30 divide-y divide-slate-800">
+          </div>
         </div>
 
-        <!-- Fiche descriptive de l'article actif -->
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-850 flex items-center justify-between">
-          <div class="min-w-0 pr-2">
-            <h4 id="itemDesignation" class="text-xs font-bold text-slate-200 truncate">En attente de sélection...</h4>
-            <div class="flex items-center gap-3 mt-1">
-              <span id="itemSap" class="text-xs font-mono font-extrabold text-amber-400">SAP: --</span>
-              <span id="itemSupplier" class="text-xs text-slate-400 truncate">Fourn: --</span>
+        <!-- FICHE DESCRIPTIVE DU MATÉRIEL IDENTIFIÉ -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex items-start justify-between">
+            <div class="min-w-0 pr-2">
+              <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wide">Fiche Matériel</span>
+              <h4 id="dispDesignation" class="text-base font-bold text-white truncate">Scannez ou tapez un mot-clé</h4>
+            </div>
+            <div id="badgeIdentified" class="hidden px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold shrink-0">
+              Prêt
             </div>
           </div>
-          <div id="itemReadyBadge" class="hidden shrink-0 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold tracking-wider uppercase border border-emerald-500/30">
-            PRÊT
+          
+          <div class="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-slate-800">
+            <div>
+              <span class="text-slate-400 block text-xs">Réf Fournisseur :</span>
+              <span id="dispSupplier" class="font-mono font-bold text-blue-400 truncate block">--</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-xs">Réf SAP :</span>
+              <span id="dispSap" class="font-mono font-black text-amber-500">--</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Saisie de Quantité -->
-      <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 shadow text-center">
-        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Quantité constatée</label>
-        <div class="flex items-center justify-center space-x-3">
-          <button onclick="adjustQty(-1)" class="w-14 h-14 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow">-</button>
-          <input type="number" id="inputQuantity" min="0" placeholder="0" class="w-36 h-14 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-2xl font-black text-white focus:border-indigo-500 focus:outline-none font-mono">
-          <button onclick="adjustQty(1)" class="w-14 h-14 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow">+</button>
+      <!-- Pavé de Quantité (>= 0) -->
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
+        <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
+        <div class="flex items-center justify-center space-x-4">
+          <button type="button" onclick="adjustQuantity(-1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">-</button>
+          <input type="number" id="qtyInput" placeholder="0" min="0" inputmode="numeric" 
+                 oninput="if(this.value < 0) this.value = 0;"
+                 class="w-36 h-16 bg-slate-950 border-2 border-slate-700 rounded-xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none placeholder-slate-600">
+          <button type="button" onclick="adjustQuantity(1)" class="w-16 h-16 bg-slate-800 active:bg-slate-700 rounded-xl flex items-center justify-center text-3xl font-bold shadow text-white">+</button>
         </div>
       </div>
 
-      <!-- Bouton Validation Principal -->
-      <button id="btnSubmit" onclick="submitInventory()" class="w-full h-14 bg-emerald-600 active:bg-emerald-700 hover:bg-emerald-500 text-white font-black text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
-        <i data-lucide="check-circle" class="w-6 h-6"></i>
-        <span>VALIDER L'INVENTAIRE</span>
+      <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-lg rounded-2xl shadow-xl flex items-center justify-center space-x-3 transition">
+        <i data-lucide="check-circle" class="w-7 h-7"></i>
+        <span>VALIDER ET ARCHIVER</span>
       </button>
-
     </section>
 
-    <!-- ========== VUE 2 : HISTORIQUE ========== -->
+    <!-- VUE 2 : HISTORIQUE -->
     <section id="view-history" class="hidden space-y-4">
       <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-        <input type="text" id="searchHistoryInput" oninput="filterHistory()" placeholder="Filtrer l'historique..." class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-white focus:outline-none focus:border-indigo-500">
+        <i data-lucide="search" class="w-5 h-5 absolute left-3 top-3.5 text-slate-400"></i>
+        <input type="text" id="searchHistoryInput" oninput="filterHistory()" placeholder="Filtrer l'historique..." class="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-blue-500">
       </div>
 
       <div class="flex justify-between items-center text-xs text-slate-400 px-1">
@@ -156,245 +173,362 @@
       <div id="historyList" class="space-y-2"></div>
     </section>
 
-    <!-- MENTION LÉGALE DISCRÈTE -->
-    <div class="text-center pt-6 pb-2">
-      <span class="text-[10px] font-medium text-slate-600 tracking-wider uppercase">designed by CO2H2O srlu</span>
-    </div>
+    <!-- VUE 3 : MONITORING MOBILE (ADMIN AVEC MOT DE PASSE) -->
+    <section id="view-monitoring" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
+          Supervision Magasin
+        </h3>
+        <button onclick="syncData()" class="text-xs bg-slate-800 px-2.5 py-1 rounded text-indigo-400">Actualiser</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow">
+          <span class="text-[10px] text-slate-400 block font-bold uppercase">Lignes</span>
+          <span id="mobKpiRows" class="text-xl font-black text-white">0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow">
+          <span class="text-[10px] text-slate-400 block font-bold uppercase">Pièces</span>
+          <span id="mobKpiQty" class="text-xl font-black text-emerald-400">0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow">
+          <span class="text-[10px] text-amber-400 block font-bold uppercase">Alertes</span>
+          <span id="mobKpiAlerts" class="text-xl font-black text-amber-400">0</span>
+        </div>
+      </div>
+
+      <div id="mobMonitoringList" class="space-y-2"></div>
+    </section>
 
   </main>
 
-  <!-- ================= BARRE DE NAVIGATION INFÉRIEURE ================= -->
-  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto z-40">
-    
-    <!-- Bouton Comptage avec l'icône SVG personnalisée -->
+  <!-- NAVIGATION INFÉRIEURE -->
+  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <defs>
-          <path id="line-corner-start-higher" d="M 72 83 H 82" />
-        </defs>
-        <!-- Coins affinés de moitié -->
-        <g stroke="currentColor" stroke-width="4">
-          <path d="M 12 28 V 20 A 8 8 0 0 1 20 12 H 28"/>
-          <path d="M 72 12 H 80 A 8 8 0 0 1 88 20 V 28"/>
-          <path d="M 88 72 V 80 A 8 8 0 0 1 80 88 H 72"/>
-          <path d="M 28 88 H 20 A 8 8 0 0 1 12 80 V 72"/>
-        </g>
-        <!-- Barres de scan orange centrées -->
-        <g stroke="#f97316" stroke-width="8">
-          <line x1="33" y1="28" x2="33" y2="72"/>
-          <line x1="50" y1="28" x2="50" y2="72"/>
-          <line x1="67" y1="28" x2="67" y2="72"/>
-        </g>
-        <!-- Mention CO2H2O srlu en orange vif -->
-        <text fill="#f97316" font-size="1.4" font-weight="400" font-family="sans-serif" letter-spacing="0.05">
-          <textPath href="#line-corner-start-higher" startOffset="0" text-anchor="start">
-            CO2H2O srlu
-          </textPath>
-        </text>
-      </svg>
+      <i data-lucide="clipboard-list" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Comptage</span>
     </button>
-
-    <!-- Bouton Historique -->
     <button id="tabNavHistory" onclick="switchTab('history')" class="flex flex-col items-center justify-center text-slate-400">
       <i data-lucide="history" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Historique</span>
     </button>
+    <button id="tabNavMonitoring" onclick="switchTab('monitoring')" class="hidden flex-col items-center justify-center text-slate-400">
+      <i data-lucide="activity" class="w-5 h-5"></i>
+      <span class="text-xs font-semibold mt-1">Monitoring</span>
+    </button>
   </nav>
 
-  <!-- TOAST NOTIFICATION -->
+  <!-- NOTIFICATION TOAST -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
-    <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-5 h-5"></i></div>
-    <div class="flex-1 text-xs font-medium" id="toastMessage">Action effectuée</div>
+    <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-6 h-6"></i></div>
+    <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
-    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (/exec)
+    // ⚠️ METTEZ VOTRE VRAIE URL WEB APP ICI :
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    let availableAgents = [];
-    let availableContractors = [];
-    let availableTrades = [];
-    let adminAgents = [];
-    let catalog = [];
+    let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
+    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
+    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
+    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
+    let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
+    let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
 
-    let currentAgent = localStorage.getItem("inv_agent") || "";
+    let currentAgent = localStorage.getItem("inv_current_agent") || "";
+    let isMonitoringUnlocked = false;
     let activeItem = null;
     let html5QrCode = null;
     let isScanning = false;
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       initNetworkStatus();
-      updateUserHeader();
-      syncData();
+      updateAgentUI();
+      populateDropdowns();
+
+      // Fermeture des suggestions si on clique hors du champ
+      document.addEventListener("click", (e) => {
+        const dd = document.getElementById("suggestionsDropdown");
+        const searchInput = document.getElementById("articleSearchInput");
+        if (dd && !dd.contains(e.target) && e.target !== searchInput) {
+          dd.classList.add("hidden");
+        }
+      });
+
+      await syncData();
+
+      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
+        openAgentModal();
+      }
     });
 
-    function initNetworkStatus() {
-      const updateStatus = () => {
-        const isOnline = navigator.onLine;
-        const dot = document.getElementById("statusDot");
-        const text = document.getElementById("statusText");
-        dot.className = isOnline ? "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" : "w-2.5 h-2.5 rounded-full bg-rose-500";
-        text.className = isOnline ? "text-[11px] font-bold uppercase tracking-wider text-emerald-400" : "text-[11px] font-bold uppercase tracking-wider text-rose-400";
-        text.innerText = isOnline ? "En ligne" : "Hors-ligne";
-      };
-      window.addEventListener("online", updateStatus);
-      window.addEventListener("offline", updateStatus);
-      updateStatus();
+    function isAdmin() {
+      return adminAgents.includes(currentAgent);
     }
 
-    function updateUserHeader() {
-      document.getElementById("displayUserName").innerText = currentAgent || "Magasinier";
-      const isAdmin = adminAgents.includes(currentAgent);
-      document.getElementById("adminBadge").classList.toggle("hidden", !isAdmin);
-      document.getElementById("historyHeaderLabel").innerText = isAdmin ? "Toutes les saisies (Admin)" : "Mes saisies";
+    function updateAgentUI() {
+      document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
+      const adminBadge = document.getElementById("adminBadge");
+      const monNavBtn = document.getElementById("tabNavMonitoring");
+      const navContainer = document.getElementById("bottomNav");
+
+      if (isAdmin()) {
+        adminBadge.classList.remove("hidden");
+        monNavBtn.classList.remove("hidden");
+        monNavBtn.classList.add("flex");
+        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-3 h-16 max-w-md mx-auto";
+      } else {
+        adminBadge.classList.add("hidden");
+        monNavBtn.classList.add("hidden");
+        monNavBtn.classList.remove("flex");
+        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto";
+      }
     }
 
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
-      if (availableAgents.length > 0) {
-        select.innerHTML = '<option value="">Choisir son nom...</option>' + availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+      if (availableAgents.length === 0) {
+        select.innerHTML = '<option value="">Chargement de la liste...</option>';
+      } else {
+        select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
+          availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
       }
-      document.getElementById("agentModal").classList.remove("hidden");
+      document.getElementById("userModal").classList.remove("hidden");
     }
 
     function confirmAgentSelection() {
-      const val = document.getElementById("modalAgentSelect").value;
-      if (!val) {
+      const select = document.getElementById("modalAgentSelect");
+      if (!select.value) {
         alert("Veuillez sélectionner votre nom d'agent.");
         return;
       }
-      currentAgent = val;
-      localStorage.setItem("inv_agent", currentAgent);
-      document.getElementById("agentModal").classList.add("hidden");
-      updateUserHeader();
+      currentAgent = select.value;
+      localStorage.setItem("inv_current_agent", currentAgent);
+      isMonitoringUnlocked = false;
+      updateAgentUI();
+      document.getElementById("userModal").classList.add("hidden");
+      showToast(`Session : ${currentAgent}`);
       renderHistory();
-      showToast("Connecté en tant que " + currentAgent);
-    }
-
-    async function syncData() {
-      if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
-      try {
-        const res = await fetch(GOOGLE_SCRIPT_URL);
-        const data = await res.json();
-        if (data.status === "success") {
-          availableAgents = data.agents || [];
-          availableContractors = data.contractors || [];
-          availableTrades = data.trades || [];
-          adminAgents = data.admins || [];
-          catalog = data.catalog || [];
-          if (data.history) {
-            cachedHistory = data.history;
-            localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-          }
-
-          populateDropdowns();
-          if (!currentAgent) openAgentModal();
-          updateUserHeader();
-          renderHistory();
-        }
-      } catch (err) {
-        console.warn("Mode hors-ligne / erreur réseau :", err);
-        if (!currentAgent) openAgentModal();
-        renderHistory();
-      }
     }
 
     function populateDropdowns() {
-      document.getElementById("contractorSelect").innerHTML = '<option value="">Sélectionner un entrepreneur...</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      document.getElementById("tradeSelect").innerHTML = '<option value="">Sélectionner un corps d\'état...</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      const cSelect = document.getElementById("contractorSelect");
+      const tSelect = document.getElementById("tradeSelect");
+
+      if (availableContractors.length > 0) {
+        cSelect.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      if (availableTrades.length > 0) {
+        tSelect.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
     }
 
-    // --- RECHERCHE ET SELECTION ARTICLE ---
-    function handleSearchInput(q) {
+    function adjustQuantity(delta) {
+      const input = document.getElementById("qtyInput");
+      let val = parseInt(input.value, 10);
+      if (isNaN(val)) val = delta > 0 ? delta : 0;
+      else val = Math.max(0, val + delta);
+      input.value = val;
+    }
+
+    function normalizeStr(str) {
+      return String(str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    // --- RECHERCHE ET RÉINITIALISATION DE LA MÉMOIRE ---
+    function onSearchInput(rawVal) {
+      const val = rawVal.trim();
+      const dd = document.getElementById("suggestionsDropdown");
+      const clearBtn = document.getElementById("clearSearchBtn");
+
+      // ⚠️ EFFACEMENT DE LA MÉMOIRE ARTICLE DÈS LA MODIFICATION DU CHAMP
       activeItem = null;
-      document.getElementById("itemReadyBadge").classList.add("hidden");
-      document.getElementById("itemDesignation").innerText = "En attente de sélection...";
-      document.getElementById("itemSap").innerText = "SAP: --";
-      document.getElementById("itemSupplier").innerText = "Fourn: --";
+      document.getElementById("dispDesignation").innerText = "Scannez ou tapez un mot-clé";
+      document.getElementById("dispSupplier").innerText = "--";
+      document.getElementById("dispSap").innerText = "--";
+      document.getElementById("badgeIdentified").classList.add("hidden");
 
-      const query = q.trim().toLowerCase();
-      const drop = document.getElementById("searchSuggestions");
-      if (query.length < 2) {
-        drop.classList.add("hidden");
+      if (val.length > 0) {
+        clearBtn.classList.remove("hidden");
+      } else {
+        clearBtn.classList.add("hidden");
+        dd.classList.add("hidden");
         return;
       }
 
-      const words = query.split(/\s+/);
-      const matches = catalog.filter(it => {
-        const fullTxt = `${it.sapRef} ${it.designation} ${it.supplierRef} ${it.ean} ${it.qr}`.toLowerCase();
-        return words.every(w => fullTxt.includes(w));
-      }).sort((a, b) => a.designation.localeCompare(b.designation));
-
-      if (matches.length === 0) {
-        drop.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">Aucun article correspondant</div>';
-        drop.classList.remove("hidden");
+      if (val.length < 1) {
+        dd.classList.add("hidden");
         return;
       }
 
-      drop.innerHTML = matches.map((item, idx) => `
-        <div onclick="selectArticleByIndex(${catalog.indexOf(item)})" class="p-3 hover:bg-slate-800 active:bg-slate-700 cursor-pointer transition">
-          <p class="text-xs font-semibold text-white truncate">${item.designation}</p>
-          <div class="flex justify-between items-center mt-1">
-            <span class="text-[11px] font-mono font-extrabold text-amber-400">${item.sapRef}</span>
-            <span class="text-[10px] text-slate-400 truncate">${item.supplierRef}</span>
+      const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
+
+      // Recherche universelle (Désignation, Fournisseur, SAP, EAN, QR)
+      const filtered = catalog.filter(item => {
+        const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""} ${item.sapRef || ""} ${item.ean || ""} ${item.qr || ""}`);
+        return searchTerms.every(term => textTarget.includes(term));
+      });
+
+      // Tri alphabétique sur la désignation
+      const sortedResults = filtered.sort((a, b) => {
+        return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
+      });
+
+      renderSuggestions(sortedResults);
+    }
+
+    // --- AFFICHAGE DE TOUTES LES SUGGESTIONS SANS RESTRICTION ---
+    function renderSuggestions(results) {
+      const dd = document.getElementById("suggestionsDropdown");
+
+      if (!results || results.length === 0) {
+        dd.innerHTML = `<div class="p-4 text-sm text-slate-400 text-center font-medium">Aucun résultat trouvé dans le catalogue.</div>`;
+        dd.classList.remove("hidden");
+        return;
+      }
+
+      // En-tête indiquant le nombre total d'articles trouvés
+      let html = `
+        <div class="px-3.5 py-1.5 bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold text-slate-400 flex justify-between">
+          <span>${results.length} article(s) trouvé(s)</span>
+          <span class="text-indigo-400">Cliquez pour choisir</span>
+        </div>
+      `;
+
+      // Affichage de TOUS les résultats (avec défilement fluide)
+      html += results.map(item => `
+        <div onclick="selectArticleBySap('${item.sapRef}')" 
+             class="p-3.5 hover:bg-slate-800 active:bg-indigo-600/30 cursor-pointer transition">
+          <div class="text-sm font-bold text-slate-100 leading-snug">
+            ${item.designation || 'Sans désignation'}
+          </div>
+          <div class="flex items-center justify-between text-xs mt-1.5 pt-1 border-t border-slate-850">
+            <span class="text-blue-400 font-semibold truncate">
+              Réf Fourn : <span class="font-mono text-blue-300 font-bold">${item.supplierRef || 'N/A'}</span>
+            </span>
+            <span class="font-mono font-extrabold text-amber-400 text-sm tracking-wide shrink-0 ml-3">
+              ${item.sapRef}
+            </span>
           </div>
         </div>
       `).join('');
-      drop.classList.remove("hidden");
+
+      dd.innerHTML = html;
+      dd.classList.remove("hidden");
     }
 
-    function selectArticleByIndex(idx) {
-      const it = catalog[idx];
-      if (!it) return;
-      activeItem = it;
-      document.getElementById("itemDesignation").innerText = it.designation;
-      document.getElementById("itemSap").innerText = it.sapRef;
-      document.getElementById("itemSupplier").innerText = it.supplierRef || "N/A";
-      document.getElementById("searchInput").value = it.designation;
-      document.getElementById("searchSuggestions").classList.add("hidden");
-      document.getElementById("itemReadyBadge").classList.remove("hidden");
-      showToast("Article sélectionné");
+    function selectArticleBySap(sapRef) {
+      const item = catalog.find(i => String(i.sapRef) === String(sapRef));
+      if (!item) return;
+      selectArticle(item);
+    }
+
+    function selectArticle(item) {
+      activeItem = { ...item };
+
+      document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
+      document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
+      document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
+      
+      document.getElementById("articleSearchInput").value = activeItem.designation || activeItem.supplierRef;
+      document.getElementById("badgeIdentified").classList.remove("hidden");
+      document.getElementById("suggestionsDropdown").classList.add("hidden");
+      document.getElementById("clearSearchBtn").classList.remove("hidden");
+    }
+
+    function clearSearch() {
+      document.getElementById("articleSearchInput").value = "";
+      document.getElementById("clearSearchBtn").classList.add("hidden");
+      document.getElementById("suggestionsDropdown").classList.add("hidden");
+      activeItem = null;
+      document.getElementById("dispDesignation").innerText = "Scannez ou tapez un mot-clé";
+      document.getElementById("dispSupplier").innerText = "--";
+      document.getElementById("dispSap").innerText = "--";
+      document.getElementById("badgeIdentified").classList.add("hidden");
+    }
+
+    // --- RECHERCHE PAR CODE DIRECT (Scan Caméra) ---
+    function searchArticleByExactCode(code) {
+      const q = String(code).trim().toUpperCase();
+      if (!q) return;
+
+      const match = catalog.find(item => 
+        String(item.sapRef).toUpperCase() === q ||
+        String(item.ean).toUpperCase() === q ||
+        String(item.qr).toUpperCase() === q ||
+        String(item.supplierRef).toUpperCase() === q
+      );
+
+      if (match) {
+        selectArticle(match);
+      } else {
+        activeItem = {
+          sapRef: q,
+          designation: "Article (" + q + ")",
+          supplierRef: "Non indexé",
+          ean: q.length >= 8 ? q : "N/A",
+          qr: "N/A"
+        };
+        document.getElementById("dispDesignation").innerText = activeItem.designation;
+        document.getElementById("dispSupplier").innerText = activeItem.supplierRef;
+        document.getElementById("dispSap").innerText = activeItem.sapRef;
+        document.getElementById("articleSearchInput").value = activeItem.sapRef;
+        document.getElementById("badgeIdentified").classList.remove("hidden");
+        document.getElementById("clearSearchBtn").classList.remove("hidden");
+      }
     }
 
     // --- SCANNER CAMÉRA ---
     async function toggleScanner() {
-      const box = document.getElementById("scannerContainer");
-      const btnTxt = document.getElementById("btnScanText");
+      const container = document.getElementById("scannerContainer");
+      const btnText = document.getElementById("btnScanText");
+
       if (isScanning) {
         await stopScanner();
         return;
       }
 
-      box.classList.remove("hidden");
-      btnTxt.innerText = "FERMER LE SCAN";
+      container.classList.remove("hidden");
+      btnText.innerText = "FERMER LA CAMÉRA";
       html5QrCode = new Html5Qrcode("reader");
+
+      const config = {
+        fps: 20,
+        qrbox: { width: 280, height: 160 },
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.DATA_MATRIX,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E
+        ]
+      };
 
       try {
         await html5QrCode.start(
           { facingMode: "environment" },
-          { fps: 20, qrbox: { width: 260, height: 160 } },
-          (decoded) => {
-            const found = catalog.find(c => c.ean === decoded || c.qr === decoded || c.sapRef === decoded);
-            if (found) {
-              selectArticleByIndex(catalog.indexOf(found));
-              showToast("Scanné : " + found.designation);
-            } else {
-              document.getElementById("searchInput").value = decoded;
-              handleSearchInput(decoded);
-              showToast("Code scanné : " + decoded);
-            }
+          config,
+          (decodedText) => {
+            searchArticleByExactCode(decodedText);
+            showToast("Scanné : " + decodedText);
             stopScanner();
           },
           () => {}
         );
         isScanning = true;
-      } catch (e) {
-        alert("Accès caméra refusé.");
-        box.classList.add("hidden");
-        btnTxt.innerText = "SCANNER CODE-BARRES / QR";
+      } catch (err) {
+        alert("Erreur caméra. Vérifiez les autorisations du navigateur.");
+        container.classList.add("hidden");
+        btnText.innerText = "SCANNER QR OU CODE-BARRES";
       }
     }
 
@@ -405,45 +539,41 @@
       }
       isScanning = false;
       document.getElementById("scannerContainer").classList.add("hidden");
-      document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR";
+      document.getElementById("btnScanText").innerText = "SCANNER QR OU CODE-BARRES";
     }
 
-    function adjustQty(delta) {
-      const el = document.getElementById("inputQuantity");
-      let v = parseInt(el.value, 10);
-      if (isNaN(v)) v = 0;
-      v = Math.max(0, v + delta);
-      el.value = v;
-    }
-
-    // --- VALIDATION D'INVENTAIRE ---
+    // --- SOUMISSION & ARCHIVAGE ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
         return;
       }
-      const contractor = document.getElementById("contractorSelect").value;
-      const trade = document.getElementById("tradeSelect").value;
-      const qtyStr = document.getElementById("inputQuantity").value;
-      const qty = parseInt(qtyStr, 10);
-
-      if (!contractor || !trade) {
-        alert("Veuillez sélectionner un entrepreneur et un corps d'état.");
-        return;
-      }
       if (!activeItem) {
-        alert("Veuillez identifier un article via la recherche ou le scan.");
+        alert("Veuillez sélectionner un article (en tapant dans la recherche ou par scan) avant d'enregistrer.");
         return;
       }
+
+      const qtyInput = document.getElementById("qtyInput");
+      const qty = parseInt(qtyInput.value, 10);
       if (isNaN(qty) || qty < 0) {
         alert("Veuillez renseigner une quantité valide (>= 0).");
+        qtyInput.focus();
         return;
       }
+
+      const btn = document.getElementById("btnSubmit");
+      const contractor = document.getElementById("contractorSelect").value;
+      const trade = document.getElementById("tradeSelect").value;
+
+      const now = new Date();
+      const dateId = now.toISOString().slice(0, 10).replace(/-/g, "");
+      const randSuffix = Math.floor(1000 + Math.random() * 9000);
+      const invId = `INV-${dateId}-${randSuffix}`;
 
       const payload = {
         action: "CREATE",
-        id: "INV-" + Date.now().toString(36).toUpperCase(),
-        timestamp: new Date().toLocaleString("fr-FR"),
+        id: invId,
+        timestamp: now.toLocaleString("fr-FR"),
         user: currentAgent,
         contractor: contractor,
         trade: trade,
@@ -455,8 +585,8 @@
         quantity: qty
       };
 
-      const btn = document.getElementById("btnSubmit");
       btn.disabled = true;
+      btn.innerHTML = `<span class="inline-block animate-spin mr-2">⏳</span> Enregistrement...`;
 
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
@@ -466,140 +596,281 @@
             body: JSON.stringify(payload)
           });
         }
+        
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Inventaire validé !");
+        showToast(`Archivé : ${activeItem.designation} (${qty})`);
 
-        // Réinitialisation
-        document.getElementById("inputQuantity").value = "";
-        document.getElementById("searchInput").value = "";
-        activeItem = null;
-        document.getElementById("itemReadyBadge").classList.add("hidden");
-        document.getElementById("itemDesignation").innerText = "En attente de sélection...";
-        document.getElementById("itemSap").innerText = "SAP: --";
-        document.getElementById("itemSupplier").innerText = "Fourn: --";
+        qtyInput.value = "";
+        clearSearch();
 
-      } catch (err) {
-        cachedHistory.unshift(payload);
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Enregistré hors-ligne !");
+      } catch (e) {
+        alert("Erreur réseau lors de la validation.");
       } finally {
         btn.disabled = false;
-        renderHistory();
+        btn.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i><span>VALIDER ET ARCHIVER</span>`;
+        lucide.createIcons();
       }
     }
 
-    // --- VUE HISTORIQUE ---
-    function renderHistory() {
-      const container = document.getElementById("historyList");
-      const isAdmin = adminAgents.includes(currentAgent);
-      const filtered = cachedHistory.filter(it => isAdmin || it.user === currentAgent);
+    async function editHistoryItem(id, oldQty) {
+      const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
+      if (newQtyStr === null) return;
 
-      if (!filtered || filtered.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Aucune saisie enregistrée.</div>';
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide (>= 0 attendue).");
         return;
       }
 
-      container.innerHTML = filtered.map(it => `
-        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between shadow-sm">
-          <div class="min-w-0 flex-1 pr-2">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-mono font-bold text-amber-400">${it.sapRef}</span>
-              <span class="text-[10px] text-slate-400">• ${it.timestamp}</span>
+      showToast("Mise à jour...");
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ 
+              action: "UPDATE", 
+              id: id, 
+              quantity: newQty,
+              user: currentAgent 
+            })
+          });
+        }
+
+        const target = cachedHistory.find(item => item.id === id);
+        if (target) target.quantity = newQty;
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+        showToast("Quantité modifiée !");
+      } catch (err) {
+        alert("Erreur lors de la mise à jour.");
+      }
+    }
+
+    async function deleteHistoryItem(id, designation) {
+      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
+
+      showToast("Suppression...");
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ 
+              action: "DELETE", 
+              id: id,
+              user: currentAgent
+            })
+          });
+        }
+
+        cachedHistory = cachedHistory.filter(item => item.id !== id);
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+        showToast("Saisie supprimée !");
+      } catch (err) {
+        alert("Erreur lors de la suppression.");
+      }
+    }
+
+    function renderHistory(filteredList = null) {
+      const container = document.getElementById("historyList");
+      const label = document.getElementById("historyHeaderLabel");
+
+      let items = filteredList || cachedHistory;
+      if (!isAdmin()) {
+        items = items.filter(i => i.user === currentAgent);
+        label.innerText = `Mes saisies (${items.length})`;
+      } else {
+        label.innerText = `Toutes les saisies (Mode Admin - ${items.length})`;
+      }
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">Aucun inventaire à afficher.</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center justify-between space-x-3 shadow-md">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-mono font-extrabold text-amber-500">${item.sapRef}</span>
+              <span class="text-[10px] text-slate-400">• ${item.timestamp}</span>
             </div>
-            <p class="text-xs font-semibold text-white truncate mt-0.5">${it.designation}</p>
-            <p class="text-[11px] text-slate-400 truncate">${it.contractor} — <span class="text-slate-500">${it.trade}</span></p>
-            ${isAdmin ? `<p class="text-[10px] text-indigo-400 font-bold mt-0.5">Agent: ${it.user}</p>` : ''}
+            <p class="text-sm font-semibold text-slate-100 truncate">${item.designation}</p>
+            <p class="text-xs text-slate-400 truncate">${item.contractor} (${item.trade})</p>
+            <p class="text-[10px] text-slate-500 pt-0.5"><i data-lucide="user" class="inline w-2.5 h-2.5 mr-0.5"></i>${item.user}</p>
           </div>
-          <div class="flex items-center space-x-2 shrink-0">
-            <span class="text-base font-black text-white px-2 py-1 bg-slate-950 rounded-lg border border-slate-800 font-mono">${it.quantity}</span>
-            <button onclick="editHistoryItem('${it.id}', ${it.quantity})" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-lg text-indigo-400 flex items-center justify-center">
-              <i data-lucide="pencil" class="w-4 h-4"></i>
-            </button>
-            <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" class="w-10 h-10 bg-slate-800 hover:bg-slate-700 active:bg-rose-950 rounded-lg text-rose-400 flex items-center justify-center">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
+
+          <div class="flex items-center space-x-3 shrink-0">
+            <span class="text-2xl font-black text-emerald-400 min-w-[3rem] text-right">${item.quantity}</span>
+            <div class="flex items-center space-x-1.5 pl-1">
+              <button onclick="editHistoryItem('${item.id}', ${item.quantity})" title="Modifier" 
+                      class="w-11 h-11 bg-slate-800 active:bg-blue-600 rounded-xl text-slate-200 active:text-white flex items-center justify-center transition border border-slate-700 shadow">
+                <i data-lucide="pencil" class="w-5 h-5"></i>
+              </button>
+              <button onclick="deleteHistoryItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
+                      class="w-11 h-11 bg-slate-800 active:bg-rose-600 rounded-xl text-rose-400 active:text-white flex items-center justify-center transition border border-slate-700 shadow">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+              </button>
+            </div>
           </div>
         </div>
       `).join('');
       lucide.createIcons();
     }
 
-    async function editHistoryItem(id, oldQty) {
-      const valStr = prompt("Modifier la quantité :", oldQty);
-      if (valStr === null) return;
-      const nQty = parseInt(valStr, 10);
-      if (isNaN(nQty) || nQty < 0) {
-        alert("Quantité invalide (>= 0).");
-        return;
-      }
-      showToast("Mise à jour en cours...");
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "UPDATE", id: id, quantity: nQty, user: currentAgent })
-          });
-        }
-        const item = cachedHistory.find(i => i.id === id);
-        if (item) item.quantity = nQty;
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        renderHistory();
-        showToast("Quantité modifiée !");
-      } catch (e) {
-        alert("Erreur de modification.");
-      }
-    }
-
-    async function deleteHistoryItem(id, desig) {
-      if (!confirm(`Supprimer définitivement :\n"${desig}" ?`)) return;
-      showToast("Suppression en cours...");
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "DELETE", id: id, user: currentAgent })
-          });
-        }
-        cachedHistory = cachedHistory.filter(i => i.id !== id);
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        renderHistory();
-        showToast("Saisie supprimée !");
-      } catch (e) {
-        alert("Erreur de suppression.");
-      }
-    }
-
     function filterHistory() {
       const q = document.getElementById("searchHistoryInput").value.toLowerCase();
-      const cards = document.querySelectorAll("#historyList > div");
-      cards.forEach(card => {
-        card.style.display = card.innerText.toLowerCase().includes(q) ? "flex" : "none";
-      });
+      const base = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
+      const filtered = base.filter(i => 
+        (i.sapRef && i.sapRef.toLowerCase().includes(q)) ||
+        (i.designation && i.designation.toLowerCase().includes(q)) ||
+        (i.supplierRef && i.supplierRef.toLowerCase().includes(q)) ||
+        (i.contractor && i.contractor.toLowerCase().includes(q)) ||
+        (i.user && i.user.toLowerCase().includes(q))
+      );
+      renderHistory(filtered);
+    }
+
+    function renderMobileMonitoring() {
+      if (!isAdmin()) return;
+      document.getElementById("mobKpiRows").innerText = cachedHistory.length;
+      document.getElementById("mobKpiQty").innerText = cachedHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
+      document.getElementById("mobKpiAlerts").innerText = cachedHistory.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50).length;
+
+      const container = document.getElementById("mobMonitoringList");
+      container.innerHTML = cachedHistory.slice(0, 15).map(item => {
+        const q = Number(item.quantity);
+        const isAlert = (q === 0 || q > 50);
+        return `
+          <div class="bg-slate-900 p-3 rounded-xl border ${isAlert ? 'border-amber-500/40' : 'border-slate-800'} text-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-indigo-300">${item.user} • ${item.timestamp}</span>
+              <span class="font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${q}</span>
+            </div>
+            <div class="truncate text-slate-200">${item.designation}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${item.contractor} (${item.trade})</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function syncData() {
+      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
+      try {
+        const res = await fetch(GOOGLE_SCRIPT_URL);
+        const data = await res.json();
+        if (data.status === "success") {
+          if (data.agents) {
+            availableAgents = data.agents;
+            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
+          }
+          if (data.contractors) {
+            availableContractors = data.contractors;
+            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
+          }
+          if (data.trades) {
+            availableTrades = data.trades;
+            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
+          }
+          if (data.admins) {
+            adminAgents = data.admins;
+            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
+          }
+          if (data.adminPasswords) {
+            adminPasswords = data.adminPasswords;
+            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
+          }
+          if (data.catalog) {
+            catalog = data.catalog;
+            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
+          }
+
+          populateDropdowns();
+          updateAgentUI();
+
+          if (data.history) {
+            cachedHistory = data.history;
+            localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+            renderHistory();
+            if (isAdmin()) renderMobileMonitoring();
+          }
+        }
+      } catch (err) {
+        console.warn("Erreur de synchronisation réseau.");
+      }
     }
 
     function switchTab(tab) {
       const invView = document.getElementById("view-inventory");
       const histView = document.getElementById("view-history");
+      const monView = document.getElementById("view-monitoring");
+
       const tabInv = document.getElementById("tabNavInventory");
       const tabHist = document.getElementById("tabNavHistory");
+      const tabMon = document.getElementById("tabNavMonitoring");
+
+      if (tab === 'monitoring') {
+        if (!isAdmin()) {
+          alert("Accès réservé aux comptes superviseurs.");
+          return;
+        }
+        if (!isMonitoringUnlocked) {
+          const expected = adminPasswords[currentAgent] || "1234";
+          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe / code PIN :`);
+          if (entered === null) return;
+          if (entered !== expected) {
+            alert("Mot de passe incorrect.");
+            return;
+          }
+          isMonitoringUnlocked = true;
+        }
+      }
+
+      invView.classList.add("hidden");
+      histView.classList.add("hidden");
+      monView.classList.add("hidden");
+
+      tabInv.classList.replace("text-blue-400", "text-slate-400");
+      tabHist.classList.replace("text-blue-400", "text-slate-400");
+      if (tabMon) tabMon.classList.replace("text-blue-400", "text-slate-400");
 
       if (tab === 'inventory') {
         invView.classList.remove("hidden");
-        histView.classList.add("hidden");
         tabInv.classList.replace("text-slate-400", "text-blue-400");
-        tabHist.classList.replace("text-blue-400", "text-slate-400");
-      } else {
+      } else if (tab === 'history') {
         if (isScanning) stopScanner();
-        invView.classList.add("hidden");
         histView.classList.remove("hidden");
         tabHist.classList.replace("text-slate-400", "text-blue-400");
-        tabInv.classList.replace("text-blue-400", "text-slate-400");
         renderHistory();
+      } else if (tab === 'monitoring') {
+        if (isScanning) stopScanner();
+        monView.classList.remove("hidden");
+        if (tabMon) tabMon.classList.replace("text-slate-400", "text-blue-400");
+        renderMobileMonitoring();
       }
+
+      syncData();
       lucide.createIcons();
+    }
+
+    function initNetworkStatus() {
+      const update = () => {
+        const isOnline = navigator.onLine;
+        const dot = document.getElementById("statusDot");
+        const txt = document.getElementById("statusText");
+        dot.className = isOnline ? "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" : "w-2.5 h-2.5 rounded-full bg-rose-500";
+        txt.className = isOnline ? "text-[11px] font-bold uppercase tracking-wider text-emerald-400" : "text-[11px] font-bold uppercase tracking-wider text-rose-400";
+        txt.innerText = isOnline ? "En ligne" : "Hors-ligne";
+      };
+      window.addEventListener("online", update);
+      window.addEventListener("offline", update);
+      update();
     }
 
     function showToast(msg) {
@@ -610,7 +881,7 @@
       setTimeout(() => {
         toast.classList.remove("translate-y-0");
         toast.classList.add("-translate-y-28");
-      }, 2300);
+      }, 2500);
     }
   </script>
 </body>
