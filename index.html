@@ -47,25 +47,27 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- ================= MODALE D'IDENTIFICATION AGENT ================= -->
+  <!-- ================= MODALE D'IDENTIFICATION ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
-      <div class="w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto">
-        <i data-lucide="user-check" class="w-6 h-6"></i>
+      <!-- Bonhomme en orange assorti au logo -->
+      <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center mx-auto">
+        <i data-lucide="user-check" class="w-7 h-7"></i>
       </div>
       <div>
-        <h2 class="text-lg font-bold text-white">Identification Agent</h2>
+        <!-- Titre simplifié -->
+        <h2 class="text-xl font-bold text-white tracking-wide">Identification</h2>
         <p class="text-xs text-slate-400 mt-1">Sélectionnez votre profil pour débuter</p>
       </div>
 
-      <div class="text-left space-y-1">
-        <label class="block text-[11px] font-bold text-slate-400 uppercase">Magasinier</label>
-        <select id="modalAgentSelect" class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl p-3 text-sm text-white font-medium focus:border-blue-500 focus:outline-none">
+      <div class="text-left">
+        <!-- Champ sans label 'Magasinier' -->
+        <select id="modalAgentSelect" class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl p-3.5 text-sm text-white font-medium focus:border-amber-500 focus:outline-none">
           <option value="">Chargement depuis Google Sheets...</option>
         </select>
       </div>
 
-      <button id="btnConfirmAgent" onclick="confirmAgentSelection()" class="w-full h-12 bg-blue-600 active:bg-blue-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+      <button id="btnConfirmAgent" onclick="confirmAgentSelection()" class="w-full h-12 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-sm transition">
         <span>Commencer la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
@@ -83,7 +85,7 @@
     <div class="flex items-center space-x-2">
       <span id="adminBadge" class="hidden px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider border border-amber-500/30">ADMIN</span>
       <button onclick="openAgentModal()" class="flex items-center space-x-1.5 bg-slate-800/90 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-200">
-        <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
+        <i data-lucide="user" class="w-3.5 h-3.5 text-amber-500"></i>
         <span id="currentAgentName" class="font-bold truncate max-w-[110px]">Chargement...</span>
         <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400 ml-0.5"></i>
       </button>
@@ -144,6 +146,7 @@
           </div>
         </div>
 
+        <!-- ZONE DE RECHERCHE CATALOGUE -->
         <div class="relative">
           <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
           <div class="relative flex items-center">
@@ -153,12 +156,17 @@
                    onfocus="this.select()"
                    placeholder="Tapez un mot-clé ou un chiffre..." 
                    autocomplete="off"
-                   class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl py-3 pl-11 pr-10 text-sm text-white font-medium focus:outline-none focus:border-indigo-500">
+                   class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl py-3.5 pl-11 pr-10 text-base text-white font-medium focus:outline-none focus:border-indigo-500">
             <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1">
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
-          <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-30 divide-y divide-slate-800"></div>
+          <!-- Menu déroulant grand format avec écouteur de masquage de clavier tactile -->
+          <div id="suggestionsDropdown" 
+               ontouchstart="blurSearchInput()" 
+               ontouchmove="blurSearchInput()" 
+               onscroll="blurSearchInput()"
+               class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-30 divide-y divide-slate-800"></div>
         </div>
 
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
@@ -197,7 +205,7 @@
       </button>
     </section>
 
-    <!-- ========== VUE 2 : HISTORIQUE (AVEC MODIFICATION / SUPPRESSION) ========== -->
+    <!-- ========== VUE 2 : HISTORIQUE ========== -->
     <section id="view-history" class="hidden space-y-4">
       <div class="flex justify-between items-center text-xs text-slate-400 px-1">
         <span id="historyHeaderLabel">Mes saisies</span>
@@ -308,6 +316,14 @@
       }
     });
 
+    // --- FERMETURE IMMÉDIATE DU CLAVIER AU TOUCHER/DÉFILEMENT ---
+    function blurSearchInput() {
+      const input = document.getElementById("articleSearchInput");
+      if (input && document.activeElement === input) {
+        input.blur();
+      }
+    }
+
     function isAdmin() {
       return adminAgents.includes(currentAgent);
     }
@@ -336,7 +352,7 @@
       if (availableAgents.length === 0) {
         select.innerHTML = '<option value="">En attente de connexion Google Sheets...</option>';
       } else {
-        select.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
+        select.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
           availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
       }
       document.getElementById("userModal").classList.remove("hidden");
@@ -345,7 +361,7 @@
     function confirmAgentSelection() {
       const val = document.getElementById("modalAgentSelect").value;
       if (!val) {
-        alert("Veuillez sélectionner votre nom d'agent.");
+        alert("Veuillez sélectionner votre profil.");
         return;
       }
       currentAgent = val;
@@ -418,7 +434,7 @@
 
           const modalSelect = document.getElementById("modalAgentSelect");
           if (modalSelect && availableAgents.length > 0) {
-            modalSelect.innerHTML = '<option value="">-- Choisir votre nom --</option>' + 
+            modalSelect.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
               availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
           }
 
@@ -477,28 +493,29 @@
       renderSuggestions(sortedResults);
     }
 
+    // --- AFFICHAGE AGRANDI ET PLUS LISIBLE DU CATALOGUE ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
 
       if (!results || results.length === 0) {
-        dd.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Aucun article correspondant dans le catalogue.</div>`;
+        dd.innerHTML = `<div class="p-4 text-sm text-slate-400 text-center">Aucun article correspondant.</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
       let html = `
-        <div class="px-3.5 py-1.5 bg-slate-950/90 text-[11px] font-bold text-slate-400 flex justify-between border-b border-slate-800">
+        <div class="px-4 py-2 bg-slate-950/90 text-xs font-bold text-slate-400 flex justify-between border-b border-slate-800">
           <span>${results.length} article(s) trouvé(s)</span>
-          <span class="text-indigo-400">Sélectionnez</span>
+          <span class="text-amber-400">Touchez pour sélectionner</span>
         </div>
       `;
 
       html += results.map(item => `
-        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-3 hover:bg-slate-800 cursor-pointer transition">
-          <p class="text-xs font-bold text-slate-100 truncate">${item.designation || 'Sans désignation'}</p>
-          <div class="flex justify-between items-center text-xs mt-1">
-            <span class="text-[10px] text-blue-400 truncate">Fourn : ${item.supplierRef || 'N/A'}</span>
-            <span class="font-mono font-extrabold text-amber-400 text-xs">${item.sapRef}</span>
+        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 hover:bg-slate-800 active:bg-slate-800/80 cursor-pointer transition">
+          <p class="text-base font-bold text-slate-100 leading-snug">${item.designation || 'Sans désignation'}</p>
+          <div class="flex justify-between items-center text-xs mt-2 pt-1 border-t border-slate-800/60">
+            <span class="text-slate-400">Réf Fourn : <strong class="font-mono text-blue-400 text-sm">${item.supplierRef || 'N/A'}</strong></span>
+            <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-950 px-2.5 py-0.5 rounded border border-amber-500/20">${item.sapRef}</span>
           </div>
         </div>
       `).join('');
@@ -519,6 +536,7 @@
       document.getElementById("badgeIdentified").classList.remove("hidden");
       document.getElementById("suggestionsDropdown").classList.add("hidden");
       document.getElementById("clearSearchBtn").classList.remove("hidden");
+      blurSearchInput();
     }
 
     function clearSearch() {
@@ -629,7 +647,6 @@
       document.getElementById("scanStatusMsg").innerText = "Visez les 6 chiffres...";
     }
 
-    // --- PILOTAGE DE LA TORCHE LUMIÈRE ---
     async function toggleTorch() {
       if (!isScanning || !html5QrCode) return;
       const targetState = !isTorchOn;
@@ -639,7 +656,7 @@
         updateTorchUI();
         showToast(isTorchOn ? "Lumière allumée" : "Lumière éteinte");
       } else {
-        alert("La torche / flash n'est pas supportée par ce capteur ou ce navigateur.");
+        alert("La torche n'est pas supportée par ce capteur ou ce navigateur.");
       }
     }
 
@@ -689,7 +706,6 @@
       }
     }
 
-    // --- RECONNAISSANCE OPTIQUE OCR 100% CORRÉLÉE AU CATALOGUE ---
     function startBackgroundOcr() {
       ocrInterval = setInterval(async () => {
         if (!isScanning || isOcrBusy) return;
@@ -781,7 +797,7 @@
 
         let bestSapMatch = null;
 
-        // 1. Correspondance directe
+        // 1. Recherche directe
         const direct6Matches = rawDigits.match(/\d{6}/g) || [];
         for (const candidate of direct6Matches) {
           if (validCatalogSaps.includes(candidate)) {
@@ -801,7 +817,7 @@
           }
         }
 
-        // 3. Similarité Levenshtein (tolérance 1 erreur)
+        // 3. Distance de Levenshtein (Tolérance 1 chiffre)
         if (!bestSapMatch && validCatalogSaps.length > 0) {
           const candidates = rawDigits.match(/\d{5,7}/g) || [];
           for (const cand of candidates) {
@@ -831,7 +847,7 @@
         }
 
         if (forceToast) {
-          document.getElementById("scanStatusMsg").innerText = "⚠️ Réf SAP à 6 chiffres non reconnue. Rapprochez le bac.";
+          document.getElementById("scanStatusMsg").innerText = "⚠️ Réf SAP non reconnue. Rapprochez le bac.";
         }
       } catch (e) {
         console.warn("Erreur OCR :", e);
@@ -864,18 +880,17 @@
       }
     }
 
-    // --- GESTION DES MODIFICATIONS / SUPPRESSIONS D'HISTORIQUE ---
     async function editHistoryItem(id, oldQty) {
       const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
       if (newQtyStr === null) return;
 
       const newQty = parseInt(newQtyStr, 10);
       if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide. Doit être égale à 0 ou supérieure.");
+        alert("Quantité invalide (>= 0 attendue).");
         return;
       }
 
-      showToast("Mise à jour en cours...");
+      showToast("Mise à jour...");
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
@@ -902,11 +917,9 @@
     }
 
     async function deleteHistoryItem(id, designation) {
-      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) {
-        return;
-      }
+      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
 
-      showToast("Suppression en cours...");
+      showToast("Suppression...");
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
@@ -930,7 +943,6 @@
       }
     }
 
-    // --- SOUMISSION DU COMPTAGE (AVEC VÉRIFICATION STRICTE) ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1007,7 +1019,6 @@
 
     function renderHistory() {
       const c = document.getElementById("historyList");
-      // Filtrage : Magasinier standard = ses saisies | Admin = tout l'historique
       const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
       document.getElementById("historyHeaderLabel").innerText = isAdmin() ? `Toutes les saisies (${list.length})` : `Mes saisies (${list.length})`;
 
