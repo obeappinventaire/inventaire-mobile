@@ -77,6 +77,8 @@
       <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800" onerror="this.style.display='none'">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
       <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">En ligne</span>
+      <!-- Indicateur de synchronisation en attente -->
+      <span id="syncBadge" class="hidden text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded">0 en attente</span>
     </div>
 
     <div class="flex items-center space-x-2">
@@ -159,7 +161,7 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
               </button>
             </div>
-            <!-- Menu déroulant avec défilement tactile optimisé -->
+            <!-- Menu déroulant des suggestions -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
                  onscroll="blurSearchInput()"
@@ -176,12 +178,12 @@
             </div>
             <div class="grid grid-cols-2 gap-2 text-xs pt-2 mt-2 border-t border-slate-800">
               <div>
-                <span class="text-slate-400 block text-[10px]">Réf Fournisseur :</span>
-                <span id="dispSupplier" class="font-mono font-semibold text-blue-400 truncate block">--</span>
-              </div>
-              <div>
                 <span class="text-slate-400 block text-[10px]">Réf SAP :</span>
                 <span id="dispSap" class="font-mono font-black text-amber-500">--</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px]">Réf Fournisseur :</span>
+                <span id="dispSupplier" class="font-mono font-semibold text-blue-400 truncate block">--</span>
               </div>
             </div>
           </div>
@@ -207,7 +209,7 @@
       <section id="view-history" class="hidden space-y-4">
         <div class="flex justify-between items-center text-xs text-slate-400 px-1">
           <span id="historyHeaderLabel">Mes saisies</span>
-          <button onclick="syncData()" class="flex items-center space-x-1 text-indigo-400">
+          <button onclick="manualSync()" class="flex items-center space-x-1 text-indigo-400">
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
             <span>Actualiser</span>
           </button>
@@ -222,7 +224,7 @@
             <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
             Supervision Entrepôt
           </h3>
-          <button onclick="syncData()" class="text-xs bg-slate-950 px-2.5 py-1 rounded text-indigo-400 border border-slate-800">Actualiser</button>
+          <button onclick="manualSync()" class="text-xs bg-slate-950 px-2.5 py-1 rounded text-indigo-400 border border-slate-800">Actualiser</button>
         </div>
 
         <div class="grid grid-cols-3 gap-2 text-center">
@@ -252,7 +254,7 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE DYNAMIQUE ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -275,9 +277,9 @@
   </div>
 
   <script>
-    // ⚠️ URL DE VOTRE APPLICATION WEB GOOGLE APPS SCRIPT (/exec)
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
+    // Modèle de données & Persistance
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
@@ -285,6 +287,9 @@
     let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
     let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
+    
+    // File d'attente d'envoi hors-ligne (Outbox)
+    let syncQueue = JSON.parse(localStorage.getItem("offline_sync_queue") || "[]");
 
     let currentAgent = localStorage.getItem("inv_current_agent") || "";
     let isMonitoringUnlocked = false;
@@ -295,11 +300,20 @@
     let isOcrBusy = false;
     let isTorchOn = false;
 
+    // Instance unique Worker OCR persistant (évite les fuites mémoire)
+    let ocrWorker = null;
+
+    // Cache GPS en continu (latence 0 ms au clic)
+    let latestCoords = { lat: null, lng: null };
+
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       updateAgentUI();
       populateDropdowns();
+      initContinuousGps();
+      updateSyncBadge();
 
+      // Fermeture des suggestions au clic externe
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
@@ -308,6 +322,16 @@
         }
       });
 
+      // Écouteurs de connectivité réseau
+      window.addEventListener("online", () => {
+        updateNetworkStatus(true);
+        processSyncQueue();
+      });
+      window.addEventListener("offline", () => updateNetworkStatus(false));
+
+      // Initialisation du worker OCR persistant en tâche de fond
+      initOcrWorker();
+
       await syncData();
 
       if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
@@ -315,37 +339,53 @@
       }
     });
 
+    // Initialisation continue de la position GPS
+    function initContinuousGps() {
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          (pos) => {
+            latestCoords.lat = pos.coords.latitude;
+            latestCoords.lng = pos.coords.longitude;
+          },
+          (err) => console.warn("GPS watch error:", err.message),
+          { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+        );
+      }
+    }
+
+    // Gestion du statut réseau visuel
+    function updateNetworkStatus(isOnline) {
+      const dot = document.getElementById("statusDot");
+      const txt = document.getElementById("statusText");
+      if (isOnline) {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        txt.className = "text-[11px] font-bold uppercase tracking-wider text-emerald-400";
+        txt.innerText = "En ligne";
+      } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+        txt.className = "text-[11px] font-bold uppercase tracking-wider text-rose-400";
+        txt.innerText = "Hors-ligne";
+      }
+    }
+
+    // Initialisation du worker Tesseract unique
+    async function initOcrWorker() {
+      try {
+        ocrWorker = await Tesseract.createWorker('eng');
+        await ocrWorker.setParameters({
+          tessedit_char_whitelist: '0123456789',
+          tessedit_pageseg_mode: '7'
+        });
+      } catch (err) {
+        console.warn("Échec pré-chargement Worker OCR:", err);
+      }
+    }
+
     function blurSearchInput() {
       const input = document.getElementById("articleSearchInput");
       if (input && document.activeElement === input) {
         input.blur();
       }
-    }
-
-    function getCurrentCoordinates() {
-      return new Promise((resolve) => {
-        if (!navigator.geolocation) {
-          resolve({ lat: null, lng: null });
-          return;
-        }
-        const timer = setTimeout(() => resolve({ lat: null, lng: null }), 3500);
-
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            clearTimeout(timer);
-            resolve({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude
-            });
-          },
-          (err) => {
-            clearTimeout(timer);
-            console.warn("GPS non disponible ou refusé :", err.message);
-            resolve({ lat: null, lng: null });
-          },
-          { enableHighAccuracy: true, timeout: 3000, maximumAge: 10000 }
-        );
-      });
     }
 
     function isAdmin() {
@@ -416,9 +456,47 @@
       }
     }
 
+    function updateSyncBadge() {
+      const badge = document.getElementById("syncBadge");
+      if (!badge) return;
+      if (syncQueue.length > 0) {
+        badge.innerText = `${syncQueue.length} en attente`;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    // Traitement de la file d'attente hors-ligne (Outbox Queue)
+    async function processSyncQueue() {
+      if (!navigator.onLine || syncQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
+      const queueCopy = [...syncQueue];
+      for (const item of queueCopy) {
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(item)
+          });
+          // Retrait après confirmation serveur
+          syncQueue = syncQueue.filter(q => q.id !== item.id || q.action !== item.action);
+          localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+          updateSyncBadge();
+        } catch (e) {
+          console.warn("Échec d'envoi d'une saisie en file d'attente :", e);
+          break; // Sortie si le réseau coupe à nouveau
+        }
+      }
+    }
+
     async function syncData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
+      // 1. Vider d'abord la file d'attente locale vers le serveur
+      await processSyncQueue();
+
+      // 2. Récupérer les données fraîches
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
@@ -448,8 +526,14 @@
             catalog = data.catalog;
             localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
+          
+          // Fusion sécurisée : On ne perd pas les éléments locaux non encore traités
           if (data.history) {
-            cachedHistory = data.history;
+            const pendingIds = new Set(syncQueue.map(q => q.id));
+            const localPendingItems = cachedHistory.filter(i => pendingIds.has(i.id));
+            
+            // Les données distantes complétées des éléments locaux en attente
+            cachedHistory = [...localPendingItems, ...data.history.filter(remoteItem => !pendingIds.has(remoteItem.id))];
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
 
@@ -468,6 +552,12 @@
       } catch (err) {
         console.warn("Erreur synchronisation réseau :", err);
       }
+    }
+
+    async function manualSync() {
+      showToast("Actualisation...");
+      await syncData();
+      showToast("Données synchronisées");
     }
 
     function adjustQuantity(delta) {
@@ -537,12 +627,10 @@
         <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 hover:bg-slate-800 active:bg-slate-800/80 cursor-pointer transition">
           <p class="text-base font-bold text-slate-100 leading-snug">${item.designation || 'Sans désignation'}</p>
           <div class="flex justify-between items-center text-xs mt-2 pt-1 border-t border-slate-800/60">
-            <!-- RÉF SAP À GAUCHE -->
             <div class="flex items-center space-x-1.5">
               <span class="text-[11px] text-slate-400 uppercase font-semibold">SAP :</span>
               <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-950 px-2.5 py-0.5 rounded border border-amber-500/20">${item.sapRef}</span>
             </div>
-            <!-- RÉF FOURNISSEUR À DROITE -->
             <div class="text-right truncate max-w-[170px]">
               <span class="text-slate-400">Fourn : </span>
               <strong class="font-mono text-blue-400 text-sm">${item.supplierRef || 'N/A'}</strong>
@@ -563,7 +651,7 @@
       document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
       document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
       document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
-      document.getElementById("articleSearchInput").value = activeItem.designation || activeItem.supplierRef;
+      document.getElementById("articleSearchInput").value = `${activeItem.sapRef} - ${activeItem.designation}`;
       document.getElementById("badgeIdentified").classList.remove("hidden");
       document.getElementById("suggestionsDropdown").classList.add("hidden");
       document.getElementById("clearSearchBtn").classList.remove("hidden");
@@ -796,7 +884,8 @@
 
     async function processVideoOcr(forceToast = false) {
       const video = document.querySelector("#reader video");
-      if (!video || !video.videoWidth || video.readyState < 2) return;
+      // Vérification de la disponibilité effective de la frame vidéo
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
 
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -837,21 +926,31 @@
 
       isOcrBusy = true;
       try {
-        const result = await Tesseract.recognize(canvas, 'eng', {
-          tessedit_char_whitelist: '0123456789',
-          tessedit_pageseg_mode: '7'
-        });
+        let textResult = "";
 
-        // Ignore le résultat si la caméra a été fermée entre-temps
+        // Utilisation prioritaire du Worker pré-chargé
+        if (ocrWorker) {
+          const ret = await ocrWorker.recognize(canvas);
+          textResult = ret.data.text || "";
+        } else {
+          const ret = await Tesseract.recognize(canvas, 'eng', {
+            tessedit_char_whitelist: '0123456789',
+            tessedit_pageseg_mode: '7'
+          });
+          textResult = ret.data.text || "";
+        }
+
+        // Annulation si le scanner a été fermé pendant l'analyse
         if (!isScanning) return;
 
-        const rawDigits = (result.data.text || "").replace(/\D/g, "");
+        const rawDigits = textResult.replace(/\D/g, "");
         const validCatalogSaps = catalog
           .map(i => String(i.sapRef).trim())
           .filter(ref => ref.length === 6);
 
         let bestSapMatch = null;
 
+        // Recherche directe
         const direct6Matches = rawDigits.match(/\d{6}/g) || [];
         for (const candidate of direct6Matches) {
           if (validCatalogSaps.includes(candidate)) {
@@ -860,6 +959,7 @@
           }
         }
 
+        // Fenêtre glissante
         if (!bestSapMatch && rawDigits.length >= 6) {
           for (let i = 0; i <= rawDigits.length - 6; i++) {
             const slice = rawDigits.substring(i, i + 6);
@@ -870,6 +970,7 @@
           }
         }
 
+        // Distance d'édition Levenshtein (Tolérance 1 chiffre)
         if (!bestSapMatch && validCatalogSaps.length > 0) {
           const candidates = rawDigits.match(/\d{5,7}/g) || [];
           for (const cand of candidates) {
@@ -946,30 +1047,32 @@
       }
 
       showToast("Mise à jour...");
+      const payload = { 
+        action: "UPDATE", 
+        id: id, 
+        quantity: newQty,
+        user: currentAgent 
+      };
+
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ 
-              action: "UPDATE", 
-              id: id, 
-              quantity: newQty,
-              user: currentAgent 
-            })
+            body: JSON.stringify(payload)
           });
         }
-
-        const target = cachedHistory.find(item => item.id === id);
-        if (target) target.quantity = newQty;
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         showToast("Quantité modifiée !");
       } catch (err) {
+        // Enregistrement dans la file d'attente hors-ligne
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
+        showToast("Modifié en attente de synchronisation.");
+      } finally {
         const target = cachedHistory.find(item => item.id === id);
         if (target) target.quantity = newQty;
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Quantité modifiée en local.");
-      } finally {
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
       }
@@ -979,32 +1082,36 @@
       if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
 
       showToast("Suppression...");
+      const payload = { 
+        action: "DELETE", 
+        id: id, 
+        user: currentAgent 
+      };
+
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ 
-              action: "DELETE", 
-              id: id, 
-              user: currentAgent 
-            })
+            body: JSON.stringify(payload)
           });
         }
-
-        cachedHistory = cachedHistory.filter(item => item.id !== id);
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         showToast("Saisie supprimée !");
       } catch (err) {
+        // Enregistrement dans la file d'attente hors-ligne
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
+        showToast("Supprimé en attente de synchronisation.");
+      } finally {
         cachedHistory = cachedHistory.filter(item => item.id !== id);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Supprimé en local.");
-      } finally {
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
       }
     }
 
+    // Validation principale avec synchronisation résiliente
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1039,12 +1146,9 @@
       }
 
       const btn = document.getElementById("btnSubmit");
-      btn.disabled = true;
-      showToast("Géolocalisation & Enregistrement...");
+      btn.disabled = true; // Anti-rebond
 
-      const coords = await getCurrentCoordinates();
-
-      // Double déclaration GPS : lat/lng et latitude/longitude pour alignement avec Code.gs
+      // Coordonnées GPS immédiates (sans bloquer le thread)
       const payload = {
         action: "CREATE",
         id: "INV-" + Date.now().toString(36).toUpperCase(),
@@ -1058,10 +1162,10 @@
         ean: activeItem.ean || "",
         qr: activeItem.qr || "",
         quantity: qty,
-        lat: coords.lat,
-        lng: coords.lng,
-        latitude: coords.lat,
-        longitude: coords.lng
+        lat: latestCoords.lat,
+        lng: latestCoords.lng,
+        latitude: latestCoords.lat,
+        longitude: latestCoords.lng
       };
 
       try {
@@ -1076,11 +1180,14 @@
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         showToast("Inventaire archivé avec succès !");
       } catch (e) {
+        // Sauvegarde locale + file d'attente pour synchronisation ultérieure
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
         showToast("Enregistré localement (hors-ligne).");
       } finally {
-        // Réinitialisation garantie en ligne comme hors-ligne
         qtyInput.value = "";
         clearSearch();
         btn.disabled = false;
@@ -1099,30 +1206,36 @@
         return;
       }
 
-      c.innerHTML = list.map(it => `
-        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-sm">
-          <div class="min-w-0 pr-2">
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-mono font-extrabold text-amber-500">${it.sapRef}</span>
-              <span class="text-[10px] text-slate-400">• ${it.timestamp}</span>
-              ${isAdmin() ? `<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-bold">${it.user}</span>` : ''}
-              ${(it.lat || it.latitude) ? `<span class="text-[9px] text-emerald-400 font-mono">📍 GPS</span>` : ''}
+      const pendingIds = new Set(syncQueue.map(q => q.id));
+
+      c.innerHTML = list.map(it => {
+        const isPending = pendingIds.has(it.id);
+        return `
+          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800'} p-4 rounded-xl flex items-center justify-between shadow-sm">
+            <div class="min-w-0 pr-2">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-mono font-extrabold text-amber-500">${it.sapRef}</span>
+                <span class="text-[10px] text-slate-400">• ${it.timestamp}</span>
+                ${isAdmin() ? `<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-bold">${it.user}</span>` : ''}
+                ${(it.lat || it.latitude) ? `<span class="text-[9px] text-emerald-400 font-mono">📍 GPS</span>` : ''}
+                ${isPending ? `<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-bold">En attente</span>` : ''}
+              </div>
+              <p class="text-xs font-bold text-white truncate mt-0.5">${it.designation}</p>
+              <p class="text-[11px] text-slate-400 truncate">${it.contractor} (${it.trade})</p>
             </div>
-            <p class="text-xs font-bold text-white truncate mt-0.5">${it.designation}</p>
-            <p class="text-[11px] text-slate-400 truncate">${it.contractor} (${it.trade})</p>
+            
+            <div class="flex items-center space-x-2 shrink-0">
+              <span class="text-xl font-black text-emerald-400 font-mono px-2.5 py-1 bg-slate-900 rounded-lg border border-slate-800">${it.quantity}</span>
+              <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" class="w-11 h-11 rounded-xl bg-slate-850 hover:bg-slate-800 active:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition">
+                <i data-lucide="edit-3" class="w-5 h-5"></i>
+              </button>
+              <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" class="w-11 h-11 rounded-xl bg-slate-850 hover:bg-rose-900/60 active:bg-rose-600 text-slate-300 hover:text-rose-400 flex items-center justify-center border border-slate-700 transition">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+              </button>
+            </div>
           </div>
-          
-          <div class="flex items-center space-x-2 shrink-0">
-            <span class="text-xl font-black text-emerald-400 font-mono px-2.5 py-1 bg-slate-900 rounded-lg border border-slate-800">${it.quantity}</span>
-            <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" class="w-11 h-11 rounded-xl bg-slate-850 hover:bg-slate-800 active:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition">
-              <i data-lucide="edit-3" class="w-5 h-5"></i>
-            </button>
-            <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" class="w-11 h-11 rounded-xl bg-slate-850 hover:bg-rose-900/60 active:bg-rose-600 text-slate-300 hover:text-rose-400 flex items-center justify-center border border-slate-700 transition">
-              <i data-lucide="trash-2" class="w-5 h-5"></i>
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       lucide.createIcons();
     }
 
