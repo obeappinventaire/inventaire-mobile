@@ -55,13 +55,11 @@
         <i data-lucide="user-check" class="w-7 h-7"></i>
       </div>
       <div>
-        <!-- Titre simplifié -->
         <h2 class="text-xl font-bold text-white tracking-wide">Identification</h2>
         <p class="text-xs text-slate-400 mt-1">Sélectionnez votre profil pour débuter</p>
       </div>
 
       <div class="text-left">
-        <!-- Champ sans label 'Magasinier' -->
         <select id="modalAgentSelect" class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl p-3.5 text-sm text-white font-medium focus:border-amber-500 focus:outline-none">
           <option value="">Chargement depuis Google Sheets...</option>
         </select>
@@ -161,7 +159,7 @@
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
-          <!-- Menu déroulant grand format avec écouteur de masquage de clavier tactile -->
+          <!-- Menu déroulant grand format avec masquage de clavier tactile -->
           <div id="suggestionsDropdown" 
                ontouchstart="blurSearchInput()" 
                ontouchmove="blurSearchInput()" 
@@ -190,6 +188,7 @@
         </div>
       </div>
 
+      <!-- Saisie de quantité (>= 0) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
         <div class="flex items-center justify-center space-x-4">
@@ -322,6 +321,33 @@
       if (input && document.activeElement === input) {
         input.blur();
       }
+    }
+
+    // --- CAPTURE GÉOLOCALISATION GPS SILENCIEUSE (3,5s max) ---
+    function getCurrentCoordinates() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve({ lat: null, lng: null });
+          return;
+        }
+        const timer = setTimeout(() => resolve({ lat: null, lng: null }), 3500);
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            clearTimeout(timer);
+            resolve({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude
+            });
+          },
+          (err) => {
+            clearTimeout(timer);
+            console.warn("GPS non disponible ou refusé :", err.message);
+            resolve({ lat: null, lng: null });
+          },
+          { enableHighAccuracy: true, timeout: 3000, maximumAge: 10000 }
+        );
+      });
     }
 
     function isAdmin() {
@@ -647,6 +673,7 @@
       document.getElementById("scanStatusMsg").innerText = "Visez les 6 chiffres...";
     }
 
+    // --- PILOTAGE DE LA TORCHE LUMIÈRE ---
     async function toggleTorch() {
       if (!isScanning || !html5QrCode) return;
       const targetState = !isTorchOn;
@@ -706,6 +733,7 @@
       }
     }
 
+    // --- RECONNAISSANCE OPTIQUE OCR 100% CORRÉLÉE AU CATALOGUE ---
     function startBackgroundOcr() {
       ocrInterval = setInterval(async () => {
         if (!isScanning || isOcrBusy) return;
@@ -880,6 +908,7 @@
       }
     }
 
+    // --- GESTION DES MODIFICATIONS / SUPPRESSIONS D'HISTORIQUE ---
     async function editHistoryItem(id, oldQty) {
       const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
       if (newQtyStr === null) return;
@@ -943,6 +972,7 @@
       }
     }
 
+    // --- SOUMISSION STRICTE AVEC CAPTURE GPS INTÉGRÉE ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -978,6 +1008,10 @@
 
       const btn = document.getElementById("btnSubmit");
       btn.disabled = true;
+      showToast("Géolocalisation & Enregistrement...");
+
+      // Capture GPS au clic
+      const coords = await getCurrentCoordinates();
 
       const payload = {
         action: "CREATE",
@@ -991,15 +1025,19 @@
         supplierRef: activeItem.supplierRef || "",
         ean: activeItem.ean || "",
         qr: activeItem.qr || "",
-        quantity: qty
+        quantity: qty,
+        lat: coords.lat,
+        lng: coords.lng
       };
 
       try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+        }
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         showToast("Inventaire archivé avec succès !");
@@ -1028,24 +1066,26 @@
       }
 
       c.innerHTML = list.map(it => `
-        <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl flex items-center justify-between shadow-sm">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-sm">
           <div class="min-w-0 pr-2">
             <div class="flex items-center space-x-2">
               <span class="text-xs font-mono font-extrabold text-amber-500">${it.sapRef}</span>
               <span class="text-[10px] text-slate-400">• ${it.timestamp}</span>
               ${isAdmin() ? `<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-bold">${it.user}</span>` : ''}
+              ${it.lat && it.lng ? `<span class="text-[9px] text-emerald-400 font-mono">📍 GPS</span>` : ''}
             </div>
             <p class="text-xs font-bold text-white truncate mt-0.5">${it.designation}</p>
             <p class="text-[11px] text-slate-400 truncate">${it.contractor} (${it.trade})</p>
           </div>
           
+          <!-- Boutons tactiles w-11 h-11 confortables -->
           <div class="flex items-center space-x-2 shrink-0">
             <span class="text-xl font-black text-emerald-400 font-mono px-2.5 py-1 bg-slate-950 rounded-lg border border-slate-800">${it.quantity}</span>
-            <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition">
-              <i data-lucide="edit-3" class="w-4 h-4"></i>
+            <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700 transition">
+              <i data-lucide="edit-3" class="w-5 h-5"></i>
             </button>
-            <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-rose-900/60 active:bg-rose-600 text-slate-300 hover:text-rose-400 flex items-center justify-center border border-slate-700 transition">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-rose-900/60 active:bg-rose-600 text-slate-300 hover:text-rose-400 flex items-center justify-center border border-slate-700 transition">
+              <i data-lucide="trash-2" class="w-5 h-5"></i>
             </button>
           </div>
         </div>
