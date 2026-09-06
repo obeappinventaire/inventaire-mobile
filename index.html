@@ -121,7 +121,7 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- Fenêtre caméra avec réticule de centrage et actions directes -->
+          <!-- Fenêtre caméra -->
           <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
             <div id="reader" class="w-full relative"></div>
             <div class="ocr-reticle">
@@ -275,7 +275,7 @@
   </div>
 
   <script>
-    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (/exec)
+    // ⚠️ URL DE VOTRE APPLICATION WEB GOOGLE APPS SCRIPT (/exec)
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -517,7 +517,6 @@
       renderSuggestions(sortedResults);
     }
 
-    // --- AFFICHAGE AVEC RÉF SAP À GAUCHE ET RÉF FOURNISSEUR À DROITE ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
 
@@ -538,12 +537,12 @@
         <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 hover:bg-slate-800 active:bg-slate-800/80 cursor-pointer transition">
           <p class="text-base font-bold text-slate-100 leading-snug">${item.designation || 'Sans désignation'}</p>
           <div class="flex justify-between items-center text-xs mt-2 pt-1 border-t border-slate-800/60">
-            <!-- RÉF SAP INVERSÉE À GAUCHE -->
+            <!-- RÉF SAP À GAUCHE -->
             <div class="flex items-center space-x-1.5">
               <span class="text-[11px] text-slate-400 uppercase font-semibold">SAP :</span>
               <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-950 px-2.5 py-0.5 rounded border border-amber-500/20">${item.sapRef}</span>
             </div>
-            <!-- RÉF FOURNISSEUR INVERSÉE À DROITE -->
+            <!-- RÉF FOURNISSEUR À DROITE -->
             <div class="text-right truncate max-w-[170px]">
               <span class="text-slate-400">Fourn : </span>
               <strong class="font-mono text-blue-400 text-sm">${item.supplierRef || 'N/A'}</strong>
@@ -569,6 +568,7 @@
       document.getElementById("suggestionsDropdown").classList.add("hidden");
       document.getElementById("clearSearchBtn").classList.remove("hidden");
       blurSearchInput();
+      if (navigator.vibrate) navigator.vibrate(50);
     }
 
     function clearSearch() {
@@ -676,7 +676,7 @@
         } catch(e){}
       }
 
-      // Neutralisation matérielle complète des pistes vidéo
+      // Neutralisation matérielle des flux vidéo
       const video = document.querySelector("#reader video");
       if (video && video.srcObject) {
         try {
@@ -842,6 +842,9 @@
           tessedit_pageseg_mode: '7'
         });
 
+        // Ignore le résultat si la caméra a été fermée entre-temps
+        if (!isScanning) return;
+
         const rawDigits = (result.data.text || "").replace(/\D/g, "");
         const validCatalogSaps = catalog
           .map(i => String(i.sapRef).trim())
@@ -927,6 +930,7 @@
         document.getElementById("clearSearchBtn").classList.remove("hidden");
         document.getElementById("suggestionsDropdown").classList.add("hidden");
         blurSearchInput();
+        if (navigator.vibrate) navigator.vibrate(50);
         showToast("Code : " + clean);
       }
     }
@@ -959,16 +963,15 @@
         const target = cachedHistory.find(item => item.id === id);
         if (target) target.quantity = newQty;
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
         showToast("Quantité modifiée !");
       } catch (err) {
         const target = cachedHistory.find(item => item.id === id);
         if (target) target.quantity = newQty;
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        showToast("Quantité modifiée en local.");
+      } finally {
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
-        showToast("Quantité modifiée en local.");
       }
     }
 
@@ -991,15 +994,14 @@
 
         cachedHistory = cachedHistory.filter(item => item.id !== id);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
         showToast("Saisie supprimée !");
       } catch (err) {
         cachedHistory = cachedHistory.filter(item => item.id !== id);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        showToast("Supprimé en local.");
+      } finally {
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
-        showToast("Supprimé en local.");
       }
     }
 
@@ -1042,6 +1044,7 @@
 
       const coords = await getCurrentCoordinates();
 
+      // Double déclaration GPS : lat/lng et latitude/longitude pour alignement avec Code.gs
       const payload = {
         action: "CREATE",
         id: "INV-" + Date.now().toString(36).toUpperCase(),
@@ -1056,7 +1059,9 @@
         qr: activeItem.qr || "",
         quantity: qty,
         lat: coords.lat,
-        lng: coords.lng
+        lng: coords.lng,
+        latitude: coords.lat,
+        longitude: coords.lng
       };
 
       try {
@@ -1070,14 +1075,14 @@
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         showToast("Inventaire archivé avec succès !");
-
-        qtyInput.value = "";
-        clearSearch();
       } catch (e) {
         cachedHistory.unshift(payload);
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         showToast("Enregistré localement (hors-ligne).");
       } finally {
+        // Réinitialisation garantie en ligne comme hors-ligne
+        qtyInput.value = "";
+        clearSearch();
         btn.disabled = false;
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
@@ -1101,7 +1106,7 @@
               <span class="text-xs font-mono font-extrabold text-amber-500">${it.sapRef}</span>
               <span class="text-[10px] text-slate-400">• ${it.timestamp}</span>
               ${isAdmin() ? `<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-bold">${it.user}</span>` : ''}
-              ${it.lat && it.lng ? `<span class="text-[9px] text-emerald-400 font-mono">📍 GPS</span>` : ''}
+              ${(it.lat || it.latitude) ? `<span class="text-[9px] text-emerald-400 font-mono">📍 GPS</span>` : ''}
             </div>
             <p class="text-xs font-bold text-white truncate mt-0.5">${it.designation}</p>
             <p class="text-[11px] text-slate-400 truncate">${it.contractor} (${it.trade})</p>
