@@ -17,7 +17,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- Moteur OCR Tesseract.js -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
@@ -26,7 +25,6 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Viseur optique calibré pour 6 chiffres */
     .ocr-reticle {
       position: absolute;
       top: 50%;
@@ -95,7 +93,6 @@
     <!-- ========== VUE 1 : COMPTAGE ========== -->
     <section id="view-inventory" class="space-y-4">
       
-      <!-- Sélection Contexte obligatoire -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <div>
           <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
@@ -115,15 +112,12 @@
         </div>
       </div>
 
-      <!-- Module Scanner Unique (Code-barres / QR / OCR) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
-        
         <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg text-sm transition">
           <i data-lucide="scan-barcode" class="w-5 h-5"></i>
           <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
         </button>
 
-        <!-- Fenêtre caméra avec réticule de centrage -->
         <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
           <div id="reader" class="w-full relative"></div>
           <div class="ocr-reticle">
@@ -131,7 +125,6 @@
           </div>
           <canvas id="ocrCanvas" class="hidden"></canvas>
           
-          <!-- Bandeau de statut et bouton capture manuelle -->
           <div class="p-2.5 bg-slate-900/95 flex items-center justify-between border-t border-slate-800 z-10 relative">
             <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[190px]">Visez les 6 chiffres du bac...</span>
             <button onclick="triggerManualOcrCapture()" class="px-3 py-2 bg-amber-500 active:bg-amber-600 text-slate-950 font-black rounded-lg text-xs shadow flex items-center gap-1.5">
@@ -141,7 +134,6 @@
           </div>
         </div>
 
-        <!-- Zone de Recherche Manuelle -->
         <div class="relative">
           <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
           <div class="relative flex items-center">
@@ -159,7 +151,6 @@
           <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-30 divide-y divide-slate-800"></div>
         </div>
 
-        <!-- Fiche descriptive du matériel identifié -->
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
@@ -181,7 +172,6 @@
         </div>
       </div>
 
-      <!-- Saisie de quantité (>= 0) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow">
         <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
         <div class="flex items-center justify-center space-x-4">
@@ -191,7 +181,6 @@
         </div>
       </div>
 
-      <!-- Bouton Validation Principal -->
       <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
         <i data-lucide="check-circle" class="w-6 h-6"></i>
         <span>VALIDER ET ARCHIVER</span>
@@ -246,7 +235,7 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE DYNAMIQUE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <i data-lucide="clipboard-list" class="w-5 h-5"></i>
@@ -262,14 +251,16 @@
     </button>
   </nav>
 
-  <!-- TOAST -->
+  <!-- TOAST NOTIFICATION -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
-    <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-6 h-6"></i></div>
+    <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-5 h-5"></i></div>
     <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
-    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (/exec)
+    // =========================================================================
+    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT CI-DESSOUS (se terminant par /exec)
+    // =========================================================================
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -377,7 +368,7 @@
     }
 
     async function syncData() {
-      if (!navigator.onLine) return;
+      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
@@ -546,35 +537,47 @@
 
       container.classList.remove("hidden");
       btnText.innerText = "FERMER CAMERA";
+
+      if (html5QrCode) {
+        try { await html5QrCode.clear(); } catch(e){}
+      }
       html5QrCode = new Html5Qrcode("reader");
 
-      const cameraConfig = {
-        facingMode: "environment",
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      };
-
       const qrConfig = {
-        fps: 20,
-        qrbox: { width: 280, height: 160 },
+        fps: 15,
+        qrbox: { width: 260, height: 150 },
         aspectRatio: 1.777778
       };
 
       try {
-        await html5QrCode.start(
-          cameraConfig,
-          qrConfig,
-          (decodedText) => {
-            handleExactCodeMatch(decodedText);
-            stopScanner();
-          },
-          () => {}
-        );
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          const backCam = devices[devices.length - 1];
+          await html5QrCode.start(
+            backCam.id,
+            qrConfig,
+            (decodedText) => {
+              handleExactCodeMatch(decodedText);
+              stopScanner();
+            },
+            () => {}
+          );
+        } else {
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            qrConfig,
+            (decodedText) => {
+              handleExactCodeMatch(decodedText);
+              stopScanner();
+            },
+            () => {}
+          );
+        }
         isScanning = true;
         startBackgroundOcr();
 
       } catch (err) {
-        console.warn("Échec caméra HD, tentative en mode standard...", err);
+        console.warn("Échec caméra spécifique, bascule standard...", err);
         try {
           await html5QrCode.start(
             { facingMode: "environment" },
@@ -589,7 +592,7 @@
           startBackgroundOcr();
         } catch (fallbackErr) {
           console.error("Erreur fatale caméra :", fallbackErr);
-          alert("Accès caméra refusé. Vérifiez les autorisations du navigateur.");
+          alert("Accès caméra impossible :\n- Vérifiez les autorisations de votre navigateur (Safari/Chrome).\n- Assurez-vous d'utiliser une connexion HTTPS.\n- Fermez toute autre application utilisant l'appareil photo.");
           container.classList.add("hidden");
           btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
         }
@@ -631,13 +634,11 @@
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      // Extraction de la bande centrale
       const cropWidth = Math.floor(video.videoWidth * 0.70);
       const cropHeight = Math.floor(video.videoHeight * 0.22);
       const startX = Math.floor((video.videoWidth - cropWidth) / 2);
       const startY = Math.floor((video.videoHeight - cropHeight) / 2);
 
-      // Agrandissement 2x pour donner de la matière aux chiffres (évite les confusions 3/9)
       canvas.width = cropWidth * 2;
       canvas.height = cropHeight * 2;
 
@@ -645,7 +646,6 @@
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(video, startX, startY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
 
-      // Filtrage binaire adaptatif
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const d = imgData.data;
       let totalLum = 0;
@@ -677,7 +677,6 @@
         for (const code of candidates) {
           let match = catalog.find(i => String(i.sapRef).trim() === code);
 
-          // Résolution de l'inversion 3 <-> 9
           if (!match && code.includes("3")) {
             const alternateCode = code.replace(/3/g, "9");
             match = catalog.find(i => String(i.sapRef).trim() === alternateCode);
