@@ -80,7 +80,7 @@
         </div>
       </div>
 
-      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4 shadow">
         <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 active:bg-indigo-700 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-lg">
           <i data-lucide="scan-barcode" class="w-6 h-6"></i>
           <span id="btnScanText">SCANNER QR OU CODE-BARRES</span>
@@ -91,54 +91,46 @@
           <p class="text-[11px] text-center text-slate-400 py-1.5">Centrez le code (QR, EAN-13, Code 128)</p>
         </div>
 
-        <!-- ZONE DE RECHERCHE DÉSIGNATION & RÉF FOURNISSEUR -->
+        <!-- ZONE DE RECHERCHE DÉSIGNATION & RÉF FOURNISSEUR AGRANDIE -->
         <div class="relative">
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche (Désignation ou Réf Fournisseur)</label>
+          <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche (Désignation ou Réf Fournisseur)</label>
           <div class="relative flex items-center">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400 pointer-events-none"></i>
+            <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-slate-400 pointer-events-none"></i>
             <input type="text" id="articleSearchInput" 
                    oninput="onSearchInput(this.value)" 
                    placeholder="Ex: voo tool, connecteur, tool-75..." 
                    autocomplete="off"
-                   class="w-full bg-slate-950 border border-slate-700 rounded-lg py-3 pl-9 pr-8 text-sm text-white focus:outline-none focus:border-indigo-500 placeholder-slate-500">
-            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 text-slate-400 hover:text-white p-1">
-              <i data-lucide="x" class="w-4 h-4"></i>
+                   class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl py-4 pl-11 pr-10 text-base text-white font-medium focus:outline-none focus:border-indigo-500 placeholder-slate-500 shadow-inner">
+            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1">
+              <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
 
-          <!-- Liste déroulante des suggestions -->
-          <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-30 divide-y divide-slate-800">
+          <!-- LISTE DÉROULANTE DES SUGGESTIONS AGRANDIE -->
+          <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-900 border-2 border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-30 divide-y divide-slate-800">
           </div>
         </div>
 
-        <!-- Fiche descriptive du matériel identifié -->
-        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+        <!-- FICHE DESCRIPTIVE DU MATÉRIEL IDENTIFIÉ (SANS EAN NI QR CODE) -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
           <div class="flex items-start justify-between">
             <div class="min-w-0 pr-2">
               <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wide">Fiche Matériel</span>
-              <h4 id="dispDesignation" class="text-sm font-bold text-white truncate">Scannez ou cherchez par désignation / fourn.</h4>
+              <h4 id="dispDesignation" class="text-base font-bold text-white truncate">Scannez ou cherchez par désignation / fourn.</h4>
             </div>
-            <div id="badgeIdentified" class="hidden px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold shrink-0">
+            <div id="badgeIdentified" class="hidden px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold shrink-0">
               Prêt
             </div>
           </div>
           
-          <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-850">
+          <div class="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-slate-800">
             <div>
-              <span class="text-slate-400 block text-[10px]">Réf Fournisseur :</span>
+              <span class="text-slate-400 block text-xs">Réf Fournisseur :</span>
               <span id="dispSupplier" class="font-mono font-bold text-blue-400 truncate block">--</span>
             </div>
             <div>
-              <span class="text-slate-400 block text-[10px]">Réf SAP :</span>
-              <span id="dispSap" class="font-mono font-bold text-slate-200">--</span>
-            </div>
-            <div>
-              <span class="text-slate-400 block text-[10px]">Code EAN :</span>
-              <span id="dispEan" class="font-mono text-slate-200">--</span>
-            </div>
-            <div>
-              <span class="text-slate-400 block text-[10px]">QR Code :</span>
-              <span id="dispQr" class="font-mono text-slate-200 truncate block">--</span>
+              <span class="text-slate-400 block text-xs">Réf SAP :</span>
+              <span id="dispSap" class="font-mono font-black text-amber-500">--</span>
             </div>
           </div>
         </div>
@@ -370,7 +362,6 @@
 
       const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
 
-      // On filtre STRICTEMENT sur la Désignation et la Réf Fournisseur
       const results = catalog.filter(item => {
         const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""}`);
         return searchTerms.every(term => textTarget.includes(term));
@@ -379,26 +370,28 @@
       renderSuggestions(results);
     }
 
+    // --- AFFICHAGE AGRANDI DES SUGGESTIONS AVEC RÉF SAP ORANGE GRAS ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
 
       if (!results || results.length === 0) {
-        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">Aucune désignation ou réf fournisseur trouvée.</div>`;
+        dd.innerHTML = `<div class="p-4 text-sm text-slate-400 text-center font-medium">Aucune désignation ou réf fournisseur trouvée.</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
-      // Top 10 des résultats pour fluidité mobile
+      // Top 10 des résultats avec présentation élargie et SAP en orange gras
       dd.innerHTML = results.slice(0, 10).map(item => `
         <div onclick="selectArticleBySap('${item.sapRef}')" 
-             class="p-2.5 hover:bg-slate-800 active:bg-indigo-600/30 cursor-pointer transition">
-          <div class="flex justify-between items-start gap-2">
-            <span class="text-xs font-bold text-slate-100 truncate">${item.designation || 'Sans désignation'}</span>
-            <span class="text-[10px] font-mono text-slate-400 shrink-0">SAP: ${item.sapRef}</span>
+             class="p-3.5 hover:bg-slate-800 active:bg-indigo-600/30 cursor-pointer transition">
+          <div class="flex justify-between items-start gap-3">
+            <span class="text-sm font-bold text-slate-100 truncate">${item.designation || 'Sans désignation'}</span>
+            <span class="text-xs font-mono font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 shrink-0">
+              SAP: ${item.sapRef}
+            </span>
           </div>
-          <div class="flex items-center gap-2 text-[10px] mt-0.5">
-            <span class="text-blue-400 font-medium truncate">Réf Fourn : <span class="font-mono text-blue-300 font-bold">${item.supplierRef || 'N/A'}</span></span>
-            ${item.ean ? `<span class="text-slate-500">• EAN: ${item.ean}</span>` : ''}
+          <div class="flex items-center gap-2 text-xs mt-1">
+            <span class="text-blue-400 font-semibold truncate">Réf Fourn : <span class="font-mono text-blue-300">${item.supplierRef || 'N/A'}</span></span>
           </div>
         </div>
       `).join('');
@@ -418,10 +411,7 @@
       document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
       document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
       document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
-      document.getElementById("dispEan").innerText = activeItem.ean || "--";
-      document.getElementById("dispQr").innerText = activeItem.qr || "--";
       
-      // Remplissage avec la désignation sélectionnée
       document.getElementById("articleSearchInput").value = activeItem.designation || activeItem.supplierRef;
       document.getElementById("badgeIdentified").classList.remove("hidden");
       document.getElementById("suggestionsDropdown").classList.add("hidden");
@@ -434,7 +424,7 @@
       document.getElementById("suggestionsDropdown").classList.add("hidden");
     }
 
-    // --- RECHERCHE PAR CODE DIRECT (Ex: scan caméra) ---
+    // --- RECHERCHE PAR CODE DIRECT (Scan Caméra) ---
     function searchArticleByExactCode(code) {
       const q = String(code).trim().toUpperCase();
       if (!q) return;
@@ -459,8 +449,6 @@
         document.getElementById("dispDesignation").innerText = activeItem.designation;
         document.getElementById("dispSupplier").innerText = activeItem.supplierRef;
         document.getElementById("dispSap").innerText = activeItem.sapRef;
-        document.getElementById("dispEan").innerText = activeItem.ean;
-        document.getElementById("dispQr").innerText = activeItem.qr;
         document.getElementById("articleSearchInput").value = activeItem.sapRef;
         document.getElementById("badgeIdentified").classList.remove("hidden");
         document.getElementById("clearSearchBtn").classList.remove("hidden");
@@ -525,7 +513,7 @@
       document.getElementById("btnScanText").innerText = "SCANNER QR OU CODE-BARRES";
     }
 
-    // --- SOUMISSION & ACTIONS ---
+    // --- SOUMISSION & ARCHIVAGE ---
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -563,8 +551,8 @@
         sapRef: activeItem.sapRef,
         designation: activeItem.designation,
         supplierRef: activeItem.supplierRef,
-        ean: activeItem.ean,
-        qr: activeItem.qr,
+        ean: activeItem.ean || "",
+        qr: activeItem.qr || "",
         quantity: qty
       };
 
@@ -590,8 +578,6 @@
         document.getElementById("dispDesignation").innerText = "Scannez ou cherchez par désignation / fourn.";
         document.getElementById("dispSupplier").innerText = "--";
         document.getElementById("dispSap").innerText = "--";
-        document.getElementById("dispEan").innerText = "--";
-        document.getElementById("dispQr").innerText = "--";
         document.getElementById("badgeIdentified").classList.add("hidden");
 
       } catch (e) {
@@ -687,7 +673,7 @@
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center justify-between space-x-3 shadow-md">
           <div class="min-w-0 flex-1">
             <div class="flex items-center space-x-2">
-              <span class="text-xs font-mono font-bold text-indigo-400">${item.sapRef}</span>
+              <span class="text-xs font-mono font-extrabold text-amber-500">${item.sapRef}</span>
               <span class="text-[10px] text-slate-400">• ${item.timestamp}</span>
             </div>
             <p class="text-sm font-semibold text-slate-100 truncate">${item.designation}</p>
