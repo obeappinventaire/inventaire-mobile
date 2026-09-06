@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision & Pilotage Inventaire - Manager PC</title>
 
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -17,7 +18,7 @@
 </head>
 <body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950">
 
-  <!-- MODALE AUTHENTIFICATION ADMIN -->
+  <!-- ================= MODALE AUTHENTIFICATION ADMIN ================= -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
@@ -42,18 +43,17 @@
     </div>
   </div>
 
-  <!-- EN-TÊTE PC -->
-  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between shrink-0 shadow-lg">
-    <div class="flex items-center space-x-4">
-      <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+  <!-- ================= EN-TÊTE FIXE ================= -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
         <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
       </div>
       <div>
         <h1 class="text-base font-bold text-white flex items-center gap-2">
-          Dashboard de Supervision & Pilotage
-          <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-500/30">Admin PC</span>
+          Dashboard Manager
+          <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-500/30">Supervision PC</span>
         </h1>
-        <p class="text-xs text-slate-400">Suivi des agents, cadences horaires, détection des anomalies et traçabilité</p>
       </div>
     </div>
 
@@ -68,152 +68,195 @@
         <span>Actualiser</span>
       </button>
 
-      <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
-        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-        <span>Exporter CSV</span>
-      </button>
-
       <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 text-slate-400 hover:text-rose-400 transition">
         <i data-lucide="log-out" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
 
-  <!-- CORPS DU DASHBOARD -->
-  <main class="flex-1 overflow-y-auto p-6 space-y-6 max-w-7xl mx-auto w-full">
+  <!-- ================= STRUCTURE PRINCIPALE : MENU LATÉRAL + CONTENU ================= -->
+  <div class="flex-1 flex overflow-hidden">
 
-    <!-- 1. KPIS GLOBAUX FIXES (100% Historique) -->
-    <div>
-      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Activité Globale Entrepôt</span>
-      <div class="grid grid-cols-4 gap-4">
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-          <div class="flex items-center justify-between text-slate-400 mb-1">
-            <span class="text-xs font-bold uppercase tracking-wider">Lignes comptées</span>
-            <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
-          </div>
-          <div id="kpiRows" class="text-2xl font-black text-white">0</div>
-          <span class="text-[11px] text-slate-500">Totalité des saisies</span>
-        </div>
+    <!-- MENU VERTICAL GAUCHE -->
+    <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between p-3 shrink-0">
+      <div class="space-y-1.5">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2 block">Vues de Supervision</span>
+        
+        <!-- Onglet 1 : Activité globale -->
+        <button id="navTabGlobal" onclick="switchMainTab('global')" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+          <span class="truncate">Activité Globale</span>
+        </button>
 
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-          <div class="flex items-center justify-between text-slate-400 mb-1">
-            <span class="text-xs font-bold uppercase tracking-wider">Quantité Cumulée</span>
-            <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
-          </div>
-          <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
-          <span class="text-[11px] text-slate-500">Volume total inventorié</span>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-          <div class="flex items-center justify-between text-amber-400 mb-1">
-            <span class="text-xs font-bold uppercase tracking-wider">Stocks à 0</span>
-            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
-          </div>
-          <div id="kpiZeroStock" class="text-2xl font-black text-amber-400">0</div>
-          <span class="text-[11px] text-slate-500">Ruptures signalées</span>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-          <div class="flex items-center justify-between text-rose-400 mb-1">
-            <span class="text-xs font-bold uppercase tracking-wider">Volumes > 50 pcs</span>
-            <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
-          </div>
-          <div id="kpiHighStock" class="text-2xl font-black text-rose-400">0</div>
-          <span class="text-[11px] text-slate-500">Quantités atypiques</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2. PILOTAGE DES AGENTS (TIROIRS ACCORDÉONS) -->
-    <div class="space-y-3">
-      <div>
-        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i>
-          Suivi Terrain par Agent & Statut Entrepreneur
-        </h2>
-        <p class="text-xs text-slate-400">Cliquez sur une tuile KPI pour déplier le détail en accordéon</p>
+        <!-- Onglet 2 : Suivi Terrain Agents -->
+        <button id="navTabAgents" onclick="switchMainTab('agents')" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span class="truncate">Suivi Terrain & Agents</span>
+        </button>
       </div>
 
-      <div id="agentAccordionContainer" class="space-y-3"></div>
-    </div>
-
-    <!-- 3. BARRE DE FILTRES DU TABLEAU -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Recherche & Filtres Avancés</span>
-        <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline">Réinitialiser les filtres</button>
+      <!-- Résumé compact bas de menu -->
+      <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+        <div class="flex justify-between">
+          <span>Base inventaire :</span>
+          <strong id="sideTotalCount" class="text-white">0</strong>
+        </div>
+        <div class="flex justify-between">
+          <span>Alertes actives :</span>
+          <strong id="sideAlertCount" class="text-amber-400">0</strong>
+        </div>
       </div>
+    </aside>
 
-      <div class="grid grid-cols-5 gap-3 items-end text-xs">
+    <!-- ZONE DE CONTENU SCROLLABLE -->
+    <main class="flex-1 overflow-y-auto p-6 bg-slate-950">
+
+      <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE, RECHERCHE & EXTRAIT ================= -->
+      <section id="sectionGlobalView" class="space-y-6">
+
+        <!-- 1. KPIS GLOBAUX -->
         <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche globale</label>
-          <div class="relative">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
-            <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="SAP, désignation, ID..." class="w-full bg-slate-950 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-indigo-500">
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Activité Globale Entrepôt</span>
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-slate-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Lignes comptées</span>
+                <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+              </div>
+              <div id="kpiRows" class="text-2xl font-black text-white">0</div>
+              <span class="text-[11px] text-slate-500">Totalité des saisies</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-slate-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Quantité Cumulée</span>
+                <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
+              </div>
+              <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
+              <span class="text-[11px] text-slate-500">Volume total inventorié</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-amber-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Stocks à 0</span>
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+              </div>
+              <div id="kpiZeroStock" class="text-2xl font-black text-amber-400">0</div>
+              <span class="text-[11px] text-slate-500">Ruptures signalées</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-rose-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Volumes > 50 pcs</span>
+                <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
+              </div>
+              <div id="kpiHighStock" class="text-2xl font-black text-rose-400">0</div>
+              <span class="text-[11px] text-slate-500">Quantités atypiques</span>
+            </div>
           </div>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Agent Magasinier</label>
-          <select id="filterAgent" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-            <option value="">Tous les agents</option>
-          </select>
+        <!-- 2. RECHERCHE, FILTRES & EXTRACT -->
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Recherche et Extraction</span>
+            <div class="flex items-center space-x-2">
+              <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Exporter la sélection (CSV)</span>
+              </button>
+              <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-5 gap-3 items-end text-xs">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche mot-clé</label>
+              <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+                <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="SAP, désignation, ID..." class="w-full bg-slate-950 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Agent Magasinier</label>
+              <select id="filterAgent" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                <option value="">Tous les agents</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
+              <select id="filterContractor" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                <option value="">Tous les entrepreneurs</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
+              <select id="filterTrade" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                <option value="">Tous les métiers</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Filtre Anomalies</label>
+              <select id="filterAlert" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                <option value="ALL">Toutes les saisies</option>
+                <option value="ZERO">Stock à 0 uniquement</option>
+                <option value="HIGH">Quantités > 50 pièces</option>
+                <option value="ANY_ALERT">Toutes les alertes (0 ou >50)</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
-          <select id="filterContractor" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-            <option value="">Tous les entrepreneurs</option>
-          </select>
+        <!-- 3. TABLEAU DES DONNÉES -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
+          <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
+            <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
+            <span class="text-[11px] text-slate-500">Synchronisation active avec Audit_Logs</span>
+          </div>
+
+          <div class="overflow-x-auto max-h-[520px]">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-950 sticky top-0 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider z-10">
+                <tr>
+                  <th class="p-3">Horodatage / ID</th>
+                  <th class="p-3">Agent</th>
+                  <th class="p-3">Entrepreneur & Métier</th>
+                  <th class="p-3">Réf SAP</th>
+                  <th class="p-3">Désignation Matériel</th>
+                  <th class="p-3">Codes Barres</th>
+                  <th class="p-3 text-center">Quantité</th>
+                  <th class="p-3 text-center">Statut</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
+            </table>
+          </div>
         </div>
 
+      </section>
+
+      <!-- ================= ONGLET 2 : SUIVI TERRAIN AGENTS & STATUT ENTREPRENEUR ================= -->
+      <section id="sectionAgentsView" class="hidden space-y-4">
         <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier</label>
-          <select id="filterTrade" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-            <option value="">Tous les métiers</option>
-          </select>
+          <h2 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
+            Suivi Terrain par Agent & Statut Entrepreneur
+          </h2>
+          <p class="text-xs text-slate-400">Supervision en direct : cadence, alertes et périmètres traités avec horodatages</p>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Anomalies</label>
-          <select id="filterAlert" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-            <option value="ALL">Toutes les saisies</option>
-            <option value="ZERO">Stock à 0 uniquement</option>
-            <option value="HIGH">Quantités > 50 pièces</option>
-            <option value="ANY_ALERT">Toutes les alertes (0 ou >50)</option>
-          </select>
+        <div id="agentAccordionContainer" class="space-y-3">
+          <!-- Rendu dynamique via renderAgentAccordions() -->
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- 4. GRAND TABLEAU DENSE DE SUPERVISION -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
-      <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
-        <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
-        <span class="text-[11px] text-slate-500">Toutes les modifications et suppressions sont archivées dans Audit_Logs</span>
-      </div>
-
-      <div class="overflow-x-auto max-h-[500px]">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead class="bg-slate-950 sticky top-0 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider z-10">
-            <tr>
-              <th class="p-3">Horodatage / ID</th>
-              <th class="p-3">Agent</th>
-              <th class="p-3">Entrepreneur & Métier</th>
-              <th class="p-3">Réf SAP</th>
-              <th class="p-3">Désignation Matériel</th>
-              <th class="p-3">Codes Barres</th>
-              <th class="p-3 text-center">Quantité</th>
-              <th class="p-3 text-center">Statut</th>
-              <th class="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="inventoryTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
-        </table>
-      </div>
-    </div>
-
-  </main>
+    </main>
+  </div>
 
   <!-- TOAST -->
   <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-24 transition-transform duration-300 z-50 pointer-events-none">
@@ -241,6 +284,29 @@
       checkAuth();
     });
 
+    // --- NAVIGATION MENU VERTICAL GAUCHE ---
+    function switchMainTab(tab) {
+      const secGlobal = document.getElementById("sectionGlobalView");
+      const secAgents = document.getElementById("sectionAgentsView");
+      const btnGlobal = document.getElementById("navTabGlobal");
+      const btnAgents = document.getElementById("navTabAgents");
+
+      if (tab === 'global') {
+        secGlobal.classList.remove("hidden");
+        secAgents.classList.add("hidden");
+        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
+      } else {
+        secGlobal.classList.add("hidden");
+        secAgents.classList.remove("hidden");
+        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
+        renderAgentAccordions();
+      }
+      lucide.createIcons();
+    }
+
+    // --- AUTHENTIFICATION SUPERVISEUR ---
     function checkAuth() {
       if (!currentAdmin || !adminAgents.includes(currentAdmin)) {
         openAuthModal();
@@ -282,6 +348,7 @@
       location.reload();
     }
 
+    // --- SYNCHRONISATION INITIALE ---
     async function syncData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
 
@@ -335,7 +402,6 @@
     function getAgentLiveStatus(agentName, agentEntries) {
       if (!agentEntries || agentEntries.length === 0) {
         return {
-          code: "WAITING",
           label: "En attente",
           contractor: "Aucun entrepreneur débuté",
           detail: "0 scan",
@@ -353,7 +419,6 @@
       const activeContractor = lastEntry.contractor || "Entrepreneur indéterminé";
 
       return {
-        code: "IN_PROGRESS",
         label: "En cours",
         contractor: activeContractor,
         detail: lastTime,
@@ -363,10 +428,19 @@
     }
 
     function applyFilters() {
-      document.getElementById("kpiRows").innerText = historyData.length;
-      document.getElementById("kpiTotalQty").innerText = historyData.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
-      document.getElementById("kpiZeroStock").innerText = historyData.filter(i => Number(i.quantity) === 0).length;
-      document.getElementById("kpiHighStock").innerText = historyData.filter(i => Number(i.quantity) > 50).length;
+      const totalRows = historyData.length;
+      const totalQty = historyData.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
+      const zeroStockCount = historyData.filter(i => Number(i.quantity) === 0).length;
+      const highStockCount = historyData.filter(i => Number(i.quantity) > 50).length;
+      const totalAlerts = zeroStockCount + highStockCount;
+
+      document.getElementById("kpiRows").innerText = totalRows;
+      document.getElementById("kpiTotalQty").innerText = totalQty;
+      document.getElementById("kpiZeroStock").innerText = zeroStockCount;
+      document.getElementById("kpiHighStock").innerText = highStockCount;
+
+      document.getElementById("sideTotalCount").innerText = totalRows;
+      document.getElementById("sideAlertCount").innerText = totalAlerts;
 
       const search = document.getElementById("filterSearch").value.trim().toLowerCase();
       const agent = document.getElementById("filterAgent").value;
@@ -391,8 +465,8 @@
         return matchSearch && matchAgent && matchContractor && matchTrade && matchAlert;
       });
 
-      renderAgentAccordions();
       renderTable();
+      renderAgentAccordions();
     }
 
     function toggleAgentDrawer(agentName, drawerType) {
@@ -404,10 +478,11 @@
       renderAgentAccordions();
     }
 
+    // --- GESTION DU TIROIR ACCORDÉON (AVEC PÉRIMÈTRE TRAITÉ SEULEMENT) ---
     function renderAgentAccordions() {
       const container = document.getElementById("agentAccordionContainer");
       if (availableAgents.length === 0) {
-        container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">Aucun agent configuré.</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Aucun agent configuré.</div>`;
         return;
       }
 
@@ -440,9 +515,43 @@
         });
         const anomalyRate = agentEntries.length > 0 ? Math.round((suspiciousEntries.length / agentEntries.length) * 100) : 0;
 
-        // 3. Périmètre
-        const treatedContractors = new Set(agentEntries.map(i => i.contractor).filter(Boolean));
-        const treatedTrades = new Set(agentEntries.map(i => i.trade).filter(Boolean));
+        // 3. Périmètre DÉMARRÉ / TRAITÉ UNIQUEMENT (avec date/heure de dernière saisie)
+        const treatedContractorMap = {};
+        const treatedTradeMap = {};
+
+        agentEntries.forEach(item => {
+          const c = item.contractor;
+          const t = item.trade;
+          const d = parseItemDate(item.timestamp);
+
+          if (c) {
+            if (!treatedContractorMap[c] || d > treatedContractorMap[c].lastDate) {
+              treatedContractorMap[c] = {
+                lastDate: d,
+                lastTimeStr: item.timestamp,
+                lines: (treatedContractorMap[c]?.lines || 0) + 1,
+                qty: (treatedContractorMap[c]?.qty || 0) + (Number(item.quantity) || 0)
+              };
+            } else {
+              treatedContractorMap[c].lines += 1;
+              treatedContractorMap[c].qty += (Number(item.quantity) || 0);
+            }
+          }
+
+          if (t) {
+            if (!treatedTradeMap[t] || d > treatedTradeMap[t].lastDate) {
+              treatedTradeMap[t] = {
+                lastDate: d,
+                lastTimeStr: item.timestamp,
+                lines: (treatedTradeMap[t]?.lines || 0) + 1,
+                qty: (treatedTradeMap[t]?.qty || 0) + (Number(item.quantity) || 0)
+              };
+            } else {
+              treatedTradeMap[t].lines += 1;
+              treatedTradeMap[t].qty += (Number(item.quantity) || 0);
+            }
+          }
+        });
 
         const activeDrawer = openDrawers[agent];
 
@@ -451,19 +560,19 @@
           drawerContent = `
             <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-2">
               <div class="font-bold text-indigo-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <span>⚡ Rythme & Amplitude de comptage (${agent})</span>
-                <span class="text-[11px] text-slate-400 font-normal">Vitesse moyenne : <strong class="text-white">${cadence} lignes / h</strong></span>
+                <span>⚡ Rythme & Amplitude (${agent})</span>
+                <span class="text-[11px] text-slate-400">Vitesse : <strong class="text-white">${cadence} lignes / h</strong></span>
               </div>
               <div class="grid grid-cols-3 gap-3 text-slate-300 pt-1">
                 <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Premier scan</span><strong class="text-emerald-400">${firstScanTime}</strong></div>
                 <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Dernier scan</span><strong class="text-emerald-400">${lastScanTime}</strong></div>
-                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Temps de session</span><strong>${durationHours > 0 ? durationHours.toFixed(1) + ' heure(s)' : 'En cours'}</strong></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Durée active</span><strong>${durationHours > 0 ? durationHours.toFixed(1) + ' heure(s)' : 'En cours'}</strong></div>
               </div>
             </div>
           `;
         } else if (activeDrawer === 'anomalies') {
           const rowsHtml = suspiciousEntries.length === 0 
-            ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie détectée pour cet agent.</div>`
+            ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie constatée pour cet agent.</div>`
             : suspiciousEntries.map(item => `
                 <div class="flex items-center justify-between py-2 border-b border-slate-850 last:border-0 text-xs">
                   <div class="min-w-0 flex-1 pr-2">
@@ -488,47 +597,59 @@
           drawerContent = `
             <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-rose-500/30 text-xs space-y-2">
               <div class="font-bold text-rose-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <span>⚠️ Détail des ${suspiciousEntries.length} saisie(s) non conforme(s)</span>
-                <span class="text-[10px] text-slate-400">Actions synchronisées dans Audit_Logs</span>
+                <span>⚠️ ${suspiciousEntries.length} saisie(s) non conforme(s)</span>
+                <span class="text-[10px] text-slate-400">Actions tracées dans Audit_Logs</span>
               </div>
               <div class="divide-y divide-slate-800/80 max-h-60 overflow-y-auto">${rowsHtml}</div>
             </div>
           `;
         } else if (activeDrawer === 'perimetre') {
-          const contractorBadges = availableContractors.map(c => {
-            const isDone = treatedContractors.has(c);
-            const count = agentEntries.filter(i => i.contractor === c).length;
-            return `
-              <div class="p-2 rounded-lg border text-xs flex justify-between items-center ${isDone ? 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300' : 'bg-slate-950/60 border-slate-800 text-slate-500'}">
-                <span>${isDone ? '✅' : '⬜'} ${c}</span>
-                <span class="font-mono text-[10px]">${isDone ? count + ' lignes' : 'À faire'}</span>
-              </div>
-            `;
-          }).join('');
+          const contractorKeys = Object.keys(treatedContractorMap);
+          const tradeKeys = Object.keys(treatedTradeMap);
 
-          const tradeBadges = availableTrades.map(t => {
-            const isDone = treatedTrades.has(t);
-            const count = agentEntries.filter(i => i.trade === t).length;
-            return `
-              <div class="p-2 rounded-lg border text-xs flex justify-between items-center ${isDone ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : 'bg-slate-950/60 border-slate-800 text-slate-500'}">
-                <span>${isDone ? '✅' : '⬜'} ${t}</span>
-                <span class="font-mono text-[10px]">${isDone ? count + ' lignes' : 'En attente'}</span>
-              </div>
-            `;
-          }).join('');
+          const contractorListHtml = contractorKeys.length === 0
+            ? `<div class="text-slate-500 text-xs py-1">Aucun entrepreneur entamé.</div>`
+            : contractorKeys.map(c => `
+                <div class="p-2 rounded-lg bg-indigo-950/40 border border-indigo-500/40 text-xs space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-indigo-300 truncate">${c}</span>
+                    <span class="font-mono text-[10px] text-slate-400">${treatedContractorMap[c].lines} lig. (${treatedContractorMap[c].qty} pcs)</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                    <i data-lucide="calendar" class="w-3 h-3 text-indigo-400"></i>
+                    Dernière saisie : <strong class="text-slate-200">${treatedContractorMap[c].lastTimeStr}</strong>
+                  </div>
+                </div>
+              `).join('');
+
+          const tradeListHtml = tradeKeys.length === 0
+            ? `<div class="text-slate-500 text-xs py-1">Aucun corps d'état entamé.</div>`
+            : tradeKeys.map(t => `
+                <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-emerald-300 truncate">${t}</span>
+                    <span class="font-mono text-[10px] text-slate-400">${treatedTradeMap[t].lines} lig. (${treatedTradeMap[t].qty} pcs)</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3 h-3 text-emerald-400"></i>
+                    Dernière saisie : <strong class="text-slate-200">${treatedTradeMap[t].lastTimeStr}</strong>
+                  </div>
+                </div>
+              `).join('');
 
           drawerContent = `
             <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-3">
-              <div class="font-bold text-indigo-300 border-b border-slate-800 pb-1.5">
-                🌐 Couverture du périmètre affecté (${agent})
+              <div class="font-bold text-indigo-300 border-b border-slate-800 pb-1.5 flex justify-between items-center">
+                <span>🌐 Entrepreneurs & Métiers Démarrés / Traités (${agent})</span>
+                <span class="text-[10px] text-slate-400 font-normal">Affichage des dates de passage</span>
               </div>
               <div>
-                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Entrepreneurs (${treatedContractors.size} / ${availableContractors.length}) :</span>
-                <div class="grid grid-cols-2 gap-2">${contractorBadges}</div>
+                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Entrepreneurs traités (${contractorKeys.length}) :</span>
+                <div class="grid grid-cols-2 gap-2">${contractorListHtml}</div>
               </div>
               <div>
-                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Corps d'état / Métiers (${treatedTrades.size} / ${availableTrades.length}) :</span>
-                <div class="grid grid-cols-2 gap-2">${tradeBadges}</div>
+                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Corps d'état / Métiers traités (${tradeKeys.length}) :</span>
+                <div class="grid grid-cols-2 gap-2">${tradeListHtml}</div>
               </div>
             </div>
           `;
@@ -536,7 +657,7 @@
 
         return `
           <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow transition">
-            <!-- EN-TÊTE : NOM AGENT + STATUT TEMPS RÉEL + ENTREPRENEUR EN COURS -->
+            <!-- EN-TÊTE DE CARTE : AGENT + STATUT TEMPS RÉEL + ENTREPRENEUR EN COURS -->
             <div class="flex items-center justify-between pb-3 border-b border-slate-800">
               <div class="flex items-center space-x-3">
                 <span class="text-sm font-bold text-white flex items-center gap-1.5">
@@ -544,7 +665,6 @@
                   ${agent}
                 </span>
 
-                <!-- Badge dynamique enrichi -->
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${status.badgeClass}">
                   <span class="w-1.5 h-1.5 rounded-full ${status.dotClass}"></span>
                   <span>${status.label}</span>
@@ -561,44 +681,40 @@
               </span>
             </div>
 
-            <!-- LES 3 TUILES ACCORDÉONS CLIQUABLES -->
+            <!-- TUILES ACCORDÉONS -->
             <div class="grid grid-cols-3 gap-3 pt-3">
-              <!-- Tuile 1 : Cadence -->
               <button onclick="toggleAgentDrawer('${agent}', 'cadence')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'cadence' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
                 <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
                   <span>⚡ Cadence</span>
                   <span>${activeDrawer === 'cadence' ? '▲' : '▼'}</span>
                 </div>
                 <div class="text-sm font-black text-emerald-400">${cadence} <span class="text-[10px] font-normal text-slate-400">l/h</span></div>
-                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'cadence' ? 'Fermer amplitude' : 'Déplier amplitude'}</div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'cadence' ? 'Fermer' : 'Déplier'}</div>
               </button>
 
-              <!-- Tuile 2 : Anomalies -->
               <button onclick="toggleAgentDrawer('${agent}', 'anomalies')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'anomalies' ? 'bg-rose-950/60 border-rose-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
                 <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
                   <span>🛡️ Anomalies</span>
                   <span>${activeDrawer === 'anomalies' ? '▲' : '▼'}</span>
                 </div>
                 <div class="text-sm font-black ${anomalyRate > 10 ? 'text-rose-400' : 'text-amber-400'}">
-                  ${anomalyRate}% <span class="text-[10px] font-normal text-slate-400">(${suspiciousEntries.length} alertes)</span>
+                  ${anomalyRate}% <span class="text-[10px] font-normal text-slate-400">(${suspiciousEntries.length})</span>
                 </div>
-                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'anomalies' ? 'Fermer la liste' : 'Déplier les alertes'}</div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'anomalies' ? 'Fermer' : 'Déplier'}</div>
               </button>
 
-              <!-- Tuile 3 : Périmètre -->
               <button onclick="toggleAgentDrawer('${agent}', 'perimetre')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'perimetre' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
                 <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
-                  <span>🌐 Périmètre</span>
+                  <span>🌐 Traités</span>
                   <span>${activeDrawer === 'perimetre' ? '▲' : '▼'}</span>
                 </div>
                 <div class="text-sm font-black text-slate-200">
-                  ${treatedContractors.size} <span class="text-[10px] font-normal text-slate-400">ent. / ${treatedTrades.size} mét.</span>
+                  ${Object.keys(treatedContractorMap).length} <span class="text-[10px] font-normal text-slate-400">ent. démarrés</span>
                 </div>
-                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'perimetre' ? 'Fermer avancement' : 'Déplier avancement'}</div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'perimetre' ? 'Fermer' : 'Voir dates'}</div>
               </button>
             </div>
 
-            <!-- TIROIR ACCORDÉON DÉPLIÉ -->
             ${drawerContent}
           </div>
         `;
@@ -607,6 +723,7 @@
       lucide.createIcons();
     }
 
+    // --- RENDU DU TABLEAU DES INVENTAIRES ---
     function renderTable() {
       const tbody = document.getElementById("inventoryTableBody");
       document.getElementById("tableCountLabel").innerText = `${filteredData.length} ligne(s) affichée(s) sur ${historyData.length}`;
@@ -668,6 +785,7 @@
       lucide.createIcons();
     }
 
+    // --- ACTIONS D'AUDIT MODIFIER / SUPPRIMER ---
     async function editItem(id, currentQty) {
       const newQtyStr = prompt("Superviseur : Nouvelle quantité constatée (>= 0) :", currentQty);
       if (newQtyStr === null) return;
@@ -725,6 +843,7 @@
       }
     }
 
+    // --- EXPORT CSV DIRECT ---
     function exportToCSV() {
       if (filteredData.length === 0) {
         alert("Aucune donnée à exporter.");
@@ -751,11 +870,11 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `Inventaires_Supervision_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `Inventaires_Extraction_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast("Export CSV généré !");
+      showToast("Extraction CSV téléchargée !");
     }
 
     function showToast(msg) {
