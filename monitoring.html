@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision & Cartographie des Inventaires</title>
   
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Leaflet CSS & JS -->
+  <!-- Leaflet CSS & JS pour la cartographie -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -24,7 +25,7 @@
 </head>
 <body class="h-full flex overflow-hidden">
 
-  <!-- MODALE AUTHENTIFICATION SUPERVISEUR -->
+  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
   <div id="authModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
       <div class="flex items-center space-x-3">
@@ -32,7 +33,7 @@
           <i data-lucide="shield-check" class="w-6 h-6"></i>
         </div>
         <div>
-          <h2 class="text-lg font-bold text-white">Supervision Inventaire</h2>
+          <h2 class="text-lg font-bold text-white">Supervision Magasin</h2>
           <p class="text-xs text-slate-400">Authentification administrateur requise</p>
         </div>
       </div>
@@ -48,13 +49,13 @@
           <input type="password" id="loginPasswordInput" placeholder="••••" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
         </div>
       </div>
-      <button onclick="submitLogin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition">
+      <button onclick="submitLogin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">
         Ouvrir le tableau de bord
       </button>
     </div>
   </div>
 
-  <!-- MENU LATÉRAL GAUCHE -->
+  <!-- ================= MENU LATÉRAL ================= -->
   <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
     <div class="p-4 border-b border-slate-800 flex items-center justify-between">
       <div class="flex items-center space-x-2">
@@ -64,20 +65,32 @@
       <span id="currentAdminBadge" class="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded font-mono">ADMIN</span>
     </div>
 
-    <!-- Filtre Maître de Période -->
-    <div class="p-4 border-b border-slate-800 space-y-2">
-      <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Période active</label>
-      <select id="periodFilter" onchange="applyFiltersAndRender()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200">
+    <!-- Filtre Maître de Période (Raccourcis + Plage Libre Du / Au) -->
+    <div class="p-4 border-b border-slate-800 space-y-3">
+      <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Période active</label>
+      <select id="periodPreset" onchange="handlePeriodPresetChange(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
         <option value="today">Aujourd'hui</option>
         <option value="week">Semaine en cours</option>
         <option value="month">Mois en cours</option>
         <option value="all" selected>Tout l'historique</option>
+        <option value="custom">Personnalisée (dates ci-dessous)</option>
       </select>
+
+      <div class="space-y-1.5 pt-1">
+        <div>
+          <span class="text-[10px] text-slate-400 block">Du</span>
+          <input type="date" id="filterDateStart" onchange="handleManualDateChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-400 block">Au</span>
+          <input type="date" id="filterDateEnd" onchange="handleManualDateChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
+        </div>
+      </div>
     </div>
 
     <!-- Navigation Onglets -->
     <nav class="flex-1 p-3 space-y-1">
-      <button onclick="switchView('overview')" id="btnTabOverview" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white">
+      <button onclick="switchView('overview')" id="btnTabOverview" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
         <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
         <span>Activité Globale</span>
       </button>
@@ -95,13 +108,13 @@
 
     <div class="p-4 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
       <span id="syncStatus">Connecté</span>
-      <button onclick="refreshData()" class="text-indigo-400 hover:text-indigo-300">
+      <button onclick="refreshData()" class="text-indigo-400 hover:text-indigo-300" title="Actualiser">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
       </button>
     </div>
   </aside>
 
-  <!-- CONTENU PRINCIPAL -->
+  <!-- ================= CONTENEUR PRINCIPAL ================= -->
   <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-950">
 
     <!-- ================= VUE 1 : ACTIVITÉ GLOBALE ================= -->
@@ -130,7 +143,7 @@
         </div>
       </div>
 
-      <!-- 2. PANNEAU DE CONFIGURATION DES SEUILS SUSPECTS -->
+      <!-- 2. CONFIGURATION DYNAMIQUE DES CRITÈRES SUSPECTS -->
       <details class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-300">
         <summary class="font-bold text-indigo-400 cursor-pointer flex items-center justify-between">
           <span>⚙️ Définir les critères de saisies suspectes</span>
@@ -148,10 +161,10 @@
         </div>
       </details>
 
-      <!-- 3. BARRE DE FILTRES MULTI-CHAMPS ET TRI PAR DATE -->
+      <!-- 3. MENUS DÉROULANTS À CASES À COCHER MULTIPLES (CHECKBOXES DROPDOWNS) -->
       <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold text-slate-300 uppercase">Filtres et Tri</span>
+          <span class="text-[11px] font-bold text-slate-300 uppercase">Filtres complémentaires & Extraction</span>
           <select id="monSortDate" onchange="applyFiltersAndRender()" class="bg-slate-950 border border-slate-700 text-[11px] text-indigo-300 font-bold rounded-lg px-2.5 py-1">
             <option value="DESC">📅 Date : Récent ➔ Ancien</option>
             <option value="ASC">📅 Date : Ancien ➔ Récent</option>
@@ -159,29 +172,63 @@
         </div>
 
         <div class="grid grid-cols-3 gap-3 text-xs">
-          <div>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Agents (multi-choix)</label>
-            <select id="monFilterAgents" multiple onchange="applyFiltersAndRender()" class="w-full h-20 bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[11px] text-white">
-            </select>
+          
+          <!-- Dropdown 1 : Entrepreneurs -->
+          <div class="relative">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs</label>
+            <button type="button" onclick="toggleDropdown('ddContractors')" id="btnDdContractors" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-left text-slate-200 flex justify-between items-center text-xs">
+              <span id="labelDdContractors" class="truncate">Tous les entrepreneurs</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i>
+            </button>
+            <div id="ddContractors" class="hidden absolute left-0 top-full mt-1 w-64 bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl z-40 space-y-2">
+              <div class="flex justify-between text-[10px] border-b border-slate-800 pb-1.5">
+                <button type="button" onclick="checkAllOptions('contractor', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                <button type="button" onclick="checkAllOptions('contractor', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+              </div>
+              <div id="listDdContractors" class="max-h-48 overflow-y-auto space-y-1 text-xs"></div>
+            </div>
           </div>
-          <div>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs (multi-choix)</label>
-            <select id="monFilterContractors" multiple onchange="applyFiltersAndRender()" class="w-full h-20 bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[11px] text-white">
-            </select>
+
+          <!-- Dropdown 2 : Corps d'état / Métiers -->
+          <div class="relative">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Métiers / Corps d'état</label>
+            <button type="button" onclick="toggleDropdown('ddTrades')" id="btnDdTrades" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-left text-slate-200 flex justify-between items-center text-xs">
+              <span id="labelDdTrades" class="truncate">Tous les métiers</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i>
+            </button>
+            <div id="ddTrades" class="hidden absolute left-0 top-full mt-1 w-64 bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl z-40 space-y-2">
+              <div class="flex justify-between text-[10px] border-b border-slate-800 pb-1.5">
+                <button type="button" onclick="checkAllOptions('trade', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                <button type="button" onclick="checkAllOptions('trade', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+              </div>
+              <div id="listDdTrades" class="max-h-48 overflow-y-auto space-y-1 text-xs"></div>
+            </div>
           </div>
-          <div>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Métiers (multi-choix)</label>
-            <select id="monFilterTrades" multiple onchange="applyFiltersAndRender()" class="w-full h-20 bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[11px] text-white">
-            </select>
+
+          <!-- Dropdown 3 : Magasiniers / Agents -->
+          <div class="relative">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Magasiniers</label>
+            <button type="button" onclick="toggleDropdown('ddAgents')" id="btnDdAgents" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-left text-slate-200 flex justify-between items-center text-xs">
+              <span id="labelDdAgents" class="truncate">Tous les magasiniers</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i>
+            </button>
+            <div id="ddAgents" class="hidden absolute left-0 top-full mt-1 w-64 bg-slate-900 border border-slate-700 rounded-xl p-2.5 shadow-2xl z-40 space-y-2">
+              <div class="flex justify-between text-[10px] border-b border-slate-800 pb-1.5">
+                <button type="button" onclick="checkAllOptions('agent', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                <button type="button" onclick="checkAllOptions('agent', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+              </div>
+              <div id="listDdAgents" class="max-h-48 overflow-y-auto space-y-1 text-xs"></div>
+            </div>
           </div>
+
         </div>
-        
+
         <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px]">
-          <label class="flex items-center space-x-1.5 text-amber-400">
+          <label class="flex items-center space-x-1.5 text-amber-400 cursor-pointer">
             <input type="checkbox" id="monFilterAlertOnly" onchange="applyFiltersAndRender()" class="rounded bg-slate-950 border-slate-700 text-amber-500">
-            <span>Afficher uniquement les alertes</span>
+            <span>Afficher uniquement les alertes (Stocks 0 ou seuils)</span>
           </label>
-          <button onclick="resetFilters()" class="text-slate-400 hover:text-white underline">Réinitialiser les sélections</button>
+          <button type="button" onclick="resetAllFilters()" class="text-slate-400 hover:text-white underline">Réinitialiser les filtres</button>
         </div>
       </div>
 
@@ -220,9 +267,9 @@
       </div>
     </section>
 
-    <!-- ================= VUE 2 : SUIVI TERRAIN & AGENTS (ACCORDÉONS) ================= -->
+    <!-- ================= VUE 2 : SUIVI TERRAIN & AGENTS ================= -->
     <section id="viewField" class="hidden flex-1 overflow-y-auto p-6 space-y-4">
-      <div id="fieldAccordionContainer" class="space-y-4"></div>
+      <div id="fieldTilesContainer" class="space-y-4"></div>
     </section>
 
     <!-- ================= VUE 3 : CARTE GÉOGRAPHIQUE LEAFLET ================= -->
@@ -254,15 +301,84 @@
     let rawData = { agents: [], contractors: [], trades: [], admins: [], adminPasswords: {}, history: [] };
     let periodHistory = [];
     let filteredHistory = [];
+    let activeDrawers = {};
     let map = null;
     let mapMarkersLayer = null;
 
+    // État des cases à cocher multiples
+    let selectedContractors = [];
+    let selectedTrades = [];
+    let selectedAgents = [];
+
     window.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
+      initDateInputs();
       await refreshData();
       populateLoginAdmins();
-      populateMultiSelects();
     });
+
+    // Fermeture automatique des dropdowns au clic extérieur
+    window.addEventListener("click", (e) => {
+      if (!e.target.closest("#btnDdContractors") && !e.target.closest("#ddContractors")) {
+        document.getElementById("ddContractors").classList.add("hidden");
+      }
+      if (!e.target.closest("#btnDdTrades") && !e.target.closest("#ddTrades")) {
+        document.getElementById("ddTrades").classList.add("hidden");
+      }
+      if (!e.target.closest("#btnDdAgents") && !e.target.closest("#ddAgents")) {
+        document.getElementById("ddAgents").classList.add("hidden");
+      }
+    });
+
+    function toggleDropdown(id) {
+      const el = document.getElementById(id);
+      const isClosed = el.classList.contains("hidden");
+      // Ferme les autres
+      document.getElementById("ddContractors").classList.add("hidden");
+      document.getElementById("ddTrades").classList.add("hidden");
+      document.getElementById("ddAgents").classList.add("hidden");
+      if (isClosed) el.classList.remove("hidden");
+    }
+
+    // Gestion de la plage de dates libre et des raccourcis
+    function initDateInputs() {
+      handlePeriodPresetChange("all");
+    }
+
+    function handlePeriodPresetChange(preset) {
+      const now = new Date();
+      const startInput = document.getElementById("filterDateStart");
+      const endInput = document.getElementById("filterDateEnd");
+
+      if (preset === "all") {
+        startInput.value = "";
+        endInput.value = "";
+      } else if (preset === "today") {
+        const iso = now.toISOString().slice(0, 10);
+        startInput.value = iso;
+        endInput.value = iso;
+      } else if (preset === "week") {
+        const day = now.getDay();
+        const diff = (day === 0 ? -6 : 1) - day;
+        const mon = new Date(now);
+        mon.setDate(now.getDate() + diff);
+        const sun = new Date(mon);
+        sun.setDate(mon.getDate() + 6);
+        startInput.value = mon.toISOString().slice(0, 10);
+        endInput.value = sun.toISOString().slice(0, 10);
+      } else if (preset === "month") {
+        const first = new Date(now.getFullYear(), now.getMonth(), 1);
+        const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        startInput.value = first.toISOString().slice(0, 10);
+        endInput.value = last.toISOString().slice(0, 10);
+      }
+      applyFiltersAndRender();
+    }
+
+    function handleManualDateChange() {
+      document.getElementById("periodPreset").value = "custom";
+      applyFiltersAndRender();
+    }
 
     async function refreshData() {
       document.getElementById("syncStatus").innerText = "Chargement...";
@@ -270,7 +386,7 @@
         const res = await fetch(GOOGLE_SCRIPT_URL);
         rawData = await res.json();
         document.getElementById("syncStatus").innerText = "Synchronisé";
-        populateMultiSelects();
+        initDropdownOptions();
         applyFiltersAndRender();
       } catch (e) {
         document.getElementById("syncStatus").innerText = "Hors ligne";
@@ -298,34 +414,47 @@
       }
     }
 
-    function populateMultiSelects() {
-      const agSelect = document.getElementById("monFilterAgents");
-      const cSelect = document.getElementById("monFilterContractors");
-      const tSelect = document.getElementById("monFilterTrades");
+    // Initialisation des listes à cases à cocher
+    function initDropdownOptions() {
+      const renderBoxes = (containerId, items, category) => {
+        const c = document.getElementById(containerId);
+        c.innerHTML = (items || []).map(val => `
+          <label class="flex items-center space-x-2 py-1 px-1.5 hover:bg-slate-800 rounded cursor-pointer">
+            <input type="checkbox" value="${val}" onchange="handleCheckboxChange('${category}')" class="rounded bg-slate-950 border-slate-700 text-indigo-600 chk-${category}">
+            <span class="text-slate-300 truncate">${val}</span>
+          </label>
+        `).join("");
+      };
 
-      if (agSelect && rawData.agents) {
-        agSelect.innerHTML = rawData.agents.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
-      if (cSelect && rawData.contractors) {
-        cSelect.innerHTML = rawData.contractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      }
-      if (tSelect && rawData.trades) {
-        tSelect.innerHTML = rawData.trades.map(t => `<option value="${t}">${t}</option>`).join('');
-      }
+      renderBoxes("listDdContractors", rawData.contractors, "contractor");
+      renderBoxes("listDdTrades", rawData.trades, "trade");
+      renderBoxes("listDdAgents", rawData.agents, "agent");
     }
 
-    function getSelectedValues(selectElement) {
-      if (!selectElement) return [];
-      return Array.from(selectElement.selectedOptions).map(opt => opt.value);
-    }
-
-    function resetFilters() {
-      ["monFilterAgents", "monFilterContractors", "monFilterTrades"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) Array.from(el.options).forEach(opt => opt.selected = false);
-      });
-      document.getElementById("monFilterAlertOnly").checked = false;
+    function handleCheckboxChange(category) {
+      if (category === 'contractor') {
+        selectedContractors = Array.from(document.querySelectorAll('.chk-contractor:checked')).map(el => el.value);
+        document.getElementById('labelDdContractors').innerText = selectedContractors.length > 0 ? `${selectedContractors.length} sélectionné(s)` : 'Tous les entrepreneurs';
+      } else if (category === 'trade') {
+        selectedTrades = Array.from(document.querySelectorAll('.chk-trade:checked')).map(el => el.value);
+        document.getElementById('labelDdTrades').innerText = selectedTrades.length > 0 ? `${selectedTrades.length} sélectionné(s)` : 'Tous les métiers';
+      } else if (category === 'agent') {
+        selectedAgents = Array.from(document.querySelectorAll('.chk-agent:checked')).map(el => el.value);
+        document.getElementById('labelDdAgents').innerText = selectedAgents.length > 0 ? `${selectedAgents.length} sélectionné(s)` : 'Tous les magasiniers';
+      }
       applyFiltersAndRender();
+    }
+
+    function checkAllOptions(category, state) {
+      document.querySelectorAll(`.chk-${category}`).forEach(el => el.checked = state);
+      handleCheckboxChange(category);
+    }
+
+    function resetAllFilters() {
+      ['contractor', 'trade', 'agent'].forEach(cat => checkAllOptions(cat, false));
+      document.getElementById("monFilterAlertOnly").checked = false;
+      document.getElementById("periodPreset").value = "all";
+      handlePeriodPresetChange("all");
     }
 
     function isSuspiciousEntry(qty) {
@@ -349,46 +478,37 @@
       return new Date(str);
     }
 
-    // Filtrage et distribution des données
+    // Filtrage unifié sur la période et les critères
     function applyFiltersAndRender() {
-      const period = document.getElementById("periodFilter").value;
-      const now = new Date();
+      const sVal = document.getElementById("filterDateStart").value;
+      const eVal = document.getElementById("filterDateEnd").value;
+      const dStart = sVal ? new Date(sVal + "T00:00:00") : null;
+      const dEnd = eVal ? new Date(eVal + "T23:59:59") : null;
 
-      // 1. Filtrage Maître par période
+      // 1. Période active
       periodHistory = (rawData.history || []).filter(item => {
-        if (period === 'all') return true;
+        if (!dStart && !dEnd) return true;
         const itemDate = parseItemDate(item.timestamp);
         if (isNaN(itemDate.getTime())) return true;
-
-        if (period === 'today') return itemDate.toDateString() === now.toDateString();
-        if (period === 'week') {
-          const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - now.getDay());
-          return itemDate >= startOfWeek;
-        }
-        if (period === 'month') {
-          return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
-        }
+        if (dStart && itemDate < dStart) return false;
+        if (dEnd && itemDate > dEnd) return false;
         return true;
       });
 
-      // Calcul des KPIs Globaux Permanents sur la période
+      // KPI permanents
       document.getElementById("kpiGlobalRows").innerText = periodHistory.length;
       document.getElementById("kpiGlobalQty").innerText = periodHistory.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
       document.getElementById("kpiGlobalZero").innerText = periodHistory.filter(r => Number(r.quantity) === 0).length;
       document.getElementById("kpiGlobalAlerts").innerText = periodHistory.filter(r => isSuspiciousEntry(r.quantity).alert).length;
 
-      // 2. Filtrage spécifique de l'activité
-      const selAgents = getSelectedValues(document.getElementById("monFilterAgents"));
-      const selContractors = getSelectedValues(document.getElementById("monFilterContractors"));
-      const selTrades = getSelectedValues(document.getElementById("monFilterTrades"));
+      // 2. Filtres complémentaires
       const alertOnly = document.getElementById("monFilterAlertOnly").checked;
       const sortDirection = document.getElementById("monSortDate").value;
 
       filteredHistory = periodHistory.filter(item => {
-        if (selAgents.length > 0 && !selAgents.includes(item.user)) return false;
-        if (selContractors.length > 0 && !selContractors.includes(item.contractor)) return false;
-        if (selTrades.length > 0 && !selTrades.includes(item.trade)) return false;
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
         if (alertOnly && !isSuspiciousEntry(item.quantity).alert) return false;
         return true;
       });
@@ -401,7 +521,7 @@
 
       renderOverviewTable();
       renderAgentSpecificKpis(filteredHistory);
-      renderFieldAccordions();
+      renderFieldTiles();
 
       if (!document.getElementById("viewMap").classList.contains("hidden")) {
         renderMap();
@@ -430,10 +550,10 @@
               ${row.lat && row.lng ? `<span class="text-emerald-400 font-mono text-[10px]" title="${row.lat},${row.lng}">📍 GPS</span>` : `<span class="text-slate-600">--</span>`}
             </td>
             <td class="p-3 text-right space-x-1 whitespace-nowrap">
-              <button onclick="editItem('${row.id}', ${row.quantity})" class="p-1.5 bg-slate-800 hover:bg-indigo-600 rounded text-slate-300 transition">
+              <button onclick="editItem('${row.id}', ${row.quantity})" class="p-1.5 bg-slate-800 hover:bg-indigo-600 rounded text-slate-300 transition" title="Modifier">
                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
               </button>
-              <button onclick="deleteItem('${row.id}', '${row.designation.replace(/'/g, "\\'")}')" class="p-1.5 bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white rounded transition">
+              <button onclick="deleteItem('${row.id}', '${row.designation.replace(/'/g, "\\'")}')" class="p-1.5 bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white rounded transition" title="Supprimer">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </td>
@@ -503,18 +623,32 @@
       lucide.createIcons();
     }
 
-    // ================= RENDU DE L'ONGLET 2 : ACCORDÉONS SUIVI TERRAIN =================
-    function renderFieldAccordions() {
-      const container = document.getElementById("fieldAccordionContainer");
+    // Vue 2 : Tuiles interactives et tiroirs accordéons par agent
+    function toggleFieldDrawer(agent, drawerName) {
+      if (!activeDrawers[agent]) activeDrawers[agent] = null;
+      activeDrawers[agent] = activeDrawers[agent] === drawerName ? null : drawerName;
+      renderFieldTiles();
+    }
+
+    function renderFieldTiles() {
+      const container = document.getElementById("fieldTilesContainer");
       container.innerHTML = (rawData.agents || []).map(agent => {
         const agentEntries = periodHistory.filter(r => r.user === agent);
+        const totalLines = agentEntries.length;
+        const totalQty = agentEntries.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
         const lastEntry = agentEntries[0];
-        const status = agentEntries.length > 0 ? "🟢 En cours" : "🟠 En attente";
-        const contractorBadge = lastEntry 
-          ? `<span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded font-mono">En cours : ${lastEntry.contractor} (${lastEntry.timestamp})</span>` 
-          : `<span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">En attente de comptage</span>`;
+        const status = totalLines > 0 ? "🟢 En cours" : "🟠 En attente";
 
-        // Données Périmètre démarré/traité
+        let cadence = totalLines;
+        if (totalLines > 1) {
+          const timestamps = agentEntries.map(e => parseItemDate(e.timestamp).getTime());
+          const duration = (Math.max(...timestamps) - Math.min(...timestamps)) / (1000 * 60 * 60);
+          cadence = duration > 0.05 ? Math.round(totalLines / duration) : totalLines;
+        }
+
+        const suspiciousEntries = agentEntries.filter(e => isSuspiciousEntry(e.quantity).alert);
+        const anomalyRate = totalLines > 0 ? Math.round((suspiciousEntries.length / totalLines) * 100) : 0;
+
         const perimMap = {};
         agentEntries.forEach(e => {
           const key = `${e.contractor} • ${e.trade}`;
@@ -525,103 +659,112 @@
           perimMap[key].qty += Number(e.quantity) || 0;
         });
 
-        // Données Anomalies
-        const suspiciousEntries = agentEntries.filter(e => isSuspiciousEntry(e.quantity).alert);
+        const activeDrawer = activeDrawers[agent] || null;
 
         return `
           <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow">
-            <div class="p-4 bg-slate-900 flex items-center justify-between border-b border-slate-800">
+            <div class="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-black text-sm">
                   ${agent.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
                   <div class="flex items-center space-x-2">
-                    <span class="font-bold text-white text-sm">${agent}</span>
-                    <span class="text-[10px] px-2 py-0.5 rounded font-bold border ${agentEntries.length > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}">${status}</span>
+                    <span class="font-bold text-white text-sm">👤 ${agent}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded font-bold border ${totalLines > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}">${status}</span>
                   </div>
-                  <div class="mt-1">${contractorBadge}</div>
+                  <p class="text-xs text-slate-400 mt-0.5">
+                    ${lastEntry ? `Comptage en cours chez <strong>${lastEntry.contractor}</strong> (${lastEntry.timestamp})` : 'Aucun comptage démarré'}
+                  </p>
                 </div>
               </div>
               <div class="text-right">
-                <span class="text-lg font-black text-white">${agentEntries.length}</span>
-                <span class="text-[11px] text-slate-400 block">saisies sur la période</span>
+                <span class="text-base font-black text-white">${totalLines} lignes</span>
+                <span class="text-[11px] text-slate-400 block">${totalQty} pièces</span>
               </div>
             </div>
 
-            <!-- TIROIRS ACCORDÉONS -->
-            <div class="divide-y divide-slate-800 text-xs">
-              
-              <!-- Tiroir 1 : Cadence & Horaires -->
-              <details class="group">
-                <summary class="p-3 cursor-pointer flex items-center justify-between hover:bg-slate-850/50 font-bold text-slate-300">
-                  <span class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i> Cadence horaire & Amplitude</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition"></i>
-                </summary>
-                <div class="p-3 bg-slate-950/60 text-slate-400 space-y-1">
-                  <p>Nombre de lignes traitées : <strong class="text-white">${agentEntries.length}</strong></p>
-                  <p>Volume total de pièces : <strong class="text-white">${agentEntries.reduce((s, r) => s + (Number(r.quantity) || 0), 0)}</strong></p>
-                  ${lastEntry ? `<p>Premier scan : <strong class="text-white">${agentEntries[agentEntries.length - 1].timestamp}</strong> | Dernier scan : <strong class="text-white">${lastEntry.timestamp}</strong></p>` : ''}
-                </div>
-              </details>
+            <div class="grid grid-cols-3 divide-x divide-slate-800 bg-slate-950/60 border-b border-slate-800 text-center">
+              <button onclick="toggleFieldDrawer('${agent}', 'cadence')" class="p-3 hover:bg-slate-800/50 transition flex flex-col items-center justify-center ${activeDrawer === 'cadence' ? 'bg-slate-800' : ''}">
+                <span class="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">⚡ CADENCE ${activeDrawer === 'cadence' ? '▲' : '▼'}</span>
+                <span class="text-sm font-extrabold text-emerald-400 mt-0.5">${cadence} l/h</span>
+              </button>
 
-              <!-- Tiroir 2 : Détail des Anomalies -->
-              <details class="group">
-                <summary class="p-3 cursor-pointer flex items-center justify-between hover:bg-slate-850/50 font-bold ${suspiciousEntries.length > 0 ? 'text-amber-400' : 'text-slate-300'}">
-                  <span class="flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Anomalies & Saisies suspectes (${suspiciousEntries.length})</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition"></i>
-                </summary>
-                <div class="p-3 bg-slate-950/60 space-y-2">
-                  ${suspiciousEntries.length === 0 ? '<p class="text-slate-500 text-xs">Aucune saisie suspecte enregistrée pour cet agent.</p>' : 
-                    suspiciousEntries.map(e => `
-                      <div class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
-                        <div>
-                          <span class="font-mono text-indigo-400 text-[10px]">${e.sapRef || '--'}</span>
-                          <span class="font-bold text-slate-200 text-xs ml-1">${e.designation}</span>
-                          <p class="text-[10px] text-slate-400">${e.contractor} (${e.trade}) • ${e.timestamp}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <span class="text-sm font-black text-rose-400 font-mono">${e.quantity}</span>
-                          <button onclick="editItem('${e.id}', ${e.quantity})" class="p-1 bg-slate-800 rounded hover:bg-indigo-600"><i data-lucide="pencil" class="w-3.5 h-3.5 text-slate-300"></i></button>
-                          <button onclick="deleteItem('${e.id}', '${e.designation.replace(/'/g, "\\'")}')" class="p-1 bg-slate-800 rounded hover:bg-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400"></i></button>
-                        </div>
-                      </div>
-                    `).join('')
-                  }
-                </div>
-              </details>
+              <button onclick="toggleFieldDrawer('${agent}', 'anomalies')" class="p-3 hover:bg-slate-800/50 transition flex flex-col items-center justify-center ${activeDrawer === 'anomalies' ? 'bg-slate-800' : ''}">
+                <span class="text-[10px] font-bold ${anomalyRate > 10 ? 'text-rose-400' : 'text-slate-400'} uppercase flex items-center gap-1">🛡️ ANOMALIES ${activeDrawer === 'anomalies' ? '▲' : '▼'}</span>
+                <span class="text-sm font-extrabold ${anomalyRate > 10 ? 'text-rose-400' : 'text-amber-400'} mt-0.5">${anomalyRate}% (${suspiciousEntries.length} alertes)</span>
+              </button>
 
-              <!-- Tiroir 3 : Périmètre Démarré / Traité -->
-              <details class="group">
-                <summary class="p-3 cursor-pointer flex items-center justify-between hover:bg-slate-850/50 font-bold text-slate-300">
-                  <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i> Périmètre traité (${Object.keys(perimMap).length} site/métier)</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition"></i>
-                </summary>
-                <div class="p-3 bg-slate-950/60 space-y-2">
-                  ${Object.keys(perimMap).length === 0 ? '<p class="text-slate-500 text-xs">Aucun entrepreneur ou corps d\'état entamé sur cette période.</p>' :
-                    Object.values(perimMap).map(p => `
-                      <div class="p-2 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between">
-                        <div>
-                          <p class="font-bold text-white text-xs">${p.contractor}</p>
-                          <p class="text-[10px] text-slate-400">${p.trade} • Dernier scan le <strong>${p.lastDate}</strong></p>
-                        </div>
-                        <div class="text-right">
-                          <span class="font-black text-indigo-400">${p.lines}</span> <span class="text-[10px] text-slate-400">lignes</span>
-                        </div>
-                      </div>
-                    `).join('')
-                  }
-                </div>
-              </details>
-
+              <button onclick="toggleFieldDrawer('${agent}', 'perimetre')" class="p-3 hover:bg-slate-800/50 transition flex flex-col items-center justify-center ${activeDrawer === 'perimetre' ? 'bg-slate-800' : ''}">
+                <span class="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">🌐 PÉRIMÈTRE ${activeDrawer === 'perimetre' ? '▲' : '▼'}</span>
+                <span class="text-sm font-extrabold text-slate-200 mt-0.5">${Object.keys(perimMap).length} sites/corps</span>
+              </button>
             </div>
+
+            ${activeDrawer ? `
+              <div class="p-4 bg-slate-950/80 border-t border-slate-800 text-xs">
+                ${activeDrawer === 'cadence' ? `
+                  <div class="space-y-1.5 text-slate-300">
+                    <div class="font-bold text-white text-xs mb-2">⚡ Amplitude et cadence détaillée (${agent}) :</div>
+                    <p>Nombre total de lignes enregistrées : <strong class="text-white">${totalLines}</strong></p>
+                    <p>Total pièces dénombrées : <strong class="text-white">${totalQty}</strong></p>
+                    ${totalLines > 0 ? `
+                      <p>Premier scan horodaté : <strong class="text-slate-200">${agentEntries[agentEntries.length - 1].timestamp}</strong></p>
+                      <p>Dernier scan horodaté : <strong class="text-slate-200">${agentEntries[0].timestamp}</strong></p>
+                    ` : ''}
+                  </div>
+                ` : ''}
+
+                ${activeDrawer === 'anomalies' ? `
+                  <div class="space-y-2">
+                    <div class="font-bold text-amber-400 text-xs mb-2">⚠️ DÉTAIL DES SAISIES NON CONFORMES (${agent}) :</div>
+                    ${suspiciousEntries.length === 0 ? '<p class="text-slate-500">Aucune saisie suspecte enregistrée pour cet agent.</p>' : 
+                      suspiciousEntries.map(e => `
+                        <div class="flex items-center justify-between p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                          <div>
+                            <span class="font-mono text-indigo-400 text-[10px]">${e.sapRef || '--'}</span>
+                            <span class="font-bold text-slate-200 text-xs ml-1">${e.designation}</span>
+                            <p class="text-[10px] text-slate-400">${e.contractor} (${e.trade}) • ${e.timestamp}</p>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <span class="text-sm font-black text-rose-400 font-mono">${e.quantity}</span>
+                            <button onclick="editItem('${e.id}', ${e.quantity})" class="p-1.5 bg-slate-800 rounded hover:bg-indigo-600 transition" title="Modifier"><i data-lucide="pencil" class="w-3.5 h-3.5 text-slate-300"></i></button>
+                            <button onclick="deleteItem('${e.id}', '${e.designation.replace(/'/g, "\\'")}')" class="p-1.5 bg-slate-800 rounded hover:bg-rose-600 transition" title="Supprimer"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400 hover:text-white"></i></button>
+                          </div>
+                        </div>
+                      `).join('')
+                    }
+                  </div>
+                ` : ''}
+
+                ${activeDrawer === 'perimetre' ? `
+                  <div class="space-y-2">
+                    <div class="font-bold text-indigo-400 text-xs mb-2">🌐 PÉRIMÈTRE DES SITES TRAITÉS (${agent}) :</div>
+                    ${Object.keys(perimMap).length === 0 ? '<p class="text-slate-500">Aucun site commencé.</p>' : 
+                      Object.values(perimMap).map(p => `
+                        <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                          <div>
+                            <p class="font-bold text-white text-xs">${p.contractor}</p>
+                            <p class="text-[10px] text-slate-400">${p.trade} • Dernier passage à <strong>${p.lastDate}</strong></p>
+                          </div>
+                          <div class="text-right">
+                            <span class="font-black text-indigo-400 text-sm">${p.lines}</span> <span class="text-[10px] text-slate-400">lignes (${p.qty} pcs)</span>
+                          </div>
+                        </div>
+                      `).join('')
+                    }
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+
           </div>
         `;
       }).join("");
       lucide.createIcons();
     }
 
-    // ================= MOTEUR CARTOGRAPHIQUE (LEAFLET.JS) =================
+    // Vue 3 : Cartographie Leaflet
     function renderMap() {
       if (!map) {
         map = L.map('mapContainer').setView([50.85, 4.35], 8);
@@ -635,7 +778,6 @@
       mapMarkersLayer.clearLayers();
       const bounds = [];
 
-      // 1. Marqueurs Agents (dernière position)
       (rawData.agents || []).forEach(agent => {
         const agentEntries = periodHistory.filter(r => r.user === agent && r.lat && r.lng);
         if (agentEntries.length > 0) {
@@ -660,7 +802,6 @@
         }
       });
 
-      // 2. Marqueurs Chantiers / Statuts
       const contractorMap = {};
       periodHistory.forEach(item => {
         if (item.lat && item.lng && item.contractor) {
@@ -716,14 +857,14 @@
 
       if (view === 'overview') {
         document.getElementById("viewOverview").classList.remove("hidden");
-        document.getElementById("btnTabOverview").className = "w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white";
+        document.getElementById("btnTabOverview").className = "w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
       } else if (view === 'field') {
         document.getElementById("viewField").classList.remove("hidden");
-        document.getElementById("btnTabField").className = "w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white";
-        renderFieldAccordions();
+        document.getElementById("btnTabField").className = "w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+        renderFieldTiles();
       } else if (view === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnTabMap").className = "w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white";
+        document.getElementById("btnTabMap").className = "w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
         setTimeout(renderMap, 150);
       }
       lucide.createIcons();
