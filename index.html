@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
 
-  <!-- LIBRAIRIES EXTERNES -->
+  <!-- SCRIPTS & LIBRAIRIES EXTERNES -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -23,7 +23,7 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     
-    /* VERROUILLAGE RIGIDE DE LA CAMÉRA DANS LA MODALE */
+    /* CADRAGE STRICT DU FLUX CAMÉRA */
     #reader {
       height: 240px !important;
       max-height: 240px !important;
@@ -46,7 +46,7 @@
     }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* RÉTICULE VERT : TEXTE CALÉ TOUT EN BAS CONTRE LA LIGNE */
+    /* RÉTICULE VERT : TEXTE PARFAITEMENT CALÉ CONTRE LA BORDURE BASSE */
     .ocr-reticle {
       position: absolute;
       top: 52%;
@@ -143,11 +143,11 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- MODALE CAMÉRA CENTRÉE EN PLEIN MILIEU DE L'ÉCRAN DU SMARTPHONE -->
+          <!-- MODALE CAMÉRA CENTRÉE AU MILIEU DE LA HAUTEUR DU SMARTPHONE -->
           <div id="scannerContainer" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm items-center justify-center p-4">
             <div class="relative w-full max-w-sm bg-slate-950 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
               
-              <!-- BANDEAU HAUT ZONE QR / EAN -->
+              <!-- BANDEAU HAUT ZONE POUR QR / EAN -->
               <div class="absolute top-2 inset-x-0 flex justify-center z-10 pointer-events-none">
                 <span class="text-[9px] font-mono text-indigo-200 bg-slate-950/90 px-2.5 py-0.5 rounded border border-indigo-500/40 tracking-wider font-bold shadow">
                   ZONE POUR QR / EAN
@@ -157,7 +157,7 @@
               <!-- Zone vidéo cadrée -->
               <div id="reader" class="w-full relative"></div>
               
-              <!-- RÉTICULE VERT : TEXTE TRÈS PROCHE DE LA LIGNE BASSE DU CADRE -->
+              <!-- RÉTICULE VERT : TEXTE PROCHE DE LA LIGNE BASSE DU CADRE -->
               <div class="ocr-reticle">
                 <span class="text-[9px] font-mono text-emerald-300 bg-slate-950/90 px-2 py-0.5 rounded border border-emerald-500/40 tracking-wider font-bold mb-0.5">
                   ZONE POUR RÉF SAP 6 CHIFFRES
@@ -165,23 +165,23 @@
               </div>
               <canvas id="ocrCanvas" class="hidden"></canvas>
               
-              <!-- BARRE D'OUTILS : FLASH SEUL, SCAN RÉF SAP VERT, CROIX FERMETURE STYLE RESET -->
+              <!-- BARRE D'OUTILS : FLASH SEUL, SCAN VERT ÉMERAUDE, CROIX FERMETURE STYLE RESET -->
               <div class="p-3 bg-slate-900/95 flex items-center justify-between gap-2 border-t border-slate-800 z-10 relative">
                 
                 <!-- Bouton Flash (logo uniquement) -->
-                <button id="btnTorch" onclick="toggleTorch()" title="Flash" 
+                <button id="btnTorch" onclick="toggleTorch()" title="Lampe" 
                         class="h-11 w-11 shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow">
                   <i data-lucide="flashlight" id="torchIcon" class="w-5 h-5 text-slate-300"></i>
                 </button>
 
-                <!-- Bouton vert : Scan Ref SAP -->
+                <!-- Bouton vert : Scan Réf SAP -->
                 <button onclick="triggerManualOcrCapture()" 
                         class="h-11 flex-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
                   <i data-lucide="scan-line" class="w-4 h-4"></i>
                   <span>Scan Réf SAP</span>
                 </button>
 
-                <!-- Bouton Fermer : Croix seule, couleur et style identiques au bouton Reset -->
+                <!-- Bouton Fermer : Croix seule, couleur identique au Reset -->
                 <button onclick="stopScanner()" title="Fermer" 
                         class="h-11 w-11 shrink-0 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 rounded-xl border border-rose-500/40 flex items-center justify-center shadow transition">
                   <i data-lucide="x" class="w-5 h-5"></i>
@@ -235,7 +235,7 @@
           </div>
         </div>
 
-        <!-- SAISIE DE QUANTITÉ (AVEC BOUTON RESET ROUGE/ROSE) -->
+        <!-- SAISIE DE QUANTITÉ (AVEC BOUTON RESET UNIQUE) -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
           <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (&gt;= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -306,7 +306,7 @@
       </section>
     </div>
 
-    <!-- ================= MENTION DE COPYRIGHT OBLIGATOIRE ================= -->
+    <!-- ================= MENTION LÉGALE OBLIGATOIRE ================= -->
     <div class="text-center pt-6 pb-2 mb-1">
       <span class="text-[10px] font-medium text-slate-400 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -314,10 +314,19 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE (AVEC PICTOGRAMME SCAN OFFICIEL) ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
-      <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+      <!-- Pictogramme scan orange calibré (coins affinés + 3 barres franches) -->
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 4 8 V 6 A 2 2 0 0 1 6 4 H 8" stroke="#94a3b8" stroke-width="1.5"/>
+        <path d="M 16 4 H 18 A 2 2 0 0 1 20 6 V 8" stroke="#94a3b8" stroke-width="1.5"/>
+        <path d="M 20 16 V 18 A 2 2 0 0 1 18 20 H 16" stroke="#94a3b8" stroke-width="1.5"/>
+        <path d="M 8 20 H 6 A 2 2 0 0 1 4 18 V 16" stroke="#94a3b8" stroke-width="1.5"/>
+        <line x1="8" y1="7" x2="8" y2="17" stroke="#f97316" stroke-width="2"/>
+        <line x1="12" y1="7" x2="12" y2="17" stroke="#f97316" stroke-width="2"/>
+        <line x1="16" y1="7" x2="16" y2="17" stroke="#f97316" stroke-width="2"/>
+      </svg>
       <span class="text-xs font-semibold mt-1">Comptage</span>
     </button>
     <button id="tabNavHistory" onclick="switchTab('history')" class="flex flex-col items-center justify-center text-slate-400">
@@ -361,6 +370,19 @@
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
 
+    // --- SYNTHÈSE VOCALE (AUDIO FEEDBACK) ---
+    function speakFeedback(text) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'fr-FR';
+        utterance.rate = 1.05;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } catch(e) {}
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       updateAgentUI();
@@ -368,7 +390,7 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // Fermeture de la recherche et effacement de la mémoire si tap en dehors
+      // Clic hors recherche : vide le texte et referme si aucun article sélectionné
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
@@ -705,7 +727,9 @@
       document.getElementById("suggestionsDropdown").classList.add("hidden");
       document.getElementById("clearSearchBtn").classList.remove("hidden");
       blurSearchInput();
+      
       if (navigator.vibrate) navigator.vibrate(50);
+      speakFeedback(`${activeItem.designation}. Réf SAP ${activeItem.sapRef}`);
     }
 
     function clearSearch() {
@@ -721,7 +745,7 @@
     }
 
     // =========================================================================
-    // SCANNER CENTRÉ AU MILIEU DE L'ÉCRAN
+    // SCANNER CENTRÉ DANS LA HAUTEUR DU SMARTPHONE
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -1039,7 +1063,7 @@
     }
 
     // =========================================================================
-    // GESTION DU SCANNER OPTIQUE (REFUS CATÉGORIQUE DES ARTICLES HORS CATALOGUE)
+    // CODE OPTIQUE : BLOCAGE STRICT SI NON PRÉSENT DANS LE CATALOGUE
     // =========================================================================
     function handleExactCodeMatch(code) {
       const clean = String(code).trim();
@@ -1055,7 +1079,7 @@
         selectArticleBySap(match.sapRef);
         showToast("Identifié : " + match.designation);
       } else {
-        // BLOCAGE STRICT : AUCUN ARTICLE FACTICE NE DOIT ÊTRE CRÉÉ
+        // REFUS CATÉGORIQUE : AUCUN ARTICLE FACTICE CRÉÉ
         activeItem = null;
         document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
         document.getElementById("dispSap").innerText = "--";
@@ -1144,6 +1168,9 @@
       }
     }
 
+    // =========================================================================
+    // VALIDATION DE L'INVENTAIRE : AVEC CONTRÔLE ANTI-DOUBLON (5 MINUTES)
+    // =========================================================================
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1164,7 +1191,7 @@
         return;
       }
 
-      // VÉRIFICATION STRICTE DE LA PRÉSENCE RÉELLE DANS LE CATALOGUE
+      // VÉRIFICATION STRICTE DE PRÉSENCE DANS LE CATALOGUE
       if (!activeItem || !catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim())) {
         alert("Action impossible :\nAucun article valide du catalogue n'est sélectionné.");
         return;
@@ -1178,6 +1205,48 @@
         return;
       }
 
+      // --- VÉRIFICATION ANTI-DOUBLON 5 MINUTES ---
+      const nowMs = Date.now();
+      const fiveMinMs = 5 * 60 * 1000;
+
+      const recentDuplicate = cachedHistory.find(entry => {
+        if (
+          String(entry.sapRef) === String(activeItem.sapRef) &&
+          entry.contractor === contractor &&
+          entry.trade === trade
+        ) {
+          let entryTime = 0;
+          if (entry.id && entry.id.startsWith("INV-")) {
+            const timestampPart = entry.id.replace("INV-", "");
+            entryTime = parseInt(timestampPart, 36);
+          }
+          if (!entryTime && entry.timestamp) {
+            const parts = entry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
+            if (parts) entryTime = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
+          }
+          return (nowMs - entryTime) < fiveMinMs;
+        }
+        return false;
+      });
+
+      let finalQty = qty;
+      let targetUpdateId = null;
+
+      if (recentDuplicate) {
+        const confirmChoice = confirm(
+          `⚠️ Doublon détecté :\nVous avez déjà compté cet article il y a moins de 5 minutes (${recentDuplicate.quantity} pcs pour ${contractor} - ${trade}).\n\n` +
+          `• Cliquez sur [OK] pour CUMULER (+${qty} pcs, total = ${recentDuplicate.quantity + qty})\n` +
+          `• Cliquez sur [Annuler] pour ÉCRASER / REMPLACER (nouvelle valeur = ${qty})`
+        );
+
+        if (confirmChoice) {
+          finalQty = Number(recentDuplicate.quantity) + qty;
+          targetUpdateId = recentDuplicate.id;
+        } else {
+          targetUpdateId = recentDuplicate.id;
+        }
+      }
+
       const btn = document.getElementById("btnSubmit");
       const label = document.getElementById("submitLabel");
       const icon = document.getElementById("submitIcon");
@@ -1186,24 +1255,34 @@
       label.innerText = "ENREGISTREMENT...";
       icon.className = "w-6 h-6 animate-spin";
 
-      const payload = {
-        action: "CREATE",
-        id: "INV-" + Date.now().toString(36).toUpperCase(),
-        timestamp: new Date().toLocaleString("fr-FR"),
-        user: currentAgent,
-        contractor: contractor,
-        trade: trade,
-        sapRef: activeItem.sapRef,
-        designation: activeItem.designation,
-        supplierRef: activeItem.supplierRef || "",
-        ean: activeItem.ean || "",
-        qr: activeItem.qr || "",
-        quantity: qty,
-        lat: latestCoords.lat,
-        lng: latestCoords.lng,
-        latitude: latestCoords.lat,
-        longitude: latestCoords.lng
-      };
+      let payload;
+      if (targetUpdateId) {
+        payload = {
+          action: "UPDATE",
+          id: targetUpdateId,
+          quantity: finalQty,
+          user: currentAgent
+        };
+      } else {
+        payload = {
+          action: "CREATE",
+          id: "INV-" + Date.now().toString(36).toUpperCase(),
+          timestamp: new Date().toLocaleString("fr-FR"),
+          user: currentAgent,
+          contractor: contractor,
+          trade: trade,
+          sapRef: activeItem.sapRef,
+          designation: activeItem.designation,
+          supplierRef: activeItem.supplierRef || "",
+          ean: activeItem.ean || "",
+          qr: activeItem.qr || "",
+          quantity: finalQty,
+          lat: latestCoords.lat,
+          lng: latestCoords.lng,
+          latitude: latestCoords.lat,
+          longitude: latestCoords.lng
+        };
+      }
 
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
@@ -1213,11 +1292,21 @@
             body: JSON.stringify(payload)
           });
         }
-        cachedHistory.unshift(payload);
+        if (targetUpdateId) {
+          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
+          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
+        } else {
+          cachedHistory.unshift(payload);
+        }
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Inventaire archivé avec succès !");
+        showToast("Inventaire synchronisé !");
       } catch (e) {
-        cachedHistory.unshift(payload);
+        if (targetUpdateId) {
+          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
+          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
+        } else {
+          cachedHistory.unshift(payload);
+        }
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         syncQueue.push(payload);
         localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
@@ -1263,15 +1352,15 @@
               <p class="text-[11px] text-slate-400 truncate">${it.contractor} (${it.trade})</p>
             </div>
             
-            <div class="flex items-center space-x-2.5 shrink-0">
+            <div class="flex items-center space-x-2 shrink-0">
               <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 min-w-[50px]">
                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Qté</span>
                 <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
               </div>
-              <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" class="w-8 h-8 rounded-lg bg-slate-850 hover:bg-slate-800 active:bg-blue-600 text-slate-400 hover:text-white flex items-center justify-center border border-slate-750 transition">
+              <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" class="w-10 h-10 rounded-xl bg-slate-850 hover:bg-slate-800 active:bg-blue-600 text-slate-400 hover:text-white flex items-center justify-center border border-slate-750 transition shadow">
                 <i data-lucide="edit-3" class="w-4 h-4"></i>
               </button>
-              <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" class="w-8 h-8 rounded-lg bg-slate-850 hover:bg-rose-900/60 active:bg-rose-600 text-slate-400 hover:text-rose-400 flex items-center justify-center border border-slate-750 transition">
+              <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" class="w-10 h-10 rounded-xl bg-slate-850 hover:bg-rose-900/60 active:bg-rose-600 text-slate-400 hover:text-rose-400 flex items-center justify-center border border-slate-750 transition shadow">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </div>
