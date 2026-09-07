@@ -795,7 +795,6 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
-    // --- CORRECTION DU BUG DE RECHERCHE CATALOGUE ---
     function onSearchInput(rawVal) {
       const val = String(rawVal || "").trim();
       const dd = document.getElementById("suggestionsDropdown");
