@@ -35,7 +35,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- MODALE IDENTIFICATION OBLIGATOIRE AU DÉMARRAGE -->
+  <!-- MODALE IDENTIFICATION OBLIGATOIRE -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center mx-auto">
@@ -108,7 +108,6 @@
 
           <!-- Zone Caméra Optimisée -->
           <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
-            <!-- Bandeau Haut Visée QR / EAN -->
             <div class="absolute top-2 inset-x-0 z-10 text-center pointer-events-none">
               <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-950/80 text-blue-300 border border-blue-500/40 px-3 py-1 rounded-full backdrop-blur-sm">
                 ZONE POUR QR / EAN
@@ -117,7 +116,6 @@
 
             <div id="reader" class="w-full relative"></div>
 
-            <!-- Cadre Vert Centré Référence SAP -->
             <div class="ocr-reticle">
               <span class="text-[11px] font-mono text-emerald-300 bg-slate-950/90 px-3 py-1 rounded border border-emerald-500/50 tracking-wider font-bold shadow-lg">
                 ZONE POUR RÉF SAP 6 CHIFFRES
@@ -125,20 +123,17 @@
             </div>
             <canvas id="ocrCanvas" class="hidden"></canvas>
             
-            <!-- Barre Inférieure : 3 Boutons Alignés et Centrés de Même Taille -->
+            <!-- 3 Boutons Alignés et Centrés de Même Taille -->
             <div class="p-2.5 bg-slate-900/95 border-t border-slate-800 z-10 relative">
               <div class="grid grid-cols-3 gap-2 w-full">
-                <!-- Bouton 1 : Flash -->
                 <button id="btnTorch" onclick="toggleTorch()" class="h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition">
                   <i data-lucide="flashlight" id="torchIcon" class="w-4 h-4 text-slate-300"></i>
                   <span id="torchLabel">Flash</span>
                 </button>
-                <!-- Bouton 2 : Scanner Réf SAP (Vert Émeraude) -->
                 <button onclick="triggerManualOcrCapture()" class="h-12 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
                   <i data-lucide="scan" class="w-4 h-4"></i>
                   <span>Scanner Réf SAP</span>
                 </button>
-                <!-- Bouton 3 : Fermer (Rouge Vif) -->
                 <button onclick="stopScanner()" class="h-12 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
                   <i data-lucide="x" class="w-4 h-4"></i>
                   <span>Fermer</span>
@@ -190,7 +185,7 @@
           </div>
         </div>
 
-        <!-- ZONE DE SAISIE DE QUANTITÉ (ÉLARGIE ET VIDE AU DÉPART) -->
+        <!-- ZONE DE SAISIE DE QUANTITÉ AVEC RESET -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
           <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -206,7 +201,7 @@
           </div>
         </div>
 
-        <!-- BOUTON DE VALIDATION AVEC VERROU ANTI-DOUBLON -->
+        <!-- BOUTON DE VALIDATION -->
         <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
           <i data-lucide="check-circle" id="submitIcon" class="w-6 h-6"></i>
           <span id="submitLabel">VALIDER ET ARCHIVER</span>
@@ -225,7 +220,7 @@
         <div id="historyList" class="space-y-3"></div>
       </section>
 
-      <!-- VUE 3 : MONITORING MOBILE (RÉSERVÉ ADMIN) -->
+      <!-- VUE 3 : MONITORING MOBILE (ADMIN) -->
       <section id="view-monitoring" class="hidden space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -271,14 +266,12 @@
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <!-- Coins affinés de moitié (stroke-width="1") -->
         <g stroke="currentColor" stroke-width="1">
           <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
           <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
           <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
           <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
         </g>
-        <!-- Barres verticales orange parfaitement centrées (x: 8, 12, 16) -->
         <g stroke="#f97316" stroke-width="2">
           <line x1="8" y1="7" x2="8" y2="17"/>
           <line x1="12" y1="7" x2="12" y2="17"/>
@@ -326,7 +319,6 @@
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
 
-    // RETOUR VOCAL AUTOMATIQUE (Audio Feedback)
     function speakFeedback(text) {
       if (!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
@@ -335,6 +327,17 @@
       utterance.rate = 1.05;
       utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
+    }
+
+    function parseItemDate(timestampStr) {
+      if (!timestampStr) return new Date(0);
+      if (timestampStr.includes('/')) {
+        const parts = timestampStr.split(' ');
+        const dParts = parts[0].split('/');
+        const tParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
+        return new Date(dParts[2], dParts[1] - 1, dParts[0], tParts[0] || 0, tParts[1] || 0, tParts[2] || 0);
+      }
+      return new Date(timestampStr);
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -524,27 +527,28 @@
       }
     }
 
+    // SYNCHRONISATION ROBUSTE SANS PERTE DE SAISIES RÉCENTES (Anti-Cache GET)
     async function syncData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
       await processSyncQueue();
 
       try {
-        const res = await fetch(GOOGLE_SCRIPT_URL);
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         if (data.status === "success") {
-          if (data.agents) {
+          if (data.agents && data.agents.length > 0) {
             availableAgents = data.agents;
             localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
           }
-          if (data.contractors) {
+          if (data.contractors && data.contractors.length > 0) {
             availableContractors = data.contractors;
             localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
           }
-          if (data.trades) {
+          if (data.trades && data.trades.length > 0) {
             availableTrades = data.trades;
             localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
           }
-          if (data.admins) {
+          if (data.admins && data.admins.length > 0) {
             adminAgents = data.admins;
             localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
           }
@@ -552,16 +556,28 @@
             adminPasswords = data.adminPasswords;
             localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
           }
-          if (data.catalog) {
+          if (data.catalog && data.catalog.length > 0) {
             catalog = data.catalog;
             localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
           if (data.history) {
-            const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
             const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
-            const localCreatedItems = cachedHistory.filter(i => pendingCreateIds.has(i.id));
-            const cleanRemote = data.history.filter(r => !pendingDeletedIds.has(r.id) && !pendingCreateIds.has(r.id));
-            cachedHistory = [...localCreatedItems, ...cleanRemote];
+            const historyMap = new Map();
+
+            // 1. Ajouter les données distantes
+            data.history.forEach(item => {
+              if (!pendingDeletedIds.has(item.id)) historyMap.set(item.id, item);
+            });
+
+            // 2. Conserver les saisies locales récentes (évite la perte lors d'un scan récent)
+            cachedHistory.forEach(item => {
+              if (!pendingDeletedIds.has(item.id) && !historyMap.has(item.id)) {
+                historyMap.set(item.id, item);
+              }
+            });
+
+            cachedHistory = Array.from(historyMap.values());
+            cachedHistory.sort((a, b) => parseItemDate(b.timestamp).getTime() - parseItemDate(a.timestamp).getTime());
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
           populateDropdowns();
@@ -988,7 +1004,7 @@
       }
     }
 
-    // SOUMISSION AVEC CONTRÔLE ANTI-DOUBLON STRICT 5 MINUTES
+    // SOUMISSION AVEC ANTI-DOUBLON 5 MINUTES ET PERSISTANCE GARANTIE
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1039,8 +1055,7 @@
             entryTime = parseInt(entry.id.replace("INV-", ""), 36);
           }
           if (!entryTime && entry.timestamp) {
-            const parts = entry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-            if (parts) entryTime = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
+            entryTime = parseItemDate(entry.timestamp).getTime();
           }
           return (nowMs - entryTime) < fiveMinMs;
         }
@@ -1136,7 +1151,7 @@
       }
     }
 
-    // RENDU DE L'HISTORIQUE EN CARTES LARGES AVEC BOUTONS CONFORTABLES TACTILES (h-11)
+    // RENDU DE L'HISTORIQUE AVEC BOUTONS CONFORTABLES TACTILES (h-11)
     function renderHistory() {
       const c = document.getElementById("historyList");
       const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
@@ -1171,7 +1186,6 @@
               <p class="text-[11px] text-slate-400 truncate mt-0.5">${it.contractor} (${it.trade})</p>
             </div>
 
-            <!-- BOUTONS ACTIONS LARGES (h-11) POUR UTILISATION GANTS -->
             <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
               <button onclick="editHistoryItem('${it.id}', ${it.quantity})" class="h-11 bg-slate-850 hover:bg-slate-800 active:bg-blue-600 border border-slate-750 text-slate-200 rounded-xl flex items-center justify-center space-x-2 text-xs font-bold transition shadow">
                 <i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i>
@@ -1197,20 +1211,22 @@
       const now = new Date().getTime();
       const fifteenMinMs = 15 * 60 * 1000;
       const statusContainer = document.getElementById("agentStatusList");
-      if (availableAgents.length === 0) {
+      
+      const allActiveAgents = (availableAgents.length > 0) 
+        ? availableAgents 
+        : [...new Set(cachedHistory.map(h => h.user))].filter(Boolean);
+
+      if (allActiveAgents.length === 0) {
         statusContainer.innerHTML = `<span class="text-xs text-slate-500 italic">Aucun agent configuré.</span>`;
       } else {
-        statusContainer.innerHTML = availableAgents.map(agent => {
+        statusContainer.innerHTML = allActiveAgents.map(agent => {
           const agentHistory = cachedHistory.filter(h => h.user === agent);
           let isActive = false, lastTimeLabel = "Aucune saisie";
           if (agentHistory.length > 0) {
             const lastEntry = agentHistory[0];
             lastTimeLabel = lastEntry.timestamp;
-            const parts = lastEntry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-            if (parts) {
-              const entryDate = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
-              if (now - entryDate < fifteenMinMs) isActive = true;
-            }
+            const entryDate = parseItemDate(lastEntry.timestamp).getTime();
+            if (entryDate > 0 && (now - entryDate < fifteenMinMs)) isActive = true;
           }
           return `
             <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">

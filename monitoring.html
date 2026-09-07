@@ -180,7 +180,7 @@
           </div>
         </details>
 
-        <!-- MENUS DÉROULANTS À VOLETS FLOTTANTS AVEC CASES À COCHER MULTIPLES -->
+        <!-- MENUS DÉROULANTS À CASES À COCHER MULTIPLES -->
         <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 shadow">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-300 uppercase">Filtres Multicritères</span>
@@ -203,7 +203,7 @@
               </button>
               <div id="ddTrades" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-2xl z-30 space-y-2 max-h-48 overflow-y-auto"></div>
             </div>
-            <!-- Dropdown Statuts / Anomalies -->
+            <!-- Dropdown Statuts -->
             <div class="relative">
               <button onclick="toggleDropdownMenu('ddAlerts')" id="btnFilterAlerts" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-xs text-left text-white flex justify-between items-center">
                 <span class="truncate">Tous les statuts</span>
@@ -257,7 +257,7 @@
         </div>
       </section>
 
-      <!-- VUE 2 : SUIVI TERRAIN PAR AGENT (3 TUILES ACCORDÉONS FIDÈLES) -->
+      <!-- VUE 2 : SUIVI TERRAIN PAR AGENT -->
       <section id="tab-content-agents" class="hidden space-y-4">
         <div id="agentCardsContainer" class="space-y-4"></div>
       </section>
@@ -298,6 +298,29 @@
     let mapMarkers = [];
     let activePolyline = null;
     let filteredHistory = [];
+
+    function parseItemDate(timestampStr) {
+      if (!timestampStr) return new Date(0);
+      if (timestampStr.includes('/')) {
+        const parts = timestampStr.split(' ');
+        const dParts = parts[0].split('/');
+        const tParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
+        return new Date(dParts[2], dParts[1] - 1, dParts[0], tParts[0] || 0, tParts[1] || 0, tParts[2] || 0);
+      }
+      return new Date(timestampStr);
+    }
+
+    // EXTRACTION ROBUSTE DES AGENTS (CONFIGURÉS + ACTIFS DANS L'HISTORIQUE)
+    function getEffectiveAgents() {
+      const set = new Set();
+      if (Array.isArray(availableAgents)) {
+        availableAgents.forEach(a => { if (a && String(a).trim()) set.add(String(a).trim()); });
+      }
+      if (Array.isArray(cachedHistory)) {
+        cachedHistory.forEach(h => { if (h.user && String(h.user).trim()) set.add(String(h.user).trim()); });
+      }
+      return Array.from(set);
+    }
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
@@ -355,21 +378,43 @@
       }
     }
 
+    // RÉCUPÉRATION ROBUSTE SANS CACHE DISQUE AVEC SAUVEGARDE STRICTE
     async function fetchRemoteData() {
       if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
       try {
-        const res = await fetch(GOOGLE_SCRIPT_URL);
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         if (data.status === "success") {
-          if (data.admins) adminAgents = data.admins;
-          if (data.adminPasswords) adminPasswords = data.adminPasswords;
-          if (data.contractors) availableContractors = data.contractors;
-          if (data.trades) availableTrades = data.trades;
-          if (data.agents) availableAgents = data.agents;
+          if (data.admins && data.admins.length > 0) {
+            adminAgents = data.admins;
+            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
+          }
+          if (data.adminPasswords) {
+            adminPasswords = data.adminPasswords;
+            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
+          }
+          if (data.contractors && data.contractors.length > 0) {
+            availableContractors = data.contractors;
+            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
+          }
+          if (data.trades && data.trades.length > 0) {
+            availableTrades = data.trades;
+            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
+          }
+          if (data.agents && data.agents.length > 0) {
+            availableAgents = data.agents;
+            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
+          }
           if (data.history) {
             cachedHistory = data.history;
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
+
+          populateAuthModal();
+          populateDropdowns();
+          renderMultiDropdowns();
+          applyFilters();
+          renderAgentCards();
         }
       } catch (e) {
         console.warn("Actualisation distant monitoring :", e);
@@ -380,6 +425,7 @@
       renderMultiDropdowns();
       populateDropdowns();
       applyFilters();
+      renderAgentCards();
       initLeafletMap();
     }
 
@@ -391,8 +437,9 @@
       cSel.innerHTML = '<option value="">-- Sélectionner Entrepreneur pour PV --</option>' +
         uniqueContractors.map(c => `<option value="${c}">${c}</option>`).join('');
 
+      const effAgents = getEffectiveAgents();
       mSel.innerHTML = '<option value="">-- Choisir un agent pour tracer la tournée --</option>' +
-        availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+        effAgents.map(a => `<option value="${a}">${a}</option>`).join('');
     }
 
     function toggleDropdownMenu(id) {
@@ -486,17 +533,6 @@
       lucide.createIcons();
     }
 
-    function parseItemDate(timestampStr) {
-      if (!timestampStr) return new Date(0);
-      if (timestampStr.includes('/')) {
-        const parts = timestampStr.split(' ');
-        const dParts = parts[0].split('/');
-        const tParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-        return new Date(dParts[2], dParts[1] - 1, dParts[0], tParts[0] || 0, tParts[1] || 0, tParts[2] || 0);
-      }
-      return new Date(timestampStr);
-    }
-
     function applyFilters() {
       const dStart = document.getElementById("dateStart").value;
       const dEnd = document.getElementById("dateEnd").value;
@@ -504,7 +540,6 @@
       const flagZero = document.getElementById("cfgFlagZero").checked;
       const maxQty = Number(document.getElementById("cfgMaxQty").value) || 50;
 
-      // Badge de libellé période
       document.getElementById("periodLabelBadge").innerText = (dStart && dEnd) 
         ? `${dStart.split('-').reverse().join('/')} ➔ ${dEnd.split('-').reverse().join('/')}` 
         : 'Tout l\'historique';
@@ -541,9 +576,7 @@
 
       renderGlobalKpis(maxQty);
       renderTable();
-      if (!document.getElementById("tab-content-agents").classList.contains("hidden")) {
-        renderAgentCards();
-      }
+      renderAgentCards();
     }
 
     function renderGlobalKpis(maxQty) {
@@ -557,7 +590,6 @@
       document.getElementById("kpiZero").innerText = zeroCount;
       document.getElementById("kpiOverMax").innerText = overCount;
 
-      // Compteurs sidebar
       document.getElementById("sideTotalCount").innerText = rowsCount;
       document.getElementById("sideAlertCount").innerText = zeroCount + overCount;
     }
@@ -585,7 +617,7 @@
       `).join('');
     }
 
-    // ONGLET 2 : RENDU DES 3 TUILES ACCORDÉONS FIDÈLES ET RIGUREUSES PAR AGENT
+    // ONGLET 2 : RENDU FIDÈLE DES CARTES AGENTS (AVEC AGENTS CONFIGURÉS OU ACTIFS)
     function toggleAccordion(agent, tab) {
       if (activeAccordionTab[agent] === tab) {
         activeAccordionTab[agent] = null;
@@ -597,9 +629,17 @@
 
     function renderAgentCards() {
       const c = document.getElementById("agentCardsContainer");
-      const maxQty = Number(document.getElementById("cfgMaxQty").value) || 50;
+      if (!c) return;
 
-      c.innerHTML = availableAgents.map(agent => {
+      const maxQty = Number(document.getElementById("cfgMaxQty").value) || 50;
+      const effAgents = getEffectiveAgents();
+
+      if (effAgents.length === 0) {
+        c.innerHTML = `<div class="p-8 text-center text-slate-500 bg-slate-900 rounded-2xl border border-slate-800">Aucun agent configuré ou actif dans l'historique.</div>`;
+        return;
+      }
+
+      c.innerHTML = effAgents.map(agent => {
         const rows = filteredHistory.filter(r => r.user === agent);
         const qty = rows.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
         const anomalies = rows.filter(r => Number(r.quantity) === 0 || Number(r.quantity) > maxQty);
@@ -607,7 +647,7 @@
         const lastScan = rows.length > 0 ? rows[0].timestamp : "--";
         const lastContractor = rows.length > 0 ? rows[0].contractor : "Aucun";
 
-        // Calcul exact de la cadence horaire basée sur l'amplitude réelle
+        // Cadence horaire
         let cadence = rows.length;
         let durationFormatted = "Session courte";
         if (rows.length > 1) {
@@ -626,7 +666,6 @@
           }
         }
 
-        // Taux de couverture comparative par rapport à la Configuration
         const treatedContractors = new Set(rows.map(r => r.contractor).filter(Boolean));
         const currentTab = activeAccordionTab[agent];
 
@@ -645,7 +684,7 @@
               <span class="text-[11px] bg-slate-950 px-2.5 py-1 rounded text-slate-400 border border-slate-800 font-mono">Dernier scan : ${lastScan}</span>
             </div>
 
-            <!-- LES 3 TUILES CLICQUABLES ACCORDÉONS -->
+            <!-- LES 3 TUILES ACCORDÉONS CLIQUABLES -->
             <div class="grid grid-cols-3 gap-3">
               <button onclick="toggleAccordion('${agent}', 'cadence')" class="p-3 rounded-xl border text-center transition ${currentTab === 'cadence' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
                 <span class="text-[10px] font-bold block uppercase opacity-75">⚡ Cadence</span>
@@ -657,11 +696,11 @@
               </button>
               <button onclick="toggleAccordion('${agent}', 'perimetre')" class="p-3 rounded-xl border text-center transition ${currentTab === 'perimetre' ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
                 <span class="text-[10px] font-bold block uppercase opacity-75">🌐 Périmètre</span>
-                <span class="text-xl font-black font-mono mt-0.5 block">${treatedContractors.size} <span class="text-xs font-normal">/ ${availableContractors.length}</span></span>
+                <span class="text-xl font-black font-mono mt-0.5 block">${treatedContractors.size} <span class="text-xs font-normal">/ ${availableContractors.length || treatedContractors.size}</span></span>
               </button>
             </div>
 
-            <!-- TIROIR DÉROULANT SOUS LA CARTE -->
+            <!-- TIROIR ACCORDÉON DÉROULANT -->
             ${currentTab === 'cadence' ? `
               <div class="p-3 bg-slate-950 rounded-xl border border-indigo-500/40 text-xs space-y-1">
                 <strong class="text-indigo-400 block font-bold">Détail de la Session de Comptage :</strong>
@@ -694,7 +733,7 @@
               <div class="p-3 bg-slate-950 rounded-xl border border-blue-500/40 text-xs space-y-2">
                 <strong class="text-blue-400 block font-bold">Avancement des Entreprises & Chantiers :</strong>
                 <div class="space-y-1">
-                  ${availableContractors.map(cName => {
+                  ${(availableContractors.length > 0 ? availableContractors : Array.from(treatedContractors)).map(cName => {
                     const cRows = rows.filter(r => r.contractor === cName);
                     const isDone = cRows.length > 0;
                     return `
@@ -719,7 +758,6 @@
       lucide.createIcons();
     }
 
-    // ACTIONS D'ÉDITION DEPUIS LE MONITORING
     async function editItemFromMonitoring(id, oldQty) {
       const val = prompt("Modifier la quantité :", oldQty);
       if (val === null) return;
@@ -755,7 +793,6 @@
       }
     }
 
-    // CARTE LEAFLET ET REPLAY DE TOURNÉE
     function initLeafletMap() {
       if (map) return;
       map = L.map('map').setView([48.8566, 2.3522], 13);
@@ -829,7 +866,6 @@
       map.fitBounds(activePolyline.getBounds(), { padding: [40, 40] });
     }
 
-    // RAPPORT PDF DE CLÔTURE EN 1 CLIC
     function generateClosingReportPDF() {
       const contractor = document.getElementById("pdfContractorSelect").value;
       if (!contractor) {
