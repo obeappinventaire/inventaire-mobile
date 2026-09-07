@@ -658,10 +658,12 @@
         <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-650 cursor-pointer transition">
           <p class="text-base font-bold text-white leading-snug">${item.designation || 'Sans désignation'}</p>
           <div class="flex justify-between items-center text-xs mt-2 pt-1.5 border-t border-slate-700/70">
+            <!-- RÉF SAP À GAUCHE -->
             <div class="flex items-center space-x-1.5">
               <span class="text-[11px] text-slate-300 uppercase font-bold">SAP :</span>
               <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-900 px-2.5 py-0.5 rounded border border-amber-500/30">${item.sapRef}</span>
             </div>
+            <!-- RÉF FOURNISSEUR À DROITE -->
             <div class="text-right truncate max-w-[170px]">
               <span class="text-slate-300">Fourn : </span>
               <strong class="font-mono text-blue-300 text-sm">${item.supplierRef || 'N/A'}</strong>
