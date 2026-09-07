@@ -32,7 +32,7 @@
       border: 1px solid #e2e8f0;
       background: #ffffff;
       width: auto !important;
-      max-width: 340px !important;
+      max-width: 360px !important;
     }
     .leaflet-popup-content { 
       margin: 10px 14px; 
@@ -138,11 +138,15 @@
           </button>
         </div>
 
-        <!-- SÉLECTEUR DE PÉRIODE ÉPURÉ -->
+        <!-- SÉLECTEUR DE PÉRIODE AVEC NUMÉRO DE SEMAINE SXX YYYY -->
         <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
-          <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
-          </span>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
+            </span>
+            <!-- Badge dynamique Numéro de Semaine SXX YYYY -->
+            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-200">--</span>
+          </div>
 
           <div class="relative">
             <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
@@ -225,7 +229,7 @@
                 <span id="kpiTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
               </div>
 
-              <!-- KPI RUPTURES AVEC BOUTON ICÔNE LISTE -->
+              <!-- KPI RUPTURES -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
@@ -237,7 +241,7 @@
                 <span id="kpiZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
               </div>
 
-              <!-- KPI ALERTES ATYPIQUES AVEC BOUTON ICÔNE LISTE -->
+              <!-- KPI ALERTES ATYPIQUES -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-amber-600 uppercase">Alertes Atypiques</span>
@@ -410,7 +414,7 @@
                 <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
                 Cartographie Interactive du Terrain (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Survolez pour l'agent et le statut • Cliquez pour centrer et afficher le détail complet</p>
+              <p class="text-xs text-slate-500 mt-0.5">Survolez un spot pour voir le nombre d'agents • Cliquez pour éclater ou voir les détails</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs transition flex items-center gap-1">
@@ -438,12 +442,14 @@
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
+    let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
     let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
     let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
     let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
+    let syncQueue = JSON.parse(localStorage.getItem("offline_sync_queue") || "[]");
 
     let currentAdmin = sessionStorage.getItem("mon_current_admin") || "";
     let activeView = 'global';
@@ -465,6 +471,23 @@
       [51.55, 6.50]
     ];
 
+    // --- CALCUL DU NUMÉRO DE SEMAINE ISO (SXX YYYY) ---
+    function getISOWeekNumber(d) {
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+      return { week: weekNo, year: date.getUTCFullYear() };
+    }
+
+    function updateWeekBadge(startDateStr) {
+      const targetDate = startDateStr ? new Date(startDateStr) : new Date();
+      const iso = getISOWeekNumber(targetDate);
+      const weekStr = String(iso.week).padStart(2, '0');
+      const badge = document.getElementById("weekBadgeLabel");
+      if (badge) badge.innerText = `S${weekStr} ${iso.year}`;
+    }
+
     function parseItemDate(str) {
       if (!str) return new Date(0);
       const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
@@ -484,9 +507,7 @@
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
       
-      if (!includeTime) {
-        return `${day}/${month}/${year}`;
-      }
+      if (!includeTime) return `${day}/${month}/${year}`;
       const hours = String(d.getHours()).padStart(2, '0');
       const minutes = String(d.getMinutes()).padStart(2, '0');
       return `${day}/${month}/${year} ${hours}:${minutes}`;
@@ -528,31 +549,37 @@
 
     function initMultiSelects() {
       const cAgents = document.getElementById("checkboxesAgents");
-      cAgents.innerHTML = availableAgents.map(a => `
-        <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-          <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-          <span class="truncate">${a}</span>
-        </label>
-      `).join('');
+      if (cAgents) {
+        cAgents.innerHTML = availableAgents.map(a => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${a}</span>
+          </label>
+        `).join('');
+      }
 
       const cContractors = document.getElementById("checkboxesContractors");
-      cContractors.innerHTML = availableContractors.map(c => `
-        <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-          <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-          <span class="truncate">${c}</span>
-        </label>
-      `).join('');
+      if (cContractors) {
+        cContractors.innerHTML = availableContractors.map(c => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${c}</span>
+          </label>
+        `).join('');
+      }
 
       const cTrades = document.getElementById("checkboxesTrades");
-      cTrades.innerHTML = availableTrades.map(t => `
-        <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-          <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-          <span class="truncate">${t}</span>
-        </label>
-      `).join('');
+      if (cTrades) {
+        cTrades.innerHTML = availableTrades.map(t => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${t}</span>
+          </label>
+        `).join('');
+      }
 
       const adminSel = document.getElementById("authAdminSelect");
-      if (adminAgents.length > 0) {
+      if (adminSel && adminAgents.length > 0) {
         const currentlySelected = adminSel.value;
         adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
           adminAgents.map(a => `<option value="${a}" ${a === currentlySelected ? 'selected' : ''}>${a}</option>`).join('');
@@ -664,6 +691,7 @@
         customBox.classList.add("hidden");
       }
 
+      let referenceDate = now;
       if (mode === 'ALL') {
         sInput.value = "";
         eInput.value = "";
@@ -680,6 +708,7 @@
 
         sInput.value = monday.toISOString().split('T')[0];
         eInput.value = sunday.toISOString().split('T')[0];
+        referenceDate = monday;
       } else if (mode === 'PREV_WEEK') {
         const day = now.getDay() || 7;
         const prevMonday = new Date(now);
@@ -689,13 +718,16 @@
 
         sInput.value = prevMonday.toISOString().split('T')[0];
         eInput.value = prevSunday.toISOString().split('T')[0];
+        referenceDate = prevMonday;
       } else if (mode === 'CURRENT_MONTH') {
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         sInput.value = firstDay.toISOString().split('T')[0];
         eInput.value = lastDay.toISOString().split('T')[0];
+        referenceDate = firstDay;
       }
 
+      updateWeekBadge(sInput.value);
       applyFilters();
     }
 
@@ -715,6 +747,8 @@
       const eDateVal = document.getElementById("filterEndDate").value;
       const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
       const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      updateWeekBadge(sDateVal);
 
       let periodLabel = "Tout l'historique";
       if (sDateVal && eDateVal) {
@@ -988,8 +1022,20 @@
     }
 
     // =========================================================================
-    // CARTOGRAPHIE INTERACTIVE : MULTI-POINTS ET GESTION DES SUPERPOSITIONS (SPIDERFY LÉGER)
+    // CARTOGRAPHIE INTERACTIVE : CALCUL DE PROXIMITÉ (1 KM) ET AFFICHAGE DU NOMBRE D'AGENTS
     // =========================================================================
+    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000; // Rayon de la terre en mètres
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2); 
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+      return R * c;
+    }
+
     function renderMap(list) {
       if (!map) {
         map = L.map('mapContainer', {
@@ -1014,34 +1060,40 @@
       const now = new Date().getTime();
       const thirtyMinMs = 30 * 60 * 1000;
 
-      // Regroupement des points par coordonnées exactes [lat, lng] pour gérer plusieurs agents au même endroit
-      const coordGroups = {};
+      // Algorithme de regroupement dans un rayon de 1 km (1000 mètres)
+      const clusters = [];
       list.forEach(item => {
         const lat = Number(item.lat || item.latitude);
         const lng = Number(item.lng || item.longitude);
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-          // Clé arrondie à 5 décimales (~1 mètre) pour regrouper les saisies du même endroit
-          const key = `${lat.toFixed(5)}_${lng.toFixed(5)}`;
-          if (!coordGroups[key]) {
-            coordGroups[key] = { lat, lng, items: [] };
+          let placed = false;
+          for (let cluster of clusters) {
+            const dist = getDistanceFromLatLonInMeters(cluster.lat, cluster.lng, lat, lng);
+            if (dist <= 1000) { // Dans un cercle de 1km de diamètre / rayon
+              cluster.items.push(item);
+              placed = true;
+              break;
+            }
           }
-          coordGroups[key].items.push(item);
+          if (!placed) {
+            clusters.push({ lat, lng, items: [item] });
+          }
         }
       });
 
-      Object.values(coordGroups).forEach(group => {
-        const { lat, lng, items } = group;
-        const totalAgentsAtSpot = [...new Set(items.map(i => i.user))];
-        const count = totalAgentsAtSpot.length;
+      clusters.forEach(cluster => {
+        const { lat, lng, items } = cluster;
+        const uniqueAgents = [...new Set(items.map(i => i.user))];
+        const agentCount = uniqueAgents.length;
 
-        // Si plusieurs agents au même endroit, on décale légèrement les points en cercle (effet d'éclatement)
+        // Si plusieurs agents dans le rayon de 1km, on éclate les points en étoile
         items.forEach((item, index) => {
           let markerLat = lat;
           let markerLng = lng;
 
-          if (count > 1) {
-            const angle = (index / count) * 2 * Math.PI;
-            const radius = 0.00015 * (index + 1); // Décalage de quelques mètres
+          if (items.length > 1) {
+            const angle = (index / items.length) * 2 * Math.PI;
+            const radius = 0.002 * (index + 1); // Décalage visuel
             markerLat = lat + radius * Math.cos(angle);
             markerLng = lng + radius * Math.sin(angle);
           }
@@ -1079,7 +1131,7 @@
           const linesCount = entriesForPair.length;
 
           const marker = L.circleMarker([markerLat, markerLng], {
-            radius: count > 1 ? 8 : 7,
+            radius: agentCount > 1 ? 9 : 7,
             fillColor: isAgentActiveLive ? "#10b981" : "#f97316",
             color: "#ffffff",
             weight: 2,
@@ -1087,11 +1139,11 @@
             fillOpacity: 0.9
           }).addTo(markersLayer);
 
-          // 1. SURVOL DE LA SOURIS : Affiche l'agent et s'il y a plusieurs agents à cet endroit exact
+          // AU SURVOL : Affiche uniquement le nombre d'agents à ce spot s'ils sont plusieurs
           marker.bindTooltip(`
-            <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
+            <div class="text-xs font-sans px-1.5 py-1 space-y-0.5 leading-snug">
               <strong class="text-slate-900 block text-sm">Agent : ${item.user}</strong>
-              ${count > 1 ? `<div class="text-indigo-600 font-bold text-[11px]">👥 ${count} agents partagent ce site</div>` : ''}
+              ${agentCount > 1 ? `<div class="text-orange-600 font-bold text-[11px]">📍 ${agentCount} agents actifs sur ce spot (1km)</div>` : ''}
               <div class="text-[11px] text-emerald-700">
                 <span class="font-bold">En cours :</span> ${currentActivePair}
               </div>
