@@ -35,7 +35,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- MODALE IDENTIFICATION OBLIGATOIRE -->
+  <!-- MODALE IDENTIFICATION OBLIGATOIRE AU DÉMARRAGE -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center mx-auto">
@@ -123,7 +123,6 @@
             </div>
             <canvas id="ocrCanvas" class="hidden"></canvas>
             
-            <!-- 3 Boutons Alignés et Centrés de Même Taille -->
             <div class="p-2.5 bg-slate-900/95 border-t border-slate-800 z-10 relative">
               <div class="grid grid-cols-3 gap-2 w-full">
                 <button id="btnTorch" onclick="toggleTorch()" class="h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition">
@@ -142,7 +141,7 @@
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE MULTI-CHAMPS -->
+          <!-- RECHERCHE CATALOGUE -->
           <div class="relative">
             <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
             <div class="relative flex items-center">
@@ -185,7 +184,7 @@
           </div>
         </div>
 
-        <!-- ZONE DE SAISIE DE QUANTITÉ AVEC RESET -->
+        <!-- ZONE QUANTITÉ AVEC RESET -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
           <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -201,14 +200,14 @@
           </div>
         </div>
 
-        <!-- BOUTON DE VALIDATION -->
+        <!-- BOUTON ARCHIVAGE -->
         <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
           <i data-lucide="check-circle" id="submitIcon" class="w-6 h-6"></i>
           <span id="submitLabel">VALIDER ET ARCHIVER</span>
         </button>
       </section>
 
-      <!-- VUE 2 : HISTORIQUE EN CARTES EMPILÉES LARGES -->
+      <!-- VUE 2 : HISTORIQUE -->
       <section id="view-history" class="hidden space-y-4">
         <div class="flex justify-between items-center text-xs text-slate-400 px-1">
           <span id="historyHeaderLabel">Mes saisies</span>
@@ -254,7 +253,6 @@
       </section>
     </div>
 
-    <!-- MENTION LÉGALE BASSE -->
     <div class="text-center pt-6 pb-2 mb-1">
       <span class="text-[10px] font-medium text-slate-400 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -341,6 +339,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
+      // Enregistre uniquement service-worker.js
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./service-worker.js')
           .then(() => console.log("Service Worker actif."))
@@ -527,7 +526,6 @@
       }
     }
 
-    // SYNCHRONISATION ROBUSTE SANS PERTE DE SAISIES RÉCENTES (Anti-Cache GET)
     async function syncData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
       await processSyncQueue();
@@ -564,12 +562,10 @@
             const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
             const historyMap = new Map();
 
-            // 1. Ajouter les données distantes
             data.history.forEach(item => {
               if (!pendingDeletedIds.has(item.id)) historyMap.set(item.id, item);
             });
 
-            // 2. Conserver les saisies locales récentes (évite la perte lors d'un scan récent)
             cachedHistory.forEach(item => {
               if (!pendingDeletedIds.has(item.id) && !historyMap.has(item.id)) {
                 historyMap.set(item.id, item);
@@ -1004,7 +1000,6 @@
       }
     }
 
-    // SOUMISSION AVEC ANTI-DOUBLON 5 MINUTES ET PERSISTANCE GARANTIE
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1151,7 +1146,6 @@
       }
     }
 
-    // RENDU DE L'HISTORIQUE AVEC BOUTONS CONFORTABLES TACTILES (h-11)
     function renderHistory() {
       const c = document.getElementById("historyList");
       const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
