@@ -1,8 +1,9 @@
-const CACHE_NAME = 'co2h2o-inventory-v2';
+const CACHE_NAME = 'co2h2o-inventory-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './monitoring.html',
+  './icon.svg',
   './app_icon_co2h2o.png',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
@@ -32,19 +33,37 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Ne jamais intercepter les échanges vers Google Apps Script
   if (event.request.url.includes('script.google.com')) return;
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        const respClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
-        return response;
-      }).catch(() => caches.match('./index.html'));
-    })
-  );
+  const isHtml = event.request.mode === 'navigate' || event.request.url.endsWith('.html') || event.request.url.endsWith('/');
+
+  if (isHtml) {
+    // Network-First pour l'interface : récupère toujours la dernière version de GitHub
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+    );
+  } else {
+    // Cache-First pour les bibliothèques CDN et médias
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        });
+      })
+    );
+  }
 });
