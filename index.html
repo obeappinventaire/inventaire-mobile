@@ -22,36 +22,36 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     
-    /* ZONE DU SCANNER CENTRÉE ET FORMAT COMPACT */
+    /* ZONE DU SCANNER CENTRÉE */
     #scannerContainer {
       max-height: 100vh !important;
     }
     #reader {
-      height: 290px !important;
-      max-height: 290px !important;
+      height: 310px !important;
+      max-height: 310px !important;
       width: 100% !important;
       overflow: hidden !important;
       position: relative !important;
     }
     #reader video {
-      height: 290px !important;
-      max-height: 290px !important;
+      height: 310px !important;
+      max-height: 310px !important;
       width: 100% !important;
       object-fit: cover !important;
-      border-radius: 0.5rem;
+      border-radius: 0.75rem;
     }
 
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Réticule de visée centré */
+    /* Réticule de visée rigoureusement centré au milieu du cadre blanc */
     .ocr-reticle {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 86%;
-      height: 38%;
+      width: 82%;
+      height: 32%;
       border: 2px solid #10b981;
       border-radius: 12px;
       box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55);
@@ -145,7 +145,7 @@
           <div id="scannerContainer" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm items-center justify-center p-4">
             <div class="relative w-full max-w-sm bg-black rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
               
-              <!-- BANDEAU HAUT DU CADRE BLEU : ZONE POUR QR / EAN -->
+              <!-- BANDEAU HAUT DU CADRE BLEU -->
               <div class="absolute top-2.5 inset-x-0 z-20 flex justify-center pointer-events-none">
                 <span class="text-[10px] font-bold font-mono tracking-wider bg-slate-950/90 text-indigo-300 border border-indigo-500/50 px-3 py-1 rounded-full shadow-lg">
                   ZONE POUR QR / EAN
@@ -155,35 +155,36 @@
               <!-- FENÊTRE VIDÉO -->
               <div id="reader" class="w-full relative"></div>
 
-              <!-- RÉTICULE VERT : ZONE POUR RÉF SAP 6 CHIFFRES -->
+              <!-- RÉTICULE VERT : PARFAITEMENT CENTRÉ AU MILIEU -->
               <div class="ocr-reticle">
-                <span class="text-[10px] font-mono text-emerald-300 bg-slate-950/95 px-2.5 py-0.5 rounded-md border border-emerald-500/50 tracking-wider font-black">
-                  ZONE POUR RÉF SAP 6 CHIFFRES
+                <span class="text-[9px] font-mono text-emerald-300 bg-slate-950/95 px-2.5 py-0.5 rounded-md border border-emerald-500/50 tracking-wider font-black uppercase">
+                  Zone pour réf SAP 6 chiffres
                 </span>
               </div>
               <canvas id="ocrCanvas" class="hidden"></canvas>
               
-              <!-- BARRE D'OUTILS INFÉRIEURE -->
-              <div class="p-3 bg-slate-900/95 flex items-center justify-between border-t border-slate-800 z-10 relative">
-                <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[120px]">Alignez le code...</span>
-                
-                <div class="flex items-center space-x-2">
-                  <!-- BOUTON LAMPE -->
-                  <button id="btnTorch" onclick="toggleTorch()" title="Lumière" class="px-3 py-2 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center gap-1.5 border border-slate-700 transition">
+              <!-- BARRE D'OUTILS INFÉRIEURE AVEC LES 3 BOUTONS PARFAITEMENT ALIGNÉS ET DE MÊME TAILLE -->
+              <div class="p-3 bg-slate-900/95 border-t border-slate-800 z-10 relative">
+                <div class="grid grid-cols-3 gap-2 w-full">
+                  
+                  <!-- 1. BOUTON FLASH -->
+                  <button id="btnTorch" onclick="toggleTorch()" title="Lumière" class="h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition">
                     <i data-lucide="flashlight" id="torchIcon" class="w-4 h-4 text-slate-300"></i>
                     <span id="torchLabel">Flash</span>
                   </button>
 
-                  <!-- BOUTON SCANNER RÉF SAP ERGONOMIQUE -->
-                  <button onclick="triggerManualOcrCapture()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5 transition">
+                  <!-- 2. BOUTON SCANNER RÉF SAP EN VERT ÉMERAUDE -->
+                  <button onclick="triggerManualOcrCapture()" title="Lire Réf SAP" class="h-12 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 transition border border-emerald-400/40">
                     <i data-lucide="scan-line" class="w-4 h-4"></i>
-                    <span>Scanner Réf SAP</span>
+                    <span>Scanner SAP</span>
                   </button>
 
-                  <!-- BOUTON FERMER -->
-                  <button onclick="stopScanner()" title="Fermer" class="p-2 bg-rose-500/20 active:bg-rose-600 text-rose-300 hover:text-white rounded-xl border border-rose-500/40 transition">
-                    <i data-lucide="x" class="w-4 h-4"></i>
+                  <!-- 3. BOUTON FERMER (CROIX ROUGE DE MÊME TAILLE) -->
+                  <button onclick="stopScanner()" title="Fermer" class="h-12 bg-rose-600/20 hover:bg-rose-600/30 active:bg-rose-600 text-rose-300 active:text-white rounded-xl border border-rose-500/40 flex items-center justify-center gap-1.5 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                    <span class="font-bold text-xs">Fermer</span>
                   </button>
+
                 </div>
               </div>
 
@@ -757,7 +758,7 @@
 
       const qrConfig = {
         fps: 15,
-        qrbox: { width: 270, height: 180 },
+        qrbox: { width: 280, height: 180 },
         aspectRatio: 1.333333
       };
 
@@ -833,7 +834,6 @@
       container.classList.remove("flex");
       
       document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-      document.getElementById("scanStatusMsg").innerText = "Alignez le code...";
       lucide.createIcons();
     }
 
@@ -878,11 +878,11 @@
       if (!btn || !label || !icon) return;
 
       if (isTorchOn) {
-        btn.className = "px-3 py-2 bg-amber-400 active:bg-amber-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5 border border-amber-300 transition";
+        btn.className = "h-12 bg-amber-400 active:bg-amber-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-amber-300 transition";
         label.innerText = "Allumé";
         icon.className = "w-4 h-4 text-slate-950 fill-slate-950";
       } else {
-        btn.className = "px-3 py-2 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center gap-1.5 border border-slate-700 transition";
+        btn.className = "h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition";
         label.innerText = "Flash";
         icon.className = "w-4 h-4 text-slate-300";
       }
@@ -895,7 +895,7 @@
       const label = document.getElementById("torchLabel");
       const icon = document.getElementById("torchIcon");
       if (btn && label && icon) {
-        btn.className = "px-3 py-2 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center gap-1.5 border border-slate-700 transition";
+        btn.className = "h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition";
         label.innerText = "Flash";
         icon.className = "w-4 h-4 text-slate-300";
       }
@@ -911,7 +911,6 @@
 
     async function triggerManualOcrCapture() {
       if (!isScanning) return;
-      document.getElementById("scanStatusMsg").innerText = "⏳ Analyse en cours...";
       await processVideoOcr(true);
     }
 
@@ -945,8 +944,8 @@
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      const cropW = Math.floor(video.videoWidth * 0.86);
-      const cropH = Math.floor(video.videoHeight * 0.38);
+      const cropW = Math.floor(video.videoWidth * 0.82);
+      const cropH = Math.floor(video.videoHeight * 0.32);
       const startX = Math.floor((video.videoWidth - cropW) / 2);
       const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
 
@@ -1049,7 +1048,7 @@
         }
 
         if (forceToast) {
-          document.getElementById("scanStatusMsg").innerText = "⚠️ Réf SAP inconnue dans le catalogue.";
+          showToast("⚠️ Réf SAP inconnue dans le catalogue.");
         }
       } catch (e) {
         console.warn("Erreur OCR :", e);
