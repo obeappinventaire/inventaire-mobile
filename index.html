@@ -21,7 +21,6 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
-    /* BLOCAGE STRICT DU PULL-TO-REFRESH ET DU REBOND ÉLASTIQUE MOBILE */
     html, body {
       overscroll-behavior: none !important;
       overscroll-behavior-y: none !important;
@@ -34,7 +33,6 @@
       overscroll-behavior-y: contain !important;
     }
 
-    /* CADRAGE DE LA CAMÉRA ÉTENDU (+1 CM HAUT ET BAS) */
     #reader {
       height: 330px !important;
       max-height: 330px !important;
@@ -57,7 +55,6 @@
     }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* RÉTICULE VERT SUPERPOSÉ AU CENTRE DU QR */
     .ocr-reticle {
       position: absolute;
       top: 50%;
@@ -193,11 +190,11 @@
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE -->
-          <div class="relative">
+          <!-- RECHERCHE CATALOGUE AVEC REMONTÉE EN HAUT DE PAGE -->
+          <div class="relative" id="searchCatalogueWrapper">
             <div class="flex justify-between items-center mb-1.5">
               <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
-              <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" class="hidden text-[11px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded border border-slate-700 font-bold">
+              <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" class="hidden text-[11px] bg-slate-800 text-indigo-300 px-2.5 py-1 rounded border border-slate-700 font-bold">
                 Masquer clavier ✕
               </button>
             </div>
@@ -385,20 +382,65 @@
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
 
-    // --- SYNTHÈSE VOCALE ---
+    // --- SYNTHÈSE VOCALE BELGE (SEPTANTE / NONANTE & CHIFFRE PAR CHIFFRE) ---
+    function formatNumberToBelgianFrench(n) {
+      const num = parseInt(n, 10);
+      if (isNaN(num)) return String(n);
+      
+      const units = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
+                     "onze", "douze", "treize", "quatorze", "quinze", "seize"];
+      if (num <= 16) return units[num];
+
+      if (num < 70) {
+        return String(num); // La synthèse native prononce correctement 17 à 69
+      }
+      if (num >= 70 && num < 80) {
+        const rem = num - 70;
+        if (rem === 0) return "septante";
+        if (rem === 1) return "septante et un";
+        return "septante-" + units[rem];
+      }
+      if (num >= 80 && num < 90) {
+        const rem = num - 80;
+        if (rem === 0) return "quatre-vingts";
+        return "quatre-vingt-" + units[rem];
+      }
+      if (num >= 90 && num < 100) {
+        const rem = num - 90;
+        if (rem === 0) return "nonante";
+        if (rem === 1) return "nonante et un";
+        return "nonante-" + units[rem];
+      }
+      return String(num);
+    }
+
+    function formatDigitsSpaced(str) {
+      return String(str || "").replace(/\D/g, "").split("").join(" ");
+    }
+
     function speakFeedback(text) {
       if (!('speechSynthesis' in window)) return;
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'fr-FR';
-        utterance.rate = 1.05;
+        utterance.lang = 'fr-BE';
+        utterance.rate = 1.0;
         utterance.pitch = 1.0;
         window.speechSynthesis.speak(utterance);
       } catch(e) {}
     }
 
-    // --- FORMAT DATES ---
+    function speakQuantity(qty) {
+      const belgianText = formatNumberToBelgianFrench(qty);
+      speakFeedback(belgianText);
+    }
+
+    function speakSapSelection(sapRef) {
+      const digitsSpaced = formatDigitsSpaced(sapRef);
+      speakFeedback(`Réf SAP ${digitsSpaced} sélectionnée`);
+    }
+
+    // --- CONVERSION DES DATES FORMAT JJ/MM/AAAA ---
     function parseItemDate(str) {
       if (!str) return new Date(0);
       const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
@@ -424,7 +466,6 @@
       return `${day}/${month}/${year} ${hours}:${minutes}`;
     }
 
-    // --- PERSISTANCE DES CHOIX ENTREPRENEUR & MÉTIER ---
     function persistSelection(field, val) {
       if (field === 'contractor') {
         localStorage.setItem("inv_saved_contractor", val);
@@ -439,12 +480,8 @@
       const cSelect = document.getElementById("contractorSelect");
       const tSelect = document.getElementById("tradeSelect");
 
-      if (savedContractor && cSelect) {
-        cSelect.value = savedContractor;
-      }
-      if (savedTrade && tSelect) {
-        tSelect.value = savedTrade;
-      }
+      if (savedContractor && cSelect) cSelect.value = savedContractor;
+      if (savedTrade && tSelect) tSelect.value = savedTrade;
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -454,16 +491,20 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // Gestion du clic extérieur sécurisée (ne ferme la liste que sur un vrai clic extérieur)
+      // Effacement du champ si clic franc en dehors alors qu'aucun article n'est validé
       document.addEventListener("click", (e) => {
+        const wrapper = document.getElementById("searchCatalogueWrapper");
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
         const clearBtn = document.getElementById("clearSearchBtn");
         const dismissBtn = document.getElementById("btnDismissKeyboard");
         
-        if (dd && !dd.contains(e.target) && e.target !== searchInput && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
-          dd.classList.add("hidden");
+        if (wrapper && !wrapper.contains(e.target) && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
+          if (dd) dd.classList.add("hidden");
           if (dismissBtn) dismissBtn.classList.add("hidden");
+          if (!activeItem && searchInput && searchInput.value.trim() !== "") {
+            clearSearch();
+          }
         }
       });
 
@@ -520,9 +561,17 @@
       }
     }
 
+    // --- REMONTÉE EN HAUT DU MOBILE LORS DU CLIC DANS LA RECHERCHE ---
     function onSearchFocus() {
       const dismissBtn = document.getElementById("btnDismissKeyboard");
       if (dismissBtn) dismissBtn.classList.remove("hidden");
+
+      // Auto-scroll au sommet pour libérer tout l'écran au-dessus du clavier virtuel
+      setTimeout(() => {
+        const main = document.getElementById("mainContent");
+        if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     }
 
     function blurSearchInput() {
@@ -764,7 +813,7 @@
       let html = `
         <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between items-center border-b border-slate-700 sticky top-0 z-10 backdrop-blur-sm">
           <span>${results.length} article(s) trouvé(s)</span>
-          <button type="button" onclick="blurSearchInput()" class="text-amber-400 font-bold bg-slate-900 px-2 py-0.5 rounded border border-amber-500/30">
+          <button type="button" onclick="blurSearchInput()" class="text-amber-400 font-bold bg-slate-900 px-2.5 py-1 rounded border border-amber-500/30">
             Fermer clavier ✕
           </button>
         </div>
@@ -805,7 +854,7 @@
       blurSearchInput();
       
       if (navigator.vibrate) navigator.vibrate(50);
-      speakFeedback(`Réf SAP ${activeItem.sapRef} sélectionnée`);
+      speakSapSelection(activeItem.sapRef);
     }
 
     function clearSearch() {
@@ -1317,7 +1366,7 @@
       label.innerText = "ENREGISTREMENT...";
       icon.className = "w-6 h-6 animate-spin";
 
-      speakFeedback(`${finalQty}`);
+      speakQuantity(finalQty);
 
       let payload;
       if (targetUpdateId) {
