@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inventaire Logistique Terrain</title>
 
-  <!-- ICÔNE SMARTPHONE, PWA & RETINA -->
+  <!-- ICÔNES & PWA -->
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
@@ -23,7 +23,7 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     
-    /* CADRAGE DE LA CAMÉRA : AGRANDI EN HAUT ET EN BAS D'ENVIRON 1 CM (330px) */
+    /* CADRAGE DE LA CAMÉRA ÉTENDU (+1 CM HAUT ET BAS) */
     #reader {
       height: 330px !important;
       max-height: 330px !important;
@@ -46,7 +46,7 @@
     }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* RÉTICULE VERT : SUPERPOSÉ AU CENTRE EXACT AVEC TEXTE AGRANDI CONTRE LA LIGNE BASSE */
+    /* RÉTICULE VERT SUPERPOSÉ AU CENTRE DU QR */
     .ocr-reticle {
       position: absolute;
       top: 50%;
@@ -129,7 +129,7 @@
           </div>
           <div>
             <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
-              Corps d'état / Métier <span class="text-rose-400 font-bold">*</span>
+              Métier <span class="text-rose-400 font-bold">*</span>
             </label>
             <select id="tradeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
               <option value="">-- Sélectionner le métier (Obligatoire) --</option>
@@ -143,21 +143,18 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- MODALE CAMÉRA : CADRE BLEU ÉTENDU EN HAUT ET EN BAS (+1 CM) -->
+          <!-- MODALE CAMÉRA CENTRÉE -->
           <div id="scannerContainer" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm items-center justify-center p-4">
             <div class="relative w-full max-w-sm bg-slate-950 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
               
-              <!-- BANDEAU HAUT : ZONE POUR QR / EAN -->
               <div class="absolute top-2.5 inset-x-0 flex justify-center z-10 pointer-events-none">
                 <span class="text-xs font-mono font-black text-indigo-200 bg-slate-950/90 px-3 py-1 rounded border border-indigo-500/50 tracking-wider shadow">
                   ZONE POUR QR / EAN
                 </span>
               </div>
 
-              <!-- Zone vidéo cadrée sur 330px -->
               <div id="reader" class="w-full relative"></div>
               
-              <!-- RÉTICULE VERT : SUPERPOSÉ CENTRÉ AU CADRE DES COINS DU SCANNER -->
               <div class="ocr-reticle">
                 <span class="text-xs font-mono font-black text-emerald-300 bg-slate-950/90 px-2.5 py-1 rounded border border-emerald-500/50 tracking-wider shadow mb-0.5">
                   ZONE POUR RÉF SAP 6 CHIFFRES
@@ -165,52 +162,56 @@
               </div>
               <canvas id="ocrCanvas" class="hidden"></canvas>
               
-              <!-- BARRE D'OUTILS : FLASH, SCAN VERT RACCOURCI, CROIX FERMETURE ROUGE ROSE -->
               <div class="p-3 bg-slate-900/95 flex items-center justify-between gap-3 border-t border-slate-800 z-10 relative">
-                
-                <!-- Bouton Flash -->
                 <button id="btnTorch" onclick="toggleTorch()" title="Lampe" 
                         class="w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow">
                   <i data-lucide="flashlight" id="torchIcon" class="w-6 h-6 text-slate-300"></i>
                 </button>
 
-                <!-- Bouton vert : Scan Réf SAP -->
                 <button onclick="triggerManualOcrCapture()" 
                         class="h-[52px] flex-1 max-w-[185px] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1.5 transition">
                   <i data-lucide="scan-line" class="w-5 h-5 shrink-0"></i>
                   <span class="truncate">Scan Réf SAP</span>
                 </button>
 
-                <!-- Bouton Croix (style Reset) -->
                 <button onclick="stopScanner()" title="Fermer" 
                         class="w-[52px] h-[52px] shrink-0 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 rounded-xl border border-rose-500/40 flex items-center justify-center shadow transition">
                   <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
-
               </div>
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE -->
+          <!-- RECHERCHE CATALOGUE AVEC FERMETURE RAPIDE DU CLAVIER -->
           <div class="relative">
-            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
+              <!-- Bouton d'action directe pour baisser le clavier si ouvert -->
+              <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" class="hidden text-[11px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded border border-slate-700 font-bold">
+                Masquer clavier ✕
+              </button>
+            </div>
+
             <div class="relative flex items-center">
               <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-slate-400 pointer-events-none"></i>
               <input type="text" id="articleSearchInput" 
                      oninput="onSearchInput(this.value)" 
-                     onfocus="this.select()"
+                     onfocus="onSearchFocus()"
+                     onkeydown="if(event.key==='Enter') blurSearchInput()"
                      placeholder="Tapez un mot-clé ou un chiffre..." 
                      autocomplete="off"
+                     enterkeyhint="search"
                      class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3.5 pl-11 pr-10 text-base text-white font-medium focus:outline-none focus:border-indigo-500">
               <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1">
                 <i data-lucide="x" class="w-5 h-5"></i>
               </button>
             </div>
             
+            <!-- LISTE DE PRÉSELECTION ACCESSIBLE SANS GÊNE DU CLAVIER -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
                  onscroll="blurSearchInput()"
-                 class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[26rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
+                 class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[22rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
           </div>
 
           <!-- FICHE MATÉRIEL IDENTIFIÉ -->
@@ -235,7 +236,7 @@
           </div>
         </div>
 
-        <!-- SAISIE DE QUANTITÉ (AVEC BOUTON RESET ROUGE/ROSE) -->
+        <!-- SAISIE DE QUANTITÉ -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
           <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (&gt;= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -257,7 +258,7 @@
         </button>
       </section>
 
-      <!-- ========== VUE 2 : HISTORIQUE ========== -->
+      <!-- ========== VUE 2 : HISTORIQUE REFONDU (2 NIVEAUX PLEINE LARGEUR) ========== -->
       <section id="view-history" class="hidden space-y-4">
         <div class="flex justify-between items-center text-xs text-slate-400 px-1">
           <span id="historyHeaderLabel">Mes saisies</span>
@@ -266,10 +267,10 @@
             <span>Actualiser</span>
           </button>
         </div>
-        <div id="historyList" class="space-y-2.5"></div>
+        <div id="historyList" class="space-y-3"></div>
       </section>
 
-      <!-- ========== VUE 3 : MONITORING MOBILE ========== -->
+      <!-- ========== VUE 3 : MONITORING MOBILE (DONNÉES DU CADRE CARTE) ========== -->
       <section id="view-monitoring" class="hidden space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -294,19 +295,15 @@
           </div>
         </div>
 
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 shadow space-y-2.5">
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Statut des Magasiniers</span>
-          <div id="agentStatusList" class="space-y-2"></div>
-        </div>
-
+        <!-- LISTING DU MONITORING MOBILE : REPREND LE DÉTAIL DU CADRE DE LA CARTE -->
         <div class="space-y-2">
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-1 block">Flux récent</span>
-          <div id="mobMonitoringList" class="space-y-2"></div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-1 block">Chantiers & Tournées en cours</span>
+          <div id="mobMonitoringList" class="space-y-3"></div>
         </div>
       </section>
     </div>
 
-    <!-- ================= MENTION LÉGALE OBLIGATOIRE ================= -->
+    <!-- ================= MENTION LÉGALE ================= -->
     <div class="text-center pt-6 pb-2 mb-1">
       <span class="text-[10px] font-medium text-slate-400 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -314,27 +311,24 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE : LOGO SCAN AVEC MENTION ORANGE ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <defs>
           <path id="line-corner-start-higher" d="M 72 83 H 82" />
         </defs>
-        <!-- Angles affinés -->
         <g stroke="currentColor" stroke-width="4">
           <path d="M 12 28 V 20 A 8 8 0 0 1 20 12 H 28"/>
           <path d="M 72 12 H 80 A 8 8 0 0 1 88 20 V 28"/>
           <path d="M 88 72 V 80 A 8 8 0 0 1 80 88 H 72"/>
           <path d="M 28 88 H 20 A 8 8 0 0 1 12 80 V 72"/>
         </g>
-        <!-- Barres verticales orange -->
         <g stroke="#f97316" stroke-width="8">
           <line x1="33" y1="28" x2="33" y2="72"/>
           <line x1="50" y1="28" x2="50" y2="72"/>
           <line x1="67" y1="28" x2="67" y2="72"/>
         </g>
-        <!-- Micro-mention CO2H2O srlu orange -->
         <text fill="#f97316" font-size="1.4" font-weight="400" font-family="sans-serif" letter-spacing="0.05">
           <textPath href="#line-corner-start-higher" startOffset="0" text-anchor="start">
             CO2H2O srlu
@@ -397,6 +391,32 @@
       } catch(e) {}
     }
 
+    // --- CONVERSION DES DATES FORMAT JJ/MM/AAAA ---
+    function parseItemDate(str) {
+      if (!str) return new Date(0);
+      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (parts) {
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
+      }
+      const iso = new Date(str);
+      return isNaN(iso.getTime()) ? new Date(0) : iso;
+    }
+
+    function formatDateDMY(dateInput, includeTime = false) {
+      if (!dateInput) return "--/--/----";
+      const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
+      if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
+      
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      
+      if (!includeTime) return `${day}/${month}/${year}`;
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       updateAgentUI();
@@ -404,14 +424,16 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // Clic hors recherche : vide le texte et referme si aucun article sélectionné
+      // Clic hors de la zone de recherche : vide le texte et referme si rien n'est sélectionné
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
         const clearBtn = document.getElementById("clearSearchBtn");
+        const dismissBtn = document.getElementById("btnDismissKeyboard");
         
-        if (dd && !dd.contains(e.target) && e.target !== searchInput && (!clearBtn || !clearBtn.contains(e.target))) {
+        if (dd && !dd.contains(e.target) && e.target !== searchInput && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
           dd.classList.add("hidden");
+          if (dismissBtn) dismissBtn.classList.add("hidden");
           if (!activeItem && searchInput.value.trim() !== "") {
             clearSearch();
           }
@@ -467,8 +489,13 @@
           tessedit_pageseg_mode: '7'
         });
       } catch (err) {
-        console.warn("Worker OCR initialisation warning:", err);
+        console.warn("Worker OCR warning:", err);
       }
+    }
+
+    function onSearchFocus() {
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.remove("hidden");
     }
 
     function blurSearchInput() {
@@ -476,6 +503,8 @@
       if (input && document.activeElement === input) {
         input.blur();
       }
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.add("hidden");
     }
 
     function resetQuantity() {
@@ -544,6 +573,7 @@
         cSelect.innerHTML = '<option value="">Chargement des entrepreneurs...</option>';
       }
 
+      // 'Corps d'état' retiré, affichage de 'Métier' uniquement
       if (availableTrades.length > 0) {
         tSelect.innerHTML = '<option value="">-- Sélectionner le métier (Obligatoire) --</option>' + 
           availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -578,7 +608,7 @@
           localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
           updateSyncBadge();
         } catch (e) {
-          console.warn("Échec synchronisation queue :", e);
+          console.warn("Échec synchro queue :", e);
           break;
         }
       }
@@ -647,10 +677,9 @@
       }
     }
 
-    async function manualSync() {
+    function manualSync() {
       showToast("Actualisation...");
-      await syncData();
-      showToast("Données synchronisées");
+      syncData().then(() => showToast("Données synchronisées"));
     }
 
     function normalizeStr(str) {
@@ -664,6 +693,7 @@
       const val = rawVal.trim();
       const dd = document.getElementById("suggestionsDropdown");
       const clearBtn = document.getElementById("clearSearchBtn");
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
 
       activeItem = null;
       document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
@@ -673,8 +703,10 @@
 
       if (val.length > 0) {
         clearBtn.classList.remove("hidden");
+        if (dismissBtn) dismissBtn.classList.remove("hidden");
       } else {
         clearBtn.classList.add("hidden");
+        if (dismissBtn) dismissBtn.classList.add("hidden");
         dd.classList.add("hidden");
         return;
       }
@@ -702,9 +734,11 @@
       }
 
       let html = `
-        <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between border-b border-slate-700">
+        <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between items-center border-b border-slate-700 sticky top-0 z-10 backdrop-blur-sm">
           <span>${results.length} article(s) trouvé(s)</span>
-          <span class="text-amber-400 font-bold">Touchez pour sélectionner</span>
+          <button type="button" onclick="blurSearchInput()" class="text-amber-400 font-bold bg-slate-900 px-2 py-0.5 rounded border border-amber-500/30">
+            Fermer clavier ✕
+          </button>
         </div>
       `;
 
@@ -745,7 +779,7 @@
       
       if (navigator.vibrate) navigator.vibrate(50);
 
-      // RETOUR VOCAL STRICT : Uniquement la référence SAP
+      // RETOUR VOCAL LORS DE LA SÉLECTION
       speakFeedback(`Réf SAP ${activeItem.sapRef} sélectionnée`);
     }
 
@@ -753,6 +787,8 @@
       document.getElementById("articleSearchInput").value = "";
       document.getElementById("clearSearchBtn").classList.add("hidden");
       document.getElementById("suggestionsDropdown").classList.add("hidden");
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.add("hidden");
       activeItem = null;
       document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
       document.getElementById("dispSupplier").innerText = "--";
@@ -762,7 +798,7 @@
     }
 
     // =========================================================================
-    // SCANNER CENTRÉ DANS LA HAUTEUR DU SMARTPHONE (+1 CM HAUT ET BAS)
+    // SCANNER CENTRÉ DANS LA HAUTEUR DU SMARTPHONE
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -783,7 +819,6 @@
       }
       html5QrCode = new Html5Qrcode("reader");
 
-      // qrbox ajusté pour la hauteur étendue à 330px
       const qrConfig = {
         fps: 15,
         qrbox: { width: 270, height: 210 },
@@ -818,11 +853,11 @@
         startBackgroundOcr();
 
       } catch (err) {
-        console.warn("Erreur démarrage capteur :", err);
+        console.warn("Erreur capteur :", err);
         container.classList.add("hidden");
         container.classList.remove("flex");
         btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-        alert("Accès caméra impossible : Vérifiez les autorisations et le protocole HTTPS.");
+        alert("Accès caméra impossible : Vérifiez les autorisations HTTPS.");
       } finally {
         isStartingScanner = false;
         lucide.createIcons();
@@ -1081,7 +1116,7 @@
     }
 
     // =========================================================================
-    // CODE OPTIQUE : BLOCAGE STRICT SI NON PRÉSENT DANS LE CATALOGUE
+    // CODE OPTIQUE : BLOCAGE STRICT DES ARTICLES HORS CATALOGUE
     // =========================================================================
     function handleExactCodeMatch(code) {
       const clean = String(code).trim();
@@ -1186,7 +1221,7 @@
     }
 
     // =========================================================================
-    // VALIDATION DE L'INVENTAIRE : AVEC RETOUR VOCAL (QUANTITÉ ET RÉF SAP)
+    // VALIDATION DE L'INVENTAIRE : RETOUR VOCAL SUR LA QUANTITÉ UNIQUEMENT
     // =========================================================================
     async function submitInventory() {
       if (!currentAgent) {
@@ -1203,7 +1238,7 @@
         return;
       }
       if (!trade || trade.trim() === "") {
-        alert("Action impossible :\nVeuillez impérativement sélectionner un Corps d'état / Métier avant de valider.");
+        alert("Action impossible :\nVeuillez impérativement sélectionner un Métier avant de valider.");
         document.getElementById("tradeSelect").focus();
         return;
       }
@@ -1270,8 +1305,8 @@
       label.innerText = "ENREGISTREMENT...";
       icon.className = "w-6 h-6 animate-spin";
 
-      // RETOUR VOCAL À LA VALIDATION : Énonce la quantité et la réf SAP
-      speakFeedback(`Quantité ${finalQty}, Réf SAP ${activeItem.sapRef}`);
+      // RETOUR VOCAL : ÉNONCE STRICTEMENT LA QUANTITÉ COMPTÉE
+      speakFeedback(`${finalQty}`);
 
       let payload;
       if (targetUpdateId) {
@@ -1342,6 +1377,9 @@
       }
     }
 
+    // =========================================================================
+    // RENDU DE L'HISTORIQUE EN 2 NIVEAUX PLEINE LARGEUR
+    // =========================================================================
     function renderHistory() {
       const c = document.getElementById("historyList");
       const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
@@ -1356,38 +1394,60 @@
 
       c.innerHTML = list.map(it => {
         const isPending = pendingIds.has(it.id);
+        const displayDate = formatDateDMY(it.timestamp, true);
         return `
-          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800/80'} p-3.5 rounded-xl flex items-center justify-between shadow-sm">
-            <div class="min-w-0 flex-1 pr-3">
-              <div class="flex items-center space-x-2">
-                <span class="font-mono font-black text-amber-400 text-sm tracking-wide">${it.sapRef}</span>
-                <span class="text-[10px] text-slate-400">• ${it.timestamp}</span>
-                ${isAdmin() ? `<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-bold">${it.user}</span>` : ''}
-                ${(it.lat || it.latitude) ? `<span class="text-[9px] text-emerald-400 font-mono">📍</span>` : ''}
+          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800'} p-3.5 rounded-2xl shadow space-y-2.5">
+            
+            <!-- 1. PARTIE HAUTE SUR TOUTE LA LARGEUR : Agent + Entrepreneur (Métier) + Date/Heure -->
+            <div class="flex items-center justify-between border-b border-slate-850 pb-2 text-xs">
+              <div class="min-w-0 pr-2">
+                <span class="font-bold text-white">${it.user}</span>
+                <span class="text-slate-400">• <strong class="text-slate-300 font-semibold">${it.contractor}</strong> (${it.trade})</span>
+              </div>
+              <div class="flex items-center space-x-1.5 shrink-0 text-[11px] font-mono text-slate-400">
+                <span>${displayDate}</span>
+                ${(it.lat || it.latitude) ? `<span class="text-emerald-400">📍</span>` : ''}
                 ${isPending ? `<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-bold">Attente</span>` : ''}
               </div>
-              <p class="text-xs font-semibold text-slate-200 truncate mt-0.5">${it.designation}</p>
-              <p class="text-[11px] text-slate-400 truncate">${it.contractor} (${it.trade})</p>
             </div>
-            
-            <div class="flex items-center space-x-2 shrink-0">
-              <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 min-w-[50px]">
-                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Qté</span>
-                <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
+
+            <!-- 2. PARTIE BASSE : Réf SAP, Désignation, Quantité et Boutons Modifier/Supprimer -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1 pr-2">
+                <span class="font-mono font-black text-amber-400 text-base tracking-wider block">${it.sapRef}</span>
+                <p class="text-xs text-slate-300 truncate mt-0.5" title="${it.designation}">${it.designation}</p>
               </div>
-              <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" class="w-10 h-10 rounded-xl bg-slate-850 hover:bg-slate-800 active:bg-blue-600 text-slate-400 hover:text-white flex items-center justify-center border border-slate-750 transition shadow">
-                <i data-lucide="edit-3" class="w-4 h-4"></i>
-              </button>
-              <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" class="w-10 h-10 rounded-xl bg-slate-850 hover:bg-rose-900/60 active:bg-rose-600 text-slate-400 hover:text-rose-400 flex items-center justify-center border border-slate-750 transition shadow">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
+
+              <!-- Bloc Quantité au centre droit -->
+              <div class="flex items-center space-x-2 shrink-0">
+                <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 min-w-[50px]">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase">Qté</span>
+                  <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
+                </div>
+
+                <!-- Bouton Modifier ton vert émeraude -->
+                <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" 
+                        class="w-10 h-10 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 active:bg-emerald-600 text-emerald-400 hover:text-emerald-100 flex items-center justify-center border border-emerald-500/40 transition shadow">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Bouton Supprimer ton rouge rose (identique au Reset) -->
+                <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
+                        class="w-10 h-10 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 flex items-center justify-center border border-rose-500/40 transition shadow">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
             </div>
+
           </div>
         `;
       }).join('');
       lucide.createIcons();
     }
 
+    // =========================================================================
+    // MONITORING MOBILE REPRENANT LES DONNÉES DU CADRE CARTE GÉOLOCALISATION
+    // =========================================================================
     function renderMobileMonitoring() {
       if (!isAdmin()) return;
       document.getElementById("mobKpiRows").innerText = cachedHistory.length;
@@ -1395,61 +1455,78 @@
       document.getElementById("mobKpiAlerts").innerText = cachedHistory.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50).length;
 
       const now = new Date().getTime();
-      const fifteenMinMs = 15 * 60 * 1000;
-      const statusContainer = document.getElementById("agentStatusList");
-      
-      if (availableAgents.length === 0) {
-        statusContainer.innerHTML = `<span class="text-xs text-slate-500 italic">Aucun agent configuré.</span>`;
-      } else {
-        statusContainer.innerHTML = availableAgents.map(agent => {
-          const agentHistory = cachedHistory.filter(h => h.user === agent);
-          let isActive = false;
-          let lastTimeLabel = "Aucune saisie";
+      const thirtyMinMs = 30 * 60 * 1000;
+      const container = document.getElementById("mobMonitoringList");
 
-          if (agentHistory.length > 0) {
-            const lastEntry = agentHistory[0];
-            lastTimeLabel = lastEntry.timestamp;
-            const parts = lastEntry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-            if (parts) {
-              const entryDate = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
-              if (now - entryDate < fifteenMinMs) {
-                isActive = true;
-              }
-            }
-          }
+      // Regroupement par [Agent + Entrepreneur + Métier] comme sur la carte
+      const groups = {};
+      cachedHistory.forEach(item => {
+        const key = `${item.user}__${item.contractor}__${item.trade}`;
+        if (!groups[key]) {
+          groups[key] = {
+            user: item.user,
+            contractor: item.contractor,
+            trade: item.trade,
+            entries: []
+          };
+        }
+        groups[key].entries.push(item);
+      });
 
-          return `
-            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-              <div class="flex items-center space-x-2.5">
-                <div class="w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}"></div>
-                <span class="font-bold text-white">${agent}</span>
-              </div>
-              <div class="text-right">
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
-                  ${isActive ? 'En comptage' : 'Déconnecté'}
-                </span>
-                <span class="block text-[9px] text-slate-400 mt-0.5">${lastTimeLabel}</span>
-              </div>
-            </div>
-          `;
-        }).join('');
+      const groupList = Object.values(groups);
+
+      if (groupList.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs italic">Aucune activité enregistrée.</div>`;
+        return;
       }
 
-      const container = document.getElementById("mobMonitoringList");
-      container.innerHTML = cachedHistory.slice(0, 15).map(item => {
-        const q = Number(item.quantity);
-        const isAlert = (q === 0 || q > 50);
+      container.innerHTML = groupList.map(grp => {
+        // Tri chronologique pour trouver 1ère et dernière saisie
+        const sorted = [...grp.entries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
+        const firstEntry = sorted[0];
+        const lastEntry = sorted[sorted.length - 1];
+
+        const firstDateStr = formatDateDMY(firstEntry.timestamp, true);
+        const lastDateStr = formatDateDMY(lastEntry.timestamp, true);
+
+        // Détection de statut en cours ou finalisé (< 30 min)
+        const lastDt = parseItemDate(lastEntry.timestamp);
+        const isActive = (now - lastDt.getTime()) < thirtyMinMs;
+
         return `
-          <div class="bg-slate-950 p-3 rounded-xl border ${isAlert ? 'border-amber-500/40' : 'border-slate-800'} text-xs space-y-1">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-indigo-300">${item.user} • ${item.timestamp}</span>
-              <span class="font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${q}</span>
+          <div class="bg-slate-950 p-3.5 rounded-2xl border ${isActive ? 'border-indigo-500/50' : 'border-slate-800'} text-xs space-y-2 shadow">
+            <div class="flex justify-between items-start border-b border-slate-850 pb-2">
+              <div>
+                <strong class="text-white text-sm block">${grp.contractor}</strong>
+                <span class="text-indigo-400 font-bold">${grp.trade}</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                ${isActive ? '🟢 En cours' : '🔵 Finalisé'}
+              </span>
             </div>
-            <div class="truncate text-slate-200">${item.designation}</div>
-            <div class="text-[10px] text-slate-400 font-mono">${item.contractor} (${item.trade})</div>
+
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1">
+              <div>
+                <span>Magasinier :</span>
+                <strong class="text-slate-200 block">${grp.user}</strong>
+              </div>
+              <div>
+                <span>Lignes traitées :</span>
+                <strong class="text-emerald-400 font-mono text-xs block">${grp.entries.length} ligne(s)</strong>
+              </div>
+              <div>
+                <span>1ère saisie :</span>
+                <span class="font-mono text-slate-300 block">${firstDateStr}</span>
+              </div>
+              <div>
+                <span>Dernière saisie :</span>
+                <span class="font-mono text-slate-300 block">${lastDateStr}</span>
+              </div>
+            </div>
           </div>
         `;
       }).join('');
+      lucide.createIcons();
     }
 
     function switchTab(tab) {
