@@ -25,7 +25,6 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
     
-    /* Style optimisé du popup Leaflet pour empêcher tout rognage du texte */
     .leaflet-popup-content-wrapper {
       border-radius: 16px;
       box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.15), 0 6px 12px -4px rgba(15, 23, 42, 0.08);
@@ -211,7 +210,6 @@
         <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
         <section id="viewGlobal" class="space-y-6">
           
-          <!-- BANDEAU KPI CUMULÉ : AVEC ICÔNE LISTE DE FILTRAGE SUR RUPTURES ET ALERTES -->
           <div>
             <div class="flex justify-between items-center mb-2 px-1">
               <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
@@ -276,9 +274,9 @@
               
               <!-- Multi-sélection Agents -->
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Magasiniers</label>
+                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
                 <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-indigo-600">
-                  <span id="btnLabelAgents" class="truncate font-semibold">Tous les magasiniers</span>
+                  <span id="btnLabelAgents" class="truncate font-semibold">Tous les agents</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
                 <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
@@ -308,7 +306,7 @@
 
               <!-- Multi-sélection Métiers -->
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Corps d'état / Métiers</label>
+                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
                 <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-indigo-600">
                   <span id="btnLabelTrades" class="truncate font-semibold">Tous les métiers</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
@@ -336,7 +334,7 @@
                 <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
                   <tr>
                     <th class="p-3">Horodatage (JJ/MM/AAAA)</th>
-                    <th class="p-3">Magasinier</th>
+                    <th class="p-3">Agent</th>
                     <th class="p-3">Entrepreneur</th>
                     <th class="p-3">Métier</th>
                     <th class="p-3">Réf SAP</th>
@@ -394,11 +392,17 @@
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
-                Cartographie Interactive du Terrain
+                Cartographie Interactive du Terrain (Wallonie)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Survolez un point pour voir l'agent et son statut en cours ou terminé • Cliquez pour le résumé détaillé</p>
+              <p class="text-xs text-slate-500 mt-0.5">Survolez un point pour voir l'agent et son statut • Cliquez pour le résumé et le recentrage Wallonie</p>
             </div>
-            <span class="text-xs font-mono text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
+            <div class="flex items-center gap-2">
+              <button onclick="resetMapToWallonia()" class="text-xs font-bold text-indigo-600 bg-white hover:bg-indigo-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs transition flex items-center gap-1">
+                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                <span>Recentrer Wallonie</span>
+              </button>
+              <span class="text-xs font-mono text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
+            </div>
           </div>
           <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-xs">
             <div id="mapContainer"></div>
@@ -434,13 +438,18 @@
     let selectedContractors = [];
     let selectedTrades = [];
 
-    // Filtre spécifique activé par les icônes de KPI (ZERO ou HIGH)
     let activeKpiFilter = null;
-
     let filterOnlyActiveAgents = false;
     let openDrawers = {};
 
-    // --- CONVERSION ET PARSING DES DATES AU FORMAT JJ/MM/AAAA ---
+    // --- COORDONNÉES ET LIMITES GÉOGRAPHIQUES STRICTES DE LA WALLONIE ---
+    const WALLONIA_CENTER = [50.45, 4.85]; // Centre de la région wallonne
+    const WALLONIA_ZOOM = 8.5;
+    const WALLONIA_BOUNDS = [
+      [49.45, 2.75], // Sud-Ouest
+      [50.85, 6.45]  // Nord-Est
+    ];
+
     function parseItemDate(str) {
       if (!str) return new Date(0);
       const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
@@ -538,7 +547,7 @@
       activeKpiFilter = null;
       if (type === 'agents') {
         selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
-        document.getElementById("btnLabelAgents").innerText = selectedAgents.length === 0 ? "Tous les magasiniers" : `${selectedAgents.length} magasinier(s)`;
+        document.getElementById("btnLabelAgents").innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
       } else if (type === 'contractors') {
         selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
         document.getElementById("btnLabelContractors").innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
@@ -569,7 +578,6 @@
       applyFilters();
     }
 
-    // --- FILTRAGE INSTANTANÉ DEPUIS LES ICÔNES DES CARTES KPI ---
     function filterByKpi(type) {
       activeKpiFilter = type;
       switchView('global');
@@ -720,7 +728,6 @@
           if (!matchTarget.includes(term)) return false;
         }
 
-        // Filtre exclusif appliqué par clic sur icône KPI
         if (activeKpiFilter === 'ZERO') {
           if (Number(item.quantity) !== 0) return false;
         } else if (activeKpiFilter === 'HIGH') {
@@ -756,8 +763,8 @@
 
     function renderTable(list) {
       let countText = `${list.length} saisie(s) répertoriée(s)`;
-      if (activeKpiFilter === 'ZERO') countText += " [Filtre actif : Ruptures uniquement]";
-      if (activeKpiFilter === 'HIGH') countText += " [Filtre actif : Alertes atypiques uniquement]";
+      if (activeKpiFilter === 'ZERO') countText += " [Filtre : Ruptures uniquement]";
+      if (activeKpiFilter === 'HIGH') countText += " [Filtre : Alertes atypiques uniquement]";
       document.getElementById("tableCountLabel").innerText = countText;
 
       const tbody = document.getElementById("supervisionTableBody");
@@ -965,15 +972,25 @@
     }
 
     // =========================================================================
-    // CARTOGRAPHIE INTERACTIVE : TOOLTIP ENRICHI + POPUP LARGE & DATE 1ÈRE SAISIE
+    // CARTOGRAPHIE INTERACTIVE : CENTRÉE ET BLOQUÉE SUR LA WALLONIE
     // =========================================================================
     function renderMap(list) {
       if (!map) {
-        map = L.map('mapContainer').setView([50.8503, 4.3517], 8);
+        // Initialisation centrée et contrainte à la région Wallonne
+        map = L.map('mapContainer', {
+          center: WALLONIA_CENTER,
+          zoom: WALLONIA_ZOOM,
+          minZoom: 7.5,
+          maxZoom: 18,
+          maxBounds: WALLONIA_BOUNDS,
+          maxBoundsViscosity: 0.85
+        });
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap'
         }).addTo(map);
+
         markersLayer = L.layerGroup().addTo(map);
       }
 
@@ -988,7 +1005,6 @@
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
           points.push([lat, lng]);
 
-          // Extraction de l'historique complet de cet agent pour identifier les chantiers en cours et terminés
           const agentHistory = list.filter(h => h.user === item.user);
           const sortedAgentHistory = [...agentHistory].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
           
@@ -1007,14 +1023,11 @@
             }
           }
 
-          // Statut du couple spécifique correspondant à ce point GPS
-          const itemDt = parseItemDate(item.timestamp);
-          const isItemSessionActive = (now - itemDt.getTime()) < thirtyMinMs;
+          const isItemSessionActive = (now - parseItemDate(item.timestamp).getTime()) < thirtyMinMs;
           const statusBadge = isItemSessionActive 
             ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold">🟢 En cours</span>`
             : `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold">🔵 Finalisé</span>`;
 
-          // Extraction de la PREMIÈRE et DERNIÈRE saisie pour ce couple entrepreneur/métier chez cet agent
           const entriesForPair = list.filter(h => h.user === item.user && h.contractor === item.contractor && h.trade === item.trade);
           entriesForPair.sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
 
@@ -1031,7 +1044,7 @@
             fillOpacity: 0.9
           }).addTo(markersLayer);
 
-          // 1. SURVOL DE LA SOURIS (HOVER / TOOLTIP)
+          // 1. SURVOL DE LA SOURIS (Nom de l'agent + chantiers en cours ou terminés)
           marker.bindTooltip(`
             <div class="text-xs font-sans px-1 py-1 space-y-0.5 leading-snug">
               <strong class="text-slate-900 block text-sm">${item.user}</strong>
@@ -1044,7 +1057,7 @@
             </div>
           `, { direction: 'top', offset: [0, -6] });
 
-          // 2. CLIC SUR LE POINT (POPUP ERGONOMIQUE ÉLARGI SANS TEXTE ROGNÉ)
+          // 2. CLIC SUR LE POINT (Cadre large sans coupure)
           const safeUser = (item.user || '').replace(/'/g, "\\'");
           const safeContractor = (item.contractor || '').replace(/'/g, "\\'");
           const safeTrade = (item.trade || '').replace(/'/g, "\\'");
@@ -1061,7 +1074,7 @@
 
               <div class="space-y-1.5 text-slate-600 text-[11px]">
                 <div class="flex justify-between items-center">
-                  <span>Magasinier :</span>
+                  <span>Agent :</span>
                   <strong class="text-slate-900">${item.user}</strong>
                 </div>
                 <div class="flex justify-between items-center">
@@ -1089,10 +1102,13 @@
       });
 
       document.getElementById("mapPointsCountLabel").innerText = `${points.length} point(s) GPS`;
-      if (points.length > 0) {
-        map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
-      }
       lucide.createIcons();
+    }
+
+    function resetMapToWallonia() {
+      if (map) {
+        map.setView(WALLONIA_CENTER, WALLONIA_ZOOM);
+      }
     }
 
     function filterAndSwitchToGlobal(agent, contractor, trade) {
@@ -1101,7 +1117,7 @@
       document.querySelectorAll("#checkboxesAgents input").forEach(chk => {
         chk.checked = (chk.value === agent);
       });
-      document.getElementById("btnLabelAgents").innerText = agent ? `1 magasinier (${agent})` : "Tous les magasiniers";
+      document.getElementById("btnLabelAgents").innerText = agent ? `1 agent (${agent})` : "Tous les agents";
 
       selectedContractors = contractor ? [contractor] : [];
       document.querySelectorAll("#checkboxesContractors input").forEach(chk => {
@@ -1138,7 +1154,12 @@
       } else if (v === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
         document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
-        setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+        setTimeout(() => { 
+          if (map) {
+            map.invalidateSize();
+            resetMapToWallonia();
+          }
+        }, 200);
       }
       lucide.createIcons();
     }
@@ -1204,7 +1225,7 @@
         return;
       }
 
-      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Magasinier;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
+      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
       data.forEach(r => {
         const dmy = formatDateDMY(r.timestamp, true);
         csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
