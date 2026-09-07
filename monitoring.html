@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision & Monitoring - Inventaires</title>
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
-  <!-- Tailwind CSS, Lucide Icons & Leaflet CSS/JS -->
+  <!-- Tailwind CSS, Lucide & Leaflet -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -59,7 +59,7 @@
       <div>
         <h1 class="text-base font-bold text-white flex items-center gap-2">
           Dashboard Manager
-          <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-500/30">Supervision PC</span>
+          <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-500/30">Supply Chain Control</span>
         </h1>
       </div>
     </div>
@@ -79,15 +79,15 @@
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL AVEC MENU VERTICAL -->
+  <!-- NAVIGATION & CONTENU -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- SIDEBAR VERTICALE GAUCHE -->
+    <!-- SIDEBAR GAUCHE -->
     <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 p-4 space-y-5 overflow-y-auto">
       
-      <!-- Sélection des vues -->
+      <!-- Menus de navigation -->
       <div class="space-y-1">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-1">Vues Supervision</span>
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-1">Navigation Superviseur</span>
         <button id="navBtnOverview" onclick="switchSupervisionTab('overview')" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 bg-indigo-600 text-white shadow-md">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> Activité Globale
         </button>
@@ -97,9 +97,12 @@
         <button id="navBtnMap" onclick="switchSupervisionTab('map')" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
           <i data-lucide="map-pin" class="w-4 h-4"></i> Carte & Chantiers
         </button>
+        <button id="navBtnSettings" onclick="switchSupervisionTab('settings')" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+          <i data-lucide="sliders" class="w-4 h-4"></i> Paramètres & Audit
+        </button>
       </div>
 
-      <!-- Sélecteur de période maître -->
+      <!-- Filtre temporel maître -->
       <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-2.5 text-xs">
         <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
           <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
@@ -130,13 +133,11 @@
       </div>
     </aside>
 
-    <!-- ZONE DE TRAVAIL CENTRALE DÉFILANTE -->
+    <!-- ZONE CENTRALE DE TRAVAIL -->
     <main class="flex-1 bg-slate-950 p-6 overflow-y-auto space-y-6">
       
       <!-- ================= VUE 1 : ACTIVITÉ GLOBALE ================= -->
       <section id="sectionOverview" class="space-y-5">
-        
-        <!-- 4 Cartes KPI Fixes -->
         <div class="grid grid-cols-4 gap-4">
           <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
             <span class="text-xs text-slate-400 font-bold uppercase block">Lignes Réalisées</span>
@@ -151,41 +152,21 @@
             <span id="kpiZeroStock" class="text-2xl font-black text-rose-400">0</span>
           </div>
           <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-            <span class="text-xs text-amber-400 font-bold uppercase block">Volumes > 50 pièces</span>
+            <span class="text-xs text-amber-400 font-bold uppercase block">Volumes > Seuil Critique</span>
             <span id="kpiHighStock" class="text-2xl font-black text-amber-400">0</span>
           </div>
         </div>
 
-        <!-- Panneau de configuration des alertes -->
-        <details class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 shadow">
-          <summary class="font-bold text-indigo-400 cursor-pointer flex items-center justify-between">
-            <span class="flex items-center gap-1.5"><i data-lucide="sliders" class="w-3.5 h-3.5"></i> Paramétrer les seuils d'alertes suspectes</span>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-          </summary>
-          <div class="grid grid-cols-2 gap-4 pt-3 mt-2 border-t border-slate-800">
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" id="cfgFlagZero" checked onchange="applyFiltersAndRender()" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
-              <span class="text-xs font-semibold">Signaler comme alerte si Quantité = 0</span>
-            </label>
-            <div class="flex items-center space-x-2">
-              <span class="text-xs text-slate-400 font-bold">Alerter si Quantité ></span>
-              <input type="number" id="cfgMaxQty" value="50" min="1" onchange="applyFiltersAndRender()" class="w-24 bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono">
-            </div>
-          </div>
-        </details>
-
-        <!-- Filtres avancés & Sélecteurs à cases à cocher multiples -->
+        <!-- Filtres avancés & Multi-sélection -->
         <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
           <div class="grid grid-cols-4 gap-3">
-            <div class="relative">
-              <input type="text" id="filterSearch" placeholder="Recherche référence, désignation..." oninput="applyFiltersAndRender()"
-                     class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-            </div>
+            <input type="text" id="filterSearch" placeholder="Recherche référence, désignation..." oninput="applyFiltersAndRender()"
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
 
             <!-- Dropdown multi-entrepreneurs -->
             <div class="relative">
               <button onclick="toggleDropdown('dropContractors')" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-left font-semibold text-slate-200 flex items-center justify-between">
-                <span id="labelContractors">Entrepreneurs (Tous)</span>
+                <span>Entrepreneurs (Multi)</span>
                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
               </button>
               <div id="dropContractors" class="hidden absolute top-full left-0 w-64 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-30 max-h-56 overflow-y-auto space-y-1">
@@ -200,7 +181,7 @@
             <!-- Dropdown multi-métiers -->
             <div class="relative">
               <button onclick="toggleDropdown('dropTrades')" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-left font-semibold text-slate-200 flex items-center justify-between">
-                <span id="labelTrades">Métiers (Tous)</span>
+                <span>Métiers (Multi)</span>
                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
               </button>
               <div id="dropTrades" class="hidden absolute top-full left-0 w-64 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-30 max-h-56 overflow-y-auto space-y-1">
@@ -212,10 +193,10 @@
               </div>
             </div>
 
-            <!-- Dropdown statuts / anomalies -->
+            <!-- Dropdown statuts -->
             <div class="relative">
               <button onclick="toggleDropdown('dropAlerts')" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-left font-semibold text-slate-200 flex items-center justify-between">
-                <span id="labelAlerts">Statuts (Tous)</span>
+                <span>Statuts (Multi)</span>
                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
               </button>
               <div id="dropAlerts" class="hidden absolute top-full right-0 w-56 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-30 space-y-1">
@@ -233,7 +214,7 @@
                 </label>
                 <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer text-xs">
                   <input type="checkbox" name="chkAlert" value="HIGH" onchange="applyFiltersAndRender()" class="rounded bg-slate-950 border-slate-700 text-amber-500">
-                  <span class="text-amber-400 font-bold">Volumes > Seuil</span>
+                  <span class="text-amber-400 font-bold">> Seuil paramétré</span>
                 </label>
               </div>
             </div>
@@ -241,7 +222,7 @@
 
           <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
             <div class="flex items-center space-x-2">
-              <span class="text-slate-400">Tri par date :</span>
+              <span class="text-slate-400">Tri :</span>
               <select id="sortChronological" onchange="applyFiltersAndRender()" class="bg-slate-950 border border-slate-700 rounded-lg p-1 text-slate-200 font-semibold text-xs">
                 <option value="DESC">Plus récent d'abord</option>
                 <option value="ASC">Plus ancien d'abord</option>
@@ -256,7 +237,7 @@
           </div>
         </div>
 
-        <!-- Grand tableau dense des données -->
+        <!-- Grand tableau de données -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
           <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
             <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
@@ -284,13 +265,41 @@
 
       <!-- ================= VUE 2 : SUIVI TERRAIN & AGENTS ================= -->
       <section id="sectionAgents" class="space-y-4 hidden">
-        <div class="flex justify-between items-center px-1">
-          <div>
-            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Activité opérationnelle des équipes</h2>
-            <p class="text-xs text-slate-400">Statuts en direct, cadences horaires et avancement des tournées démarrées</p>
+        
+        <!-- BANDEAU KPI GLOBAL DE RUBRIQUE -->
+        <div class="grid grid-cols-4 gap-4">
+          <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl shadow">
+            <span class="text-[11px] text-slate-400 font-bold uppercase block">Agents Actifs / Inscrits</span>
+            <span id="kpiAgentsActiveCount" class="text-xl font-black text-emerald-400">0 / 0</span>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl shadow">
+            <span class="text-[11px] text-slate-400 font-bold uppercase block">Cadence Flotte Moyenne</span>
+            <span id="kpiGlobalCadence" class="text-xl font-black text-white">0 <span class="text-xs font-normal text-slate-400">l/h</span></span>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl shadow">
+            <span class="text-[11px] text-slate-400 font-bold uppercase block">Lignes Période</span>
+            <span id="kpiAgentsTotalLines" class="text-xl font-black text-indigo-400">0</span>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl shadow">
+            <span class="text-[11px] text-slate-400 font-bold uppercase block">Taux d'Anomalies Global</span>
+            <span id="kpiGlobalAnomalyRate" class="text-xl font-black text-amber-400">0%</span>
+          </div>
+        </div>
+
+        <!-- BARRE D'OUTILS ET BOUTON FILTRE 1-CLIC -->
+        <div class="flex justify-between items-center bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl shadow">
+          <div class="flex items-center space-x-3">
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtrer l'affichage :</span>
+            <button id="btnFilterCountingOnly" onclick="toggleOnlyCountingFilter()" 
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border border-slate-700 bg-slate-950 text-slate-300 hover:text-white">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>En cours de comptage uniquement</span>
+            </button>
           </div>
           <span id="periodBadgeAgents" class="text-xs font-mono text-indigo-400 bg-indigo-950/40 border border-indigo-500/30 px-2.5 py-1 rounded-lg"></span>
         </div>
+
+        <!-- LISTE DES CARTES AGENTS (ACCORDÉONS) -->
         <div id="agentsContainer" class="space-y-4"></div>
       </section>
 
@@ -298,16 +307,95 @@
       <section id="sectionMap" class="space-y-4 hidden">
         <div class="flex justify-between items-center px-1">
           <div>
-            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Positionnement GPS & Chantiers</h2>
-            <p class="text-xs text-slate-400">Localisation des saisies et contrôle spatial des inventaires</p>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Localisation GPS & Audit Spatial</h2>
+            <p class="text-xs text-slate-400">Contrôle géographique des scans et chantiers</p>
           </div>
           <div class="flex items-center space-x-3 text-xs">
             <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Conforme</span>
-            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Alerte / Stock 0</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Alerte / Stock 0</span>
           </div>
         </div>
         <div class="bg-slate-900 border border-slate-800 p-2 rounded-xl shadow">
           <div id="mapContainer"></div>
+        </div>
+      </section>
+
+      <!-- ================= VUE 4 : PARAMÈTRES & AUDIT ================= -->
+      <section id="sectionSettings" class="space-y-5 hidden">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="sliders" class="w-5 h-5 text-indigo-400"></i>
+            Règles d'Audit & Critères Métier
+          </h2>
+          <p class="text-xs text-slate-400">Configurez les seuils d'anomalies appliqués en temps réel à l'ensemble du monitoring</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-5">
+          <!-- Carte 1 : Contrôle des Quantités -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow">
+            <h3 class="text-xs font-bold uppercase text-indigo-300 border-b border-slate-800 pb-2 flex items-center gap-2">
+              <i data-lucide="package" class="w-4 h-4"></i> Intégrité des Quantités
+            </h3>
+            <div class="space-y-3 text-xs">
+              <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                <span class="font-semibold text-slate-200">Signaler systématiquement les stocks à 0</span>
+                <input type="checkbox" id="cfgFlagZero" checked onchange="saveSettingsAndApply()" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0">
+              </label>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                <span class="font-semibold text-slate-200">Seuil critique unitaire (> X pcs)</span>
+                <input type="number" id="cfgMaxQty" value="50" min="1" onchange="saveSettingsAndApply()" class="w-24 bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-center font-mono font-bold text-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- Carte 2 : Cadence & Alertes de Fraude / Blocage -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow">
+            <h3 class="text-xs font-bold uppercase text-emerald-400 border-b border-slate-800 pb-2 flex items-center gap-2">
+              <i data-lucide="zap" class="w-4 h-4"></i> Productivité & Rythme Opérationnel
+            </h3>
+            <div class="space-y-3 text-xs">
+              <div class="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                <span class="font-semibold text-slate-200">Alerte sous-cadence (< X lignes/h)</span>
+                <input type="number" id="cfgMinCadence" value="15" min="1" onchange="saveSettingsAndApply()" class="w-24 bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-center font-mono font-bold text-white">
+              </div>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                <span class="font-semibold text-slate-200">Alerte sur-cadence suspecte (> X lignes/h)</span>
+                <input type="number" id="cfgMaxCadence" value="120" min="1" onchange="saveSettingsAndApply()" class="w-24 bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-center font-mono font-bold text-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- Carte 3 : Inactivité & Temps Réel -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow">
+            <h3 class="text-xs font-bold uppercase text-amber-400 border-b border-slate-800 pb-2 flex items-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4"></i> Gestion de l'Inactivité Terrain
+            </h3>
+            <div class="space-y-3 text-xs">
+              <div class="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                <div>
+                  <span class="font-semibold text-slate-200 block">Délai d'inactivité avant statut "En attente"</span>
+                  <span class="text-[10px] text-slate-500">Temps écoulé depuis le dernier scan validé</span>
+                </div>
+                <input type="number" id="cfgIdleTimeout" value="30" min="5" onchange="saveSettingsAndApply()" class="w-24 bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-center font-mono font-bold text-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- Carte 4 : Contrôle de Double Saisie -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow">
+            <h3 class="text-xs font-bold uppercase text-rose-400 border-b border-slate-800 pb-2 flex items-center gap-2">
+              <i data-lucide="copy" class="w-4 h-4"></i> Prévention des Doublons (Cross-Count)
+            </h3>
+            <div class="space-y-3 text-xs">
+              <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                <div>
+                  <span class="font-semibold text-slate-200 block">Signaler scans doublons</span>
+                  <span class="text-[10px] text-slate-500">Même SAP scanné chez le même tiers par 2 agents distincts</span>
+                </div>
+                <input type="checkbox" id="cfgFlagDuplicates" checked onchange="saveSettingsAndApply()" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0">
+              </label>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -316,9 +404,9 @@
 
   <script>
     // -------------------------------------------------------------
-    // CONFIGURATION ET ÉTAT DE L'APPLICATION
+    // CONFIGURATION & ÉTATS
     // -------------------------------------------------------------
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec"; // À renseigner
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec"; // Renseigner l'URL active /exec
     
     let currentAdmin = localStorage.getItem("mon_admin_user") || "";
     let rawHistory = [];
@@ -326,11 +414,13 @@
     let availableContractors = [];
     let availableTrades = [];
     let adminPasswords = {};
-    let activeAccordion = {}; // { 'Fabian': 'cadence' | 'anomalies' | 'perimetre' | null }
+    let activeAccordion = {};
+    let filterOnlyCounting = false; // Bascule 1-clic pour agents en cours
+
     let leafletMap = null;
     let mapMarkersLayer = null;
 
-    // Fermeture des listes déroulantes au clic extérieur
+    // Fermeture des listes déroulantes au clic externe
     window.addEventListener("click", (e) => {
       if (!e.target.closest(".relative")) {
         ["dropContractors", "dropTrades", "dropAlerts"].forEach(id => {
@@ -348,7 +438,38 @@
     }
 
     // -------------------------------------------------------------
-    // GESTION DU SÉLECTEUR DE PÉRIODE MAÎTRE
+    // GESTION DES PARAMÈTRES
+    // -------------------------------------------------------------
+    function saveSettingsAndApply() {
+      applyFiltersAndRender();
+    }
+
+    function checkSuspicious(qty) {
+      const n = Number(qty);
+      const flagZero = document.getElementById("cfgFlagZero").checked;
+      const maxVal = Number(document.getElementById("cfgMaxQty").value) || 50;
+
+      if (flagZero && n === 0) return { alert: true, type: "ZERO", label: "STOCK 0" };
+      if (n > maxVal) return { alert: true, type: "HIGH", label: `> ${maxVal} PCS` };
+      return { alert: false, type: "OK", label: "CONFORME" };
+    }
+
+    // -------------------------------------------------------------
+    // FILTRE 1-CLIC : AGENTS EN COURS DE COMPTAGE UNIQUEMENT
+    // -------------------------------------------------------------
+    function toggleOnlyCountingFilter() {
+      filterOnlyCounting = !filterOnlyCounting;
+      const btn = document.getElementById("btnFilterCountingOnly");
+      if (filterOnlyCounting) {
+        btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border border-emerald-500/40 bg-emerald-500/20 text-emerald-300 shadow-md";
+      } else {
+        btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border border-slate-700 bg-slate-950 text-slate-300 hover:text-white";
+      }
+      applyFiltersAndRender();
+    }
+
+    // -------------------------------------------------------------
+    // GESTION DU FILTRE DE PÉRIODE MAÎTRE
     // -------------------------------------------------------------
     function setDateInputs(startDate, endDate) {
       const format = d => d.toISOString().split('T')[0];
@@ -365,7 +486,7 @@
       } else if (preset === "WEEK") {
         const d = new Date(now);
         const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Début lundi
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
@@ -395,13 +516,10 @@
     }
 
     // -------------------------------------------------------------
-    // CHARGEMENT DES DONNÉES DEPUIS LE BACKEND
+    // SYNCHRONISATION DES DONNÉES
     // -------------------------------------------------------------
     async function refreshData() {
-      if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("...")) {
-        console.warn("GOOGLE_SCRIPT_URL non configurée.");
-        return;
-      }
+      if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("...")) return;
       try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
@@ -417,7 +535,7 @@
           applyFiltersAndRender();
         }
       } catch (err) {
-        console.error("Erreur lors de la synchronisation:", err);
+        console.error("Erreur de synchronisation:", err);
       }
     }
 
@@ -446,13 +564,9 @@
     }
 
     function selectAll(type, check) {
-      if (type === 'contractor') {
-        document.querySelectorAll("input[name='chkContractor']").forEach(i => i.checked = check);
-      } else if (type === 'trade') {
-        document.querySelectorAll("input[name='chkTrade']").forEach(i => i.checked = check);
-      } else if (type === 'alert') {
-        document.querySelectorAll("input[name='chkAlert']").forEach(i => i.checked = check);
-      }
+      if (type === 'contractor') document.querySelectorAll("input[name='chkContractor']").forEach(i => i.checked = check);
+      if (type === 'trade') document.querySelectorAll("input[name='chkTrade']").forEach(i => i.checked = check);
+      if (type === 'alert') document.querySelectorAll("input[name='chkAlert']").forEach(i => i.checked = check);
       applyFiltersAndRender();
     }
 
@@ -466,25 +580,12 @@
       applyFiltersAndRender();
     }
 
-    // -------------------------------------------------------------
-    // RÈGLES D'ALERTES ET CALCULS
-    // -------------------------------------------------------------
-    function checkSuspicious(qty) {
-      const n = Number(qty);
-      const flagZero = document.getElementById("cfgFlagZero").checked;
-      const maxVal = Number(document.getElementById("cfgMaxQty").value) || 50;
-
-      if (flagZero && n === 0) return { alert: true, type: "ZERO", label: "STOCK 0" };
-      if (n > maxVal) return { alert: true, type: "HIGH", label: `> ${maxVal} PCS` };
-      return { alert: false, type: "OK", label: "CONFORME" };
-    }
-
     function getSelectedValues(name) {
       return Array.from(document.querySelectorAll(`input[name='${name}']:checked`)).map(i => i.value);
     }
 
     // -------------------------------------------------------------
-    // FILTRAGE ET AFFICHAGE SYNCHRONISÉ
+    // MOTEUR DE FILTRAGE ET RENDUS CONSOLIDÉS
     // -------------------------------------------------------------
     function applyFiltersAndRender() {
       const search = document.getElementById("filterSearch").value.toLowerCase().trim();
@@ -498,7 +599,7 @@
       const dStart = dStartStr ? new Date(dStartStr + "T00:00:00") : null;
       const dEnd = dEndStr ? new Date(dEndStr + "T23:59:59") : null;
 
-      // 1. Filtrage sur la Période Active (Filtre Maître)
+      // 1. Filtrage sur la Période Active
       const periodData = rawHistory.filter(item => {
         const itemDate = parseItemDate(item.timestamp);
         if (dStart && itemDate < dStart) return false;
@@ -506,11 +607,9 @@
         return true;
       });
 
-      // Libellé de période
-      const periodLabel = dStartStr && dEndStr ? `Du ${dStartStr} au ${dEndStr}` : "Tout l'historique";
-      document.getElementById("periodBadgeAgents").innerText = periodLabel;
+      document.getElementById("periodBadgeAgents").innerText = dStartStr && dEndStr ? `Du ${dStartStr} au ${dEndStr}` : "Tout l'historique";
 
-      // 2. Filtrage Spécifique Vue 1 (Activité Globale)
+      // 2. Filtrage Spécifique Vue 1
       const filteredOverview = periodData.filter(item => {
         if (search) {
           const hay = `${item.sapRef} ${item.designation} ${item.user} ${item.contractor}`.toLowerCase();
@@ -525,13 +624,11 @@
         return true;
       });
 
-      // Tri chronologique
       filteredOverview.sort((a, b) => {
         const diff = parseItemDate(a.timestamp) - parseItemDate(b.timestamp);
         return sortDir === 'ASC' ? diff : -diff;
       });
 
-      // Rendus
       renderOverviewKPIs(periodData);
       renderOverviewTable(filteredOverview);
       renderAgentsSection(periodData);
@@ -594,14 +691,10 @@
     }
 
     // -------------------------------------------------------------
-    // RENDU VUE 2 : ACCORDÉONS AGENTS & PÉRIMÈTRE DÉMARRÉ
+    // RENDU VUE 2 : SUIVI TERRAIN & ACCORDÉONS DYNAMIQUES
     // -------------------------------------------------------------
     function toggleAccordion(agent, tab) {
-      if (activeAccordion[agent] === tab) {
-        activeAccordion[agent] = null;
-      } else {
-        activeAccordion[agent] = tab;
-      }
+      activeAccordion[agent] = activeAccordion[agent] === tab ? null : tab;
       applyFiltersAndRender();
     }
 
@@ -612,38 +705,39 @@
         return;
       }
 
-      container.innerHTML = availableAgents.map(agent => {
+      const idleTimeoutMinutes = Number(document.getElementById("cfgIdleTimeout").value) || 30;
+      const minCadenceThreshold = Number(document.getElementById("cfgMinCadence").value) || 15;
+      const maxCadenceThreshold = Number(document.getElementById("cfgMaxCadence").value) || 120;
+
+      let activeAgentsCount = 0;
+      let totalFlotteCadence = 0;
+      let totalFlotteAnomalies = 0;
+
+      // Calcul des données par agent
+      const agentCardsData = availableAgents.map(agent => {
         const entries = periodData.filter(i => i.user === agent);
         const totalPieces = entries.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
         
-        // 1. Détection du statut en direct et de l'entrepreneur en cours
-        let statusBadge = "";
+        let isCounting = false;
         let activeContractorTxt = "--";
+        let lastTimeTxt = "--";
+        let lastTimestamp = null;
+
         if (entries.length > 0) {
           const sorted = [...entries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
           const lastEntry = sorted[0];
+          lastTimestamp = parseItemDate(lastEntry.timestamp);
           activeContractorTxt = lastEntry.contractor;
-          const lastTime = lastEntry.timestamp.split(' ')[1] || lastEntry.timestamp;
+          lastTimeTxt = lastEntry.timestamp.split(' ')[1] || lastEntry.timestamp;
           
-          statusBadge = `
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>En cours</span>
-              <span class="text-slate-400">•</span>
-              <span class="text-slate-200 font-extrabold truncate max-w-[150px]">${activeContractorTxt}</span>
-              <span class="text-slate-400">(${lastTime})</span>
-            </span>
-          `;
-        } else {
-          statusBadge = `
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold bg-slate-800 text-slate-400 border-slate-700">
-              <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-              <span>En attente / 0 saisie</span>
-            </span>
-          `;
+          // Vérification inactivité
+          const diffMinutes = (new Date() - lastTimestamp) / (1000 * 60);
+          isCounting = diffMinutes <= idleTimeoutMinutes;
         }
 
-        // 2. Calcul des KPI de l'agent
+        if (isCounting) activeAgentsCount++;
+
+        // Calcul Cadence
         let cadence = entries.length;
         if (entries.length > 1) {
           const timestamps = entries.map(i => parseItemDate(i.timestamp).getTime());
@@ -651,10 +745,13 @@
           cadence = durationH > 0.05 ? Math.round(entries.length / durationH) : entries.length;
         }
 
+        if (isCounting) totalFlotteCadence += cadence;
+
         const anomalies = entries.filter(i => checkSuspicious(i.quantity).alert);
+        totalFlotteAnomalies += anomalies.length;
         const anomalyRate = entries.length > 0 ? Math.round((anomalies.length / entries.length) * 100) : 0;
 
-        // Regroupement périmètre traité uniquement
+        // Périmètre démarré uniquement
         const processedPerimeter = {};
         entries.forEach(i => {
           const key = `${i.contractor}___${i.trade}`;
@@ -668,27 +765,77 @@
         });
         const processedList = Object.values(processedPerimeter);
 
+        return {
+          agent,
+          entries,
+          totalPieces,
+          isCounting,
+          activeContractorTxt,
+          lastTimeTxt,
+          cadence,
+          anomalies,
+          anomalyRate,
+          processedList
+        };
+      });
+
+      // Rendu KPI Globaux de rubrique
+      document.getElementById("kpiAgentsActiveCount").innerText = `${activeAgentsCount} / ${availableAgents.length}`;
+      document.getElementById("kpiAgentsTotalLines").innerText = periodData.length;
+      document.getElementById("kpiGlobalCadence").innerHTML = `${activeAgentsCount > 0 ? Math.round(totalFlotteCadence / activeAgentsCount) : 0} <span class="text-xs font-normal text-slate-400">l/h</span>`;
+      document.getElementById("kpiGlobalAnomalyRate").innerText = `${periodData.length > 0 ? Math.round((totalFlotteAnomalies / periodData.length) * 100) : 0}%`;
+
+      // Application du filtre 1-clic "en cours de comptage uniquement"
+      const displayedCards = agentCardsData.filter(item => {
+        if (filterOnlyCounting) return item.isCounting;
+        return true;
+      });
+
+      if (displayedCards.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 text-xs">Aucun agent n'est actuellement en cours de comptage sur ce créneau.</div>`;
+        return;
+      }
+
+      container.innerHTML = displayedCards.map(data => {
+        const { agent, entries, totalPieces, isCounting, activeContractorTxt, lastTimeTxt, cadence, anomalies, anomalyRate, processedList } = data;
         const currentTab = activeAccordion[agent];
 
-        // Rendu conditionnel du tiroir accordéon sous la carte
+        const statusBadge = isCounting ? `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>En cours</span>
+            <span class="text-slate-400">•</span>
+            <span class="text-slate-200 font-extrabold truncate max-w-[150px]">${activeContractorTxt}</span>
+            <span class="text-slate-400">(${lastTimeTxt})</span>
+          </span>
+        ` : `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold bg-slate-800 text-slate-400 border-slate-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+            <span>En attente / Inactif</span>
+          </span>
+        `;
+
+        // Tiroirs
         let drawerHtml = "";
         if (currentTab === 'cadence') {
           drawerHtml = `
             <div class="mt-3 p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 text-xs">
-              <div class="font-bold text-emerald-400 flex items-center gap-1.5">
-                <i data-lucide="zap" class="w-4 h-4"></i> Détail de la Cadence Horaire
+              <div class="font-bold text-emerald-400 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i data-lucide="zap" class="w-4 h-4"></i> Diagnostic Cadence</span>
+                <span class="text-[10px] ${cadence < minCadenceThreshold ? 'text-rose-400' : cadence > maxCadenceThreshold ? 'text-amber-400' : 'text-emerald-400'}">
+                  ${cadence < minCadenceThreshold ? '⚠️ Cadence faible' : cadence > maxCadenceThreshold ? '⚡ Rythme atypique' : '✅ Rythme normal'}
+                </span>
               </div>
-              <p class="text-slate-400">Total : ${entries.length} ligne(s) scannée(s) pour ${totalPieces} pièce(s) cumulée(s).</p>
-              <div class="text-[11px] text-slate-500">Vitesse calculée sur l'amplitude active de la période sélectionnée.</div>
+              <p class="text-slate-400">${entries.length} ligne(s) scannée(s) • ${totalPieces} pièce(s) cumulée(s).</p>
             </div>
           `;
         } else if (currentTab === 'anomalies') {
           drawerHtml = `
             <div class="mt-3 p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 text-xs">
               <div class="font-bold text-rose-400 flex items-center gap-1.5">
-                <i data-lucide="shield-alert" class="w-4 h-4"></i> Saisies non conformes (${anomalies.length})
+                <i data-lucide="shield-alert" class="w-4 h-4"></i> Saisies Non Conformes (${anomalies.length})
               </div>
-              ${anomalies.length === 0 ? '<div class="text-slate-500 py-2">Aucune anomalie détectée sur cette période.</div>' : `
+              ${anomalies.length === 0 ? '<div class="text-slate-500 py-2">Aucune anomalie détectée sur cette sélection.</div>' : `
                 <div class="space-y-1.5 max-h-48 overflow-y-auto">
                   ${anomalies.map(a => `
                     <div class="flex items-center justify-between p-2 bg-slate-900 border border-slate-800 rounded-lg">
@@ -711,9 +858,9 @@
           drawerHtml = `
             <div class="mt-3 p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 text-xs">
               <div class="font-bold text-indigo-400 flex items-center gap-1.5">
-                <i data-lucide="building-2" class="w-4 h-4"></i> Entrepreneurs & Métiers Démarrés / Traités (${processedList.length})
+                <i data-lucide="building-2" class="w-4 h-4"></i> Chantiers et Métiers Démarrés (${processedList.length})
               </div>
-              ${processedList.length === 0 ? '<div class="text-slate-500 py-2">Aucun chantier entamé sur cette période.</div>' : `
+              ${processedList.length === 0 ? '<div class="text-slate-500 py-2">Aucun comptage entamé.</div>' : `
                 <div class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto">
                   ${processedList.map(p => `
                     <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg space-y-1">
@@ -743,7 +890,7 @@
               <span class="text-xs font-bold text-slate-400">${entries.length} ligne(s) • ${totalPieces} pc(s)</span>
             </div>
 
-            <!-- 3 Grandes Tuiles Cliquables (Tiroirs Accordéons) -->
+            <!-- Tuiles Accordéons -->
             <div class="grid grid-cols-3 gap-3">
               <div onclick="toggleAccordion('${agent}', 'cadence')" class="cursor-pointer p-3 rounded-xl border transition ${currentTab === 'cadence' ? 'bg-indigo-950/40 border-indigo-500' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
                 <span class="text-[10px] text-slate-400 uppercase font-bold block flex items-center justify-between">
@@ -765,7 +912,7 @@
 
               <div onclick="toggleAccordion('${agent}', 'perimetre')" class="cursor-pointer p-3 rounded-xl border transition ${currentTab === 'perimetre' ? 'bg-indigo-950/40 border-indigo-500' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
                 <span class="text-[10px] text-slate-400 uppercase font-bold block flex items-center justify-between">
-                  <span>🌐 Périmètre Traité</span>
+                  <span>🌐 Chantiers Traités</span>
                   <i data-lucide="${currentTab === 'perimetre' ? 'chevron-up' : 'chevron-down'}" class="w-3 h-3"></i>
                 </span>
                 <span class="text-lg font-black text-white">${processedList.length} <span class="text-xs font-normal text-slate-400">ent./mét.</span></span>
@@ -781,11 +928,11 @@
     }
 
     // -------------------------------------------------------------
-    // RENDU VUE 3 : CARTOGRAPHIE LEAFLET
+    // RENDU VUE 3 : CARTE LEAFLET
     // -------------------------------------------------------------
     function initMap() {
       if (leafletMap) return;
-      leafletMap = L.map('mapContainer').setView([50.8503, 4.3517], 8); // Coordonnées par défaut Belgique
+      leafletMap = L.map('mapContainer').setView([50.8503, 4.3517], 8);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(leafletMap);
@@ -810,13 +957,17 @@
             fillOpacity: 0.9
           });
 
+          // Tooltip au survol : Nom de l'agent
+          marker.bindTooltip(`<b>Agent :</b> ${item.user}`, { direction: "top", offset: [0, -6] });
+
+          // Popup complet au clic
           marker.bindPopup(`
             <div class="text-xs space-y-1">
-              <div class="font-bold text-slate-900">${item.contractor} (${item.trade})</div>
-              <div><b>Agent :</b> ${item.user}</div>
+              <div class="font-bold text-slate-900">${item.contractor}</div>
+              <div class="text-slate-600 font-semibold">${item.trade}</div>
               <div><b>Article :</b> ${item.designation} (${item.sapRef})</div>
               <div><b>Quantité :</b> ${item.quantity}</div>
-              <div class="text-[10px] text-slate-500">${item.timestamp}</div>
+              <div class="text-[10px] text-slate-500 pt-1 border-t">${item.timestamp}</div>
             </div>
           `);
           mapMarkersLayer.addLayer(marker);
@@ -830,18 +981,20 @@
     }
 
     // -------------------------------------------------------------
-    // ACTIONS UTILISATEUR & CSV
+    // NAVIGATION ET GESTION DES ONGLETS
     // -------------------------------------------------------------
     function switchSupervisionTab(tab) {
       document.getElementById("sectionOverview").classList.toggle("hidden", tab !== 'overview');
       document.getElementById("sectionAgents").classList.toggle("hidden", tab !== 'agents');
       document.getElementById("sectionMap").classList.toggle("hidden", tab !== 'map');
+      document.getElementById("sectionSettings").classList.toggle("hidden", tab !== 'settings');
 
       const btnO = document.getElementById("navBtnOverview");
       const btnA = document.getElementById("navBtnAgents");
       const btnM = document.getElementById("navBtnMap");
+      const btnS = document.getElementById("navBtnSettings");
 
-      [btnO, btnA, btnM].forEach(b => b.className = "w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition");
+      [btnO, btnA, btnM, btnS].forEach(b => b.className = "w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition");
 
       if (tab === 'overview') btnO.className = "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 bg-indigo-600 text-white shadow-md";
       if (tab === 'agents') btnA.className = "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 bg-indigo-600 text-white shadow-md";
@@ -850,8 +1003,12 @@
         initMap();
         setTimeout(() => leafletMap.invalidateSize(), 200);
       }
+      if (tab === 'settings') btnS.className = "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 bg-indigo-600 text-white shadow-md";
     }
 
+    // -------------------------------------------------------------
+    // ACTIONS ADMIN & AUDIT LOGS
+    // -------------------------------------------------------------
     async function editEntry(id, currentQty) {
       const q = prompt("Modifier la quantité saisie :", currentQty);
       if (q === null) return;
@@ -890,7 +1047,6 @@
     }
 
     function exportFilteredCSV() {
-      // Exporte le tableau actuel
       const rows = [
         ["ID", "Date", "Agent Magasinier", "Entrepreneur", "Métier", "Réf SAP", "Désignation", "Quantité", "Statut Alerte"]
       ];
@@ -934,7 +1090,6 @@
       location.reload();
     }
 
-    // Initialisation au démarrage
     window.addEventListener("DOMContentLoaded", () => {
       onPeriodPresetChange("WEEK");
       refreshData();
