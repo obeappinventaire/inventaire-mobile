@@ -25,16 +25,16 @@
     
     /* CADRAGE STRICT DU FLUX CAMÉRA */
     #reader {
-      height: 240px !important;
-      max-height: 240px !important;
+      height: 250px !important;
+      max-height: 250px !important;
       width: 100% !important;
       overflow: hidden !important;
       position: relative !important;
       background: #000;
     }
     #reader video {
-      height: 240px !important;
-      max-height: 240px !important;
+      height: 250px !important;
+      max-height: 250px !important;
       width: 100% !important;
       object-fit: cover !important;
     }
@@ -46,22 +46,22 @@
     }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* RÉTICULE VERT : TEXTE PARFAITEMENT CALÉ CONTRE LA BORDURE BASSE */
+    /* RÉTICULE VERT : SUPERPOSÉ AU CENTRE EXACT AVEC TEXTE AGRANDI BAS */
     .ocr-reticle {
       position: absolute;
-      top: 52%;
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 82%;
+      width: 80%;
       height: 48%;
-      border: 2px solid #10b981;
-      border-radius: 10px;
+      border: 2.5px solid #10b981;
+      border-radius: 12px;
       box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
       pointer-events: none;
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      padding-bottom: 2px;
+      padding-bottom: 4px;
       z-index: 5;
     }
   </style>
@@ -111,7 +111,7 @@
     </div>
   </header>
 
-  <!-- ================= CONTENU PRINCIPAL (FOND BG-SLATE-900) ================= -->
+  <!-- ================= CONTENU PRINCIPAL ================= -->
   <main class="flex-1 overflow-y-auto bg-slate-900 border-x border-slate-800/60 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
 
     <div class="space-y-4">
@@ -143,13 +143,13 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- MODALE CAMÉRA CENTRÉE AU MILIEU DE LA HAUTEUR DU SMARTPHONE -->
+          <!-- MODALE CAMÉRA : CENTRÉE MILIEU HAUTEUR AVEC RÉTICULES SUPERPOSÉS -->
           <div id="scannerContainer" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm items-center justify-center p-4">
             <div class="relative w-full max-w-sm bg-slate-950 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
               
-              <!-- BANDEAU HAUT ZONE POUR QR / EAN -->
-              <div class="absolute top-2 inset-x-0 flex justify-center z-10 pointer-events-none">
-                <span class="text-[9px] font-mono text-indigo-200 bg-slate-950/90 px-2.5 py-0.5 rounded border border-indigo-500/40 tracking-wider font-bold shadow">
+              <!-- BANDEAU HAUT : ZONE POUR QR / EAN (PLUS GRAND) -->
+              <div class="absolute top-2.5 inset-x-0 flex justify-center z-10 pointer-events-none">
+                <span class="text-xs font-mono font-black text-indigo-200 bg-slate-950/90 px-3 py-1 rounded border border-indigo-500/50 tracking-wider shadow">
                   ZONE POUR QR / EAN
                 </span>
               </div>
@@ -157,34 +157,34 @@
               <!-- Zone vidéo cadrée -->
               <div id="reader" class="w-full relative"></div>
               
-              <!-- RÉTICULE VERT : TEXTE PROCHE DE LA LIGNE BASSE DU CADRE -->
+              <!-- RÉTICULE VERT : SUPERPOSÉ CENTRÉ + TEXTE AGRANDI CONTRE LA LIGNE BASSE -->
               <div class="ocr-reticle">
-                <span class="text-[9px] font-mono text-emerald-300 bg-slate-950/90 px-2 py-0.5 rounded border border-emerald-500/40 tracking-wider font-bold mb-0.5">
+                <span class="text-xs font-mono font-black text-emerald-300 bg-slate-950/90 px-2.5 py-1 rounded border border-emerald-500/50 tracking-wider shadow mb-0.5">
                   ZONE POUR RÉF SAP 6 CHIFFRES
                 </span>
               </div>
               <canvas id="ocrCanvas" class="hidden"></canvas>
               
-              <!-- BARRE D'OUTILS : FLASH SEUL, SCAN VERT ÉMERAUDE, CROIX FERMETURE STYLE RESET -->
-              <div class="p-3 bg-slate-900/95 flex items-center justify-between gap-2 border-t border-slate-800 z-10 relative">
+              <!-- BARRE D'OUTILS : BOUTONS LATÉRAUX PLUS GRANDS (52px) & SCAN RÉF SAP LÉGÈREMENT RACCOURCI -->
+              <div class="p-3 bg-slate-900/95 flex items-center justify-between gap-3 border-t border-slate-800 z-10 relative">
                 
-                <!-- Bouton Flash (logo uniquement) -->
+                <!-- Bouton Flash agrandi (logo seul) -->
                 <button id="btnTorch" onclick="toggleTorch()" title="Lampe" 
-                        class="h-11 w-11 shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow">
-                  <i data-lucide="flashlight" id="torchIcon" class="w-5 h-5 text-slate-300"></i>
+                        class="w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow">
+                  <i data-lucide="flashlight" id="torchIcon" class="w-6 h-6 text-slate-300"></i>
                 </button>
 
-                <!-- Bouton vert : Scan Réf SAP -->
+                <!-- Bouton vert : Scan Réf SAP un peu raccourci -->
                 <button onclick="triggerManualOcrCapture()" 
-                        class="h-11 flex-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
-                  <i data-lucide="scan-line" class="w-4 h-4"></i>
-                  <span>Scan Réf SAP</span>
+                        class="h-[52px] flex-1 max-w-[185px] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="scan-line" class="w-5 h-5 shrink-0"></i>
+                  <span class="truncate">Scan Réf SAP</span>
                 </button>
 
-                <!-- Bouton Fermer : Croix seule, couleur identique au Reset -->
+                <!-- Bouton Fermer agrandi (Croix seule, style Reset) -->
                 <button onclick="stopScanner()" title="Fermer" 
-                        class="h-11 w-11 shrink-0 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 rounded-xl border border-rose-500/40 flex items-center justify-center shadow transition">
-                  <i data-lucide="x" class="w-5 h-5"></i>
+                        class="w-[52px] h-[52px] shrink-0 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 rounded-xl border border-rose-500/40 flex items-center justify-center shadow transition">
+                  <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
 
               </div>
@@ -314,18 +314,32 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE (AVEC PICTOGRAMME SCAN OFFICIEL) ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE : AVEC MENTION ORANGE DANS LE COIN DU LOGO SCAN ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
-      <!-- Pictogramme scan orange calibré (coins affinés + 3 barres franches) -->
-      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M 4 8 V 6 A 2 2 0 0 1 6 4 H 8" stroke="#94a3b8" stroke-width="1.5"/>
-        <path d="M 16 4 H 18 A 2 2 0 0 1 20 6 V 8" stroke="#94a3b8" stroke-width="1.5"/>
-        <path d="M 20 16 V 18 A 2 2 0 0 1 18 20 H 16" stroke="#94a3b8" stroke-width="1.5"/>
-        <path d="M 8 20 H 6 A 2 2 0 0 1 4 18 V 16" stroke="#94a3b8" stroke-width="1.5"/>
-        <line x1="8" y1="7" x2="8" y2="17" stroke="#f97316" stroke-width="2"/>
-        <line x1="12" y1="7" x2="12" y2="17" stroke="#f97316" stroke-width="2"/>
-        <line x1="16" y1="7" x2="16" y2="17" stroke="#f97316" stroke-width="2"/>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <defs>
+          <path id="line-corner-start-higher" d="M 72 83 H 82" />
+        </defs>
+        <!-- Angles affinés -->
+        <g stroke="currentColor" stroke-width="4">
+          <path d="M 12 28 V 20 A 8 8 0 0 1 20 12 H 28"/>
+          <path d="M 72 12 H 80 A 8 8 0 0 1 88 20 V 28"/>
+          <path d="M 88 72 V 80 A 8 8 0 0 1 80 88 H 72"/>
+          <path d="M 28 88 H 20 A 8 8 0 0 1 12 80 V 72"/>
+        </g>
+        <!-- Barres verticales orange -->
+        <g stroke="#f97316" stroke-width="8">
+          <line x1="33" y1="28" x2="33" y2="72"/>
+          <line x1="50" y1="28" x2="50" y2="72"/>
+          <line x1="67" y1="28" x2="67" y2="72"/>
+        </g>
+        <!-- Micro-mention CO2H2O srlu orange -->
+        <text fill="#f97316" font-size="1.4" font-weight="400" font-family="sans-serif" letter-spacing="0.05">
+          <textPath href="#line-corner-start-higher" startOffset="0" text-anchor="start">
+            CO2H2O srlu
+          </textPath>
+        </text>
       </svg>
       <span class="text-xs font-semibold mt-1">Comptage</span>
     </button>
@@ -745,7 +759,7 @@
     }
 
     // =========================================================================
-    // SCANNER CENTRÉ DANS LA HAUTEUR DU SMARTPHONE
+    // SCANNER OUVERT AU CENTRE EXACT DE L'ÉCRAN SMARTPHONE
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -886,11 +900,11 @@
       if (!btn || !icon) return;
 
       if (isTorchOn) {
-        btn.className = "h-11 w-11 shrink-0 bg-amber-400 active:bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center border border-amber-300 transition shadow";
-        icon.className = "w-5 h-5 text-slate-950 fill-slate-950";
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-amber-400 active:bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center border border-amber-300 transition shadow";
+        icon.className = "w-6 h-6 text-slate-950 fill-slate-950";
       } else {
-        btn.className = "h-11 w-11 shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
-        icon.className = "w-5 h-5 text-slate-300";
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
+        icon.className = "w-6 h-6 text-slate-300";
       }
       lucide.createIcons();
     }
@@ -900,8 +914,8 @@
       const btn = document.getElementById("btnTorch");
       const icon = document.getElementById("torchIcon");
       if (btn && icon) {
-        btn.className = "h-11 w-11 shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
-        icon.className = "w-5 h-5 text-slate-300";
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
+        icon.className = "w-6 h-6 text-slate-300";
       }
       lucide.createIcons();
     }
@@ -949,7 +963,7 @@
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      const cropW = Math.floor(video.videoWidth * 0.82);
+      const cropW = Math.floor(video.videoWidth * 0.80);
       const cropH = Math.floor(video.videoHeight * 0.48);
       const startX = Math.floor((video.videoWidth - cropW) / 2);
       const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
@@ -1063,7 +1077,7 @@
     }
 
     // =========================================================================
-    // CODE OPTIQUE : BLOCAGE STRICT SI NON PRÉSENT DANS LE CATALOGUE
+    // CODE OPTIQUE : BLOCAGE STRICT DES ARTICLES HORS CATALOGUE
     // =========================================================================
     function handleExactCodeMatch(code) {
       const clean = String(code).trim();
@@ -1079,7 +1093,6 @@
         selectArticleBySap(match.sapRef);
         showToast("Identifié : " + match.designation);
       } else {
-        // REFUS CATÉGORIQUE : AUCUN ARTICLE FACTICE CRÉÉ
         activeItem = null;
         document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
         document.getElementById("dispSap").innerText = "--";
@@ -1191,7 +1204,6 @@
         return;
       }
 
-      // VÉRIFICATION STRICTE DE PRÉSENCE DANS LE CATALOGUE
       if (!activeItem || !catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim())) {
         alert("Action impossible :\nAucun article valide du catalogue n'est sélectionné.");
         return;
@@ -1205,7 +1217,6 @@
         return;
       }
 
-      // --- VÉRIFICATION ANTI-DOUBLON 5 MINUTES ---
       const nowMs = Date.now();
       const fiveMinMs = 5 * 60 * 1000;
 
