@@ -11,11 +11,16 @@
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
   <meta name="theme-color" content="#ffffff">
 
-  <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
+  <!-- SCRIPTS & FEUILLES DE STYLE CDN (LEAFLET + MARKERCLUSTER POUR LE SPIDERFY) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- LEAFLET MARKERCLUSTER CSS & JS (INDISPENSABLE POUR LE SPIDERFY) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
@@ -144,7 +149,6 @@
             <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
             </span>
-            <!-- Badge dynamique Numéro de Semaine SXX YYYY -->
             <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-200">--</span>
           </div>
 
@@ -451,18 +455,18 @@
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
     let syncQueue = JSON.parse(localStorage.getItem("offline_sync_queue") || "[]");
 
-    let currentAdmin = sessionStorage.getItem("mon_current_admin") || "";
-    let activeView = 'global';
-    let map = null;
-    let markersLayer = null;
+    let currentAgent = localStorage.getItem("inv_current_agent") || "";
+    let isMonitoringUnlocked = false;
+    let activeItem = null;
+    let html5QrCode = null;
+    let isScanning = false;
+    let ocrInterval = null;
+    let isOcrBusy = false;
+    let isTorchOn = false;
+    let isStartingScanner = false;
 
-    let selectedAgents = [];
-    let selectedContractors = [];
-    let selectedTrades = [];
-
-    let activeKpiFilter = null;
-    let filterOnlyActiveAgents = false;
-    let openDrawers = {};
+    let ocrWorker = null;
+    let latestCoords = { lat: null, lng: null };
 
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
@@ -471,7 +475,6 @@
       [51.55, 6.50]
     ];
 
-    // --- CALCUL DU NUMÉRO DE SEMAINE ISO (SXX YYYY) ---
     function getISOWeekNumber(d) {
       const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
       date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -518,829 +521,1148 @@
       initMultiSelects();
       onSmartPeriodChange('CURRENT_WEEK');
 
-      if (!currentAdmin) {
-        document.getElementById("authModal").classList.remove("hidden");
-      } else {
-        document.getElementById("activeAdminName").innerText = currentAdmin;
-        document.getElementById("authModal").classList.add("hidden");
-      }
+      // FORCER L'OUVERTURE STRICTE SUR LA PREMIÈRE PAGE (COMPTAGE) AU LANCEMENT
+      switchTab('inventory');
 
-      document.addEventListener("click", () => {
-        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.classList.add("hidden");
-        });
-      });
-
-      await syncMonitoringData();
-      applyFilters();
-    });
-
-    function toggleFilterDropdown(id) {
-      ['dropdownAgents', 'dropdownContractors', 'dropdownTrades'].forEach(otherId => {
-        if (otherId !== id) {
-          const el = document.getElementById(otherId);
-          if (el) el.classList.add("hidden");
+      document.addEventListener("click", (e) => {
+        const wrapper = document.getElementById("searchCatalogueWrapper");
+        const dd = document.getElementById("suggestionsDropdown");
+        const searchInput = document.getElementById("articleSearchInput");
+        const clearBtn = document.getElementById("clearSearchBtn");
+        const dismissBtn = document.getElementById("btnDismissKeyboard");
+        
+        if (wrapper && !wrapper.contains(e.target) && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
+          if (dd) dd.classList.add("hidden");
+          blurSearchInput();
+          if (!activeItem && searchInput && searchInput.value.trim() !== "") {
+            clearSearch();
+          }
         }
       });
-      const target = document.getElementById(id);
-      if (target) target.classList.toggle("hidden");
-    }
 
-    function initMultiSelects() {
-      const cAgents = document.getElementById("checkboxesAgents");
-      if (cAgents) {
-        cAgents.innerHTML = availableAgents.map(a => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            <span class="truncate">${a}</span>
-          </label>
-        `).join('');
+      window.addEventListener("online", () => {
+        updateNetworkStatus(true);
+        processSyncQueue();
+      });
+      window.addEventListener("offline", () => updateNetworkStatus(false));
+
+      initOcrWorker();
+      await syncData();
+
+      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
+        openAgentModal();
       }
+    });
 
-      const cContractors = document.getElementById("checkboxesContractors");
-      if (cContractors) {
-        cContractors.innerHTML = availableContractors.map(c => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            <span class="truncate">${c}</span>
-          </label>
-        `).join('');
-      }
-
-      const cTrades = document.getElementById("checkboxesTrades");
-      if (cTrades) {
-        cTrades.innerHTML = availableTrades.map(t => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            <span class="truncate">${t}</span>
-          </label>
-        `).join('');
-      }
-
-      const adminSel = document.getElementById("authAdminSelect");
-      if (adminSel && adminAgents.length > 0) {
-        const currentlySelected = adminSel.value;
-        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
-          adminAgents.map(a => `<option value="${a}" ${a === currentlySelected ? 'selected' : ''}>${a}</option>`).join('');
+    function initContinuousGps() {
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          (pos) => {
+            latestCoords.lat = pos.coords.latitude;
+            latestCoords.lng = pos.coords.longitude;
+          },
+          (err) => console.warn("GPS tracking:", err.message),
+          { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+        );
       }
     }
 
-    function onCheckboxChange(type) {
-      activeKpiFilter = null;
-      if (type === 'agents') {
-        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
-        document.getElementById("btnLabelAgents").innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
-      } else if (type === 'contractors') {
-        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
-        document.getElementById("btnLabelContractors").innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
-      } else if (type === 'trades') {
-        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
-        document.getElementById("btnLabelTrades").innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
+    function updateNetworkStatus(isOnline) {
+      const dot = document.getElementById("statusDot");
+      const txt = document.getElementById("statusText");
+      if (isOnline) {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        txt.className = "text-[11px] font-bold uppercase tracking-wider text-emerald-400";
+        txt.innerText = "En ligne";
+      } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+        txt.className = "text-[11px] font-bold uppercase tracking-wider text-rose-400";
+        txt.innerText = "Hors-ligne";
       }
-      applyFilters();
     }
 
-    function selectAll(type, check) {
-      activeKpiFilter = null;
-      let selector = "";
-      if (type === 'agents') selector = "#checkboxesAgents input";
-      else if (type === 'contractors') selector = "#checkboxesContractors input";
-      else if (type === 'trades') selector = "#checkboxesTrades input";
-
-      document.querySelectorAll(selector).forEach(box => box.checked = check);
-      onCheckboxChange(type);
+    async function initOcrWorker() {
+      try {
+        ocrWorker = await Tesseract.createWorker('eng');
+        await ocrWorker.setParameters({
+          tessedit_char_whitelist: '0123456789',
+          tessedit_pageseg_mode: '7'
+        });
+      } catch (err) {
+        console.warn("Worker OCR warning:", err);
+      }
     }
 
-    function resetFiltersToAll() {
-      activeKpiFilter = null;
-      selectAll('agents', false);
-      selectAll('contractors', false);
-      selectAll('trades', false);
-      document.getElementById("tableSearchInput").value = "";
-      applyFilters();
+    function onSearchFocus() {
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.remove("hidden");
+
+      const main = document.getElementById("mainContent");
+      if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function filterByKpi(type) {
-      activeKpiFilter = type;
-      switchView('global');
-      applyFilters();
+    function blurSearchInput() {
+      const input = document.getElementById("articleSearchInput");
+      if (input && document.activeElement === input) {
+        input.blur();
+      }
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.add("hidden");
     }
 
-    function authenticateAdmin() {
-      const selected = document.getElementById("authAdminSelect").value;
-      const pwd = document.getElementById("authPassword").value;
+    function resetQuantity() {
+      const input = document.getElementById("qtyInput");
+      input.value = 0;
+      if (navigator.vibrate) navigator.vibrate(30);
+    }
 
-      if (!selected) {
-        alert("Veuillez choisir un superviseur.");
+    function isAdmin() {
+      return adminAgents.includes(currentAgent);
+    }
+
+    function updateAgentUI() {
+      document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
+      const adminBadge = document.getElementById("adminBadge");
+      const monNavBtn = document.getElementById("tabNavMonitoring");
+      const navContainer = document.getElementById("bottomNav");
+
+      if (isAdmin()) {
+        adminBadge.classList.remove("hidden");
+        monNavBtn.classList.remove("hidden");
+        monNavBtn.classList.add("flex");
+        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-3 h-16 max-w-md mx-auto z-20";
+      } else {
+        adminBadge.classList.add("hidden");
+        monNavBtn.classList.add("hidden");
+        monNavBtn.classList.remove("flex");
+        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto z-20";
+      }
+    }
+
+    function openAgentModal() {
+      const select = document.getElementById("modalAgentSelect");
+      if (availableAgents.length === 0) {
+        select.innerHTML = '<option value="">En attente de connexion Google Sheets...</option>';
+      } else {
+        select.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
+          availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+      }
+      document.getElementById("userModal").classList.remove("hidden");
+    }
+
+    function confirmAgentSelection() {
+      const val = document.getElementById("modalAgentSelect").value;
+      if (!val) {
+        alert("Veuillez sélectionner votre profil.");
         return;
       }
-      const expected = adminPasswords[selected] || "1234";
-      if (pwd !== expected) {
-        alert("Mot de passe incorrect.");
-        return;
+      currentAgent = val;
+      localStorage.setItem("inv_current_agent", currentAgent);
+      isMonitoringUnlocked = false;
+      updateAgentUI();
+      document.getElementById("userModal").classList.add("hidden");
+      renderHistory();
+      showToast(`Session : ${currentAgent}`);
+    }
+
+    function populateDropdowns() {
+      const cSelect = document.getElementById("contractorSelect");
+      const tSelect = document.getElementById("tradeSelect");
+
+      if (availableContractors.length > 0) {
+        cSelect.innerHTML = '<option value="">-- Sélectionner l\'entrepreneur (Obligatoire) --</option>' + 
+          availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      } else {
+        cSelect.innerHTML = '<option value="">Chargement des entrepreneurs...</option>';
       }
 
-      currentAdmin = selected;
-      sessionStorage.setItem("mon_current_admin", currentAdmin);
-      document.getElementById("activeAdminName").innerText = currentAdmin;
-      document.getElementById("authModal").classList.add("hidden");
-      applyFilters();
+      if (availableTrades.length > 0) {
+        tSelect.innerHTML = '<option value="">-- Sélectionner le métier (Obligatoire) --</option>' + 
+          availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      } else {
+        tSelect.innerHTML = '<option value="">Chargement des métiers...</option>';
+      }
+
+      restoreSavedSelections();
     }
 
-    function logoutAdmin() {
-      sessionStorage.removeItem("mon_current_admin");
-      currentAdmin = "";
-      document.getElementById("authPassword").value = "";
-      document.getElementById("authModal").classList.remove("hidden");
+    function updateSyncBadge() {
+      const badge = document.getElementById("syncBadge");
+      if (!badge) return;
+      if (syncQueue.length > 0) {
+        badge.innerText = `${syncQueue.length} en attente`;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
     }
 
-    async function syncMonitoringData() {
+    async function processSyncQueue() {
+      if (!navigator.onLine || syncQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
+      const queueCopy = [...syncQueue];
+      for (const item of queueCopy) {
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(item)
+          });
+          syncQueue = syncQueue.filter(q => !(q.id === item.id && q.action === item.action));
+          localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+          updateSyncBadge();
+        } catch (e) {
+          console.warn("Échec synchro queue :", e);
+          break;
+        }
+      }
+    }
+
+    async function syncData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
+      await processSyncQueue();
+
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
+        
         if (data.status === "success") {
-          if (data.agents) availableAgents = data.agents;
-          if (data.contractors) availableContractors = data.contractors;
-          if (data.trades) availableTrades = data.trades;
-          if (data.admins) adminAgents = data.admins;
-          if (data.adminPasswords) adminPasswords = data.adminPasswords;
+          if (data.agents) {
+            availableAgents = data.agents;
+            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
+          }
+          if (data.contractors) {
+            availableContractors = data.contractors;
+            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
+          }
+          if (data.trades) {
+            availableTrades = data.trades;
+            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
+          }
+          if (data.admins) {
+            adminAgents = data.admins;
+            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
+          }
+          if (data.adminPasswords) {
+            adminPasswords = data.adminPasswords;
+            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
+          }
+          if (data.catalog) {
+            catalog = data.catalog;
+            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
+          }
+          
           if (data.history) {
-            cachedHistory = data.history;
+            const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
+            const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
+            
+            const localCreatedItems = cachedHistory.filter(i => pendingCreateIds.has(i.id));
+            const cleanRemote = data.history.filter(r => !pendingDeletedIds.has(r.id) && !pendingCreateIds.has(r.id));
+            
+            cachedHistory = [...localCreatedItems, ...cleanRemote];
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
-          initMultiSelects();
-          applyFilters();
+
+          populateDropdowns();
+          updateAgentUI();
+
+          const modalSelect = document.getElementById("modalAgentSelect");
+          if (modalSelect && availableAgents.length > 0) {
+            modalSelect.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
+              availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+          }
+
+          renderHistory();
+          if (isAdmin()) renderMobileMonitoring();
         }
       } catch (err) {
-        console.warn("Échec actualisation :", err);
+        console.warn("Synchronisation échouée :", err);
       }
     }
 
-    function onSmartPeriodChange(mode) {
-      const now = new Date();
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      const customBox = document.getElementById("customDateRangeBox");
+    function manualSync() {
+      showToast("Actualisation...");
+      syncData().then(() => showToast("Données synchronisées"));
+    }
 
-      if (mode === 'CUSTOM') {
-        customBox.classList.remove("hidden");
+    function normalizeStr(str) {
+      return String(str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function onSearchInput(rawVal) {
+      const val = String(rawVal || "").trim();
+      const dd = document.getElementById("suggestionsDropdown");
+      const clearBtn = document.getElementById("clearSearchBtn");
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+
+      activeItem = null;
+      document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
+      document.getElementById("dispSupplier").innerText = "--";
+      document.getElementById("dispSap").innerText = "--";
+      document.getElementById("badgeIdentified").classList.add("hidden");
+
+      if (val.length > 0) {
+        if (clearBtn) clearBtn.classList.remove("hidden");
+        if (dismissBtn) dismissBtn.classList.remove("hidden");
+      } else {
+        if (clearBtn) clearBtn.classList.add("hidden");
+        if (dismissBtn) dismissBtn.classList.add("hidden");
+        if (dd) dd.classList.add("hidden");
         return;
-      } else {
-        customBox.classList.add("hidden");
       }
 
-      let referenceDate = now;
-      if (mode === 'ALL') {
-        sInput.value = "";
-        eInput.value = "";
-      } else if (mode === 'TODAY') {
-        const dStr = now.toISOString().split('T')[0];
-        sInput.value = dStr;
-        eInput.value = dStr;
-      } else if (mode === 'CURRENT_WEEK') {
-        const day = now.getDay() || 7;
-        const monday = new Date(now);
-        monday.setDate(now.getDate() - day + 1);
-        const sunday = new Date(monday);
-        sunday.setDate(sunday.getDate() + 6);
-
-        sInput.value = monday.toISOString().split('T')[0];
-        eInput.value = sunday.toISOString().split('T')[0];
-        referenceDate = monday;
-      } else if (mode === 'PREV_WEEK') {
-        const day = now.getDay() || 7;
-        const prevMonday = new Date(now);
-        prevMonday.setDate(now.getDate() - day - 6);
-        const prevSunday = new Date(prevMonday);
-        prevSunday.setDate(prevMonday.getDate() + 6);
-
-        sInput.value = prevMonday.toISOString().split('T')[0];
-        eInput.value = prevSunday.toISOString().split('T')[0];
-        referenceDate = prevMonday;
-      } else if (mode === 'CURRENT_MONTH') {
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        sInput.value = firstDay.toISOString().split('T')[0];
-        eInput.value = lastDay.toISOString().split('T')[0];
-        referenceDate = firstDay;
-      }
-
-      updateWeekBadge(sInput.value);
-      applyFilters();
-    }
-
-    function toggleActiveAgentsFilter() {
-      filterOnlyActiveAgents = !filterOnlyActiveAgents;
-      const btn = document.getElementById("btnFilterActiveAgentsOnly");
-      if (filterOnlyActiveAgents) {
-        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-[#f97316] text-white border border-orange-600 flex items-center gap-1.5 transition shadow-xs";
-      } else {
-        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition shadow-xs";
-      }
-      applyFilters();
-    }
-
-    function applyFilters() {
-      const sDateVal = document.getElementById("filterStartDate").value;
-      const eDateVal = document.getElementById("filterEndDate").value;
-      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
-      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
-
-      updateWeekBadge(sDateVal);
-
-      let periodLabel = "Tout l'historique";
-      if (sDateVal && eDateVal) {
-        periodLabel = `Du ${formatDateDMY(sDate)} au ${formatDateDMY(eDate)}`;
-      } else if (sDateVal) {
-        periodLabel = `À partir du ${formatDateDMY(sDate)}`;
-      } else if (eDateVal) {
-        periodLabel = `Jusqu'au ${formatDateDMY(eDate)}`;
-      }
-      document.getElementById("periodBadgeGlobal").innerText = periodLabel;
-      document.getElementById("periodBadgeAgents").innerText = periodLabel;
-
-      const term = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").toLowerCase().trim();
-      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
-
-      const filtered = cachedHistory.filter(item => {
-        const itDate = parseItemDate(item.timestamp);
-        if (sDate && itDate && itDate < sDate) return false;
-        if (eDate && itDate && itDate > eDate) return false;
-
-        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-
-        if (term) {
-          const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
-          if (!matchTarget.includes(term)) return false;
-        }
-
-        if (activeKpiFilter === 'ZERO') {
-          if (Number(item.quantity) !== 0) return false;
-        } else if (activeKpiFilter === 'HIGH') {
-          if (Number(item.quantity) <= maxQ) return false;
-        }
-
-        return true;
+      const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
+      const filtered = catalog.filter(item => {
+        const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""} ${item.sapRef || ""} ${item.ean || ""} ${item.qr || ""}`);
+        return searchTerms.every(term => textTarget.includes(term));
       });
 
-      renderKPIs(filtered);
-      renderTable(filtered);
-      renderAgentsView(filtered);
-      renderMap(filtered);
+      const sortedResults = filtered.sort((a, b) => {
+        return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
+      });
+
+      renderSuggestions(sortedResults);
     }
 
-    function renderKPIs(list) {
-      const totalR = list.length;
-      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
-      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
-      const atypS = list.filter(r => Number(r.quantity) > maxQ).length;
+    function renderSuggestions(results) {
+      const dd = document.getElementById("suggestionsDropdown");
+      if (!dd) return;
 
-      document.getElementById("kpiTotalRows").innerText = totalR;
-      document.getElementById("kpiTotalPieces").innerText = totalP;
-      document.getElementById("kpiZeroStock").innerText = zeroS;
-      document.getElementById("kpiAtypicalStock").innerText = atypS;
-
-      document.getElementById("kpiAgentsTotalRows").innerText = totalR;
-      document.getElementById("kpiAgentsTotalPieces").innerText = totalP;
-      document.getElementById("kpiAgentsZeroStock").innerText = zeroS;
-      document.getElementById("kpiAgentsAtypicalStock").innerText = atypS;
-    }
-
-    function renderTable(list) {
-      let countText = `${list.length} saisie(s) répertoriée(s)`;
-      if (activeKpiFilter === 'ZERO') countText += " [Filtre : Ruptures uniquement]";
-      if (activeKpiFilter === 'HIGH') countText += " [Filtre : Alertes atypiques uniquement]";
-      document.getElementById("tableCountLabel").innerText = countText;
-
-      const tbody = document.getElementById("supervisionTableBody");
-      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
-      const alertZero = document.getElementById("cfgAlertZero").checked;
-
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée pour cette sélection.</td></tr>`;
+      if (!results || results.length === 0) {
+        dd.innerHTML = `<div class="p-4 text-sm text-slate-300 text-center font-medium">Aucun article correspondant dans le catalogue.</div>`;
+        dd.classList.remove("hidden");
         return;
       }
 
-      tbody.innerHTML = list.map(item => {
-        const q = Number(item.quantity);
-        const isAlert = (alertZero && q === 0) || q > maxQ;
-        const displayDate = formatDateDMY(item.timestamp, true);
-        return `
-          <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${displayDate}</td>
-            <td class="p-3 font-bold text-slate-900">${item.user}</td>
-            <td class="p-3 text-slate-700">${item.contractor}</td>
-            <td class="p-3 text-slate-500">${item.trade}</td>
-            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
-            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
-            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
-            <td class="p-3 text-right whitespace-nowrap">
-              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+      let html = `
+        <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between items-center border-b border-slate-700 sticky top-0 z-10 backdrop-blur-sm">
+          <span>${results.length} article(s) trouvé(s)</span>
+          <button type="button" onclick="blurSearchInput()" class="text-amber-300 font-black bg-slate-900 px-3 py-1 rounded-lg border border-amber-500/40 text-xs shadow">
+            Fermer clavier ✕
+          </button>
+        </div>
+      `;
+
+      html += results.map(item => `
+        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-650 cursor-pointer transition">
+          <p class="text-base font-bold text-white leading-snug">${item.designation || 'Sans désignation'}</p>
+          <div class="flex justify-between items-center text-xs mt-2 pt-1.5 border-t border-slate-700/70">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[11px] text-slate-300 uppercase font-bold">RÉF :</span>
+              <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-900 px-2.5 py-0.5 rounded border border-amber-500/30">${item.sapRef}</span>
+            </div>
+            <div class="text-right truncate max-w-[170px]">
+              <span class="text-slate-300">Fourn : </span>
+              <strong class="font-mono text-blue-300 text-sm">${item.supplierRef || 'N/A'}</strong>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      dd.innerHTML = html;
+      dd.classList.remove("hidden");
+    }
+
+    function selectArticleBySap(sapRef) {
+      const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
+      if (!item) return;
+      activeItem = { ...item };
+
+      document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
+      document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
+      document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
+      document.getElementById("articleSearchInput").value = `${activeItem.sapRef} - ${activeItem.designation}`;
+      document.getElementById("badgeIdentified").classList.remove("hidden");
+      document.getElementById("suggestionsDropdown").classList.add("hidden");
+      document.getElementById("clearSearchBtn").classList.remove("hidden");
+      blurSearchInput();
+      
+      if (navigator.vibrate) navigator.vibrate(50);
+      speakRefSelection(activeItem.sapRef);
+    }
+
+    function clearSearch() {
+      document.getElementById("articleSearchInput").value = "";
+      document.getElementById("clearSearchBtn").classList.add("hidden");
+      document.getElementById("suggestionsDropdown").classList.add("hidden");
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.add("hidden");
+      activeItem = null;
+      document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
+      document.getElementById("dispSupplier").innerText = "--";
+      document.getElementById("dispSap").innerText = "--";
+      document.getElementById("badgeIdentified").classList.add("hidden");
+      blurSearchInput();
+    }
+
+    async function toggleScanner() {
+      const container = document.getElementById("scannerContainer");
+      const btnText = document.getElementById("btnScanText");
+
+      if (isScanning || isStartingScanner) {
+        await stopScanner();
+        return;
+      }
+
+      isStartingScanner = true;
+      container.classList.remove("hidden");
+      container.classList.add("flex");
+      btnText.innerText = "FERMER CAMERA";
+
+      if (html5QrCode) {
+        try { await html5QrCode.clear(); } catch(e){}
+      }
+      html5QrCode = new Html5Qrcode("reader");
+
+      const qrConfig = {
+        fps: 15,
+        qrbox: { width: 270, height: 210 },
+        aspectRatio: 1.333333
+      };
+
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          const backCam = devices[devices.length - 1];
+          await html5QrCode.start(
+            backCam.id,
+            qrConfig,
+            (decodedText) => handleExactCodeMatch(decodedText),
+            () => {}
+          );
+        } else {
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            qrConfig,
+            (decodedText) => handleExactCodeMatch(decodedText),
+            () => {}
+          );
+        }
+        
+        isScanning = true;
+        resetTorchUI();
+        startBackgroundOcr();
+
+      } catch (err) {
+        console.warn("Erreur capteur :", err);
+        container.classList.add("hidden");
+        container.classList.remove("flex");
+        btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
+        alert("Accès caméra impossible : Vérifiez les autorisations HTTPS.");
+      } finally {
+        isStartingScanner = false;
+        lucide.createIcons();
+      }
+    }
+
+    async function stopScanner() {
+      if (ocrInterval) {
+        clearInterval(ocrInterval);
+        ocrInterval = null;
+      }
+
+      if (isTorchOn) {
+        await setTorch(false);
+      }
+
+      if (html5QrCode && isScanning) {
+        try {
+          await html5QrCode.stop();
+          html5QrCode.clear();
+        } catch(e){}
+      }
+
+      const video = document.querySelector("#reader video");
+      if (video && video.srcObject) {
+        try {
+          video.srcObject.getTracks().forEach(track => track.stop());
+        } catch (e) {}
+      }
+
+      isScanning = false;
+      resetTorchUI();
+      
+      const container = document.getElementById("scannerContainer");
+      container.classList.add("hidden");
+      container.classList.remove("flex");
+      
+      document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
       lucide.createIcons();
     }
 
-    function toggleDrawer(agent, drawerType) {
-      const key = `${agent}_${drawerType}`;
-      openDrawers[key] = !openDrawers[key];
-      applyFilters();
+    async function toggleTorch() {
+      if (!isScanning || !html5QrCode) return;
+      const targetState = !isTorchOn;
+      const success = await setTorch(targetState);
+      if (success) {
+        isTorchOn = targetState;
+        updateTorchUI();
+        showToast(isTorchOn ? "Lumière allumée" : "Lumière éteinte");
+      } else {
+        alert("La torche n'est pas supportée par ce capteur.");
+      }
     }
 
-    function renderAgentsView(list) {
-      const container = document.getElementById("agentsAccordionContainer");
-      if (!container) return;
+    async function setTorch(enable) {
+      try {
+        await html5QrCode.applyVideoConstraints({ advanced: [{ torch: enable }] });
+        return true;
+      } catch (e) {
+        const video = document.querySelector("#reader video");
+        if (video && video.srcObject) {
+          const track = video.srcObject.getVideoTracks()[0];
+          if (track && typeof track.applyConstraints === "function") {
+            try {
+              await track.applyConstraints({ advanced: [{ torch: enable }] });
+              return true;
+            } catch (err2) {
+              return false;
+            }
+          }
+        }
+        return false;
+      }
+    }
 
-      if (availableAgents.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Aucun agent configuré.</div>`;
-        return;
+    function updateTorchUI() {
+      const btn = document.getElementById("btnTorch");
+      const icon = document.getElementById("torchIcon");
+      if (!btn || !icon) return;
+
+      if (isTorchOn) {
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-amber-400 active:bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center border border-amber-300 transition shadow";
+        icon.className = "w-6 h-6 text-slate-950 fill-slate-950";
+      } else {
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
+        icon.className = "w-6 h-6 text-slate-300";
+      }
+      lucide.createIcons();
+    }
+
+    function resetTorchUI() {
+      isTorchOn = false;
+      const btn = document.getElementById("btnTorch");
+      const icon = document.getElementById("torchIcon");
+      if (btn && icon) {
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
+        icon.className = "w-6 h-6 text-slate-300";
+      }
+      lucide.createIcons();
+    }
+
+    function startBackgroundOcr() {
+      ocrInterval = setInterval(async () => {
+        if (!isScanning || isOcrBusy) return;
+        await processVideoOcr(false);
+      }, 1600);
+    }
+
+    async function triggerManualOcrCapture() {
+      if (!isScanning) return;
+      showToast("Lecture Réf SAP...");
+      await processVideoOcr(true);
+    }
+
+    function getLevenshteinDistance(a, b) {
+      if (a.length === 0) return b.length;
+      if (b.length === 0) return a.length;
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    async function processVideoOcr(forceToast = false) {
+      const video = document.querySelector("#reader video");
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+
+      const canvas = document.getElementById("ocrCanvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+      const cropW = Math.floor(video.videoWidth * 0.82);
+      const cropH = Math.floor(video.videoHeight * 0.44);
+      const startX = Math.floor((video.videoWidth - cropW) / 2);
+      const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
+
+      canvas.width = cropW * 2;
+      canvas.height = cropH * 2;
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+      let minLum = 255;
+      let maxLum = 0;
+
+      for (let i = 0; i < d.length; i += 4) {
+        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+        if (lum < minLum) minLum = lum;
+        if (lum > maxLum) maxLum = lum;
       }
 
-      const now = new Date().getTime();
-      const fifteenMinMs = 15 * 60 * 1000;
-      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
-      const alertZero = document.getElementById("cfgAlertZero").checked;
-
-      let agentsToRender = selectedAgents.length > 0 ? availableAgents.filter(a => selectedAgents.includes(a)) : [...availableAgents];
-
-      if (filterOnlyActiveAgents) {
-        agentsToRender = agentsToRender.filter(agent => {
-          const entries = list.filter(i => i.user === agent);
-          if (entries.length === 0) return false;
-          const dt = parseItemDate(entries[0].timestamp);
-          return dt && (now - dt.getTime()) < fifteenMinMs;
-        });
+      const range = (maxLum - minLum) || 1;
+      for (let i = 0; i < d.length; i += 4) {
+        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+        let stretched = ((lum - minLum) / range) * 255;
+        const finalVal = stretched > 135 ? 255 : (stretched < 70 ? 0 : stretched);
+        d[i] = finalVal;
+        d[i + 1] = finalVal;
+        d[i + 2] = finalVal;
       }
+      ctx.putImageData(imgData, 0, 0);
 
-      if (agentsToRender.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">Aucun agent ne correspond aux filtres sélectionnés.</div>`;
-        return;
-      }
+      isOcrBusy = true;
+      try {
+        let textResult = "";
+        if (ocrWorker) {
+          const ret = await ocrWorker.recognize(canvas);
+          textResult = ret.data.text || "";
+        } else {
+          const ret = await Tesseract.recognize(canvas, 'eng', {
+            tessedit_char_whitelist: '0123456789',
+            tessedit_pageseg_mode: '7'
+          });
+          textResult = ret.data.text || "";
+        }
 
-      container.innerHTML = agentsToRender.map(agent => {
-        const agentEntries = list.filter(i => i.user === agent);
-        const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-        const anomalies = agentEntries.filter(r => (alertZero && Number(r.quantity) === 0) || Number(r.quantity) > maxQ);
+        if (!isScanning) return;
 
-        let isActive = false;
-        let activeContractor = "Aucun chantier entamé";
-        let lastTimeStr = "--";
+        const rawDigits = textResult.replace(/\D/g, "");
+        const validCatalogSaps = catalog
+          .map(i => String(i.sapRef).trim())
+          .filter(ref => ref.length === 6);
 
-        if (agentEntries.length > 0) {
-          const lastOne = agentEntries[0];
-          activeContractor = lastOne.contractor || "Entrepreneur indéterminé";
-          lastTimeStr = formatDateDMY(lastOne.timestamp, true);
-          const dt = parseItemDate(lastOne.timestamp);
-          if (dt && (now - dt.getTime()) < fifteenMinMs) {
-            isActive = true;
+        let bestSapMatch = null;
+
+        const direct6Matches = rawDigits.match(/\d{6}/g) || [];
+        for (const candidate of direct6Matches) {
+          if (validCatalogSaps.includes(candidate)) {
+            bestSapMatch = candidate;
+            break;
           }
         }
 
-        let cadenceLh = agentEntries.length;
-        let amplitudeHours = 0;
-        if (agentEntries.length > 1) {
-          const times = agentEntries.map(e => parseItemDate(e.timestamp)).filter(Boolean).map(d => d.getTime());
-          const minT = Math.min(...times);
-          const maxT = Math.max(...times);
-          amplitudeHours = (maxT - minT) / 3600000;
-          if (amplitudeHours > 0.05) cadenceLh = Math.round(agentEntries.length / amplitudeHours);
+        if (!bestSapMatch && rawDigits.length >= 6) {
+          for (let i = 0; i <= rawDigits.length - 6; i++) {
+            const slice = rawDigits.substring(i, i + 6);
+            if (validCatalogSaps.includes(slice)) {
+              bestSapMatch = slice;
+              break;
+            }
+          }
         }
 
-        const distinctPairs = {};
-        agentEntries.forEach(e => {
-          const key = `${e.contractor} - ${e.trade}`;
-          if (!distinctPairs[key]) distinctPairs[key] = { lastSeen: e.timestamp, count: 0, pieces: 0 };
-          distinctPairs[key].count++;
-          distinctPairs[key].pieces += (Number(e.quantity) || 0);
-        });
+        if (!bestSapMatch && validCatalogSaps.length > 0) {
+          const candidates = rawDigits.match(/\d{5,7}/g) || [];
+          for (const cand of candidates) {
+            let minDistance = 999;
+            let candidateSap = null;
 
-        const isCadenceOpen = !!openDrawers[`${agent}_cadence`];
-        const isAnomaliesOpen = !!openDrawers[`${agent}_anomalies`];
-        const isPerimeterOpen = !!openDrawers[`${agent}_perimeter`];
+            for (const sap of validCatalogSaps) {
+              const dist = getLevenshteinDistance(cand, sap);
+              if (dist < minDistance) {
+                minDistance = dist;
+                candidateSap = sap;
+              }
+            }
 
+            if (minDistance <= 1 && candidateSap) {
+              bestSapMatch = candidateSap;
+              break;
+            }
+          }
+        }
+
+        if (bestSapMatch) {
+          stopScanner();
+          selectArticleBySap(bestSapMatch);
+          showToast(`Réf validée : ${bestSapMatch}`);
+          return;
+        }
+
+        if (forceToast) {
+          showToast("Réf non reconnue. Rapprochez le bac.");
+        }
+      } catch (e) {
+        console.warn("Erreur OCR :", e);
+      } finally {
+        isOcrBusy = false;
+      }
+    }
+
+    function handleExactCodeMatch(code) {
+      const clean = String(code).trim();
+      const match = catalog.find(item => 
+        String(item.sapRef).toUpperCase() === clean.toUpperCase() ||
+        String(item.ean).toUpperCase() === clean.toUpperCase() ||
+        String(item.qr).toUpperCase() === clean.toUpperCase() ||
+        String(item.supplierRef).toUpperCase() === clean.toUpperCase()
+      );
+
+      if (match) {
+        stopScanner();
+        selectArticleBySap(match.sapRef);
+        showToast("Identifié : " + match.designation);
+      } else {
+        activeItem = null;
+        document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
+        document.getElementById("dispSap").innerText = "--";
+        document.getElementById("dispSupplier").innerText = "--";
+        document.getElementById("badgeIdentified").classList.add("hidden");
+        
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        alert(`Article inconnu (${clean}) :\nAucune correspondance trouvée dans le catalogue Google Sheets.`);
+      }
+    }
+
+    async function editHistoryItem(id, oldQty) {
+      const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
+      if (newQtyStr === null) return;
+
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide (>= 0 attendue).");
+        return;
+      }
+
+      showToast("Mise à jour...");
+      const payload = { 
+        action: "UPDATE", 
+        id: id, 
+        quantity: newQty,
+        user: currentAgent 
+      };
+
+      const target = cachedHistory.find(item => item.id === id);
+      if (target) {
+        target.quantity = newQty;
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      }
+
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+        }
+        showToast("Quantité modifiée !");
+      } catch (err) {
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
+        showToast("Modifié en attente de synchronisation.");
+      } finally {
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+      }
+    }
+
+    async function deleteHistoryItem(id, designation) {
+      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
+
+      showToast("Suppression...");
+      const payload = { 
+        action: "DELETE", 
+        id: id, 
+        user: currentAgent 
+      };
+
+      cachedHistory = cachedHistory.filter(item => item.id !== id);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+        }
+        showToast("Saisie supprimée !");
+      } catch (err) {
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
+        showToast("Supprimé en attente de synchronisation.");
+      } finally {
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+      }
+    }
+
+    async function submitInventory() {
+      if (!currentAgent) {
+        openAgentModal();
+        return;
+      }
+
+      const contractor = document.getElementById("contractorSelect").value;
+      const trade = document.getElementById("tradeSelect").value;
+
+      if (!contractor || contractor.trim() === "") {
+        alert("Action impossible :\nVeuillez impérativement sélectionner un Entrepreneur avant de valider.");
+        document.getElementById("contractorSelect").focus();
+        return;
+      }
+      if (!trade || trade.trim() === "") {
+        alert("Action impossible :\nVeuillez impérativement sélectionner un Métier avant de valider.");
+        document.getElementById("tradeSelect").focus();
+        return;
+      }
+
+      if (!activeItem || !catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim())) {
+        alert("Action impossible :\nAucun article valide du catalogue n'est sélectionné.");
+        return;
+      }
+
+      const qtyInput = document.getElementById("qtyInput");
+      const qty = parseInt(qtyInput.value, 10);
+      if (isNaN(qty) || qty < 0) {
+        alert("Veuillez renseigner une quantité valide (>= 0).");
+        qtyInput.focus();
+        return;
+      }
+
+      const nowMs = Date.now();
+      const fiveMinMs = 5 * 60 * 1000;
+
+      const recentDuplicate = cachedHistory.find(entry => {
+        if (
+          String(entry.sapRef) === String(activeItem.sapRef) &&
+          entry.contractor === contractor &&
+          entry.trade === trade
+        ) {
+          let entryTime = 0;
+          if (entry.id && entry.id.startsWith("INV-")) {
+            const timestampPart = entry.id.replace("INV-", "");
+            entryTime = parseInt(timestampPart, 36);
+          }
+          if (!entryTime && entry.timestamp) {
+            const parts = entry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
+            if (parts) entryTime = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
+          }
+          return (nowMs - entryTime) < fiveMinMs;
+        }
+        return false;
+      });
+
+      let finalQty = qty;
+      let targetUpdateId = null;
+
+      if (recentDuplicate) {
+        const confirmChoice = confirm(
+          `⚠️ Doublon détecté :\nVous avez déjà compté cet article il y a moins de 5 minutes (${recentDuplicate.quantity} pcs pour ${contractor} - ${trade}).\n\n` +
+          `• Cliquez sur [OK] pour CUMULER (+${qty} pcs, total = ${recentDuplicate.quantity + qty})\n` +
+          `• Cliquez sur [Annuler] pour ÉCRASER / REMPLACER (nouvelle valeur = ${qty})`
+        );
+
+        if (confirmChoice) {
+          finalQty = Number(recentDuplicate.quantity) + qty;
+          targetUpdateId = recentDuplicate.id;
+        } else {
+          targetUpdateId = recentDuplicate.id;
+        }
+      }
+
+      const btn = document.getElementById("btnSubmit");
+      const label = document.getElementById("submitLabel");
+      const icon = document.getElementById("submitIcon");
+
+      btn.disabled = true;
+      label.innerText = "ENREGISTREMENT...";
+      icon.className = "w-6 h-6 animate-spin";
+
+      speakValidationWithEncouragement(finalQty, currentAgent);
+
+      let payload;
+      if (targetUpdateId) {
+        payload = {
+          action: "UPDATE",
+          id: targetUpdateId,
+          quantity: finalQty,
+          user: currentAgent
+        };
+      } else {
+        payload = {
+          action: "CREATE",
+          id: "INV-" + Date.now().toString(36).toUpperCase(),
+          timestamp: new Date().toLocaleString("fr-FR"),
+          user: currentAgent,
+          contractor: contractor,
+          trade: trade,
+          sapRef: activeItem.sapRef,
+          designation: activeItem.designation,
+          supplierRef: activeItem.supplierRef || "",
+          ean: activeItem.ean || "",
+          qr: activeItem.qr || "",
+          quantity: finalQty,
+          lat: latestCoords.lat,
+          lng: latestCoords.lng,
+          latitude: latestCoords.lat,
+          longitude: latestCoords.lng
+        };
+      }
+
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+        }
+        if (targetUpdateId) {
+          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
+          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
+        } else {
+          cachedHistory.unshift(payload);
+        }
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        showToast("Inventaire synchronisé !");
+      } catch (e) {
+        if (targetUpdateId) {
+          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
+          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
+        } else {
+          cachedHistory.unshift(payload);
+        }
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
+        showToast("Enregistré localement (en attente réseau).");
+      } finally {
+        qtyInput.value = 0;
+        clearSearch();
+        btn.disabled = false;
+        label.innerText = "VALIDER ET ARCHIVER";
+        icon.className = "w-6 h-6";
+        lucide.createIcons();
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+      }
+    }
+
+    function renderHistory() {
+      const c = document.getElementById("historyList");
+      const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
+      document.getElementById("historyHeaderLabel").innerText = isAdmin() ? `Toutes les saisies (${list.length})` : `Mes saisies (${list.length})`;
+
+      if (list.length === 0) {
+        c.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Aucune saisie enregistrée.</div>';
+        return;
+      }
+
+      const pendingIds = new Set(syncQueue.map(q => q.id));
+
+      c.innerHTML = list.map(it => {
+        const isPending = pendingIds.has(it.id);
+        const displayDate = formatDateDMY(it.timestamp, true);
         return `
-          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
-            
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div class="flex items-center space-x-3">
-                <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}"></div>
-                <span class="font-bold text-slate-900 text-sm">${agent}</span>
-                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
-                  ${isActive ? '🟢 En cours' : '⚪ Déconnecté'} • ${activeContractor} (${lastTimeStr})
-                </span>
+          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800'} p-3.5 rounded-2xl shadow space-y-2.5">
+            <div class="flex items-center justify-between border-b border-slate-850 pb-2 text-xs">
+              <div class="min-w-0 pr-2">
+                <span class="font-bold text-white">${it.user}</span>
+                <span class="text-slate-400">• <strong class="text-slate-300 font-semibold">${it.contractor}</strong> (${it.trade})</span>
               </div>
-              <span class="text-xs font-mono text-slate-500">${agentEntries.length} lignes • ${totalPieces} pcs</span>
+              <div class="flex items-center space-x-1.5 shrink-0 text-[11px] font-mono text-slate-400">
+                <span>${displayDate}</span>
+                ${(it.lat || it.latitude) ? `<span class="text-emerald-400">📍</span>` : ''}
+                ${isPending ? `<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-bold">Attente</span>` : ''}
+              </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 text-xs">
-              
-              <div onclick="toggleDrawer('${agent}', 'cadence')" class="p-2.5 rounded-xl border cursor-pointer transition ${isCadenceOpen ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
-                <div class="flex justify-between items-center mb-0.5">
-                  <span class="text-slate-500 text-[10px] uppercase font-bold">⚡ Cadence</span>
-                  <i data-lucide="${isCadenceOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-orange-600"></i>
-                </div>
-                <span class="font-black text-slate-900 text-base">${cadenceLh} <span class="text-xs font-normal text-slate-500">l/h</span></span>
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1 pr-2">
+                <span class="font-mono font-black text-amber-400 text-base tracking-wider block">${it.sapRef}</span>
+                <p class="text-xs text-slate-300 truncate mt-0.5" title="${it.designation}">${it.designation}</p>
               </div>
 
-              <div onclick="toggleDrawer('${agent}', 'anomalies')" class="p-2.5 rounded-xl border cursor-pointer transition ${isAnomaliesOpen ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
-                <div class="flex justify-between items-center mb-0.5">
-                  <span class="text-amber-700 text-[10px] uppercase font-bold">🛡️ Anomalies</span>
-                  <i data-lucide="${isAnomaliesOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-amber-600"></i>
+              <div class="flex items-center space-x-2 shrink-0">
+                <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 min-w-[50px]">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase">Qté</span>
+                  <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
                 </div>
-                <span class="font-black text-amber-700 text-base">${anomalies.length} <span class="text-xs font-normal text-slate-500">alerte(s)</span></span>
-              </div>
 
-              <div onclick="toggleDrawer('${agent}', 'perimeter')" class="p-2.5 rounded-xl border cursor-pointer transition ${isPerimeterOpen ? 'bg-emerald-50 border-emerald-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
-                <div class="flex justify-between items-center mb-0.5">
-                  <span class="text-slate-500 text-[10px] uppercase font-bold">🌐 Périmètre</span>
-                  <i data-lucide="${isPerimeterOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-emerald-600"></i>
-                </div>
-                <span class="font-black text-orange-600 text-base">${Object.keys(distinctPairs).length} <span class="text-xs font-normal text-slate-500">traités</span></span>
-              </div>
+                <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" 
+                        class="w-10 h-10 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 active:bg-emerald-600 text-emerald-400 hover:text-emerald-100 flex items-center justify-center border border-emerald-500/40 transition shadow">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
 
+                <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
+                        class="w-10 h-10 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 flex items-center justify-center border border-rose-500/40 transition shadow">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
             </div>
-
-            ${isCadenceOpen ? `
-              <div class="p-3 bg-slate-50 rounded-xl border border-orange-200 text-xs space-y-1">
-                <span class="text-[10px] font-bold text-orange-700 uppercase block">Analyse de productivité horaire</span>
-                <p class="text-slate-700">Volume total : <strong class="text-slate-900">${agentEntries.length} lignes</strong> saisies pour <strong class="text-orange-600">${totalPieces} pièces</strong>.</p>
-                <p class="text-slate-500 text-[11px]">Amplitude active de la session : <strong>${amplitudeHours.toFixed(1)} heure(s)</strong>.</p>
-              </div>
-            ` : ''}
-
-            ${isAnomaliesOpen ? `
-              <div class="p-3 bg-slate-50 rounded-xl border border-amber-200 text-xs space-y-2">
-                <span class="text-[10px] font-bold text-amber-700 uppercase block">Saisies non conformes (${anomalies.length})</span>
-                ${anomalies.length === 0 ? '<p class="text-slate-400 italic">Aucune anomalie détectée pour cet agent.</p>' : `
-                  <div class="space-y-1.5 divide-y divide-slate-200">
-                    ${anomalies.map(an => `
-                      <div class="pt-1.5 flex justify-between items-center">
-                        <div>
-                          <div class="font-mono text-amber-700 font-bold">${an.sapRef} • <span class="text-slate-900 font-normal">${an.designation}</span></div>
-                          <div class="text-[10px] text-slate-500">${an.contractor} (${an.trade}) • ${formatDateDMY(an.timestamp, true)}</div>
-                        </div>
-                        <div class="flex items-center space-x-1.5 shrink-0">
-                          <span class="font-mono font-black ${Number(an.quantity) === 0 ? 'text-rose-600' : 'text-amber-700'} text-sm mr-1.5">${an.quantity}</span>
-                          <button onclick="editTableItem('${an.id}', ${an.quantity})" class="p-1 hover:bg-slate-200 rounded text-slate-600 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                          <button onclick="deleteTableItem('${an.id}', '${an.designation.replace(/'/g, "\\'")}')" class="p-1 hover:bg-rose-100 rounded text-slate-500 hover:text-rose-600 transition" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
-                `}
-              </div>
-            ` : ''}
-
-            ${isPerimeterOpen ? `
-              <div class="p-3 bg-slate-50 rounded-xl border border-emerald-200 text-xs space-y-1.5">
-                <span class="text-[10px] font-bold text-emerald-700 uppercase block">Chantiers entamés & dates de passage</span>
-                ${Object.keys(distinctPairs).length === 0 ? '<p class="text-slate-400 italic">Aucun chantier entamé sur cette période.</p>' : `
-                  <div class="space-y-1">
-                    ${Object.entries(distinctPairs).map(([pair, info]) => `
-                      <div class="flex justify-between items-center py-1 border-b border-slate-200 last:border-0 text-[11px]">
-                        <span class="font-semibold text-slate-800">${pair}</span>
-                        <span class="text-slate-500 font-mono text-[10px]">${formatDateDMY(info.lastSeen, true)} (${info.count} lig. / ${info.pieces} pcs)</span>
-                      </div>
-                    `).join('')}
-                  </div>
-                `}
-              </div>
-            ` : ''}
-
           </div>
         `;
       }).join('');
       lucide.createIcons();
     }
 
-    // =========================================================================
-    // CARTOGRAPHIE INTERACTIVE : CALCUL DE PROXIMITÉ (1 KM) ET AFFICHAGE DU NOMBRE D'AGENTS
-    // =========================================================================
-    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
-      const R = 6371000; // Rayon de la terre en mètres
-      const dLat = (lat2 - lat1) * (Math.PI / 180);
-      const dLon = (lon2 - lon1) * (Math.PI / 180);
-      const a = 
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
-        Math.sin(dLon / 2) * Math.sin(dLon / 2); 
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
-      return R * c;
-    }
+    function renderMobileMonitoring() {
+      if (!isAdmin()) return;
+      document.getElementById("mobKpiRows").innerText = cachedHistory.length;
+      document.getElementById("mobKpiQty").innerText = cachedHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
+      document.getElementById("mobKpiAlerts").innerText = cachedHistory.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50).length;
 
-    function renderMap(list) {
-      if (!map) {
-        map = L.map('mapContainer', {
-          center: BELGIUM_CENTER,
-          zoom: BELGIUM_ZOOM,
-          minZoom: 7,
-          maxZoom: 18,
-          maxBounds: BELGIUM_BOUNDS,
-          maxBoundsViscosity: 0.85
-        });
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
-
-        markersLayer = L.layerGroup().addTo(map);
-      }
-
-      markersLayer.clearLayers();
-      const points = [];
       const now = new Date().getTime();
       const thirtyMinMs = 30 * 60 * 1000;
+      const container = document.getElementById("mobMonitoringList");
 
-      // Algorithme de regroupement dans un rayon de 1 km (1000 mètres)
-      const clusters = [];
-      list.forEach(item => {
-        const lat = Number(item.lat || item.latitude);
-        const lng = Number(item.lng || item.longitude);
-        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-          let placed = false;
-          for (let cluster of clusters) {
-            const dist = getDistanceFromLatLonInMeters(cluster.lat, cluster.lng, lat, lng);
-            if (dist <= 1000) { // Dans un cercle de 1km de diamètre / rayon
-              cluster.items.push(item);
-              placed = true;
-              break;
-            }
-          }
-          if (!placed) {
-            clusters.push({ lat, lng, items: [item] });
-          }
+      const groups = {};
+      cachedHistory.forEach(item => {
+        const key = `${item.user}__${item.contractor}__${item.trade}`;
+        if (!groups[key]) {
+          groups[key] = {
+            user: item.user,
+            contractor: item.contractor,
+            trade: item.trade,
+            entries: []
+          };
         }
+        groups[key].entries.push(item);
       });
 
-      clusters.forEach(cluster => {
-        const { lat, lng, items } = cluster;
-        const uniqueAgents = [...new Set(items.map(i => i.user))];
-        const agentCount = uniqueAgents.length;
+      const groupList = Object.values(groups);
 
-        // Si plusieurs agents dans le rayon de 1km, on éclate les points en étoile
-        items.forEach((item, index) => {
-          let markerLat = lat;
-          let markerLng = lng;
-
-          if (items.length > 1) {
-            const angle = (index / items.length) * 2 * Math.PI;
-            const radius = 0.002 * (index + 1); // Décalage visuel
-            markerLat = lat + radius * Math.cos(angle);
-            markerLng = lng + radius * Math.sin(angle);
-          }
-
-          points.push([markerLat, markerLng]);
-
-          const agentHistory = list.filter(h => h.user === item.user);
-          const sortedAgentHistory = [...agentHistory].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
-          
-          let currentActivePair = "Aucun en cours";
-          let lastCompletedPair = "Aucun";
-          let isAgentActiveLive = false;
-
-          if (sortedAgentHistory.length > 0) {
-            const mostRecent = sortedAgentHistory[0];
-            const recentDt = parseItemDate(mostRecent.timestamp);
-            if ((now - recentDt.getTime()) < thirtyMinMs) {
-              isAgentActiveLive = true;
-              currentActivePair = `${mostRecent.contractor} (${mostRecent.trade})`;
-            } else {
-              lastCompletedPair = `${mostRecent.contractor} (${mostRecent.trade})`;
-            }
-          }
-
-          const isItemSessionActive = (now - parseItemDate(item.timestamp).getTime()) < thirtyMinMs;
-          const statusBadge = isItemSessionActive 
-            ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold">🟢 En cours</span>`
-            : `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold">🔵 Finalisé</span>`;
-
-          const entriesForPair = list.filter(h => h.user === item.user && h.contractor === item.contractor && h.trade === item.trade);
-          entriesForPair.sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
-
-          const firstEntryDateStr = entriesForPair.length > 0 ? formatDateDMY(entriesForPair[0].timestamp, true) : "--/--/----";
-          const lastEntryDateStr = entriesForPair.length > 0 ? formatDateDMY(entriesForPair[entriesForPair.length - 1].timestamp, true) : "--/--/----";
-          const linesCount = entriesForPair.length;
-
-          const marker = L.circleMarker([markerLat, markerLng], {
-            radius: agentCount > 1 ? 9 : 7,
-            fillColor: isAgentActiveLive ? "#10b981" : "#f97316",
-            color: "#ffffff",
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.9
-          }).addTo(markersLayer);
-
-          // AU SURVOL : Affiche uniquement le nombre d'agents à ce spot s'ils sont plusieurs
-          marker.bindTooltip(`
-            <div class="text-xs font-sans px-1.5 py-1 space-y-0.5 leading-snug">
-              <strong class="text-slate-900 block text-sm">Agent : ${item.user}</strong>
-              ${agentCount > 1 ? `<div class="text-orange-600 font-bold text-[11px]">📍 ${agentCount} agents actifs sur ce spot (1km)</div>` : ''}
-              <div class="text-[11px] text-emerald-700">
-                <span class="font-bold">En cours :</span> ${currentActivePair}
-              </div>
-              <div class="text-[11px] text-slate-500">
-                <span class="font-bold">Dernier terminé :</span> ${lastCompletedPair}
-              </div>
-            </div>
-          `, { direction: 'top', offset: [0, -6] });
-
-          marker.on('click', () => {
-            map.panTo([markerLat, markerLng], { animate: true, duration: 0.5 });
-          });
-
-          const safeUser = (item.user || '').replace(/'/g, "\\'");
-          const safeContractor = (item.contractor || '').replace(/'/g, "\\'");
-          const safeTrade = (item.trade || '').replace(/'/g, "\\'");
-
-          marker.bindPopup(`
-            <div class="text-xs font-sans space-y-2.5 py-1 min-w-[280px]">
-              <div class="flex justify-between items-start border-b border-slate-100 pb-2">
-                <div class="pr-2">
-                  <strong class="text-slate-900 text-sm block leading-snug">${item.contractor}</strong>
-                  <span class="text-orange-600 font-bold block">${item.trade}</span>
-                </div>
-                ${statusBadge}
-              </div>
-
-              <div class="space-y-1.5 text-slate-600 text-[11px]">
-                <div class="flex justify-between items-center">
-                  <span>Agent :</span>
-                  <strong class="text-slate-900">${item.user}</strong>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span>Lignes traitées :</span>
-                  <strong class="text-orange-700 font-mono text-xs">${linesCount} ligne(s)</strong>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span>1ère saisie :</span>
-                  <span class="font-mono text-slate-800 font-semibold">${firstEntryDateStr}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span>Dernière saisie :</span>
-                  <span class="font-mono text-slate-800 font-semibold">${lastEntryDateStr}</span>
-                </div>
-              </div>
-
-              <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
-                      class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5">
-                <i data-lucide="list" class="w-3.5 h-3.5"></i>
-                <span>Voir le listing dans l'Activité Globale</span>
-              </button>
-            </div>
-          `, {
-            autoPan: true,
-            autoPanPadding: [80, 80]
-          });
-        });
-      });
-
-      document.getElementById("mapPointsCountLabel").innerText = `${points.length} point(s) GPS`;
-      lucide.createIcons();
-    }
-
-    function resetMapToBelgium() {
-      if (map) {
-        map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
-      }
-    }
-
-    function filterAndSwitchToGlobal(agent, contractor, trade) {
-      activeKpiFilter = null;
-      selectedAgents = agent ? [agent] : [];
-      document.querySelectorAll("#checkboxesAgents input").forEach(chk => {
-        chk.checked = (chk.value === agent);
-      });
-      document.getElementById("btnLabelAgents").innerText = agent ? `1 agent (${agent})` : "Tous les agents";
-
-      selectedContractors = contractor ? [contractor] : [];
-      document.querySelectorAll("#checkboxesContractors input").forEach(chk => {
-        chk.checked = (chk.value === contractor);
-      });
-      document.getElementById("btnLabelContractors").innerText = contractor ? `1 entrepreneur (${contractor})` : "Tous les entrepreneurs";
-
-      selectedTrades = trade ? [trade] : [];
-      document.querySelectorAll("#checkboxesTrades input").forEach(chk => {
-        chk.checked = (chk.value === trade);
-      });
-      document.getElementById("btnLabelTrades").innerText = trade ? `1 métier (${trade})` : "Tous les métiers";
-
-      switchView('global');
-      applyFilters();
-    }
-
-    function switchView(v) {
-      activeView = v;
-      document.getElementById("viewGlobal").classList.add("hidden");
-      document.getElementById("viewAgents").classList.add("hidden");
-      document.getElementById("viewMap").classList.add("hidden");
-
-      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-
-      if (v === 'global') {
-        document.getElementById("viewGlobal").classList.remove("hidden");
-        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
-      } else if (v === 'agents') {
-        document.getElementById("viewAgents").classList.remove("hidden");
-        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
-      } else if (v === 'map') {
-        document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
-        setTimeout(() => { 
-          if (map) {
-            map.invalidateSize();
-            resetMapToBelgium();
-          }
-        }, 200);
-      }
-      lucide.createIcons();
-    }
-
-    async function editTableItem(id, oldQty) {
-      const newQtyStr = prompt("Modifier la quantité :", oldQty);
-      if (newQtyStr === null) return;
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide.");
+      if (groupList.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs italic">Aucune activité enregistrée.</div>`;
         return;
       }
 
-      const target = cachedHistory.find(i => i.id === id);
-      if (target) target.quantity = newQty;
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      applyFilters();
+      container.innerHTML = groupList.map(grp => {
+        const sorted = [...grp.entries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
+        const firstEntry = sorted[0];
+        const lastEntry = sorted[sorted.length - 1];
 
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "UPDATE", id: id, quantity: newQty, user: currentAdmin })
-        });
-      }
+        const firstDateStr = formatDateDMY(firstEntry.timestamp, true);
+        const lastDateStr = formatDateDMY(lastEntry.timestamp, true);
+
+        const lastDt = parseItemDate(lastEntry.timestamp);
+        const isActive = (now - lastDt.getTime()) < thirtyMinMs;
+
+        return `
+          <div class="bg-slate-950 p-3.5 rounded-2xl border ${isActive ? 'border-indigo-500/50' : 'border-slate-800'} text-xs space-y-2 shadow">
+            <div class="flex justify-between items-start border-b border-slate-850 pb-2">
+              <div>
+                <strong class="text-white text-sm block">${grp.contractor}</strong>
+                <span class="text-indigo-400 font-bold">${grp.trade}</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                ${isActive ? '🟢 En cours' : '🔵 Finalisé'}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1">
+              <div>
+                <span>Agent :</span>
+                <strong class="text-slate-200 block">${grp.user}</strong>
+              </div>
+              <div>
+                <span>Lignes traitées :</span>
+                <strong class="text-emerald-400 font-mono text-xs block">${grp.entries.length} ligne(s)</strong>
+              </div>
+              <div>
+                <span>1ère saisie :</span>
+                <span class="font-mono text-slate-300 block">${firstDateStr}</span>
+              </div>
+              <div>
+                <span>Dernière saisie :</span>
+                <span class="font-mono text-slate-300 block">${lastDateStr}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
     }
 
-    async function deleteTableItem(id, label) {
-      if (!confirm(`Supprimer définitivement :\n"${label}" ?`)) return;
+    function switchTab(tab) {
+      const inv = document.getElementById("view-inventory");
+      const hist = document.getElementById("view-history");
+      const mon = document.getElementById("view-monitoring");
+      const tInv = document.getElementById("tabNavInventory");
+      const tHist = document.getElementById("tabNavHistory");
+      const tMon = document.getElementById("tabNavMonitoring");
 
-      cachedHistory = cachedHistory.filter(i => i.id !== id);
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      applyFilters();
-
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "DELETE", id: id, user: currentAdmin })
-        });
+      if (tab === 'monitoring') {
+        if (!isAdmin()) {
+          alert("Accès réservé aux administrateurs.");
+          return;
+        }
+        if (!isMonitoringUnlocked) {
+          const expected = adminPasswords[currentAgent] || "1234";
+          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe :`);
+          if (entered === null) return;
+          if (entered !== expected) {
+            alert("Mot de passe incorrect.");
+            return;
+          }
+          isMonitoringUnlocked = true;
+        }
       }
+
+      inv.classList.add("hidden");
+      hist.classList.add("hidden");
+      mon.classList.add("hidden");
+
+      tInv.classList.replace("text-blue-400", "text-slate-400");
+      tHist.classList.replace("text-blue-400", "text-slate-400");
+      if (tMon) tMon.classList.replace("text-blue-400", "text-slate-400");
+
+      if (tab === 'inventory') {
+        inv.classList.remove("hidden");
+        tInv.classList.replace("text-slate-400", "text-blue-400");
+      } else if (tab === 'history') {
+        if (isScanning) stopScanner();
+        hist.classList.remove("hidden");
+        tHist.classList.replace("text-slate-400", "text-blue-400");
+        renderHistory();
+      } else if (tab === 'monitoring') {
+        if (isScanning) stopScanner();
+        mon.classList.remove("hidden");
+        if (tMon) tMon.classList.replace("text-slate-400", "text-blue-400");
+        renderMobileMonitoring();
+      }
+
+      syncData();
+      lucide.createIcons();
     }
 
-    function exportTableToCSV() {
-      const sDateVal = document.getElementById("filterStartDate").value;
-      const eDateVal = document.getElementById("filterEndDate").value;
-      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
-      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
-
-      const data = cachedHistory.filter(item => {
-        const itDate = parseItemDate(item.timestamp);
-        if (sDate && itDate && itDate < sDate) return false;
-        if (eDate && itDate && itDate > eDate) return false;
-
-        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-        return true;
-      });
-
-      if (data.length === 0) {
-        alert("Aucune donnée à exporter sur ce filtre.");
-        return;
-      }
-
-      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
-      data.forEach(r => {
-        const dmy = formatDateDMY(r.timestamp, true);
-        csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Inventaire_Export_${formatDateDMY(new Date()).replace(/\//g, '-')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      document.getElementById("toastMessage").innerText = msg;
+      t.classList.remove("-translate-y-28");
+      t.classList.add("translate-y-0");
+      setTimeout(() => {
+        t.classList.remove("translate-y-0");
+        t.classList.add("-translate-y-28");
+      }, 2200);
     }
   </script>
 </body>
