@@ -111,9 +111,16 @@
 
     <div class="flex items-center space-x-2">
       <span id="adminBadge" class="hidden px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider border border-amber-500/30">ADMIN</span>
+      
+      <!-- BOUTON ACTUALISER PLACÉ ENTRE ADMIN ET LE NOM DE L'AGENT -->
+      <button onclick="manualSync()" title="Actualiser les données" class="flex items-center space-x-1 bg-slate-850 hover:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs text-indigo-300 transition">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline font-semibold">Actualiser</span>
+      </button>
+
       <button onclick="openAgentModal()" class="flex items-center space-x-1.5 bg-slate-850 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-200">
         <i data-lucide="user" class="w-3.5 h-3.5 text-amber-500"></i>
-        <span id="currentAgentName" class="font-bold truncate max-w-[110px]">Chargement...</span>
+        <span id="currentAgentName" class="font-bold truncate max-w-[90px]">Chargement...</span>
         <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400 ml-0.5"></i>
       </button>
     </div>
@@ -190,7 +197,7 @@
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE CORRIGÉE ET ACCESSIBLE -->
+          <!-- RECHERCHE CATALOGUE CORRIGÉE & LISTE AGRANDIE -->
           <div class="relative" id="searchCatalogueWrapper">
             <div class="flex justify-between items-center mb-1.5">
               <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
@@ -215,9 +222,10 @@
               </button>
             </div>
             
+            <!-- LISTE AGRANDIE max-h-[60vh] ET SANS BOUTON DOUBLON INTERNE -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
-                 class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[22rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
+                 class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[60vh] overflow-y-auto z-40 divide-y divide-slate-700"></div>
           </div>
 
           <!-- FICHE MATÉRIEL IDENTIFIÉ -->
@@ -387,7 +395,7 @@
 
     function formatNumberToBelgianFrench(n) {
       const num = parseInt(n, 10);
-      if (isNaN(num)) return String(n);
+      if (isNaN(num)) return String(num);
       
       const units = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
                      "onze", "douze", "treize", "quatorze", "quinze", "seize"];
@@ -509,7 +517,7 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // FORCER L'OUVERTURE STRICTE SUR LA PREMIÈRE PAGE (COMPTAGE)
+      // FORCER L'OUVERTURE STRICTE SUR LA PREMIÈRE PAGE (COMPTAGE) AU LANCEMENT
       switchTab('inventory');
 
       document.addEventListener("click", (e) => {
@@ -585,7 +593,6 @@
       const dismissBtn = document.getElementById("btnDismissKeyboard");
       if (dismissBtn) dismissBtn.classList.remove("hidden");
 
-      // Scroll fluide et ciblé vers le haut pour garder le champ accessible
       const main = document.getElementById("mainContent");
       if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -648,8 +655,7 @@
       }
       currentAgent = val;
       localStorage.setItem("inv_current_agent", currentAgent);
-      sessionValidationCount = 0;
-      sessionStorage.setItem("inv_session_validations", 0);
+      // Remarque: Entrepreneur et Métier restent mémorisés (pas de reset de leurs valeurs locales)
       isMonitoringUnlocked = false;
       updateAgentUI();
       document.getElementById("userModal").classList.add("hidden");
@@ -820,6 +826,7 @@
       renderSuggestions(sortedResults);
     }
 
+    // --- LISTE DES RÉSULTATS AGRANDIE SANS BOUTON DOUBLON INTERNE ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
       if (!dd) return;
@@ -833,9 +840,6 @@
       let html = `
         <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between items-center border-b border-slate-700 sticky top-0 z-10 backdrop-blur-sm">
           <span>${results.length} article(s) trouvé(s)</span>
-          <button type="button" onclick="blurSearchInput()" class="text-amber-300 font-black bg-slate-900 px-3 py-1 rounded-lg border border-amber-500/40 text-xs shadow">
-            Fermer clavier ✕
-          </button>
         </div>
       `;
 
