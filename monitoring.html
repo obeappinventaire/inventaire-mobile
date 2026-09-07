@@ -44,10 +44,10 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
+  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN (BOUTON ORANGE ET SÉLECTION STABLE) ================= -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-5 text-center">
-      <div class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
         <img src="app_icon_co2h2o.png" alt="Logo" class="w-10 h-10 object-contain" onerror="this.src='icon.svg'">
       </div>
       <div>
@@ -58,17 +58,18 @@
       <div class="space-y-3 text-left">
         <div>
           <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Superviseur</label>
-          <select id="authAdminSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 font-medium focus:border-indigo-600 focus:bg-white focus:outline-none">
+          <select id="authAdminSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 font-medium focus:border-orange-500 focus:bg-white focus:outline-none">
             <option value="">Chargement des administrateurs...</option>
           </select>
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mot de passe / Code PIN</label>
-          <input type="password" id="authPassword" placeholder="••••" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 focus:border-indigo-600 focus:bg-white focus:outline-none text-center font-mono text-base">
+          <input type="password" id="authPassword" placeholder="••••" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 focus:border-orange-500 focus:bg-white focus:outline-none text-center font-mono text-base">
         </div>
       </div>
 
-      <button onclick="authenticateAdmin()" class="w-full h-12 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition">
+      <!-- Bouton orange assorti à l'icône -->
+      <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition mt-2">
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
@@ -90,7 +91,7 @@
       <div>
         <h1 class="text-sm font-bold text-slate-900 flex items-center gap-2">
           Dashboard Manager
-          <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-200">Supervision Centrale</span>
+          <span class="px-2 py-0.5 rounded bg-orange-50 text-orange-700 text-[10px] font-mono font-bold tracking-wide uppercase border border-orange-200">Supervision Centrale</span>
         </h1>
       </div>
     </div>
@@ -103,7 +104,7 @@
       <div class="h-4 w-px bg-slate-200"></div>
       <div class="flex items-center space-x-2">
         <span class="text-xs text-slate-500">Admin :</span>
-        <span id="activeAdminName" class="text-xs font-black text-indigo-700">--</span>
+        <span id="activeAdminName" class="text-xs font-black text-orange-700">--</span>
       </div>
       <button onclick="syncMonitoringData()" title="Actualiser" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
@@ -124,7 +125,7 @@
         <!-- Navigation Vues Principales -->
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
-          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition">
+          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition">
             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
             <span>Activité Globale</span>
           </button>
@@ -140,12 +141,12 @@
 
         <!-- SÉLECTEUR DE PÉRIODE ÉPURÉ -->
         <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
-          <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+          <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
           </span>
 
           <div class="relative">
-            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-600 cursor-pointer shadow-xs">
+            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
               <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
               <option value="PREV_WEEK">◀ Semaine précédente</option>
               <option value="TODAY">☀️ Aujourd'hui</option>
@@ -158,11 +159,11 @@
           <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-200">
             <div>
               <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du (JJ/MM/AAAA) :</label>
-              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-indigo-600">
+              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
             </div>
             <div>
               <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au (JJ/MM/AAAA) :</label>
-              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-indigo-600">
+              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
             </div>
           </div>
         </div>
@@ -179,7 +180,7 @@
           <div class="space-y-2 text-xs pt-1">
             <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-slate-300 transition shadow-xs">
               <span class="text-[11px] text-slate-700 font-medium">Alerter Rupture (Stock = 0)</span>
-              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0">
+              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
             </label>
 
             <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
@@ -194,7 +195,7 @@
 
       </div>
 
-      <!-- Mention de copyright obligatoire -->
+      <!-- Mention légale obligatoire -->
       <div class="p-4 border-t border-slate-200 text-center bg-slate-50/70 shrink-0">
         <span class="text-[10px] font-medium text-slate-500 tracking-wider">
           &copy; made by CO2H2O srlu
@@ -213,7 +214,7 @@
           <div>
             <div class="flex justify-between items-center mb-2 px-1">
               <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
-              <span id="periodBadgeGlobal" class="text-xs text-indigo-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
+              <span id="periodBadgeGlobal" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
             </div>
             <div class="grid grid-cols-4 gap-4">
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
@@ -222,10 +223,10 @@
               </div>
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
                 <span class="text-xs font-bold text-slate-500 uppercase block">Total Pièces</span>
-                <span id="kpiTotalPieces" class="text-2xl font-black text-indigo-600 mt-1 block">0</span>
+                <span id="kpiTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
               </div>
 
-              <!-- KPI RUPTURES AVEC BOUTON ICÔNE LISTE DIRECT -->
+              <!-- KPI RUPTURES AVEC BOUTON ICÔNE LISTE -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
@@ -237,7 +238,7 @@
                 <span id="kpiZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
               </div>
 
-              <!-- KPI ALERTES ATYPIQUES AVEC BOUTON ICÔNE LISTE DIRECT -->
+              <!-- KPI ALERTES ATYPIQUES AVEC BOUTON ICÔNE LISTE -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-amber-600 uppercase">Alertes Atypiques</span>
@@ -256,7 +257,7 @@
             <div class="flex items-center justify-between gap-4">
               <div class="flex-1 relative">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Rechercher par désignation, réf SAP..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white">
+                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Rechercher par désignation, réf SAP..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
               </div>
               <div class="flex items-center space-x-2">
                 <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
@@ -275,13 +276,13 @@
               <!-- Multi-sélection Agents -->
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-indigo-600">
+                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
                   <span id="btnLabelAgents" class="truncate font-semibold">Tous les agents</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
                 <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
                   <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('agents', true)" class="text-indigo-600 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('agents', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
                     <button type="button" onclick="selectAll('agents', false)" class="text-slate-500 hover:underline">Tout décocher</button>
                   </div>
                   <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
@@ -291,13 +292,13 @@
               <!-- Multi-sélection Entrepreneurs -->
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-indigo-600">
+                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
                   <span id="btnLabelContractors" class="truncate font-semibold">Tous les entrepreneurs</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
                 <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
                   <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('contractors', true)" class="text-indigo-600 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('contractors', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
                     <button type="button" onclick="selectAll('contractors', false)" class="text-slate-500 hover:underline">Tout décocher</button>
                   </div>
                   <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
@@ -307,13 +308,13 @@
               <!-- Multi-sélection Métiers -->
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-indigo-600">
+                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
                   <span id="btnLabelTrades" class="truncate font-semibold">Tous les métiers</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
                 <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
                   <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('trades', true)" class="text-indigo-600 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('trades', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
                     <button type="button" onclick="selectAll('trades', false)" class="text-slate-500 hover:underline">Tout décocher</button>
                   </div>
                   <div id="checkboxesTrades" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
@@ -356,7 +357,7 @@
             <div class="flex justify-between items-center mb-2 px-1">
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
-                <span id="periodBadgeAgents" class="text-xs text-indigo-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
+                <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
               </div>
               <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition shadow-xs">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -370,14 +371,30 @@
               </div>
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
                 <span class="text-xs font-bold text-slate-500 uppercase block">Pièces Totales</span>
-                <span id="kpiAgentsTotalPieces" class="text-2xl font-black text-indigo-600 mt-1 block">0</span>
+                <span id="kpiAgentsTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-rose-600 uppercase block">Ruptures Déclarées</span>
+
+              <!-- KPI RUPTURES DÉCLARÉES AVEC ICÔNE LISTE DANS L'ONGLET 2 -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
+                  <button onclick="filterByKpi('ZERO')" title="Afficher la liste des ruptures dans l'Activité Globale" 
+                          class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                    <i data-lucide="list-filter" class="w-4 h-4"></i>
+                  </button>
+                </div>
                 <span id="kpiAgentsZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-amber-600 uppercase block">Alertes Flotte</span>
+
+              <!-- KPI ALERTES FLOTTE AVEC ICÔNE LISTE DANS L'ONGLET 2 -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-amber-600 uppercase">Alertes Flotte</span>
+                  <button onclick="filterByKpi('HIGH')" title="Afficher la liste des alertes dans l'Activité Globale" 
+                          class="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                    <i data-lucide="list-filter" class="w-4 h-4"></i>
+                  </button>
+                </div>
                 <span id="kpiAgentsAtypicalStock" class="text-2xl font-black text-amber-600 mt-1 block">0</span>
               </div>
             </div>
@@ -386,22 +403,22 @@
           <div id="agentsAccordionContainer" class="space-y-4"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
+        <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION (BELGIQUE & CENTRAGE OPTIMISÉ) ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
-                Cartographie Interactive du Terrain (Wallonie)
+                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
+                Cartographie Interactive du Terrain (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Survolez un point pour voir l'agent et son statut • Cliquez pour le résumé et le recentrage Wallonie</p>
+              <p class="text-xs text-slate-500 mt-0.5">Survolez pour l'agent et le statut • Cliquez pour centrer et afficher le détail complet</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="resetMapToWallonia()" class="text-xs font-bold text-indigo-600 bg-white hover:bg-indigo-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs transition flex items-center gap-1">
+              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs transition flex items-center gap-1">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
-                <span>Recentrer Wallonie</span>
+                <span>Recentrer Belgique</span>
               </button>
-              <span class="text-xs font-mono text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
+              <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
             </div>
           </div>
           <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-xs">
@@ -442,12 +459,12 @@
     let filterOnlyActiveAgents = false;
     let openDrawers = {};
 
-    // --- COORDONNÉES ET LIMITES GÉOGRAPHIQUES STRICTES DE LA WALLONIE ---
-    const WALLONIA_CENTER = [50.45, 4.85]; // Centre de la région wallonne
-    const WALLONIA_ZOOM = 8.5;
-    const WALLONIA_BOUNDS = [
-      [49.45, 2.75], // Sud-Ouest
-      [50.85, 6.45]  // Nord-Est
+    // --- COORDONNÉES ET LIMITES ÉLARGIES À LA BELGIQUE ENTIÈRE ---
+    const BELGIUM_CENTER = [50.64, 4.67]; // Centre géographique de la Belgique
+    const BELGIUM_ZOOM = 8;
+    const BELGIUM_BOUNDS = [
+      [49.40, 2.45], // Sud-Ouest
+      [51.55, 6.50]  // Nord-Est
     ];
 
     function parseItemDate(str) {
@@ -515,7 +532,7 @@
       const cAgents = document.getElementById("checkboxesAgents");
       cAgents.innerHTML = availableAgents.map(a => `
         <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-          <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0">
+          <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
           <span class="truncate">${a}</span>
         </label>
       `).join('');
@@ -523,7 +540,7 @@
       const cContractors = document.getElementById("checkboxesContractors");
       cContractors.innerHTML = availableContractors.map(c => `
         <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-          <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0">
+          <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
           <span class="truncate">${c}</span>
         </label>
       `).join('');
@@ -531,15 +548,17 @@
       const cTrades = document.getElementById("checkboxesTrades");
       cTrades.innerHTML = availableTrades.map(t => `
         <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-          <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-0">
+          <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
           <span class="truncate">${t}</span>
         </label>
       `).join('');
 
+      // CORRECTION BUG : Maintien de la valeur sélectionnée par l'admin lors du rechargement
       const adminSel = document.getElementById("authAdminSelect");
       if (adminAgents.length > 0) {
+        const currentlySelected = adminSel.value;
         adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
-          adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+          adminAgents.map(a => `<option value="${a}" ${a === currentlySelected ? 'selected' : ''}>${a}</option>`).join('');
       }
     }
 
@@ -687,7 +706,7 @@
       filterOnlyActiveAgents = !filterOnlyActiveAgents;
       const btn = document.getElementById("btnFilterActiveAgentsOnly");
       if (filterOnlyActiveAgents) {
-        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-600 flex items-center gap-1.5 transition shadow-xs";
+        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-[#f97316] text-white border border-orange-600 flex items-center gap-1.5 transition shadow-xs";
       } else {
         btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition shadow-xs";
       }
@@ -892,10 +911,10 @@
 
             <div class="grid grid-cols-3 gap-3 text-xs">
               
-              <div onclick="toggleDrawer('${agent}', 'cadence')" class="p-2.5 rounded-xl border cursor-pointer transition ${isCadenceOpen ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
+              <div onclick="toggleDrawer('${agent}', 'cadence')" class="p-2.5 rounded-xl border cursor-pointer transition ${isCadenceOpen ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
                 <div class="flex justify-between items-center mb-0.5">
                   <span class="text-slate-500 text-[10px] uppercase font-bold">⚡ Cadence</span>
-                  <i data-lucide="${isCadenceOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <i data-lucide="${isCadenceOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-orange-600"></i>
                 </div>
                 <span class="font-black text-slate-900 text-base">${cadenceLh} <span class="text-xs font-normal text-slate-500">l/h</span></span>
               </div>
@@ -913,15 +932,15 @@
                   <span class="text-slate-500 text-[10px] uppercase font-bold">🌐 Périmètre</span>
                   <i data-lucide="${isPerimeterOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-emerald-600"></i>
                 </div>
-                <span class="font-black text-indigo-600 text-base">${Object.keys(distinctPairs).length} <span class="text-xs font-normal text-slate-500">traités</span></span>
+                <span class="font-black text-orange-600 text-base">${Object.keys(distinctPairs).length} <span class="text-xs font-normal text-slate-500">traités</span></span>
               </div>
 
             </div>
 
             ${isCadenceOpen ? `
-              <div class="p-3 bg-slate-50 rounded-xl border border-indigo-200 text-xs space-y-1">
-                <span class="text-[10px] font-bold text-indigo-700 uppercase block">Analyse de productivité horaire</span>
-                <p class="text-slate-700">Volume total : <strong class="text-slate-900">${agentEntries.length} lignes</strong> saisies pour <strong class="text-indigo-600">${totalPieces} pièces</strong>.</p>
+              <div class="p-3 bg-slate-50 rounded-xl border border-orange-200 text-xs space-y-1">
+                <span class="text-[10px] font-bold text-orange-700 uppercase block">Analyse de productivité horaire</span>
+                <p class="text-slate-700">Volume total : <strong class="text-slate-900">${agentEntries.length} lignes</strong> saisies pour <strong class="text-orange-600">${totalPieces} pièces</strong>.</p>
                 <p class="text-slate-500 text-[11px]">Amplitude active de la session : <strong>${amplitudeHours.toFixed(1)} heure(s)</strong>.</p>
               </div>
             ` : ''}
@@ -972,17 +991,16 @@
     }
 
     // =========================================================================
-    // CARTOGRAPHIE INTERACTIVE : CENTRÉE ET BLOQUÉE SUR LA WALLONIE
+    // CARTOGRAPHIE INTERACTIVE : ÉLARGIE À LA BELGIQUE ET CENTRÉE AU CLIC
     // =========================================================================
     function renderMap(list) {
       if (!map) {
-        // Initialisation centrée et contrainte à la région Wallonne
         map = L.map('mapContainer', {
-          center: WALLONIA_CENTER,
-          zoom: WALLONIA_ZOOM,
-          minZoom: 7.5,
+          center: BELGIUM_CENTER,
+          zoom: BELGIUM_ZOOM,
+          minZoom: 7,
           maxZoom: 18,
-          maxBounds: WALLONIA_BOUNDS,
+          maxBounds: BELGIUM_BOUNDS,
           maxBoundsViscosity: 0.85
         });
 
@@ -1044,7 +1062,7 @@
             fillOpacity: 0.9
           }).addTo(markersLayer);
 
-          // 1. SURVOL DE LA SOURIS (Nom de l'agent + chantiers en cours ou terminés)
+          // 1. SURVOL DE LA SOURIS
           marker.bindTooltip(`
             <div class="text-xs font-sans px-1 py-1 space-y-0.5 leading-snug">
               <strong class="text-slate-900 block text-sm">${item.user}</strong>
@@ -1057,7 +1075,12 @@
             </div>
           `, { direction: 'top', offset: [0, -6] });
 
-          // 2. CLIC SUR LE POINT (Cadre large sans coupure)
+          // 2. REPOSITIONNEMENT ET CENTRAGE AUTOMATIQUE DANS LA HAUTEUR DE LA CARTE AU CLIC
+          marker.on('click', () => {
+            map.panTo([lat, lng], { animate: true, duration: 0.5 });
+          });
+
+          // 3. POPUP CONFIGURÉ SANS COUPURE DU TEXTE
           const safeUser = (item.user || '').replace(/'/g, "\\'");
           const safeContractor = (item.contractor || '').replace(/'/g, "\\'");
           const safeTrade = (item.trade || '').replace(/'/g, "\\'");
@@ -1067,7 +1090,7 @@
               <div class="flex justify-between items-start border-b border-slate-100 pb-2">
                 <div class="pr-2">
                   <strong class="text-slate-900 text-sm block leading-snug">${item.contractor}</strong>
-                  <span class="text-indigo-600 font-bold block">${item.trade}</span>
+                  <span class="text-orange-600 font-bold block">${item.trade}</span>
                 </div>
                 ${statusBadge}
               </div>
@@ -1079,7 +1102,7 @@
                 </div>
                 <div class="flex justify-between items-center">
                   <span>Lignes traitées :</span>
-                  <strong class="text-indigo-700 font-mono text-xs">${linesCount} ligne(s)</strong>
+                  <strong class="text-orange-700 font-mono text-xs">${linesCount} ligne(s)</strong>
                 </div>
                 <div class="flex justify-between items-center">
                   <span>1ère saisie :</span>
@@ -1092,12 +1115,15 @@
               </div>
 
               <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
-                      class="w-full mt-2 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5">
+                      class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5">
                 <i data-lucide="list" class="w-3.5 h-3.5"></i>
                 <span>Voir le listing dans l'Activité Globale</span>
               </button>
             </div>
-          `);
+          `, {
+            autoPan: true,
+            autoPanPadding: [80, 80]
+          });
         }
       });
 
@@ -1105,9 +1131,9 @@
       lucide.createIcons();
     }
 
-    function resetMapToWallonia() {
+    function resetMapToBelgium() {
       if (map) {
-        map.setView(WALLONIA_CENTER, WALLONIA_ZOOM);
+        map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
       }
     }
 
@@ -1147,17 +1173,17 @@
 
       if (v === 'global') {
         document.getElementById("viewGlobal").classList.remove("hidden");
-        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
+        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
       } else if (v === 'agents') {
         document.getElementById("viewAgents").classList.remove("hidden");
-        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
+        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
       } else if (v === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
+        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
         setTimeout(() => { 
           if (map) {
             map.invalidateSize();
-            resetMapToWallonia();
+            resetMapToBelgium();
           }
         }, 200);
       }
