@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inventaire Logistique Terrain</title>
 
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
   <meta name="mobile-web-app-capable" content="yes">
@@ -26,15 +27,15 @@
     input[type=number] { -moz-appearance: textfield; }
     .ocr-reticle {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 86%; height: 36%; border: 2px solid #10b981; border-radius: 12px;
+      width: 88%; height: 35%; border: 2px solid #10b981; border-radius: 12px;
       box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55); pointer-events: none;
-      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; z-index: 5;
+      display: flex; align-items: center; justify-content: center; z-index: 5;
     }
   </style>
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- MODALE IDENTIFICATION -->
+  <!-- MODALE IDENTIFICATION OBLIGATOIRE AU DÉMARRAGE -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center mx-auto">
@@ -74,9 +75,10 @@
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL -->
+  <!-- CONTENU PRINCIPAL DÉFILANT -->
   <main class="flex-1 overflow-y-auto bg-slate-900 border-x border-slate-800/60 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
     <div class="space-y-4">
+      
       <!-- VUE 1 : COMPTAGE -->
       <section id="view-inventory" class="space-y-4">
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
@@ -104,30 +106,48 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- Zone Caméra -->
+          <!-- Zone Caméra Optimisée -->
           <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
+            <!-- Bandeau Haut Visée QR / EAN -->
+            <div class="absolute top-2 inset-x-0 z-10 text-center pointer-events-none">
+              <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-950/80 text-blue-300 border border-blue-500/40 px-3 py-1 rounded-full backdrop-blur-sm">
+                ZONE POUR QR / EAN
+              </span>
+            </div>
+
             <div id="reader" class="w-full relative"></div>
+
+            <!-- Cadre Vert Centré Référence SAP -->
             <div class="ocr-reticle">
-              <span class="text-[10px] font-mono text-emerald-300 bg-slate-950/90 px-2.5 py-0.5 rounded border border-emerald-500/40 tracking-wide font-bold">CADRER 6 CHIFFRES SAP</span>
+              <span class="text-[11px] font-mono text-emerald-300 bg-slate-950/90 px-3 py-1 rounded border border-emerald-500/50 tracking-wider font-bold shadow-lg">
+                ZONE POUR RÉF SAP 6 CHIFFRES
+              </span>
             </div>
             <canvas id="ocrCanvas" class="hidden"></canvas>
             
-            <div class="p-2.5 bg-slate-900/95 flex items-center justify-between border-t border-slate-800 z-10 relative">
-              <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[130px]">Visez les 6 chiffres...</span>
-              <div class="flex items-center space-x-2">
-                <button id="btnTorch" onclick="toggleTorch()" title="Lumière" class="px-2.5 py-1.5 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs shadow flex items-center gap-1 border border-slate-700 transition">
+            <!-- Barre Inférieure : 3 Boutons Alignés et Centrés de Même Taille -->
+            <div class="p-2.5 bg-slate-900/95 border-t border-slate-800 z-10 relative">
+              <div class="grid grid-cols-3 gap-2 w-full">
+                <!-- Bouton 1 : Flash -->
+                <button id="btnTorch" onclick="toggleTorch()" class="h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition">
                   <i data-lucide="flashlight" id="torchIcon" class="w-4 h-4 text-slate-300"></i>
                   <span id="torchLabel">Flash</span>
                 </button>
-                <button onclick="triggerManualOcrCapture()" class="px-3 py-1.5 bg-amber-500 active:bg-amber-600 text-slate-950 font-black rounded-lg text-xs shadow flex items-center gap-1.5">
-                  <i data-lucide="camera" class="w-4 h-4"></i>
-                  <span>Lire Réf Bac</span>
+                <!-- Bouton 2 : Scanner Réf SAP (Vert Émeraude) -->
+                <button onclick="triggerManualOcrCapture()" class="h-12 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="scan" class="w-4 h-4"></i>
+                  <span>Scanner Réf SAP</span>
+                </button>
+                <!-- Bouton 3 : Fermer (Rouge Vif) -->
+                <button onclick="stopScanner()" class="h-12 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="x" class="w-4 h-4"></i>
+                  <span>Fermer</span>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE -->
+          <!-- RECHERCHE CATALOGUE MULTI-CHAMPS -->
           <div class="relative">
             <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
             <div class="relative flex items-center">
@@ -148,6 +168,7 @@
                  class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[26rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
           </div>
 
+          <!-- FICHE MATÉRIEL IDENTIFIÉ -->
           <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
             <div class="flex items-start justify-between">
               <div class="min-w-0 pr-2">
@@ -169,6 +190,7 @@
           </div>
         </div>
 
+        <!-- ZONE DE SAISIE DE QUANTITÉ (ÉLARGIE ET VIDE AU DÉPART) -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
           <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -184,13 +206,14 @@
           </div>
         </div>
 
+        <!-- BOUTON DE VALIDATION AVEC VERROU ANTI-DOUBLON -->
         <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-xl flex items-center justify-center space-x-2 transition">
           <i data-lucide="check-circle" id="submitIcon" class="w-6 h-6"></i>
           <span id="submitLabel">VALIDER ET ARCHIVER</span>
         </button>
       </section>
 
-      <!-- VUE 2 : HISTORIQUE -->
+      <!-- VUE 2 : HISTORIQUE EN CARTES EMPILÉES LARGES -->
       <section id="view-history" class="hidden space-y-4">
         <div class="flex justify-between items-center text-xs text-slate-400 px-1">
           <span id="historyHeaderLabel">Mes saisies</span>
@@ -199,10 +222,10 @@
             <span>Actualiser</span>
           </button>
         </div>
-        <div id="historyList" class="space-y-2.5"></div>
+        <div id="historyList" class="space-y-3"></div>
       </section>
 
-      <!-- VUE 3 : MONITORING MOBILE -->
+      <!-- VUE 3 : MONITORING MOBILE (RÉSERVÉ ADMIN) -->
       <section id="view-monitoring" class="hidden space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -236,6 +259,7 @@
       </section>
     </div>
 
+    <!-- MENTION LÉGALE BASSE -->
     <div class="text-center pt-6 pb-2 mb-1">
       <span class="text-[10px] font-medium text-slate-400 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -243,10 +267,24 @@
     </div>
   </main>
 
-  <!-- NAVIGATION BASSE -->
+  <!-- NAVIGATION BASSE AVEC SVG OFFICIEL CENTRÉ (x: 8, 12, 16) -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
-      <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Coins affinés de moitié (stroke-width="1") -->
+        <g stroke="currentColor" stroke-width="1">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+          <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+          <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+        </g>
+        <!-- Barres verticales orange parfaitement centrées (x: 8, 12, 16) -->
+        <g stroke="#f97316" stroke-width="2">
+          <line x1="8" y1="7" x2="8" y2="17"/>
+          <line x1="12" y1="7" x2="12" y2="17"/>
+          <line x1="16" y1="7" x2="16" y2="17"/>
+        </g>
+      </svg>
       <span class="text-xs font-semibold mt-1">Comptage</span>
     </button>
     <button id="tabNavHistory" onclick="switchTab('history')" class="flex flex-col items-center justify-center text-slate-400">
@@ -288,7 +326,7 @@
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
 
-    // RETOUR AUDIO (SPEECH SYNTHESIS)
+    // RETOUR VOCAL AUTOMATIQUE (Audio Feedback)
     function speakFeedback(text) {
       if (!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
@@ -625,7 +663,6 @@
       blurSearchInput();
       if (navigator.vibrate) navigator.vibrate(50);
 
-      // RETOUR VOCAL
       speakFeedback(`${activeItem.designation}. Réf SAP ${activeItem.sapRef}`);
     }
 
@@ -697,7 +734,6 @@
       resetTorchUI();
       document.getElementById("scannerContainer").classList.add("hidden");
       document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-      document.getElementById("scanStatusMsg").innerText = "Visez les 6 chiffres...";
     }
 
     async function toggleTorch() {
@@ -736,11 +772,11 @@
       const icon = document.getElementById("torchIcon");
       if (!btn || !label || !icon) return;
       if (isTorchOn) {
-        btn.className = "px-2.5 py-1.5 bg-amber-400 active:bg-amber-500 text-slate-950 font-black rounded-lg text-xs shadow flex items-center gap-1 border border-amber-300 transition";
+        btn.className = "h-12 bg-amber-400 active:bg-amber-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-amber-300 transition";
         label.innerText = "Allumé";
         icon.className = "w-4 h-4 text-slate-950 fill-slate-950";
       } else {
-        btn.className = "px-2.5 py-1.5 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs shadow flex items-center gap-1 border border-slate-700 transition";
+        btn.className = "h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition";
         label.innerText = "Flash";
         icon.className = "w-4 h-4 text-slate-300";
       }
@@ -753,7 +789,7 @@
       const label = document.getElementById("torchLabel");
       const icon = document.getElementById("torchIcon");
       if (btn && label && icon) {
-        btn.className = "px-2.5 py-2 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs shadow flex items-center gap-1 border border-slate-700 transition";
+        btn.className = "h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700 transition";
         label.innerText = "Flash";
         icon.className = "w-4 h-4 text-slate-300";
       }
@@ -769,7 +805,6 @@
 
     async function triggerManualOcrCapture() {
       if (!isScanning) return;
-      document.getElementById("scanStatusMsg").innerText = "⏳ Analyse en cours...";
       await processVideoOcr(true);
     }
 
@@ -793,8 +828,8 @@
 
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      const cropW = Math.floor(video.videoWidth * 0.86);
-      const cropH = Math.floor(video.videoHeight * 0.36);
+      const cropW = Math.floor(video.videoWidth * 0.88);
+      const cropH = Math.floor(video.videoHeight * 0.35);
       const startX = Math.floor((video.videoWidth - cropW) / 2);
       const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
 
@@ -866,7 +901,7 @@
           return;
         }
         if (forceToast) {
-          document.getElementById("scanStatusMsg").innerText = "⚠️ Réf SAP inconnue dans le catalogue.";
+          showToast("⚠️ Réf SAP inconnue dans le catalogue.");
         }
       } catch (e) {
         console.warn("Erreur OCR :", e);
@@ -953,7 +988,7 @@
       }
     }
 
-    // SOUMISSION AVEC VERROUILLAGE ANTI-DOUBLON 5 MINUTES
+    // SOUMISSION AVEC CONTRÔLE ANTI-DOUBLON STRICT 5 MINUTES
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -991,7 +1026,6 @@
         return;
       }
 
-      // CONTRÔLE ANTI-DOUBLON STRICT 5 MINUTES
       const nowMs = Date.now();
       const fiveMinMs = 5 * 60 * 1000;
       const recentDuplicate = cachedHistory.find(entry => {
@@ -1102,20 +1136,23 @@
       }
     }
 
+    // RENDU DE L'HISTORIQUE EN CARTES LARGES AVEC BOUTONS CONFORTABLES TACTILES (h-11)
     function renderHistory() {
       const c = document.getElementById("historyList");
       const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
       document.getElementById("historyHeaderLabel").innerText = isAdmin() ? `Toutes les saisies (${list.length})` : `Mes saisies (${list.length})`;
+      
       if (list.length === 0) {
         c.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Aucune saisie enregistrée.</div>';
         return;
       }
+
       const pendingIds = new Set(syncQueue.map(q => q.id));
       c.innerHTML = list.map(it => {
         const isPending = pendingIds.has(it.id);
         return `
-          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800/80'} p-3.5 rounded-xl flex items-center justify-between shadow-sm">
-            <div class="min-w-0 flex-1 pr-3">
+          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800/80'} p-3.5 rounded-xl space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
                 <span class="font-mono font-black text-amber-400 text-sm tracking-wide">${it.sapRef}</span>
                 <span class="text-[10px] text-slate-400">• ${it.timestamp}</span>
@@ -1123,19 +1160,26 @@
                 ${(it.lat || it.latitude) ? `<span class="text-[9px] text-emerald-400 font-mono">📍</span>` : ''}
                 ${isPending ? `<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-bold">Attente</span>` : ''}
               </div>
-              <p class="text-xs font-semibold text-slate-200 truncate mt-0.5">${it.designation}</p>
-              <p class="text-[11px] text-slate-400 truncate">${it.contractor} (${it.trade})</p>
-            </div>
-            <div class="flex items-center space-x-2.5 shrink-0">
-              <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 min-w-[50px]">
-                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Qté</span>
-                <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
+              <div class="flex items-center space-x-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg">
+                <span class="text-[10px] uppercase font-bold text-slate-400">Qté :</span>
+                <span class="text-base font-black text-emerald-400 font-mono">${it.quantity}</span>
               </div>
-              <button onclick="editHistoryItem('${it.id}', ${it.quantity})" class="w-8 h-8 rounded-lg bg-slate-850 hover:bg-slate-800 active:bg-blue-600 text-slate-400 hover:text-white flex items-center justify-center border border-slate-750">
-                <i data-lucide="edit-3" class="w-4 h-4"></i>
+            </div>
+
+            <div>
+              <p class="text-xs font-bold text-slate-200 leading-snug">${it.designation}</p>
+              <p class="text-[11px] text-slate-400 truncate mt-0.5">${it.contractor} (${it.trade})</p>
+            </div>
+
+            <!-- BOUTONS ACTIONS LARGES (h-11) POUR UTILISATION GANTS -->
+            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
+              <button onclick="editHistoryItem('${it.id}', ${it.quantity})" class="h-11 bg-slate-850 hover:bg-slate-800 active:bg-blue-600 border border-slate-750 text-slate-200 rounded-xl flex items-center justify-center space-x-2 text-xs font-bold transition shadow">
+                <i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i>
+                <span>Modifier</span>
               </button>
-              <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-slate-850 hover:bg-rose-900/60 active:bg-rose-600 text-slate-400 hover:text-rose-400 flex items-center justify-center border border-slate-750">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" class="h-11 bg-slate-850 hover:bg-rose-900/40 active:bg-rose-600 border border-slate-750 text-slate-200 rounded-xl flex items-center justify-center space-x-2 text-xs font-bold transition shadow">
+                <i data-lucide="trash-2" class="w-4 h-4 text-rose-400"></i>
+                <span>Supprimer</span>
               </button>
             </div>
           </div>

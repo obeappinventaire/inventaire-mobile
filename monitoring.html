@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision Manager - CO2H2O srlu</title>
 
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -91,6 +92,20 @@
             </div>
           </div>
         </div>
+
+        <!-- RÉCAPITULATIF SYNTHÉTIQUE SIDEBAR -->
+        <div class="px-4">
+          <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+            <div class="flex justify-between">
+              <span>Saisies période :</span>
+              <strong id="sideTotalCount" class="text-white font-mono">0</strong>
+            </div>
+            <div class="flex justify-between">
+              <span>Alertes période :</span>
+              <strong id="sideAlertCount" class="text-amber-400 font-mono">0</strong>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="p-4 border-t border-slate-800 text-center">
@@ -121,23 +136,29 @@
 
       <!-- VUE 1 : ACTIVITÉ GLOBALE -->
       <section id="tab-content-global" class="space-y-6">
-        <!-- 4 KPIS FIXES -->
-        <div class="grid grid-cols-4 gap-4">
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-            <span class="text-xs font-bold text-slate-400 uppercase">Total Lignes</span>
-            <h3 id="kpiRows" class="text-3xl font-black text-white mt-1">0</h3>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Activité Entrepôt sur la période sélectionnée</span>
+            <span id="periodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold">--</span>
           </div>
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-            <span class="text-xs font-bold text-slate-400 uppercase">Total Pièces</span>
-            <h3 id="kpiQty" class="text-3xl font-black text-emerald-400 mt-1">0</h3>
-          </div>
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-            <span class="text-xs font-bold text-amber-400 uppercase">Stocks à 0</span>
-            <h3 id="kpiZero" class="text-3xl font-black text-amber-400 mt-1">0</h3>
-          </div>
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-            <span class="text-xs font-bold text-rose-400 uppercase">Volumes > Seuil</span>
-            <h3 id="kpiOverMax" class="text-3xl font-black text-rose-400 mt-1">0</h3>
+          <!-- 4 KPIS FIXES -->
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-slate-400 uppercase">Total Lignes</span>
+              <h3 id="kpiRows" class="text-3xl font-black text-white mt-1 font-mono">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-slate-400 uppercase">Total Pièces</span>
+              <h3 id="kpiQty" class="text-3xl font-black text-emerald-400 mt-1 font-mono">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-amber-400 uppercase">Stocks à 0</span>
+              <h3 id="kpiZero" class="text-3xl font-black text-amber-400 mt-1 font-mono">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-rose-400 uppercase">Volumes > Seuil</span>
+              <h3 id="kpiOverMax" class="text-3xl font-black text-rose-400 mt-1 font-mono">0</h3>
+            </div>
           </div>
         </div>
 
@@ -159,7 +180,7 @@
           </div>
         </details>
 
-        <!-- MENUS DÉROULANTS À CASES À COCHER MULTIPLES (MULTI-SELECT DROPDOWNS) -->
+        <!-- MENUS DÉROULANTS À VOLETS FLOTTANTS AVEC CASES À COCHER MULTIPLES -->
         <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 shadow">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-300 uppercase">Filtres Multicritères</span>
@@ -182,20 +203,28 @@
               </button>
               <div id="ddTrades" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-2xl z-30 space-y-2 max-h-48 overflow-y-auto"></div>
             </div>
-            <!-- Dropdown Anomalies -->
+            <!-- Dropdown Statuts / Anomalies -->
             <div class="relative">
               <button onclick="toggleDropdownMenu('ddAlerts')" id="btnFilterAlerts" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-xs text-left text-white flex justify-between items-center">
                 <span class="truncate">Tous les statuts</span>
                 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
               </button>
               <div id="ddAlerts" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-2xl z-30 space-y-2">
+                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
+                  <button type="button" onclick="selectAllAlerts(true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                  <button type="button" onclick="selectAllAlerts(false)" class="text-slate-400 hover:underline">Tout décocher</button>
+                </div>
                 <label class="flex items-center space-x-2 text-xs text-slate-300">
-                  <input type="checkbox" value="zero" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950">
-                  <span>Stock égal à 0</span>
+                  <input type="checkbox" name="chkAlert" value="OK" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950 text-emerald-500">
+                  <span>Conformes</span>
                 </label>
                 <label class="flex items-center space-x-2 text-xs text-slate-300">
-                  <input type="checkbox" value="over" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950">
-                  <span>Quantité > Seuil max</span>
+                  <input type="checkbox" name="chkAlert" value="ZERO" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950 text-rose-500">
+                  <span class="text-rose-400 font-bold">Stocks à 0</span>
+                </label>
+                <label class="flex items-center space-x-2 text-xs text-slate-300">
+                  <input type="checkbox" name="chkAlert" value="HIGH" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950 text-amber-500">
+                  <span class="text-amber-400 font-bold">Volumes > Seuil max</span>
                 </label>
               </div>
             </div>
@@ -228,7 +257,7 @@
         </div>
       </section>
 
-      <!-- VUE 2 : SUIVI TERRAIN PAR AGENT (3 TUILES ACCORDÉONS INTERACTIVES) -->
+      <!-- VUE 2 : SUIVI TERRAIN PAR AGENT (3 TUILES ACCORDÉONS FIDÈLES) -->
       <section id="tab-content-agents" class="hidden space-y-4">
         <div id="agentCardsContainer" class="space-y-4"></div>
       </section>
@@ -405,6 +434,11 @@
       updateMultiFilter(type);
     }
 
+    function selectAllAlerts(check) {
+      document.querySelectorAll('.chk-alert').forEach(cb => cb.checked = check);
+      updateMultiFilter('alerts');
+    }
+
     function updateMultiFilter(type) {
       if (type === 'contractors') {
         selectedContractors = Array.from(document.querySelectorAll('.chk-contractor:checked')).map(cb => cb.value);
@@ -414,7 +448,7 @@
         document.getElementById("btnFilterTrades").querySelector('span').innerText = selectedTrades.length ? `${selectedTrades.length} corps d'état` : 'Tous les corps d'état';
       } else if (type === 'alerts') {
         selectedAlertTypes = Array.from(document.querySelectorAll('.chk-alert:checked')).map(cb => cb.value);
-        document.getElementById("btnFilterAlerts").querySelector('span').innerText = selectedAlertTypes.length ? `${selectedAlertTypes.length} alerte(s)` : 'Tous les statuts';
+        document.getElementById("btnFilterAlerts").querySelector('span').innerText = selectedAlertTypes.length ? `${selectedAlertTypes.length} statut(s)` : 'Tous les statuts';
       }
       applyFilters();
     }
@@ -452,12 +486,28 @@
       lucide.createIcons();
     }
 
+    function parseItemDate(timestampStr) {
+      if (!timestampStr) return new Date(0);
+      if (timestampStr.includes('/')) {
+        const parts = timestampStr.split(' ');
+        const dParts = parts[0].split('/');
+        const tParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
+        return new Date(dParts[2], dParts[1] - 1, dParts[0], tParts[0] || 0, tParts[1] || 0, tParts[2] || 0);
+      }
+      return new Date(timestampStr);
+    }
+
     function applyFilters() {
       const dStart = document.getElementById("dateStart").value;
       const dEnd = document.getElementById("dateEnd").value;
       const search = (document.getElementById("globalSearchInput").value || "").toLowerCase();
       const flagZero = document.getElementById("cfgFlagZero").checked;
       const maxQty = Number(document.getElementById("cfgMaxQty").value) || 50;
+
+      // Badge de libellé période
+      document.getElementById("periodLabelBadge").innerText = (dStart && dEnd) 
+        ? `${dStart.split('-').reverse().join('/')} ➔ ${dEnd.split('-').reverse().join('/')}` 
+        : 'Tout l\'historique';
 
       filteredHistory = cachedHistory.filter(row => {
         if (search) {
@@ -478,10 +528,13 @@
         if (selectedAlertTypes.length > 0) {
           const q = Number(row.quantity);
           const isZ = (q === 0);
-          const isO = (q > maxQty);
-          const matchZ = selectedAlertTypes.includes("zero") && isZ;
-          const matchO = selectedAlertTypes.includes("over") && isO;
-          if (!matchZ && !matchO) return false;
+          const isH = (q > maxQty);
+          const isOK = (!isZ && !isH);
+
+          const matchZ = selectedAlertTypes.includes("ZERO") && isZ;
+          const matchH = selectedAlertTypes.includes("HIGH") && isH;
+          const matchOK = selectedAlertTypes.includes("OK") && isOK;
+          if (!matchZ && !matchH && !matchOK) return false;
         }
         return true;
       });
@@ -494,10 +547,19 @@
     }
 
     function renderGlobalKpis(maxQty) {
-      document.getElementById("kpiRows").innerText = filteredHistory.length;
-      document.getElementById("kpiQty").innerText = filteredHistory.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-      document.getElementById("kpiZero").innerText = filteredHistory.filter(r => Number(r.quantity) === 0).length;
-      document.getElementById("kpiOverMax").innerText = filteredHistory.filter(r => Number(r.quantity) > maxQty).length;
+      const rowsCount = filteredHistory.length;
+      const qtySum = filteredHistory.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
+      const zeroCount = filteredHistory.filter(r => Number(r.quantity) === 0).length;
+      const overCount = filteredHistory.filter(r => Number(r.quantity) > maxQty).length;
+
+      document.getElementById("kpiRows").innerText = rowsCount;
+      document.getElementById("kpiQty").innerText = qtySum;
+      document.getElementById("kpiZero").innerText = zeroCount;
+      document.getElementById("kpiOverMax").innerText = overCount;
+
+      // Compteurs sidebar
+      document.getElementById("sideTotalCount").innerText = rowsCount;
+      document.getElementById("sideAlertCount").innerText = zeroCount + overCount;
     }
 
     function renderTable() {
@@ -516,14 +578,14 @@
           <td class="p-2.5 truncate max-w-xs text-white">${r.designation}</td>
           <td class="p-2.5 text-right font-mono font-black text-emerald-400">${r.quantity}</td>
           <td class="p-2.5 text-center">
-            <button onclick="editItemFromMonitoring('${r.id}', ${r.quantity})" class="p-1 hover:text-white text-slate-400">✏️</button>
-            <button onclick="deleteItemFromMonitoring('${r.id}')" class="p-1 hover:text-rose-400 text-slate-400">🗑️</button>
+            <button onclick="editItemFromMonitoring('${r.id}', ${r.quantity})" class="p-1 hover:text-white text-slate-400" title="Modifier">✏️</button>
+            <button onclick="deleteItemFromMonitoring('${r.id}')" class="p-1 hover:text-rose-400 text-slate-400" title="Supprimer">🗑️</button>
           </td>
         </tr>
       `).join('');
     }
 
-    // ONGLET 2 : RENDU DES 3 TUILES ACCORDÉONS PAR AGENT
+    // ONGLET 2 : RENDU DES 3 TUILES ACCORDÉONS FIDÈLES ET RIGUREUSES PAR AGENT
     function toggleAccordion(agent, tab) {
       if (activeAccordionTab[agent] === tab) {
         activeAccordionTab[agent] = null;
@@ -545,14 +607,27 @@
         const lastScan = rows.length > 0 ? rows[0].timestamp : "--";
         const lastContractor = rows.length > 0 ? rows[0].contractor : "Aucun";
 
-        // Cadence (l/h)
-        let cadence = 0;
+        // Calcul exact de la cadence horaire basée sur l'amplitude réelle
+        let cadence = rows.length;
+        let durationFormatted = "Session courte";
         if (rows.length > 1) {
-          cadence = Math.round(rows.length / 1.5);
+          const timestamps = rows.map(r => parseItemDate(r.timestamp).getTime()).filter(t => t > 0);
+          if (timestamps.length > 1) {
+            const minT = Math.min(...timestamps);
+            const maxT = Math.max(...timestamps);
+            const durationHours = (maxT - minT) / (1000 * 60 * 60);
+            if (durationHours > 0.05) {
+              cadence = Math.round(rows.length / durationHours);
+              const totalMins = Math.round(durationHours * 60);
+              const h = Math.floor(totalMins / 60);
+              const m = totalMins % 60;
+              durationFormatted = `${h}h ${m < 10 ? '0' : ''}${m}min active`;
+            }
+          }
         }
 
-        // Chantiers traités
-        const uniqueContractors = [...new Set(rows.map(r => r.contractor))];
+        // Taux de couverture comparative par rapport à la Configuration
+        const treatedContractors = new Set(rows.map(r => r.contractor).filter(Boolean));
         const currentTab = activeAccordionTab[agent];
 
         return `
@@ -581,23 +656,24 @@
                 <span class="text-xl font-black font-mono mt-0.5 block">${anomalieRate}% <span class="text-xs font-normal">(${anomalies.length})</span></span>
               </button>
               <button onclick="toggleAccordion('${agent}', 'perimetre')" class="p-3 rounded-xl border text-center transition ${currentTab === 'perimetre' ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
-                <span class="text-[10px] font-bold block uppercase opacity-75">🌐 Périmètre Traité</span>
-                <span class="text-xl font-black font-mono mt-0.5 block">${uniqueContractors.length} <span class="text-xs font-normal">chantiers</span></span>
+                <span class="text-[10px] font-bold block uppercase opacity-75">🌐 Périmètre</span>
+                <span class="text-xl font-black font-mono mt-0.5 block">${treatedContractors.size} <span class="text-xs font-normal">/ ${availableContractors.length}</span></span>
               </button>
             </div>
 
             <!-- TIROIR DÉROULANT SOUS LA CARTE -->
             ${currentTab === 'cadence' ? `
               <div class="p-3 bg-slate-950 rounded-xl border border-indigo-500/40 text-xs space-y-1">
-                <strong class="text-indigo-400 block font-bold">Détail de Cadence :</strong>
-                <p>Volume traité : <strong>${rows.length} lignes</strong> | <strong>${qty} pièces</strong> sur la période active.</p>
+                <strong class="text-indigo-400 block font-bold">Détail de la Session de Comptage :</strong>
+                <p>Volume : <strong>${rows.length} lignes</strong> | <strong>${qty} pièces</strong> saisies.</p>
+                <p class="text-slate-400 font-mono text-[11px]">Amplitude horaire : ${durationFormatted}</p>
               </div>
             ` : ''}
 
             ${currentTab === 'anomalies' ? `
               <div class="p-3 bg-slate-950 rounded-xl border border-amber-500/40 text-xs space-y-2">
-                <strong class="text-amber-400 block font-bold">Détail des Anomalies :</strong>
-                ${anomalies.length === 0 ? '<p class="text-slate-500">Aucune saisie suspecte enregistrée.</p>' : 
+                <strong class="text-amber-400 block font-bold">Détail des Anomalies (${anomalies.length}) :</strong>
+                ${anomalies.length === 0 ? '<p class="text-slate-500">Aucune anomalie enregistrée sur la période.</p>' : 
                   anomalies.map(a => `
                     <div class="flex justify-between items-center py-1 border-b border-slate-850">
                       <div>
@@ -605,8 +681,8 @@
                       </div>
                       <div class="flex items-center space-x-2">
                         <span class="font-bold font-mono ${Number(a.quantity) === 0 ? 'text-rose-400' : 'text-amber-400'}">${a.quantity}</span>
-                        <button onclick="editItemFromMonitoring('${a.id}', ${a.quantity})" class="text-slate-400 hover:text-white">✏️</button>
-                        <button onclick="deleteItemFromMonitoring('${a.id}')" class="text-slate-400 hover:text-rose-400">🗑️</button>
+                        <button onclick="editItemFromMonitoring('${a.id}', ${a.quantity})" class="text-slate-400 hover:text-white" title="Modifier">✏️</button>
+                        <button onclick="deleteItemFromMonitoring('${a.id}')" class="text-slate-400 hover:text-rose-400" title="Supprimer">🗑️</button>
                       </div>
                     </div>
                   `).join('')
@@ -615,19 +691,25 @@
             ` : ''}
 
             ${currentTab === 'perimetre' ? `
-              <div class="p-3 bg-slate-950 rounded-xl border border-blue-500/40 text-xs space-y-1.5">
-                <strong class="text-blue-400 block font-bold">Entrepreneurs et Métiers démarrés :</strong>
-                ${uniqueContractors.length === 0 ? '<p class="text-slate-500">Aucun périmètre initié.</p>' :
-                  uniqueContractors.map(cName => {
+              <div class="p-3 bg-slate-950 rounded-xl border border-blue-500/40 text-xs space-y-2">
+                <strong class="text-blue-400 block font-bold">Avancement des Entreprises & Chantiers :</strong>
+                <div class="space-y-1">
+                  ${availableContractors.map(cName => {
                     const cRows = rows.filter(r => r.contractor === cName);
+                    const isDone = cRows.length > 0;
                     return `
                       <div class="flex justify-between items-center py-1 border-b border-slate-850">
-                        <span class="text-white font-medium">${cName} (${cRows.length} lignes)</span>
-                        <span class="font-mono text-[10px] text-slate-400">Dernier passage : ${cRows[0].timestamp}</span>
+                        <div class="flex items-center space-x-2">
+                          <span>${isDone ? '✅' : '⬜'}</span>
+                          <span class="${isDone ? 'text-white font-bold' : 'text-slate-500'}">${cName}</span>
+                        </div>
+                        <span class="font-mono text-[10px] text-slate-400">
+                          ${isDone ? `${cRows.length} ligne(s) • Dernier : ${cRows[0].timestamp}` : '[Non débuté]'}
+                        </span>
                       </div>
                     `;
-                  }).join('')
-                }
+                  }).join('')}
+                </div>
               </div>
             ` : ''}
 
@@ -747,7 +829,7 @@
       map.fitBounds(activePolyline.getBounds(), { padding: [40, 40] });
     }
 
-    // GÉNÉRATION RAPPORT PDF DE CLÔTURE EN 1 CLIC
+    // RAPPORT PDF DE CLÔTURE EN 1 CLIC
     function generateClosingReportPDF() {
       const contractor = document.getElementById("pdfContractorSelect").value;
       if (!contractor) {
