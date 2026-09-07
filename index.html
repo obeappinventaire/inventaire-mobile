@@ -22,29 +22,13 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     
-    /* ZONE DU SCANNER AGRANDIE */
-    #scannerContainer {
-      max-height: 380px !important;
-    }
-    #reader {
-      height: 320px !important;
-      max-height: 320px !important;
-      width: 100% !important;
-      overflow: hidden !important;
-      position: relative !important;
-    }
-    #reader video {
-      height: 320px !important;
-      max-height: 320px !important;
-      width: 100% !important;
-      object-fit: cover !important;
-      border-radius: 0.5rem;
-    }
+    #scannerContainer { max-height: 380px !important; }
+    #reader { height: 320px !important; max-height: 320px !important; width: 100% !important; overflow: hidden !important; position: relative !important; }
+    #reader video { height: 320px !important; max-height: 320px !important; width: 100% !important; object-fit: cover !important; border-radius: 0.5rem; }
 
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Réticule de visée centré dans la zone agrandie */
     .ocr-reticle {
       position: absolute;
       top: 50%;
@@ -141,7 +125,7 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- Zone Caméra agrandie -->
+          <!-- Zone Caméra -->
           <div id="scannerContainer" class="hidden relative overflow-hidden rounded-xl border-2 border-indigo-500 bg-black">
             <div id="reader" class="w-full relative"></div>
             <div class="ocr-reticle">
@@ -150,7 +134,7 @@
             <canvas id="ocrCanvas" class="hidden"></canvas>
             
             <div class="p-2.5 bg-slate-900/95 flex items-center justify-between border-t border-slate-800 z-10 relative">
-              <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[130px]">Visez les 6 chiffres...</span>
+              <span id="scanStatusMsg" class="text-[11px] text-slate-300 font-medium truncate max-w-[130px]">Visez un code...</span>
               <div class="flex items-center space-x-2">
                 <button id="btnTorch" onclick="toggleTorch()" title="Lumière" class="px-2.5 py-1.5 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs shadow flex items-center gap-1 border border-slate-700 transition">
                   <i data-lucide="flashlight" id="torchIcon" class="w-4 h-4 text-slate-300"></i>
@@ -164,7 +148,7 @@
             </div>
           </div>
 
-          <!-- ZONE DE RECHERCHE CATALOGUE -->
+          <!-- RECHERCHE CATALOGUE -->
           <div class="relative">
             <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
             <div class="relative flex items-center">
@@ -186,6 +170,7 @@
                  class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[26rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
           </div>
 
+          <!-- FICHE MATÉRIEL IDENTIFIÉE -->
           <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
             <div class="flex items-start justify-between">
               <div class="min-w-0 pr-2">
@@ -197,17 +182,17 @@
             <div class="grid grid-cols-2 gap-2 text-xs pt-2 mt-2 border-t border-slate-800">
               <div>
                 <span class="text-slate-400 block text-[10px]">Réf SAP :</span>
-                <span id="dispSap" class="font-mono font-black text-amber-500">--</span>
+                <span id="dispSap" class="font-mono font-black text-amber-500 text-sm">--</span>
               </div>
               <div>
-                <span class="text-slate-400 block text-[10px]">Réf Fournisseur :</span>
-                <span id="dispSupplier" class="font-mono font-semibold text-blue-400 truncate block">--</span>
+                <span class="text-slate-400 block text-[10px]">Réf Fournisseur / EAN :</span>
+                <span id="dispSupplier" class="font-mono font-semibold text-blue-400 truncate block text-sm">--</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Saisie de quantité avec bouton Reset unique -->
+        <!-- QUANTITÉ -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
           <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -251,7 +236,6 @@
           <button onclick="manualSync()" class="text-xs bg-slate-950 px-2.5 py-1 rounded text-indigo-400 border border-slate-800">Actualiser</button>
         </div>
 
-        <!-- KPIs Généraux -->
         <div class="grid grid-cols-3 gap-2 text-center">
           <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl shadow">
             <span class="text-[10px] text-slate-400 block font-bold uppercase">Lignes</span>
@@ -267,13 +251,11 @@
           </div>
         </div>
 
-        <!-- Statut d'activité des Agents -->
         <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 shadow space-y-2.5">
           <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Statut des Magasiniers</span>
           <div id="agentStatusList" class="space-y-2"></div>
         </div>
 
-        <!-- Flux récent -->
         <div class="space-y-2">
           <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-1 block">Flux récent</span>
           <div id="mobMonitoringList" class="space-y-2"></div>
@@ -312,6 +294,7 @@
   </div>
 
   <script>
+    // ⚠️ METTEZ VOTRE URL GOOGLE APPS SCRIPT ICI
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -377,7 +360,7 @@
             latestCoords.lat = pos.coords.latitude;
             latestCoords.lng = pos.coords.longitude;
           },
-          (err) => console.warn("GPS tracking:", err.message),
+          (err) => console.warn("GPS:", err.message),
           { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
         );
       }
@@ -405,15 +388,13 @@
           tessedit_pageseg_mode: '7'
         });
       } catch (err) {
-        console.warn("Worker OCR initialisation warning:", err);
+        console.warn("Worker OCR:", err);
       }
     }
 
     function blurSearchInput() {
       const input = document.getElementById("articleSearchInput");
-      if (input && document.activeElement === input) {
-        input.blur();
-      }
+      if (input && document.activeElement === input) input.blur();
     }
 
     function resetQuantity() {
@@ -516,7 +497,7 @@
           localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
           updateSyncBadge();
         } catch (e) {
-          console.warn("Échec synchronisation queue :", e);
+          console.warn("Erreur vidage queue :", e);
           break;
         }
       }
@@ -591,14 +572,6 @@
       showToast("Données synchronisées");
     }
 
-    function adjustQuantity(delta) {
-      const el = document.getElementById("qtyInput");
-      let val = parseInt(el.value, 10);
-      if (isNaN(val)) val = delta > 0 ? delta : 0;
-      else val = Math.max(0, val + delta);
-      el.value = val;
-    }
-
     function normalizeStr(str) {
       return String(str || "")
         .toLowerCase()
@@ -658,12 +631,10 @@
         <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-650 cursor-pointer transition">
           <p class="text-base font-bold text-white leading-snug">${item.designation || 'Sans désignation'}</p>
           <div class="flex justify-between items-center text-xs mt-2 pt-1.5 border-t border-slate-700/70">
-            <!-- RÉF SAP À GAUCHE -->
             <div class="flex items-center space-x-1.5">
               <span class="text-[11px] text-slate-300 uppercase font-bold">SAP :</span>
               <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-900 px-2.5 py-0.5 rounded border border-amber-500/30">${item.sapRef}</span>
             </div>
-            <!-- RÉF FOURNISSEUR À DROITE -->
             <div class="text-right truncate max-w-[170px]">
               <span class="text-slate-300">Fourn : </span>
               <strong class="font-mono text-blue-300 text-sm">${item.supplierRef || 'N/A'}</strong>
@@ -685,7 +656,7 @@
       activeItem = { ...item };
 
       document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
-      document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
+      document.getElementById("dispSupplier").innerText = activeItem.supplierRef || activeItem.ean || "--";
       document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
       document.getElementById("articleSearchInput").value = `${activeItem.sapRef} - ${activeItem.designation}`;
       document.getElementById("badgeIdentified").classList.remove("hidden");
@@ -708,7 +679,49 @@
     }
 
     // =========================================================================
-    // SCANNER HYBRIDE : CODES-BARRES / QR + OCR STRICT SAP (AGRANDI)
+    // IDENTIFICATION STRICTE DU CODE SCANNÉ (EAN, SAP, FOURNISSEUR, QR)
+    // =========================================================================
+    function handleExactCodeMatch(code) {
+      const clean = String(code || "").trim();
+      if (!clean) return;
+
+      const cleanUpper = clean.toUpperCase();
+      const cleanDigitsNoLeadingZeros = clean.replace(/\D/g, "").replace(/^0+/, "");
+
+      // Recherche dans tout le catalogue avec tolérance sur le formatage
+      const match = catalog.find(item => {
+        const sSap = String(item.sapRef || "").trim().toUpperCase();
+        const sEan = String(item.ean || "").trim().toUpperCase();
+        const sSupp = String(item.supplierRef || "").trim().toUpperCase();
+        const sQr = String(item.qr || "").trim().toUpperCase();
+
+        if (sSap === cleanUpper || sEan === cleanUpper || sSupp === cleanUpper || sQr === cleanUpper) {
+          return true;
+        }
+
+        // Si le code lu est numérique (ex: EAN sans zéro de tête ou SAP)
+        if (cleanDigitsNoLeadingZeros.length >= 4) {
+          const eanDigits = sEan.replace(/\D/g, "").replace(/^0+/, "");
+          const sapDigits = sSap.replace(/\D/g, "").replace(/^0+/, "");
+          const suppDigits = sSupp.replace(/\D/g, "").replace(/^0+/, "");
+          if (eanDigits === cleanDigitsNoLeadingZeros || sapDigits === cleanDigitsNoLeadingZeros || suppDigits === cleanDigitsNoLeadingZeros) {
+            return true;
+          }
+        }
+        return false;
+      });
+
+      if (match) {
+        selectArticleBySap(match.sapRef);
+        showToast("Identifié : SAP " + match.sapRef);
+      } else {
+        clearSearch();
+        alert(`Échec d'identification :\nLe code scanné [${clean}] ne correspond à aucune référence (SAP, EAN ou Fournisseur) dans votre catalogue Google Sheets.`);
+      }
+    }
+
+    // =========================================================================
+    // GESTION CAMÉRA & SCANNER HYBRIDE
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -764,7 +777,7 @@
         startBackgroundOcr();
 
       } catch (err) {
-        console.warn("Erreur démarrage capteur :", err);
+        console.warn("Erreur caméra :", err);
         container.classList.add("hidden");
         btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
         alert("Accès caméra impossible : Vérifiez les autorisations et le protocole HTTPS.");
@@ -779,9 +792,7 @@
         ocrInterval = null;
       }
 
-      if (isTorchOn) {
-        await setTorch(false);
-      }
+      if (isTorchOn) await setTorch(false);
 
       if (html5QrCode && isScanning) {
         try {
@@ -801,7 +812,7 @@
       resetTorchUI();
       document.getElementById("scannerContainer").classList.add("hidden");
       document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-      document.getElementById("scanStatusMsg").innerText = "Visez les 6 chiffres...";
+      document.getElementById("scanStatusMsg").innerText = "Visez un code...";
     }
 
     async function toggleTorch() {
@@ -1025,103 +1036,9 @@
       }
     }
 
-    // --- REFUS STRICT DE TOUT ARTICLE HORS CATALOGUE ---
-    function handleExactCodeMatch(code) {
-      const clean = String(code).trim();
-      const match = catalog.find(item => 
-        String(item.sapRef).toUpperCase() === clean.toUpperCase() ||
-        String(item.ean).toUpperCase() === clean.toUpperCase() ||
-        String(item.qr).toUpperCase() === clean.toUpperCase() ||
-        String(item.supplierRef).toUpperCase() === clean.toUpperCase()
-      );
-
-      if (match) {
-        selectArticleBySap(match.sapRef);
-        showToast("Identifié : " + match.designation);
-      } else {
-        clearSearch();
-        alert(`Échec d'identification :\nLe code scanné [${clean}] n'existe pas dans le catalogue officiel Google Sheets.\nEnregistrement interdit.`);
-      }
-    }
-
-    async function editHistoryItem(id, oldQty) {
-      const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
-      if (newQtyStr === null) return;
-
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide (>= 0 attendue).");
-        return;
-      }
-
-      showToast("Mise à jour...");
-      const payload = { 
-        action: "UPDATE", 
-        id: id, 
-        quantity: newQty,
-        user: currentAgent 
-      };
-
-      const target = cachedHistory.find(item => item.id === id);
-      if (target) {
-        target.quantity = newQty;
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      }
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        showToast("Quantité modifiée !");
-      } catch (err) {
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Modifié en attente de synchronisation.");
-      } finally {
-        renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
-      }
-    }
-
-    async function deleteHistoryItem(id, designation) {
-      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
-
-      showToast("Suppression...");
-      const payload = { 
-        action: "DELETE", 
-        id: id, 
-        user: currentAgent 
-      };
-
-      cachedHistory = cachedHistory.filter(item => item.id !== id);
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        showToast("Saisie supprimée !");
-      } catch (err) {
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Supprimé en attente de synchronisation.");
-      } finally {
-        renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
-      }
-    }
-
-    // --- SOUMISSION STRICTE : VÉRIFICATION D'EXISTENCE CATALOGUE ---
+    // =========================================================================
+    // SOUMISSION DE L'INVENTAIRE
+    // =========================================================================
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1132,26 +1049,24 @@
       const trade = document.getElementById("tradeSelect").value;
 
       if (!contractor || contractor.trim() === "") {
-        alert("Action impossible :\nVeuillez impérativement sélectionner un Entrepreneur avant de valider.");
+        alert("Action impossible :\nVeuillez sélectionner un Entrepreneur.");
         document.getElementById("contractorSelect").focus();
         return;
       }
       if (!trade || trade.trim() === "") {
-        alert("Action impossible :\nVeuillez impérativement sélectionner un Corps d'état / Métier avant de valider.");
+        alert("Action impossible :\nVeuillez sélectionner un Corps d'état / Métier.");
         document.getElementById("tradeSelect").focus();
         return;
       }
 
-      // VÉRIFICATION 1 : Un article doit être sélectionné
       if (!activeItem || !activeItem.sapRef) {
-        alert("Action bloquée :\nAucun article sélectionné. Veuillez d'abord scanner ou choisir un article dans la liste.");
+        alert("Action bloquée :\nAucun article sélectionné. Veuillez scanner ou chercher un article.");
         return;
       }
 
-      // VÉRIFICATION 2 (VERROU ANTI-BUG) : La réf SAP doit exister formellement dans le catalogue
       const isSapInCatalog = catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim());
       if (!isSapInCatalog) {
-        alert(`Action interdite :\nLa référence SAP [${activeItem.sapRef}] est absente du catalogue officiel.\nAucun enregistrement de quantité n'est permis pour des articles non indexés.`);
+        alert(`Action interdite :\nLa référence SAP [${activeItem.sapRef}] est introuvable dans le catalogue.`);
         clearSearch();
         return;
       }
@@ -1221,9 +1136,74 @@
       }
     }
 
-    // =========================================================================
-    // RENDU DE L'HISTORIQUE ÉPURÉ
-    // =========================================================================
+    async function editHistoryItem(id, oldQty) {
+      const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
+      if (newQtyStr === null) return;
+
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide (>= 0 attendue).");
+        return;
+      }
+
+      showToast("Mise à jour...");
+      const payload = { action: "UPDATE", id: id, quantity: newQty, user: currentAgent };
+
+      const target = cachedHistory.find(item => item.id === id);
+      if (target) {
+        target.quantity = newQty;
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      }
+
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+        }
+        showToast("Quantité modifiée !");
+      } catch (err) {
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
+        showToast("Modifié en attente de synchronisation.");
+      } finally {
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+      }
+    }
+
+    async function deleteHistoryItem(id, designation) {
+      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
+
+      showToast("Suppression...");
+      const payload = { action: "DELETE", id: id, user: currentAgent };
+
+      cachedHistory = cachedHistory.filter(item => item.id !== id);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+
+      try {
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+        }
+        showToast("Saisie supprimée !");
+      } catch (err) {
+        syncQueue.push(payload);
+        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
+        updateSyncBadge();
+        showToast("Supprimé en attente de synchronisation.");
+      } finally {
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+      }
+    }
+
     function renderHistory() {
       const c = document.getElementById("historyList");
       const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
@@ -1270,9 +1250,6 @@
       lucide.createIcons();
     }
 
-    // =========================================================================
-    // RENDU MONITORING (STATUTS ET DERNIÈRES SAISIES)
-    // =========================================================================
     function renderMobileMonitoring() {
       if (!isAdmin()) return;
       document.getElementById("mobKpiRows").innerText = cachedHistory.length;
