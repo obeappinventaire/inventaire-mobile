@@ -190,13 +190,11 @@
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE AVEC REMONTÉE EN TOUT HAUT D'ÉCRAN -->
+          <!-- RECHERCHE CATALOGUE CORRIGÉE -->
           <div class="relative" id="searchCatalogueWrapper">
             <div class="flex justify-between items-center mb-1.5">
               <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
-              <!-- BOUTON FERMER CLAVIER PLUS GRAND -->
-              <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" 
-                      class="hidden h-9 px-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-amber-300 border border-amber-500/40 font-black rounded-xl text-xs flex items-center gap-1 shadow-md transition">
+              <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" class="hidden h-9 px-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-amber-300 border border-amber-500/40 font-black rounded-xl text-xs flex items-center gap-1 shadow-md transition">
                 <span>Fermer clavier</span>
                 <i data-lucide="x" class="w-4 h-4"></i>
               </button>
@@ -385,10 +383,8 @@
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
 
-    // --- COMPTEUR DE VALIDATIONS DE LA SESSION ---
     let sessionValidationCount = parseInt(sessionStorage.getItem("inv_session_validations") || "0", 10);
 
-    // --- SYNTHÈSE VOCALE BELGE (SEPTANTE / NONANTE) ---
     function formatNumberToBelgianFrench(n) {
       const num = parseInt(n, 10);
       if (isNaN(num)) return String(n);
@@ -434,13 +430,11 @@
       } catch(e) {}
     }
 
-    // VOIX SÉLECTION : "RÉF [chiffres] SÉLECTIONNÉE" (SANS "SAP")
     function speakRefSelection(sapRef) {
       const digits = formatDigitsSpaced(sapRef);
       speakFeedback(`Réf ${digits} sélectionnée`);
     }
 
-    // VOIX VALIDATION : QUANTITÉ + OK + ENCOURAGEMENTS SELON PALIERS
     function speakValidationWithEncouragement(qty, agentName) {
       sessionValidationCount++;
       sessionStorage.setItem("inv_session_validations", sessionValidationCount);
@@ -468,7 +462,6 @@
       speakFeedback(phrase);
     }
 
-    // --- CONVERSION DES DATES FORMAT JJ/MM/AAAA ---
     function parseItemDate(str) {
       if (!str) return new Date(0);
       const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
@@ -495,11 +488,8 @@
     }
 
     function persistSelection(field, val) {
-      if (field === 'contractor') {
-        localStorage.setItem("inv_saved_contractor", val);
-      } else if (field === 'trade') {
-        localStorage.setItem("inv_saved_trade", val);
-      }
+      if (field === 'contractor') localStorage.setItem("inv_saved_contractor", val);
+      else if (field === 'trade') localStorage.setItem("inv_saved_trade", val);
     }
 
     function restoreSavedSelections() {
@@ -519,7 +509,9 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // Gestion du clic extérieur : efface le texte et ferme si aucun article n'a été sélectionné
+      // FORCER L'OUVERTURE SUR LA PREMIÈRE PAGE (COMPTAGE)
+      switchTab('inventory');
+
       document.addEventListener("click", (e) => {
         const wrapper = document.getElementById("searchCatalogueWrapper");
         const dd = document.getElementById("suggestionsDropdown");
@@ -589,12 +581,10 @@
       }
     }
 
-    // --- REMONTÉE IMMÉDIATE TOUT EN HAUT DU SMARTPHONE AU FOCUS ---
     function onSearchFocus() {
       const dismissBtn = document.getElementById("btnDismissKeyboard");
       if (dismissBtn) dismissBtn.classList.remove("hidden");
 
-      // Remontée maximale : masquer temporairement l'en-tête et les sélecteurs pour que la recherche colle au haut absolu
       document.getElementById("appHeader").classList.add("-mt-16", "opacity-0", "pointer-events-none");
       document.getElementById("selectorsBox").classList.add("hidden");
 
@@ -616,7 +606,6 @@
       const dismissBtn = document.getElementById("btnDismissKeyboard");
       if (dismissBtn) dismissBtn.classList.add("hidden");
 
-      // Rétablir l'affichage normal
       document.getElementById("appHeader").classList.remove("-mt-16", "opacity-0", "pointer-events-none");
       document.getElementById("selectorsBox").classList.remove("hidden");
     }
@@ -806,8 +795,9 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
+    // --- CORRECTION DU BUG DE RECHERCHE CATALOGUE ---
     function onSearchInput(rawVal) {
-      const val = rawVal.trim();
+      const val = String(rawVal || "").trim();
       const dd = document.getElementById("suggestionsDropdown");
       const clearBtn = document.getElementById("clearSearchBtn");
       const dismissBtn = document.getElementById("btnDismissKeyboard");
@@ -819,12 +809,12 @@
       document.getElementById("badgeIdentified").classList.add("hidden");
 
       if (val.length > 0) {
-        clearBtn.classList.remove("hidden");
+        if (clearBtn) clearBtn.classList.remove("hidden");
         if (dismissBtn) dismissBtn.classList.remove("hidden");
       } else {
-        clearBtn.classList.add("hidden");
+        if (clearBtn) clearBtn.classList.add("hidden");
         if (dismissBtn) dismissBtn.classList.add("hidden");
-        dd.classList.add("hidden");
+        if (dd) dd.classList.add("hidden");
         return;
       }
 
@@ -843,6 +833,7 @@
 
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
+      if (!dd) return;
 
       if (!results || results.length === 0) {
         dd.innerHTML = `<div class="p-4 text-sm text-slate-300 text-center font-medium">Aucun article correspondant dans le catalogue.</div>`;
@@ -894,8 +885,6 @@
       blurSearchInput();
       
       if (navigator.vibrate) navigator.vibrate(50);
-
-      // NOUVELLE SYNTHÈSE : "RÉF [chiffres] SÉLECTIONNÉE"
       speakRefSelection(activeItem.sapRef);
     }
 
@@ -1326,9 +1315,6 @@
       }
     }
 
-    // =========================================================================
-    // VALIDATION DE L'INVENTAIRE : RETOUR VOCAL QUANTITÉ + OK + ENCOURAGEMENTS
-    // =========================================================================
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1411,7 +1397,6 @@
       label.innerText = "ENREGISTREMENT...";
       icon.className = "w-6 h-6 animate-spin";
 
-      // RETOUR VOCAL : QUANTITÉ + OK + ENCOURAGEMENTS
       speakValidationWithEncouragement(finalQty, currentAgent);
 
       let payload;
