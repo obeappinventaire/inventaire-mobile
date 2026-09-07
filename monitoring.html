@@ -44,7 +44,7 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN (BOUTON ORANGE ET SÉLECTION STABLE) ================= -->
+  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -68,7 +68,6 @@
         </div>
       </div>
 
-      <!-- Bouton orange assorti à l'icône -->
       <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition mt-2">
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -195,9 +194,9 @@
 
       </div>
 
-      <!-- Mention légale obligatoire -->
+      <!-- Mention de copyright obligatoire -->
       <div class="p-4 border-t border-slate-200 text-center bg-slate-50/70 shrink-0">
-        <span class="text-[10px] font-medium text-slate-500 tracking-wider">
+        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
           &copy; made by CO2H2O srlu
         </span>
       </div>
@@ -374,7 +373,7 @@
                 <span id="kpiAgentsTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
               </div>
 
-              <!-- KPI RUPTURES DÉCLARÉES AVEC ICÔNE LISTE DANS L'ONGLET 2 -->
+              <!-- KPI RUPTURES DÉCLARÉES AVEC ICÔNE LISTE -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
@@ -386,7 +385,7 @@
                 <span id="kpiAgentsZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
               </div>
 
-              <!-- KPI ALERTES FLOTTE AVEC ICÔNE LISTE DANS L'ONGLET 2 -->
+              <!-- KPI ALERTES FLOTTE AVEC ICÔNE LISTE -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-amber-600 uppercase">Alertes Flotte</span>
@@ -403,7 +402,7 @@
           <div id="agentsAccordionContainer" class="space-y-4"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION (BELGIQUE & CENTRAGE OPTIMISÉ) ================= -->
+        <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
@@ -459,12 +458,11 @@
     let filterOnlyActiveAgents = false;
     let openDrawers = {};
 
-    // --- COORDONNÉES ET LIMITES ÉLARGIES À LA BELGIQUE ENTIÈRE ---
-    const BELGIUM_CENTER = [50.64, 4.67]; // Centre géographique de la Belgique
+    const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
     const BELGIUM_BOUNDS = [
-      [49.40, 2.45], // Sud-Ouest
-      [51.55, 6.50]  // Nord-Est
+      [49.40, 2.45],
+      [51.55, 6.50]
     ];
 
     function parseItemDate(str) {
@@ -553,7 +551,6 @@
         </label>
       `).join('');
 
-      // CORRECTION BUG : Maintien de la valeur sélectionnée par l'admin lors du rechargement
       const adminSel = document.getElementById("authAdminSelect");
       if (adminAgents.length > 0) {
         const currentlySelected = adminSel.value;
@@ -679,7 +676,7 @@
         const monday = new Date(now);
         monday.setDate(now.getDate() - day + 1);
         const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
+        sunday.setDate(sunday.getDate() + 6);
 
         sInput.value = monday.toISOString().split('T')[0];
         eInput.value = sunday.toISOString().split('T')[0];
@@ -991,7 +988,7 @@
     }
 
     // =========================================================================
-    // CARTOGRAPHIE INTERACTIVE : ÉLARGIE À LA BELGIQUE ET CENTRÉE AU CLIC
+    // CARTOGRAPHIE INTERACTIVE : MULTI-POINTS ET GESTION DES SUPERPOSITIONS (SPIDERFY LÉGER)
     // =========================================================================
     function renderMap(list) {
       if (!map) {
@@ -1017,11 +1014,39 @@
       const now = new Date().getTime();
       const thirtyMinMs = 30 * 60 * 1000;
 
+      // Regroupement des points par coordonnées exactes [lat, lng] pour gérer plusieurs agents au même endroit
+      const coordGroups = {};
       list.forEach(item => {
         const lat = Number(item.lat || item.latitude);
         const lng = Number(item.lng || item.longitude);
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-          points.push([lat, lng]);
+          // Clé arrondie à 5 décimales (~1 mètre) pour regrouper les saisies du même endroit
+          const key = `${lat.toFixed(5)}_${lng.toFixed(5)}`;
+          if (!coordGroups[key]) {
+            coordGroups[key] = { lat, lng, items: [] };
+          }
+          coordGroups[key].items.push(item);
+        }
+      });
+
+      Object.values(coordGroups).forEach(group => {
+        const { lat, lng, items } = group;
+        const totalAgentsAtSpot = [...new Set(items.map(i => i.user))];
+        const count = totalAgentsAtSpot.length;
+
+        // Si plusieurs agents au même endroit, on décale légèrement les points en cercle (effet d'éclatement)
+        items.forEach((item, index) => {
+          let markerLat = lat;
+          let markerLng = lng;
+
+          if (count > 1) {
+            const angle = (index / count) * 2 * Math.PI;
+            const radius = 0.00015 * (index + 1); // Décalage de quelques mètres
+            markerLat = lat + radius * Math.cos(angle);
+            markerLng = lng + radius * Math.sin(angle);
+          }
+
+          points.push([markerLat, markerLng]);
 
           const agentHistory = list.filter(h => h.user === item.user);
           const sortedAgentHistory = [...agentHistory].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
@@ -1053,8 +1078,8 @@
           const lastEntryDateStr = entriesForPair.length > 0 ? formatDateDMY(entriesForPair[entriesForPair.length - 1].timestamp, true) : "--/--/----";
           const linesCount = entriesForPair.length;
 
-          const marker = L.circleMarker([lat, lng], {
-            radius: 7,
+          const marker = L.circleMarker([markerLat, markerLng], {
+            radius: count > 1 ? 8 : 7,
             fillColor: isAgentActiveLive ? "#10b981" : "#f97316",
             color: "#ffffff",
             weight: 2,
@@ -1062,10 +1087,11 @@
             fillOpacity: 0.9
           }).addTo(markersLayer);
 
-          // 1. SURVOL DE LA SOURIS
+          // 1. SURVOL DE LA SOURIS : Affiche l'agent et s'il y a plusieurs agents à cet endroit exact
           marker.bindTooltip(`
-            <div class="text-xs font-sans px-1 py-1 space-y-0.5 leading-snug">
-              <strong class="text-slate-900 block text-sm">${item.user}</strong>
+            <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
+              <strong class="text-slate-900 block text-sm">Agent : ${item.user}</strong>
+              ${count > 1 ? `<div class="text-indigo-600 font-bold text-[11px]">👥 ${count} agents partagent ce site</div>` : ''}
               <div class="text-[11px] text-emerald-700">
                 <span class="font-bold">En cours :</span> ${currentActivePair}
               </div>
@@ -1075,12 +1101,10 @@
             </div>
           `, { direction: 'top', offset: [0, -6] });
 
-          // 2. REPOSITIONNEMENT ET CENTRAGE AUTOMATIQUE DANS LA HAUTEUR DE LA CARTE AU CLIC
           marker.on('click', () => {
-            map.panTo([lat, lng], { animate: true, duration: 0.5 });
+            map.panTo([markerLat, markerLng], { animate: true, duration: 0.5 });
           });
 
-          // 3. POPUP CONFIGURÉ SANS COUPURE DU TEXTE
           const safeUser = (item.user || '').replace(/'/g, "\\'");
           const safeContractor = (item.contractor || '').replace(/'/g, "\\'");
           const safeTrade = (item.trade || '').replace(/'/g, "\\'");
@@ -1124,7 +1148,7 @@
             autoPan: true,
             autoPanPadding: [80, 80]
           });
-        }
+        });
       });
 
       document.getElementById("mapPointsCountLabel").innerText = `${points.length} point(s) GPS`;
