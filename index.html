@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-950">
+<html lang="fr" class="h-full bg-slate-950 overflow-hidden">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -21,8 +21,19 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
-    body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+    /* BLOCAGE STRICT DU PULL-TO-REFRESH ET DU REBOND ÉLASTIQUE MOBILE */
+    html, body {
+      overscroll-behavior: none !important;
+      overscroll-behavior-y: none !important;
+      -webkit-overscroll-behavior: none !important;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: pan-x pan-y;
+    }
     
+    #mainContent {
+      overscroll-behavior-y: contain !important;
+    }
+
     /* CADRAGE DE LA CAMÉRA ÉTENDU (+1 CM HAUT ET BAS) */
     #reader {
       height: 330px !important;
@@ -112,7 +123,7 @@
   </header>
 
   <!-- ================= CONTENU PRINCIPAL ================= -->
-  <main class="flex-1 overflow-y-auto bg-slate-900 border-x border-slate-800/60 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
+  <main id="mainContent" class="flex-1 overflow-y-auto bg-slate-900 border-x border-slate-800/60 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
 
     <div class="space-y-4">
       <!-- ========== VUE 1 : COMPTAGE ========== -->
@@ -123,7 +134,7 @@
             <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
               Entrepreneur <span class="text-rose-400 font-bold">*</span>
             </label>
-            <select id="contractorSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
+            <select id="contractorSelect" onchange="persistSelection('contractor', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
               <option value="">-- Sélectionner l'entrepreneur (Obligatoire) --</option>
             </select>
           </div>
@@ -131,7 +142,7 @@
             <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
               Métier <span class="text-rose-400 font-bold">*</span>
             </label>
-            <select id="tradeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
+            <select id="tradeSelect" onchange="persistSelection('trade', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
               <option value="">-- Sélectionner le métier (Obligatoire) --</option>
             </select>
           </div>
@@ -182,11 +193,10 @@
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE AVEC FERMETURE RAPIDE DU CLAVIER -->
+          <!-- RECHERCHE CATALOGUE -->
           <div class="relative">
             <div class="flex justify-between items-center mb-1.5">
               <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
-              <!-- Bouton d'action directe pour baisser le clavier si ouvert -->
               <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" class="hidden text-[11px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded border border-slate-700 font-bold">
                 Masquer clavier ✕
               </button>
@@ -207,10 +217,8 @@
               </button>
             </div>
             
-            <!-- LISTE DE PRÉSELECTION ACCESSIBLE SANS GÊNE DU CLAVIER -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
-                 onscroll="blurSearchInput()"
                  class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[22rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
           </div>
 
@@ -258,7 +266,7 @@
         </button>
       </section>
 
-      <!-- ========== VUE 2 : HISTORIQUE REFONDU (2 NIVEAUX PLEINE LARGEUR) ========== -->
+      <!-- ========== VUE 2 : HISTORIQUE ========== -->
       <section id="view-history" class="hidden space-y-4">
         <div class="flex justify-between items-center text-xs text-slate-400 px-1">
           <span id="historyHeaderLabel">Mes saisies</span>
@@ -270,7 +278,7 @@
         <div id="historyList" class="space-y-3"></div>
       </section>
 
-      <!-- ========== VUE 3 : MONITORING MOBILE (DONNÉES DU CADRE CARTE) ========== -->
+      <!-- ========== VUE 3 : MONITORING MOBILE ========== -->
       <section id="view-monitoring" class="hidden space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -295,7 +303,6 @@
           </div>
         </div>
 
-        <!-- LISTING DU MONITORING MOBILE : REPREND LE DÉTAIL DU CADRE DE LA CARTE -->
         <div class="space-y-2">
           <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-1 block">Chantiers & Tournées en cours</span>
           <div id="mobMonitoringList" class="space-y-3"></div>
@@ -303,7 +310,7 @@
       </section>
     </div>
 
-    <!-- ================= MENTION LÉGALE ================= -->
+    <!-- MENTION LÉGALE -->
     <div class="text-center pt-6 pb-2 mb-1">
       <span class="text-[10px] font-medium text-slate-400 tracking-wider">
         &copy; made by CO2H2O srlu
@@ -311,7 +318,7 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE ================= -->
+  <!-- NAVIGATION INFÉRIEURE -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -378,7 +385,7 @@
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
 
-    // --- SYNTHÈSE VOCALE (AUDIO FEEDBACK) ---
+    // --- SYNTHÈSE VOCALE ---
     function speakFeedback(text) {
       if (!('speechSynthesis' in window)) return;
       try {
@@ -391,7 +398,7 @@
       } catch(e) {}
     }
 
-    // --- CONVERSION DES DATES FORMAT JJ/MM/AAAA ---
+    // --- FORMAT DATES ---
     function parseItemDate(str) {
       if (!str) return new Date(0);
       const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
@@ -417,6 +424,29 @@
       return `${day}/${month}/${year} ${hours}:${minutes}`;
     }
 
+    // --- PERSISTANCE DES CHOIX ENTREPRENEUR & MÉTIER ---
+    function persistSelection(field, val) {
+      if (field === 'contractor') {
+        localStorage.setItem("inv_saved_contractor", val);
+      } else if (field === 'trade') {
+        localStorage.setItem("inv_saved_trade", val);
+      }
+    }
+
+    function restoreSavedSelections() {
+      const savedContractor = localStorage.getItem("inv_saved_contractor");
+      const savedTrade = localStorage.getItem("inv_saved_trade");
+      const cSelect = document.getElementById("contractorSelect");
+      const tSelect = document.getElementById("tradeSelect");
+
+      if (savedContractor && cSelect) {
+        cSelect.value = savedContractor;
+      }
+      if (savedTrade && tSelect) {
+        tSelect.value = savedTrade;
+      }
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       updateAgentUI();
@@ -424,7 +454,7 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // Clic hors de la zone de recherche : vide le texte et referme si rien n'est sélectionné
+      // Gestion du clic extérieur sécurisée (ne ferme la liste que sur un vrai clic extérieur)
       document.addEventListener("click", (e) => {
         const dd = document.getElementById("suggestionsDropdown");
         const searchInput = document.getElementById("articleSearchInput");
@@ -434,9 +464,6 @@
         if (dd && !dd.contains(e.target) && e.target !== searchInput && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
           dd.classList.add("hidden");
           if (dismissBtn) dismissBtn.classList.add("hidden");
-          if (!activeItem && searchInput.value.trim() !== "") {
-            clearSearch();
-          }
         }
       });
 
@@ -573,13 +600,14 @@
         cSelect.innerHTML = '<option value="">Chargement des entrepreneurs...</option>';
       }
 
-      // 'Corps d'état' retiré, affichage de 'Métier' uniquement
       if (availableTrades.length > 0) {
         tSelect.innerHTML = '<option value="">-- Sélectionner le métier (Obligatoire) --</option>' + 
           availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
       } else {
         tSelect.innerHTML = '<option value="">Chargement des métiers...</option>';
       }
+
+      restoreSavedSelections();
     }
 
     function updateSyncBadge() {
@@ -762,7 +790,6 @@
       dd.classList.remove("hidden");
     }
 
-    // --- SÉLECTION DE L'ARTICLE PAR LES 3 MOYENS AVEC RETOUR VOCAL UNIQUE ---
     function selectArticleBySap(sapRef) {
       const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
       if (!item) return;
@@ -778,8 +805,6 @@
       blurSearchInput();
       
       if (navigator.vibrate) navigator.vibrate(50);
-
-      // RETOUR VOCAL LORS DE LA SÉLECTION
       speakFeedback(`Réf SAP ${activeItem.sapRef} sélectionnée`);
     }
 
@@ -797,9 +822,6 @@
       blurSearchInput();
     }
 
-    // =========================================================================
-    // SCANNER CENTRÉ DANS LA HAUTEUR DU SMARTPHONE
-    // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
@@ -832,18 +854,14 @@
           await html5QrCode.start(
             backCam.id,
             qrConfig,
-            (decodedText) => {
-              handleExactCodeMatch(decodedText);
-            },
+            (decodedText) => handleExactCodeMatch(decodedText),
             () => {}
           );
         } else {
           await html5QrCode.start(
             { facingMode: "environment" },
             qrConfig,
-            (decodedText) => {
-              handleExactCodeMatch(decodedText);
-            },
+            (decodedText) => handleExactCodeMatch(decodedText),
             () => {}
           );
         }
@@ -1115,9 +1133,6 @@
       }
     }
 
-    // =========================================================================
-    // CODE OPTIQUE : BLOCAGE STRICT DES ARTICLES HORS CATALOGUE
-    // =========================================================================
     function handleExactCodeMatch(code) {
       const clean = String(code).trim();
       const match = catalog.find(item => 
@@ -1220,9 +1235,6 @@
       }
     }
 
-    // =========================================================================
-    // VALIDATION DE L'INVENTAIRE : RETOUR VOCAL SUR LA QUANTITÉ UNIQUEMENT
-    // =========================================================================
     async function submitInventory() {
       if (!currentAgent) {
         openAgentModal();
@@ -1305,7 +1317,6 @@
       label.innerText = "ENREGISTREMENT...";
       icon.className = "w-6 h-6 animate-spin";
 
-      // RETOUR VOCAL : ÉNONCE STRICTEMENT LA QUANTITÉ COMPTÉE
       speakFeedback(`${finalQty}`);
 
       let payload;
@@ -1377,9 +1388,6 @@
       }
     }
 
-    // =========================================================================
-    // RENDU DE L'HISTORIQUE EN 2 NIVEAUX PLEINE LARGEUR
-    // =========================================================================
     function renderHistory() {
       const c = document.getElementById("historyList");
       const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
@@ -1397,8 +1405,6 @@
         const displayDate = formatDateDMY(it.timestamp, true);
         return `
           <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800'} p-3.5 rounded-2xl shadow space-y-2.5">
-            
-            <!-- 1. PARTIE HAUTE SUR TOUTE LA LARGEUR : Agent + Entrepreneur (Métier) + Date/Heure -->
             <div class="flex items-center justify-between border-b border-slate-850 pb-2 text-xs">
               <div class="min-w-0 pr-2">
                 <span class="font-bold text-white">${it.user}</span>
@@ -1411,43 +1417,35 @@
               </div>
             </div>
 
-            <!-- 2. PARTIE BASSE : Réf SAP, Désignation, Quantité et Boutons Modifier/Supprimer -->
             <div class="flex items-center justify-between gap-2">
               <div class="min-w-0 flex-1 pr-2">
                 <span class="font-mono font-black text-amber-400 text-base tracking-wider block">${it.sapRef}</span>
                 <p class="text-xs text-slate-300 truncate mt-0.5" title="${it.designation}">${it.designation}</p>
               </div>
 
-              <!-- Bloc Quantité au centre droit -->
               <div class="flex items-center space-x-2 shrink-0">
                 <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 min-w-[50px]">
                   <span class="text-[9px] font-bold text-slate-400 uppercase">Qté</span>
                   <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
                 </div>
 
-                <!-- Bouton Modifier ton vert émeraude -->
                 <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" 
                         class="w-10 h-10 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 active:bg-emerald-600 text-emerald-400 hover:text-emerald-100 flex items-center justify-center border border-emerald-500/40 transition shadow">
                   <i data-lucide="edit-3" class="w-4 h-4"></i>
                 </button>
 
-                <!-- Bouton Supprimer ton rouge rose (identique au Reset) -->
                 <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
                         class="w-10 h-10 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 flex items-center justify-center border border-rose-500/40 transition shadow">
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
               </div>
             </div>
-
           </div>
         `;
       }).join('');
       lucide.createIcons();
     }
 
-    // =========================================================================
-    // MONITORING MOBILE REPRENANT LES DONNÉES DU CADRE CARTE GÉOLOCALISATION
-    // =========================================================================
     function renderMobileMonitoring() {
       if (!isAdmin()) return;
       document.getElementById("mobKpiRows").innerText = cachedHistory.length;
@@ -1458,7 +1456,6 @@
       const thirtyMinMs = 30 * 60 * 1000;
       const container = document.getElementById("mobMonitoringList");
 
-      // Regroupement par [Agent + Entrepreneur + Métier] comme sur la carte
       const groups = {};
       cachedHistory.forEach(item => {
         const key = `${item.user}__${item.contractor}__${item.trade}`;
@@ -1481,7 +1478,6 @@
       }
 
       container.innerHTML = groupList.map(grp => {
-        // Tri chronologique pour trouver 1ère et dernière saisie
         const sorted = [...grp.entries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
         const firstEntry = sorted[0];
         const lastEntry = sorted[sorted.length - 1];
@@ -1489,7 +1485,6 @@
         const firstDateStr = formatDateDMY(firstEntry.timestamp, true);
         const lastDateStr = formatDateDMY(lastEntry.timestamp, true);
 
-        // Détection de statut en cours ou finalisé (< 30 min)
         const lastDt = parseItemDate(lastEntry.timestamp);
         const isActive = (now - lastDt.getTime()) < thirtyMinMs;
 
@@ -1507,7 +1502,7 @@
 
             <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1">
               <div>
-                <span>Magasinier :</span>
+                <span>Agent :</span>
                 <strong class="text-slate-200 block">${grp.user}</strong>
               </div>
               <div>
