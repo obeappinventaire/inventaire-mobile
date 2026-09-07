@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision Inventaire - Monitoring Manager</title>
 
-  <!-- FAVICON ET ICÔNE OFFICIELLE -->
+  <!-- FAVICON ET ICÔNES OFFICIELLES -->
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
   <meta name="theme-color" content="#0f172a">
 
@@ -121,45 +122,40 @@
           </button>
         </div>
 
-        <!-- FILTRE MAÎTRE : PÉRIODE & NAVIGATION PAR SEMAINES -->
+        <!-- SÉLECTEUR DE PÉRIODE ERGONOMIQUE & ÉPURÉ (OPTION 1) -->
         <div class="bg-slate-950/80 border border-slate-800 p-3.5 rounded-2xl space-y-3 shadow-inner">
-          <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active Maître
-          </span>
-
-          <!-- Sélecteur par blocs de semaines (Précédente / Suivante) -->
-          <div class="flex items-center justify-between gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
-            <button onclick="shiftWeek(-1)" title="Semaine précédente" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition">
-              ◀ Sem. Préc.
-            </button>
-            <span id="currentWeekDisplayLabel" class="text-[10px] font-mono font-bold text-amber-400 text-center truncate">Semaine en cours</span>
-            <button onclick="shiftWeek(1)" title="Semaine suivante" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition">
-              Sem. Suiv. ▶
-            </button>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
+            </span>
           </div>
 
-          <!-- Raccourcis rapides -->
-          <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-            <button onclick="setPeriodShortcut('today')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-center transition">Aujourd'hui</button>
-            <button onclick="setPeriodShortcut('current_week')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-center transition">Cette Semaine</button>
-            <button onclick="setPeriodShortcut('month')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-center transition">Mois</button>
-            <button onclick="setPeriodShortcut('all')" class="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold text-center transition">Tout</button>
+          <!-- Menu Déroulant Intelligent -->
+          <div class="relative">
+            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
+              <option value="PREV_WEEK">◀ Semaine précédente</option>
+              <option value="TODAY">☀️ Aujourd'hui</option>
+              <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
+              <option value="ALL">🌐 Tout l'historique</option>
+              <option value="CUSTOM">⚙️ Période personnalisée...</option>
+            </select>
           </div>
 
-          <!-- Bornes libres Du... Au... -->
-          <div class="space-y-2 pt-1 border-t border-slate-900">
+          <!-- Bornes manuelles (affichées UNIQUEMENT si l'utilisateur choisit 'Personnalisée') -->
+          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-800/80">
             <div>
-              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Date début</label>
-              <input type="date" id="filterStartDate" onchange="onDateInputChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Du :</label>
+              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
             </div>
             <div>
-              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Date fin</label>
-              <input type="date" id="filterEndDate" onchange="onDateInputChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Au :</label>
+              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
             </div>
           </div>
         </div>
 
-        <!-- CRITÈRES D'ANOMALIES & AUDIT SUPPLY CHAIN -->
+        <!-- CRITÈRES D'ANOMALIES & CONTRÔLE D'AUDIT -->
         <div class="bg-slate-950/80 border border-slate-800 p-3.5 rounded-2xl space-y-2.5 shadow-inner">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -299,7 +295,6 @@
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
                 <span id="periodBadgeAgents" class="text-xs text-indigo-400 font-mono font-bold bg-slate-900 px-2.5 py-0.5 rounded-lg border border-slate-800">--</span>
               </div>
-              <!-- Bouton d'accès direct en 1 clic aux agents actifs -->
               <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3 py-1 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>En cours de comptage uniquement</span>
@@ -368,15 +363,15 @@
     let map = null;
     let markersLayer = null;
 
-    // Gestion temporelle par bloc de semaines
-    let currentWeekOffset = 0;
     let filterOnlyActiveAgents = false;
-    let openDrawers = {}; // Maintient l'état des tiroirs par agent
+    let openDrawers = {};
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       populateDropdowns();
-      setPeriodShortcut('current_week');
+      
+      // Initialise par défaut sur "Cette semaine"
+      onSmartPeriodChange('CURRENT_WEEK');
 
       if (!currentAdmin) {
         document.getElementById("authModal").classList.remove("hidden");
@@ -460,63 +455,54 @@
       }
     }
 
-    // --- LOGIQUE DE NAVIGATION PAR SEMAINE EN BLOC (LUNDI-DIMANCHE) ---
-    function setWeekRange(baseDate) {
-      const day = baseDate.getDay();
-      const diffToMonday = (day === 0 ? -6 : 1) - day;
-      
-      const monday = new Date(baseDate);
-      monday.setDate(baseDate.getDate() + diffToMonday);
-      monday.setHours(0, 0, 0, 0);
-
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-      sunday.setHours(23, 59, 59, 999);
-
-      document.getElementById("filterStartDate").value = monday.toISOString().slice(0, 10);
-      document.getElementById("filterEndDate").value = sunday.toISOString().slice(0, 10);
-
-      const label = currentWeekOffset === 0 ? "Semaine en cours" : (currentWeekOffset === -1 ? "Semaine précédente" : `Semaine (${currentWeekOffset > 0 ? '+' : ''}${currentWeekOffset})`);
-      document.getElementById("currentWeekDisplayLabel").innerText = label;
-    }
-
-    function shiftWeek(direction) {
-      currentWeekOffset += direction;
-      const target = new Date();
-      target.setDate(target.getDate() + (currentWeekOffset * 7));
-      setWeekRange(target);
-      applyFilters();
-    }
-
-    function setPeriodShortcut(type) {
+    // =========================================================================
+    // LOGIQUE ÉPURÉE DU SÉLECTEUR DE PÉRIODE INTELLIGENT (OPTION 1)
+    // =========================================================================
+    function onSmartPeriodChange(mode) {
       const now = new Date();
       const sInput = document.getElementById("filterStartDate");
       const eInput = document.getElementById("filterEndDate");
+      const customBox = document.getElementById("customDateRangeBox");
 
-      if (type === 'current_week') {
-        currentWeekOffset = 0;
-        setWeekRange(now);
-      } else if (type === 'all') {
+      if (mode === 'CUSTOM') {
+        customBox.classList.remove("hidden");
+        return;
+      } else {
+        customBox.classList.add("hidden");
+      }
+
+      if (mode === 'ALL') {
         sInput.value = "";
         eInput.value = "";
-        document.getElementById("currentWeekDisplayLabel").innerText = "Tout l'historique";
-      } else if (type === 'today') {
+      } else if (mode === 'TODAY') {
         const dStr = now.toISOString().split('T')[0];
         sInput.value = dStr;
         eInput.value = dStr;
-        document.getElementById("currentWeekDisplayLabel").innerText = "Aujourd'hui";
-      } else if (type === 'month') {
+      } else if (mode === 'CURRENT_WEEK') {
+        const day = now.getDay() || 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+
+        sInput.value = monday.toISOString().split('T')[0];
+        eInput.value = sunday.toISOString().split('T')[0];
+      } else if (mode === 'PREV_WEEK') {
+        const day = now.getDay() || 7;
+        const prevMonday = new Date(now);
+        prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday);
+        prevSunday.setDate(prevMonday.getDate() + 6);
+
+        sInput.value = prevMonday.toISOString().split('T')[0];
+        eInput.value = prevSunday.toISOString().split('T')[0];
+      } else if (mode === 'CURRENT_MONTH') {
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         sInput.value = firstDay.toISOString().split('T')[0];
         eInput.value = lastDay.toISOString().split('T')[0];
-        document.getElementById("currentWeekDisplayLabel").innerText = "Mois en cours";
       }
-      applyFilters();
-    }
 
-    function onDateInputChange() {
-      document.getElementById("currentWeekDisplayLabel").innerText = "Plage personnalisée";
       applyFilters();
     }
 
@@ -592,13 +578,11 @@
       const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
       const atypS = list.filter(r => Number(r.quantity) > maxQ).length;
 
-      // Onglet 1 (Activité Globale)
       document.getElementById("kpiTotalRows").innerText = totalR;
       document.getElementById("kpiTotalPieces").innerText = totalP;
       document.getElementById("kpiZeroStock").innerText = zeroS;
       document.getElementById("kpiAtypicalStock").innerText = atypS;
 
-      // Onglet 2 (Rappel identique en tête de Suivi Terrain)
       document.getElementById("kpiAgentsTotalRows").innerText = totalR;
       document.getElementById("kpiAgentsTotalPieces").innerText = totalP;
       document.getElementById("kpiAgentsZeroStock").innerText = zeroS;
@@ -638,7 +622,6 @@
       lucide.createIcons();
     }
 
-    // --- ACCORDÉONS DÉPLIABLES PAR AGENT ---
     function toggleDrawer(agent, drawerType) {
       const key = `${agent}_${drawerType}`;
       openDrawers[key] = !openDrawers[key];
@@ -661,7 +644,6 @@
 
       let agentsToRender = [...availableAgents];
 
-      // Filtrage 1-clic : uniquement les agents en cours de comptage
       if (filterOnlyActiveAgents) {
         agentsToRender = agentsToRender.filter(agent => {
           const entries = list.filter(i => i.user === agent);
@@ -695,7 +677,6 @@
           }
         }
 
-        // 1. Cadence horaire l/h
         let cadenceLh = agentEntries.length;
         let amplitudeHours = 0;
         if (agentEntries.length > 1) {
@@ -706,7 +687,6 @@
           if (amplitudeHours > 0.05) cadenceLh = Math.round(agentEntries.length / amplitudeHours);
         }
 
-        // 2. Périmètre traité
         const distinctPairs = {};
         agentEntries.forEach(e => {
           const key = `${e.contractor} - ${e.trade}`;
@@ -722,7 +702,6 @@
         return `
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow space-y-3">
             
-            <!-- En-tête de carte avec statut temps réel & entrepreneur actif -->
             <div class="flex items-center justify-between pb-3 border-b border-slate-800">
               <div class="flex items-center space-x-3">
                 <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}"></div>
@@ -734,10 +713,8 @@
               <span class="text-xs font-mono text-slate-400">${agentEntries.length} lignes • ${totalPieces} pcs</span>
             </div>
 
-            <!-- 3 Tuiles Cliquables (Accordéons) -->
             <div class="grid grid-cols-3 gap-3 text-xs">
               
-              <!-- Tuile 1 : Cadence -->
               <div onclick="toggleDrawer('${agent}', 'cadence')" class="p-2.5 rounded-xl border cursor-pointer transition ${isCadenceOpen ? 'bg-indigo-950/60 border-indigo-500' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
                 <div class="flex justify-between items-center mb-0.5">
                   <span class="text-slate-400 text-[10px] uppercase font-bold">⚡ Cadence</span>
@@ -746,7 +723,6 @@
                 <span class="font-black text-white text-base">${cadenceLh} <span class="text-xs font-normal text-slate-400">l/h</span></span>
               </div>
 
-              <!-- Tuile 2 : Anomalies -->
               <div onclick="toggleDrawer('${agent}', 'anomalies')" class="p-2.5 rounded-xl border cursor-pointer transition ${isAnomaliesOpen ? 'bg-amber-950/60 border-amber-500' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
                 <div class="flex justify-between items-center mb-0.5">
                   <span class="text-amber-400 text-[10px] uppercase font-bold">🛡️ Anomalies</span>
@@ -755,7 +731,6 @@
                 <span class="font-black text-amber-400 text-base">${anomalies.length} <span class="text-xs font-normal text-slate-400">alerte(s)</span></span>
               </div>
 
-              <!-- Tuile 3 : Périmètre -->
               <div onclick="toggleDrawer('${agent}', 'perimeter')" class="p-2.5 rounded-xl border cursor-pointer transition ${isPerimeterOpen ? 'bg-emerald-950/60 border-emerald-500' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
                 <div class="flex justify-between items-center mb-0.5">
                   <span class="text-slate-400 text-[10px] uppercase font-bold">🌐 Périmètre</span>
@@ -766,7 +741,6 @@
 
             </div>
 
-            <!-- Tiroir 1 : Détail Cadence -->
             ${isCadenceOpen ? `
               <div class="p-3 bg-slate-950 rounded-xl border border-indigo-500/40 text-xs space-y-1">
                 <span class="text-[10px] font-bold text-indigo-400 uppercase block">Analyse de productivité horaire</span>
@@ -775,7 +749,6 @@
               </div>
             ` : ''}
 
-            <!-- Tiroir 2 : Détail Anomalies avec boutons d'action rapide -->
             ${isAnomaliesOpen ? `
               <div class="p-3 bg-slate-950 rounded-xl border border-amber-500/40 text-xs space-y-2">
                 <span class="text-[10px] font-bold text-amber-400 uppercase block">Saisies non conformes (${anomalies.length})</span>
@@ -799,7 +772,6 @@
               </div>
             ` : ''}
 
-            <!-- Tiroir 3 : Détail Périmètre avec dates de passage -->
             ${isPerimeterOpen ? `
               <div class="p-3 bg-slate-950 rounded-xl border border-emerald-500/40 text-xs space-y-1.5">
                 <span class="text-[10px] font-bold text-emerald-400 uppercase block">Chantiers entamés & dates de passage</span>
@@ -849,10 +821,8 @@
             fillOpacity: 0.85
           }).addTo(markersLayer);
 
-          // Au survol : nom de l'agent
           marker.bindTooltip(`<strong>${item.user}</strong>`, { direction: 'top' });
 
-          // Au clic : popup détaillée
           marker.bindPopup(`
             <div class="text-xs">
               <strong>${item.user}</strong><br>
