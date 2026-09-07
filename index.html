@@ -23,18 +23,18 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     
-    /* CADRAGE STRICT DU FLUX CAMÉRA */
+    /* CADRAGE DE LA CAMÉRA : AGRANDI EN HAUT ET EN BAS D'ENVIRON 1 CM (330px) */
     #reader {
-      height: 250px !important;
-      max-height: 250px !important;
+      height: 330px !important;
+      max-height: 330px !important;
       width: 100% !important;
       overflow: hidden !important;
       position: relative !important;
       background: #000;
     }
     #reader video {
-      height: 250px !important;
-      max-height: 250px !important;
+      height: 330px !important;
+      max-height: 330px !important;
       width: 100% !important;
       object-fit: cover !important;
     }
@@ -46,14 +46,14 @@
     }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* RÉTICULE VERT : SUPERPOSÉ AU CENTRE EXACT AVEC TEXTE AGRANDI BAS */
+    /* RÉTICULE VERT : SUPERPOSÉ AU CENTRE EXACT AVEC TEXTE AGRANDI CONTRE LA LIGNE BASSE */
     .ocr-reticle {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 80%;
-      height: 48%;
+      width: 82%;
+      height: 44%;
       border: 2.5px solid #10b981;
       border-radius: 12px;
       box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
@@ -143,21 +143,21 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- MODALE CAMÉRA : CENTRÉE MILIEU HAUTEUR AVEC RÉTICULES SUPERPOSÉS -->
+          <!-- MODALE CAMÉRA : CADRE BLEU ÉTENDU EN HAUT ET EN BAS (+1 CM) -->
           <div id="scannerContainer" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm items-center justify-center p-4">
             <div class="relative w-full max-w-sm bg-slate-950 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
               
-              <!-- BANDEAU HAUT : ZONE POUR QR / EAN (PLUS GRAND) -->
+              <!-- BANDEAU HAUT : ZONE POUR QR / EAN -->
               <div class="absolute top-2.5 inset-x-0 flex justify-center z-10 pointer-events-none">
                 <span class="text-xs font-mono font-black text-indigo-200 bg-slate-950/90 px-3 py-1 rounded border border-indigo-500/50 tracking-wider shadow">
                   ZONE POUR QR / EAN
                 </span>
               </div>
 
-              <!-- Zone vidéo cadrée -->
+              <!-- Zone vidéo cadrée sur 330px -->
               <div id="reader" class="w-full relative"></div>
               
-              <!-- RÉTICULE VERT : SUPERPOSÉ CENTRÉ + TEXTE AGRANDI CONTRE LA LIGNE BASSE -->
+              <!-- RÉTICULE VERT : SUPERPOSÉ CENTRÉ AU CADRE DES COINS DU SCANNER -->
               <div class="ocr-reticle">
                 <span class="text-xs font-mono font-black text-emerald-300 bg-slate-950/90 px-2.5 py-1 rounded border border-emerald-500/50 tracking-wider shadow mb-0.5">
                   ZONE POUR RÉF SAP 6 CHIFFRES
@@ -165,23 +165,23 @@
               </div>
               <canvas id="ocrCanvas" class="hidden"></canvas>
               
-              <!-- BARRE D'OUTILS : BOUTONS LATÉRAUX PLUS GRANDS (52px) & SCAN RÉF SAP LÉGÈREMENT RACCOURCI -->
+              <!-- BARRE D'OUTILS : FLASH, SCAN VERT RACCOURCI, CROIX FERMETURE ROUGE ROSE -->
               <div class="p-3 bg-slate-900/95 flex items-center justify-between gap-3 border-t border-slate-800 z-10 relative">
                 
-                <!-- Bouton Flash agrandi (logo seul) -->
+                <!-- Bouton Flash -->
                 <button id="btnTorch" onclick="toggleTorch()" title="Lampe" 
                         class="w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow">
                   <i data-lucide="flashlight" id="torchIcon" class="w-6 h-6 text-slate-300"></i>
                 </button>
 
-                <!-- Bouton vert : Scan Réf SAP un peu raccourci -->
+                <!-- Bouton vert : Scan Réf SAP -->
                 <button onclick="triggerManualOcrCapture()" 
                         class="h-[52px] flex-1 max-w-[185px] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1.5 transition">
                   <i data-lucide="scan-line" class="w-5 h-5 shrink-0"></i>
                   <span class="truncate">Scan Réf SAP</span>
                 </button>
 
-                <!-- Bouton Fermer agrandi (Croix seule, style Reset) -->
+                <!-- Bouton Croix (style Reset) -->
                 <button onclick="stopScanner()" title="Fermer" 
                         class="w-[52px] h-[52px] shrink-0 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 rounded-xl border border-rose-500/40 flex items-center justify-center shadow transition">
                   <i data-lucide="x" class="w-6 h-6"></i>
@@ -235,7 +235,7 @@
           </div>
         </div>
 
-        <!-- SAISIE DE QUANTITÉ (AVEC BOUTON RESET UNIQUE) -->
+        <!-- SAISIE DE QUANTITÉ (AVEC BOUTON RESET ROUGE/ROSE) -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
           <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (&gt;= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -314,7 +314,7 @@
     </div>
   </main>
 
-  <!-- ================= NAVIGATION INFÉRIEURE : AVEC MENTION ORANGE DANS LE COIN DU LOGO SCAN ================= -->
+  <!-- ================= NAVIGATION INFÉRIEURE : LOGO SCAN AVEC MENTION ORANGE ================= -->
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -728,6 +728,7 @@
       dd.classList.remove("hidden");
     }
 
+    // --- SÉLECTION DE L'ARTICLE PAR LES 3 MOYENS AVEC RETOUR VOCAL UNIQUE ---
     function selectArticleBySap(sapRef) {
       const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
       if (!item) return;
@@ -743,7 +744,9 @@
       blurSearchInput();
       
       if (navigator.vibrate) navigator.vibrate(50);
-      speakFeedback(`${activeItem.designation}. Réf SAP ${activeItem.sapRef}`);
+
+      // RETOUR VOCAL STRICT : Uniquement la référence SAP
+      speakFeedback(`Réf SAP ${activeItem.sapRef} sélectionnée`);
     }
 
     function clearSearch() {
@@ -759,7 +762,7 @@
     }
 
     // =========================================================================
-    // SCANNER OUVERT AU CENTRE EXACT DE L'ÉCRAN SMARTPHONE
+    // SCANNER CENTRÉ DANS LA HAUTEUR DU SMARTPHONE (+1 CM HAUT ET BAS)
     // =========================================================================
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
@@ -780,10 +783,11 @@
       }
       html5QrCode = new Html5Qrcode("reader");
 
+      // qrbox ajusté pour la hauteur étendue à 330px
       const qrConfig = {
         fps: 15,
-        qrbox: { width: 260, height: 130 },
-        aspectRatio: 1.777778
+        qrbox: { width: 270, height: 210 },
+        aspectRatio: 1.333333
       };
 
       try {
@@ -963,8 +967,8 @@
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      const cropW = Math.floor(video.videoWidth * 0.80);
-      const cropH = Math.floor(video.videoHeight * 0.48);
+      const cropW = Math.floor(video.videoWidth * 0.82);
+      const cropH = Math.floor(video.videoHeight * 0.44);
       const startX = Math.floor((video.videoWidth - cropW) / 2);
       const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
 
@@ -1077,7 +1081,7 @@
     }
 
     // =========================================================================
-    // CODE OPTIQUE : BLOCAGE STRICT DES ARTICLES HORS CATALOGUE
+    // CODE OPTIQUE : BLOCAGE STRICT SI NON PRÉSENT DANS LE CATALOGUE
     // =========================================================================
     function handleExactCodeMatch(code) {
       const clean = String(code).trim();
@@ -1182,7 +1186,7 @@
     }
 
     // =========================================================================
-    // VALIDATION DE L'INVENTAIRE : AVEC CONTRÔLE ANTI-DOUBLON (5 MINUTES)
+    // VALIDATION DE L'INVENTAIRE : AVEC RETOUR VOCAL (QUANTITÉ ET RÉF SAP)
     // =========================================================================
     async function submitInventory() {
       if (!currentAgent) {
@@ -1265,6 +1269,9 @@
       btn.disabled = true;
       label.innerText = "ENREGISTREMENT...";
       icon.className = "w-6 h-6 animate-spin";
+
+      // RETOUR VOCAL À LA VALIDATION : Énonce la quantité et la réf SAP
+      speakFeedback(`Quantité ${finalQty}, Réf SAP ${activeItem.sapRef}`);
 
       let payload;
       if (targetUpdateId) {
