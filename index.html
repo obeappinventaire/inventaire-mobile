@@ -112,7 +112,6 @@
     <div class="flex items-center space-x-2">
       <span id="adminBadge" class="hidden px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider border border-amber-500/30">ADMIN</span>
       
-      <!-- BOUTON ACTUALISER -->
       <button onclick="manualSync()" title="Actualiser les données" class="flex items-center space-x-1 bg-slate-850 hover:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs text-indigo-300 transition">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
         <span class="hidden sm:inline font-semibold">Actualiser</span>
@@ -327,9 +326,6 @@
   <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <defs>
-          <path id="line-corner-start-higher" d="M 72 83 H 82" />
-        </defs>
         <g stroke="currentColor" stroke-width="4">
           <path d="M 12 28 V 20 A 8 8 0 0 1 20 12 H 28"/>
           <path d="M 72 12 H 80 A 8 8 0 0 1 88 20 V 28"/>
@@ -341,11 +337,6 @@
           <line x1="50" y1="28" x2="50" y2="72"/>
           <line x1="67" y1="28" x2="67" y2="72"/>
         </g>
-        <text fill="#f97316" font-size="1.4" font-weight="400" font-family="sans-serif" letter-spacing="0.05">
-          <textPath href="#line-corner-start-higher" startOffset="0" text-anchor="start">
-            CO2H2O srlu
-          </textPath>
-        </text>
       </svg>
       <span class="text-xs font-semibold mt-1">Comptage</span>
     </button>
@@ -516,8 +507,12 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // FORCER STRICTEMENT L'AFFICHAGE SUR LA PAGE DE COMPTAGE AU LANCEMENT
+      // FORCER STRICTEMENT L'OUVERTURE SUR LA PAGE DE COMPTAGE AU LANCEMENT
       switchTab('inventory');
+
+      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
+        openAgentModal();
+      }
 
       document.addEventListener("click", (e) => {
         const wrapper = document.getElementById("searchCatalogueWrapper");
@@ -543,10 +538,6 @@
 
       initOcrWorker();
       await syncData();
-
-      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
-        openAgentModal();
-      }
     });
 
     function initContinuousGps() {

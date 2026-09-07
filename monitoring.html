@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision Inventaire - Monitoring Manager</title>
-
-  <!-- FAVICON ET ICÔNES OFFICIELLES -->
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
   <meta name="theme-color" content="#ffffff">
@@ -48,7 +46,7 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN (VALIDABLE AVEC ENTRÉE) ================= -->
+  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN AVEC TOUCHE ENTRÉE ================= -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -63,12 +61,12 @@
         <div>
           <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Superviseur</label>
           <select id="authAdminSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 font-medium focus:border-orange-500 focus:bg-white focus:outline-none">
-            <option value="">Chargement des administrateurs...</option>
+            <option value="Admin">Admin</option>
           </select>
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mot de passe / Code PIN</label>
-          <!-- AJOUT DU GESTIONNAIRE DE TOUCHE ENTRÉE -->
+          <!-- GESTION DE LA TOUCHE ENTRÉE -->
           <input type="password" id="authPassword" placeholder="••••" onkeydown="if(event.key==='Enter') authenticateAdmin()" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 focus:border-orange-500 focus:bg-white focus:outline-none text-center font-mono text-base">
         </div>
       </div>
@@ -446,11 +444,11 @@
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
-    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
-    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
-    let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
-    let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
+    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || '["Admin", "Superviseur"]');
+    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || '[]');
+    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || '[]');
+    let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || '["Admin"]');
+    let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || '{"Admin":"1234"}');
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
 
     let currentAdmin = sessionStorage.getItem("mon_current_admin") || "";
@@ -516,12 +514,9 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
-
-      // GARANTIR LE CHARGEMENT INSTANTANÉ DEPUIS LE CACHE LOCAL POUR ÉVITER LE BLOCAGE DE LA MODALE
-      if (availableAgents.length === 0) {
-        availableAgents = ["Admin", "Superviseur", "Agent_Terrain"];
-      }
+      initMultiSelects();
       populateAdminDropdown();
+      onSmartPeriodChange('CURRENT_WEEK');
 
       if (!currentAdmin) {
         document.getElementById("authModal").classList.remove("hidden");
@@ -530,7 +525,13 @@
         document.getElementById("authModal").classList.add("hidden");
       }
 
-      onSmartPeriodChange('CURRENT_WEEK');
+      document.addEventListener("click", () => {
+        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add("hidden");
+        });
+      });
+
       await syncMonitoringData();
       applyFilters();
     });
@@ -538,7 +539,6 @@
     function populateAdminDropdown() {
       const adminSel = document.getElementById("authAdminSelect");
       if (adminSel) {
-        // S'appuie sur la liste stockée ou un jeu d'administrateurs par défaut en cas de hors-ligne total
         const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
         adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
           listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -554,6 +554,38 @@
       });
       const target = document.getElementById(id);
       if (target) target.classList.toggle("hidden");
+    }
+
+    function initMultiSelects() {
+      const cAgents = document.getElementById("checkboxesAgents");
+      if (cAgents) {
+        cAgents.innerHTML = availableAgents.map(a => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${a}</span>
+          </label>
+        `).join('');
+      }
+
+      const cContractors = document.getElementById("checkboxesContractors");
+      if (cContractors) {
+        cContractors.innerHTML = availableContractors.map(c => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${c}</span>
+          </label>
+        `).join('');
+      }
+
+      const cTrades = document.getElementById("checkboxesTrades");
+      if (cTrades) {
+        cTrades.innerHTML = availableTrades.map(t => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${t}</span>
+          </label>
+        `).join('');
+      }
     }
 
     function onCheckboxChange(type) {
@@ -656,6 +688,7 @@
             cachedHistory = data.history;
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
+          initMultiSelects();
           populateAdminDropdown();
           applyFilters();
         }
@@ -747,7 +780,7 @@
       const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
 
       const filtered = cachedHistory.filter(item => {
-        const itDate = parseEntryDate(item.timestamp);
+        const itDate = parseItemDate(item.timestamp);
         if (sDate && itDate && itDate < sDate) return false;
         if (eDate && itDate && itDate > eDate) return false;
 
@@ -776,43 +809,54 @@
     }
 
     function renderKPIs(list) {
-      document.getElementById("kpiTotalRows").innerText = list.length;
-      document.getElementById("kpiTotalPieces").innerText = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-      document.getElementById("kpiZeroStock").innerText = list.filter(r => Number(r.quantity) === 0).length;
+      const totalR = list.length;
+      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
       const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
-      document.getElementById("kpiAtypicalStock").innerText = list.filter(r => Number(r.quantity) > maxQ).length;
+      const atypS = list.filter(r => Number(r.quantity) > maxQ).length;
 
-      document.getElementById("kpiAgentsTotalRows").innerText = list.length;
-      document.getElementById("kpiAgentsTotalPieces").innerText = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-      document.getElementById("kpiAgentsZeroStock").innerText = list.filter(r => Number(r.quantity) === 0).length;
-      document.getElementById("kpiAgentsAtypicalStock").innerText = list.filter(r => Number(r.quantity) > maxQ).length;
+      document.getElementById("kpiTotalRows").innerText = totalR;
+      document.getElementById("kpiTotalPieces").innerText = totalP;
+      document.getElementById("kpiZeroStock").innerText = zeroS;
+      document.getElementById("kpiAtypicalStock").innerText = atypS;
+
+      document.getElementById("kpiAgentsTotalRows").innerText = totalR;
+      document.getElementById("kpiAgentsTotalPieces").innerText = totalP;
+      document.getElementById("kpiAgentsZeroStock").innerText = zeroS;
+      document.getElementById("kpiAgentsAtypicalStock").innerText = atypS;
     }
 
     function renderTable(list) {
-      document.getElementById("tableCountLabel").innerText = `${list.length} saisie(s) répertoriée(s)`;
+      let countText = `${list.length} saisie(s) répertoriée(s)`;
+      if (activeKpiFilter === 'ZERO') countText += " [Filtre : Ruptures uniquement]";
+      if (activeKpiFilter === 'HIGH') countText += " [Filtre : Alertes atypiques uniquement]";
+      document.getElementById("tableCountLabel").innerText = countText;
+
       const tbody = document.getElementById("supervisionTableBody");
       const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
+      const alertZero = document.getElementById("cfgAlertZero").checked;
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 italic">Aucune saisie sur le filtre actif.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée pour cette sélection.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = list.map(item => {
         const q = Number(item.quantity);
-        const isAlert = q === 0 || q > maxQ;
+        const isAlert = (alertZero && q === 0) || q > maxQ;
+        const displayDate = formatDateDMY(item.timestamp, true);
         return `
-          <tr class="hover:bg-slate-850/60 transition ${isAlert ? 'bg-amber-500/5' : ''}">
-            <td class="p-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">${item.timestamp}</td>
-            <td class="p-3 font-bold text-white">${item.user}</td>
-            <td class="p-3 text-slate-300">${item.contractor}</td>
-            <td class="p-3 text-slate-400">${item.trade}</td>
-            <td class="p-3 font-mono font-bold text-amber-400">${item.sapRef}</td>
-            <td class="p-3 text-slate-200 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
-            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${q}</td>
+          <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
+            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${displayDate}</td>
+            <td class="p-3 font-bold text-slate-900">${item.user}</td>
+            <td class="p-3 text-slate-700">${item.contractor}</td>
+            <td class="p-3 text-slate-500">${item.trade}</td>
+            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
+            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
+            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
             <td class="p-3 text-right whitespace-nowrap">
-              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1 hover:text-white text-slate-400 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1 hover:text-rose-400 text-slate-400 transition ml-2" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
             </td>
           </tr>
         `;
@@ -820,22 +864,46 @@
       lucide.createIcons();
     }
 
+    function toggleDrawer(agent, drawerType) {
+      const key = `${agent}_${drawerType}`;
+      openDrawers[key] = !openDrawers[key];
+      applyFilters();
+    }
+
     function renderAgentsView(list) {
       const container = document.getElementById("agentsAccordionContainer");
       if (!container) return;
 
       if (availableAgents.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-500 italic">Aucun agent configuré.</div>`;
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Aucun agent configuré.</div>`;
         return;
       }
 
       const now = new Date().getTime();
       const fifteenMinMs = 15 * 60 * 1000;
+      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
+      const alertZero = document.getElementById("cfgAlertZero").checked;
 
-      container.innerHTML = availableAgents.map(agent => {
+      let agentsToRender = selectedAgents.length > 0 ? availableAgents.filter(a => selectedAgents.includes(a)) : [...availableAgents];
+
+      if (filterOnlyActiveAgents) {
+        agentsToRender = agentsToRender.filter(agent => {
+          const entries = list.filter(i => i.user === agent);
+          if (entries.length === 0) return false;
+          const dt = parseItemDate(entries[0].timestamp);
+          return dt && (now - dt.getTime()) < fifteenMinMs;
+        });
+      }
+
+      if (agentsToRender.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">Aucun agent ne correspond aux filtres sélectionnés.</div>`;
+        return;
+      }
+
+      container.innerHTML = agentsToRender.map(agent => {
         const agentEntries = list.filter(i => i.user === agent);
         const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-        const alerts = agentEntries.filter(r => Number(r.quantity) === 0 || Number(r.quantity) > 50).length;
+        const anomalies = agentEntries.filter(r => (alertZero && Number(r.quantity) === 0) || Number(r.quantity) > maxQ);
 
         let isActive = false;
         let activeContractor = "Aucun chantier entamé";
@@ -843,52 +911,141 @@
 
         if (agentEntries.length > 0) {
           const lastOne = agentEntries[0];
-          activeContractor = lastOne.contractor || "Entrepreneur inconnu";
-          lastTimeStr = lastOne.timestamp ? (lastOne.timestamp.split(' ')[1] || lastOne.timestamp) : '--';
-          const dt = parseEntryDate(lastOne.timestamp);
+          activeContractor = lastOne.contractor || "Entrepreneur indéterminé";
+          lastTimeStr = formatDateDMY(lastOne.timestamp, true);
+          const dt = parseItemDate(lastOne.timestamp);
           if (dt && (now - dt.getTime()) < fifteenMinMs) {
             isActive = true;
           }
         }
 
+        let cadenceLh = agentEntries.length;
+        let amplitudeHours = 0;
+        if (agentEntries.length > 1) {
+          const times = agentEntries.map(e => parseItemDate(e.timestamp)).filter(Boolean).map(d => d.getTime());
+          const minT = Math.min(...times);
+          const maxT = Math.max(...times);
+          amplitudeHours = (maxT - minT) / 3600000;
+          if (amplitudeHours > 0.05) cadenceLh = Math.round(agentEntries.length / amplitudeHours);
+        }
+
         const distinctPairs = {};
         agentEntries.forEach(e => {
           const key = `${e.contractor} - ${e.trade}`;
-          if (!distinctPairs[key]) distinctPairs[key] = { lastSeen: e.timestamp, count: 0 };
+          if (!distinctPairs[key]) distinctPairs[key] = { lastSeen: e.timestamp, count: 0, pieces: 0 };
           distinctPairs[key].count++;
+          distinctPairs[key].pieces += (Number(e.quantity) || 0);
         });
 
+        const isCadenceOpen = !!openDrawers[`${agent}_cadence`];
+        const isAnomaliesOpen = !!openDrawers[`${agent}_anomalies`];
+        const isPerimeterOpen = !!openDrawers[`${agent}_perimeter`];
+
         return `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow space-y-3">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
               <div class="flex items-center space-x-3">
-                <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}"></div>
-                <span class="font-bold text-white text-sm">${agent}</span>
-                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}"></div>
+                <span class="font-bold text-slate-900 text-sm">${agent}</span>
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
                   ${isActive ? '🟢 En cours' : '⚪ Déconnecté'} • ${activeContractor} (${lastTimeStr})
                 </span>
               </div>
-              <span class="text-xs font-mono text-slate-400">${agentEntries.length} lignes • ${totalPieces} pcs</span>
+              <span class="text-xs font-mono text-slate-500">${agentEntries.length} lignes • ${totalPieces} pcs</span>
             </div>
 
             <div class="grid grid-cols-3 gap-3 text-xs">
-              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                <span class="text-slate-400 block text-[10px] uppercase font-bold">Cadence Saisie</span>
-                <span class="font-black text-white text-base">${agentEntries.length} lignes traitées</span>
+              
+              <div onclick="toggleDrawer('${agent}', 'cadence')" class="p-2.5 rounded-xl border cursor-pointer transition ${isCadenceOpen ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
+                <div class="flex justify-between items-center mb-0.5">
+                  <span class="text-slate-500 text-[10px] uppercase font-bold">⚡ Cadence</span>
+                  <i data-lucide="${isCadenceOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-orange-600"></i>
+                </div>
+                <span class="font-black text-slate-900 text-base">${cadenceLh} <span class="text-xs font-normal text-slate-500">l/h</span></span>
               </div>
-              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                <span class="text-amber-400 block text-[10px] uppercase font-bold">Anomalies relevées</span>
-                <span class="font-black text-amber-400 text-base">${alerts} alerte(s)</span>
+
+              <div onclick="toggleDrawer('${agent}', 'anomalies')" class="p-2.5 rounded-xl border cursor-pointer transition ${isAnomaliesOpen ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
+                <div class="flex justify-between items-center mb-0.5">
+                  <span class="text-amber-700 text-[10px] uppercase font-bold">🛡️ Anomalies</span>
+                  <i data-lucide="${isAnomaliesOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-amber-600"></i>
+                </div>
+                <span class="font-black text-amber-700 text-base">${anomalies.length} <span class="text-xs font-normal text-slate-500">alerte(s)</span></span>
               </div>
-              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                <span class="text-slate-400 block text-[10px] uppercase font-bold">Chantiers / Métiers</span>
-                <span class="font-black text-indigo-300 text-base">${Object.keys(distinctPairs).length} traités</span>
+
+              <div onclick="toggleDrawer('${agent}', 'perimeter')" class="p-2.5 rounded-xl border cursor-pointer transition ${isPerimeterOpen ? 'bg-emerald-50 border-emerald-300' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}">
+                <div class="flex justify-between items-center mb-0.5">
+                  <span class="text-slate-500 text-[10px] uppercase font-bold">🌐 Périmètre</span>
+                  <i data-lucide="${isPerimeterOpen ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5 text-emerald-600"></i>
+                </div>
+                <span class="font-black text-orange-600 text-base">${Object.keys(distinctPairs).length} <span class="text-xs font-normal text-slate-500">traités</span></span>
               </div>
+
             </div>
+
+            ${isCadenceOpen ? `
+              <div class="p-3 bg-slate-50 rounded-xl border border-orange-200 text-xs space-y-1">
+                <span class="text-[10px] font-bold text-orange-700 uppercase block">Analyse de productivité horaire</span>
+                <p class="text-slate-700">Volume total : <strong class="text-slate-900">${agentEntries.length} lignes</strong> saisies pour <strong class="text-orange-600">${totalPieces} pièces</strong>.</p>
+                <p class="text-slate-500 text-[11px]">Amplitude active de la session : <strong>${amplitudeHours.toFixed(1)} heure(s)</strong>.</p>
+              </div>
+            ` : ''}
+
+            ${isAnomaliesOpen ? `
+              <div class="p-3 bg-slate-50 rounded-xl border border-amber-200 text-xs space-y-2">
+                <span class="text-[10px] font-bold text-amber-700 uppercase block">Saisies non conformes (${anomalies.length})</span>
+                ${anomalies.length === 0 ? '<p class="text-slate-400 italic">Aucune anomalie détectée pour cet agent.</p>' : `
+                  <div class="space-y-1.5 divide-y divide-slate-200">
+                    ${anomalies.map(an => `
+                      <div class="pt-1.5 flex justify-between items-center">
+                        <div>
+                          <div class="font-mono text-amber-700 font-bold">${an.sapRef} • <span class="text-slate-900 font-normal">${an.designation}</span></div>
+                          <div class="text-[10px] text-slate-500">${an.contractor} (${an.trade}) • ${formatDateDMY(an.timestamp, true)}</div>
+                        </div>
+                        <div class="flex items-center space-x-1.5 shrink-0">
+                          <span class="font-mono font-black ${Number(an.quantity) === 0 ? 'text-rose-600' : 'text-amber-700'} text-sm mr-1.5">${an.quantity}</span>
+                          <button onclick="editTableItem('${an.id}', ${an.quantity})" class="p-1 hover:bg-slate-200 rounded text-slate-600 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                          <button onclick="deleteTableItem('${an.id}', '${an.designation.replace(/'/g, "\\'")}')" class="p-1 hover:bg-rose-100 rounded text-slate-500 hover:text-rose-600 transition" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                `}
+              </div>
+            ` : ''}
+
+            ${isPerimeterOpen ? `
+              <div class="p-3 bg-slate-50 rounded-xl border border-emerald-200 text-xs space-y-1.5">
+                <span class="text-[10px] font-bold text-emerald-700 uppercase block">Chantiers entamés & dates de passage</span>
+                ${Object.keys(distinctPairs).length === 0 ? '<p class="text-slate-400 italic">Aucun chantier entamé sur cette période.</p>' : `
+                  <div class="space-y-1">
+                    ${Object.entries(distinctPairs).map(([pair, info]) => `
+                      <div class="flex justify-between items-center py-1 border-b border-slate-200 last:border-0 text-[11px]">
+                        <span class="font-semibold text-slate-800">${pair}</span>
+                        <span class="text-slate-500 font-mono text-[10px]">${formatDateDMY(info.lastSeen, true)} (${info.count} lig. / ${info.pieces} pcs)</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                `}
+              </div>
+            ` : ''}
+
           </div>
         `;
       }).join('');
       lucide.createIcons();
+    }
+
+    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2); 
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+      return R * c;
     }
 
     function renderMap(list) {
@@ -907,38 +1064,192 @@
           attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        markersLayer = L.layerGroup().addTo(map);
+        markersLayer = L.markerClusterGroup({
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          zoomToBoundsOnClick: true
+        }).addTo(map);
       }
 
       markersLayer.clearLayers();
       const points = [];
+      const now = new Date().getTime();
+      const thirtyMinMs = 30 * 60 * 1000;
 
+      const clusters = [];
       list.forEach(item => {
         const lat = Number(item.lat || item.latitude);
         const lng = Number(item.lng || item.longitude);
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-          points.push([lat, lng]);
-          L.circleMarker([lat, lng], {
-            radius: 6,
-            fillColor: "#f97316",
-            color: "#ffffff",
-            weight: 1.5,
-            opacity: 1,
-            fillOpacity: 0.85
-          }).addTo(markersLayer).bindPopup(`
-            <div class="text-xs">
-              <strong>${item.user}</strong><br>
-              ${item.contractor} (${item.trade})<br>
-              ${item.designation} (Qté : ${item.quantity})<br>
-              <span class="text-[10px] text-gray-500">${item.timestamp}</span>
-            </div>
-          `);
+          let placed = false;
+          for (let cluster of clusters) {
+            const dist = getDistanceFromLatLonInMeters(cluster.lat, cluster.lng, lat, lng);
+            if (dist <= 1000) {
+              cluster.items.push(item);
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            clusters.push({ lat, lng, items: [item] });
+          }
         }
       });
 
-      if (points.length > 0) {
-        map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
+      clusters.forEach(cluster => {
+        const { lat, lng, items } = cluster;
+        const uniqueAgents = [...new Set(items.map(i => i.user))];
+        const agentCount = uniqueAgents.length;
+
+        items.forEach((item, index) => {
+          let markerLat = lat;
+          let markerLng = lng;
+
+          if (items.length > 1) {
+            const angle = (index / items.length) * 2 * Math.PI;
+            const radius = 0.002 * (index + 1);
+            markerLat = lat + radius * Math.cos(angle);
+            markerLng = lng + radius * Math.sin(angle);
+          }
+
+          points.push([markerLat, markerLng]);
+
+          const agentHistory = list.filter(h => h.user === item.user);
+          const sortedAgentHistory = [...agentHistory].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
+          
+          let currentActivePair = "Aucun en cours";
+          let lastCompletedPair = "Aucun";
+          let isAgentActiveLive = false;
+
+          if (sortedAgentHistory.length > 0) {
+            const mostRecent = sortedAgentHistory[0];
+            const recentDt = parseItemDate(mostRecent.timestamp);
+            if ((now - recentDt.getTime()) < thirtyMinMs) {
+              isAgentActiveLive = true;
+              currentActivePair = `${mostRecent.contractor} (${mostRecent.trade})`;
+            } else {
+              lastCompletedPair = `${mostRecent.contractor} (${mostRecent.trade})`;
+            }
+          }
+
+          const isItemSessionActive = (now - parseItemDate(item.timestamp).getTime()) < thirtyMinMs;
+          const statusBadge = isItemSessionActive 
+            ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold">🟢 En cours</span>`
+            : `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold">🔵 Finalisé</span>`;
+
+          const entriesForPair = list.filter(h => h.user === item.user && h.contractor === item.contractor && h.trade === item.trade);
+          entriesForPair.sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
+
+          const firstEntryDateStr = entriesForPair.length > 0 ? formatDateDMY(entriesForPair[0].timestamp, true) : "--/--/----";
+          const lastEntryDateStr = entriesForPair.length > 0 ? formatDateDMY(entriesForPair[entriesForPair.length - 1].timestamp, true) : "--/--/----";
+          const linesCount = entriesForPair.length;
+
+          const marker = L.circleMarker([markerLat, markerLng], {
+            radius: agentCount > 1 ? 9 : 7,
+            fillColor: isAgentActiveLive ? "#10b981" : "#f97316",
+            color: "#ffffff",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+          });
+
+          marker.bindTooltip(`
+            <div class="text-xs font-sans px-1.5 py-1 space-y-0.5 leading-snug">
+              <strong class="text-slate-900 block text-sm">Agent : ${item.user}</strong>
+              ${agentCount > 1 ? `<div class="text-orange-600 font-bold text-[11px]">📍 ${agentCount} agents actifs sur ce spot (1km)</div>` : ''}
+              <div class="text-[11px] text-emerald-700">
+                <span class="font-bold">En cours :</span> ${currentActivePair}
+              </div>
+              <div class="text-[11px] text-slate-500">
+                <span class="font-bold">Dernier terminé :</span> ${lastCompletedPair}
+              </div>
+            </div>
+          `, { direction: 'top', offset: [0, -6] });
+
+          marker.on('click', () => {
+            map.panTo([markerLat, markerLng], { animate: true, duration: 0.5 });
+          });
+
+          const safeUser = (item.user || '').replace(/'/g, "\\'");
+          const safeContractor = (item.contractor || '').replace(/'/g, "\\'");
+          const safeTrade = (item.trade || '').replace(/'/g, "\\'");
+
+          marker.bindPopup(`
+            <div class="text-xs font-sans space-y-2.5 py-1 min-w-[280px]">
+              <div class="flex justify-between items-start border-b border-slate-100 pb-2">
+                <div class="pr-2">
+                  <strong class="text-slate-900 text-sm block leading-snug">${item.contractor}</strong>
+                  <span class="text-orange-600 font-bold block">${item.trade}</span>
+                </div>
+                ${statusBadge}
+              </div>
+
+              <div class="space-y-1.5 text-slate-600 text-[11px]">
+                <div class="flex justify-between items-center">
+                  <span>Agent :</span>
+                  <strong class="text-slate-900">${item.user}</strong>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span>Lignes traitées :</span>
+                  <strong class="text-orange-700 font-mono text-xs">${linesCount} ligne(s)</strong>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span>1ère saisie :</span>
+                  <span class="font-mono text-slate-800 font-semibold">${firstEntryDateStr}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span>Dernière saisie :</span>
+                  <span class="font-mono text-slate-800 font-semibold">${lastEntryDateStr}</span>
+                </div>
+              </div>
+
+              <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
+                      class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                <span>Voir le listing dans l'Activité Globale</span>
+              </button>
+            </div>
+          `, {
+            autoPan: true,
+            autoPanPadding: [80, 80]
+          });
+
+          markersLayer.addLayer(marker);
+        });
+      });
+
+      document.getElementById("mapPointsCountLabel").innerText = `${points.length} point(s) GPS`;
+      lucide.createIcons();
+    }
+
+    function resetMapToBelgium() {
+      if (map) {
+        map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
       }
+    }
+
+    function filterAndSwitchToGlobal(agent, contractor, trade) {
+      activeKpiFilter = null;
+      selectedAgents = agent ? [agent] : [];
+      document.querySelectorAll("#checkboxesAgents input").forEach(chk => {
+        chk.checked = (chk.value === agent);
+      });
+      document.getElementById("btnLabelAgents").innerText = agent ? `1 agent (${agent})` : "Tous les agents";
+
+      selectedContractors = contractor ? [contractor] : [];
+      document.querySelectorAll("#checkboxesContractors input").forEach(chk => {
+        chk.checked = (chk.value === contractor);
+      });
+      document.getElementById("btnLabelContractors").innerText = contractor ? `1 entrepreneur (${contractor})` : "Tous les entrepreneurs";
+
+      selectedTrades = trade ? [trade] : [];
+      document.querySelectorAll("#checkboxesTrades input").forEach(chk => {
+        chk.checked = (chk.value === trade);
+      });
+      document.getElementById("btnLabelTrades").innerText = trade ? `1 métier (${trade})` : "Tous les métiers";
+
+      switchView('global');
+      applyFilters();
     }
 
     function switchView(v) {
@@ -947,20 +1258,25 @@
       document.getElementById("viewAgents").classList.add("hidden");
       document.getElementById("viewMap").classList.add("hidden");
 
-      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition";
-      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition";
-      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition";
+      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
+      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
+      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
 
       if (v === 'global') {
         document.getElementById("viewGlobal").classList.remove("hidden");
-        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-md transition";
+        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
       } else if (v === 'agents') {
         document.getElementById("viewAgents").classList.remove("hidden");
-        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-md transition";
+        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
       } else if (v === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-md transition";
-        setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        setTimeout(() => { 
+          if (map) {
+            map.invalidateSize();
+            resetMapToBelgium();
+          }
+        }, 200);
       }
       lucide.createIcons();
     }
@@ -1010,17 +1326,14 @@
       const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
       const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
-      const selAgent = document.getElementById("filterAgentSelect").value;
-      const selContractor = document.getElementById("filterContractorSelect").value;
-      const selTrade = document.getElementById("filterTradeSelect").value;
-
       const data = cachedHistory.filter(item => {
-        const itDate = parseEntryDate(item.timestamp);
+        const itDate = parseItemDate(item.timestamp);
         if (sDate && itDate && itDate < sDate) return false;
         if (eDate && itDate && itDate > eDate) return false;
-        if (selAgent && item.user !== selAgent) return false;
-        if (selContractor && item.contractor !== selContractor) return false;
-        if (selTrade && item.trade !== selTrade) return false;
+
+        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
         return true;
       });
 
@@ -1029,16 +1342,17 @@
         return;
       }
 
-      let csv = "\uFEFFHorodatage;Magasinier;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
+      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
       data.forEach(r => {
-        csv += `"${r.timestamp || ''}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
+        const dmy = formatDateDMY(r.timestamp, true);
+        csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Inventaire_Export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `Inventaire_Export_${formatDateDMY(new Date()).replace(/\//g, '-')}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
