@@ -23,12 +23,21 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    #mapContainer { height: 560px; width: 100%; border-radius: 12px; z-index: 1; }
+    #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
+    
+    /* Style épuré des infobulles Leaflet */
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+      padding: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .leaflet-popup-content { margin: 8px 12px; line-height: 1.4; }
   </style>
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN (THÈME CLAIR) ================= -->
+  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-5 text-center">
       <div class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -122,7 +131,7 @@
           </button>
         </div>
 
-        <!-- SÉLECTEUR DE PÉRIODE ERGONOMIQUE ÉPURÉ -->
+        <!-- SÉLECTEUR DE PÉRIODE ÉPURÉ -->
         <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
           <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
@@ -141,11 +150,11 @@
 
           <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-200">
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du :</label>
+              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du (JJ/MM/AAAA) :</label>
               <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-indigo-600">
             </div>
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au :</label>
+              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au (JJ/MM/AAAA) :</label>
               <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-indigo-600">
             </div>
           </div>
@@ -178,7 +187,7 @@
 
       </div>
 
-      <!-- Mention de copyright obligatoire dans la barre latérale -->
+      <!-- Mention légale obligatoire dans la barre latérale -->
       <div class="p-4 border-t border-slate-200 text-center bg-slate-50/70 shrink-0">
         <span class="text-[10px] font-medium text-slate-500 tracking-wider">
           &copy; made by CO2H2O srlu
@@ -220,17 +229,22 @@
             </div>
           </div>
 
-          <!-- FILTRES MULTI-SÉLECTIONS AVEC VOLETS À CASES À COCHER & EXTRACTION CSV -->
+          <!-- FILTRES MULTI-SÉLECTIONS & EXPORT CSV -->
           <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
             <div class="flex items-center justify-between gap-4">
               <div class="flex-1 relative">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
                 <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Rechercher par désignation, réf SAP..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white">
               </div>
-              <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                <span>Exporter CSV</span>
-              </button>
+              <div class="flex items-center space-x-2">
+                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
+                  Effacer filtres
+                </button>
+                <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Exporter CSV</span>
+                </button>
+              </div>
             </div>
 
             <!-- GRILLE DES 3 VOLETS MULTI-CHOIX -->
@@ -287,17 +301,17 @@
             </div>
           </div>
 
-          <!-- GRAND TABLEAU DE SUPERVISION SUR FOND BLANC -->
+          <!-- GRAND TABLEAU DE SUPERVISION SUR FOND BLANC (DATES AU FORMAT JJ/MM/AAAA) -->
           <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
               <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
-              <span class="text-slate-400 text-[11px]">Synchronisation continue</span>
+              <span class="text-slate-400 text-[11px]">Format Date : JJ/MM/AAAA</span>
             </div>
             <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
                   <tr>
-                    <th class="p-3">Horodatage</th>
+                    <th class="p-3">Horodatage (JJ/MM/AAAA)</th>
                     <th class="p-3">Magasinier</th>
                     <th class="p-3">Entrepreneur</th>
                     <th class="p-3">Métier</th>
@@ -316,7 +330,6 @@
         <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS ================= -->
         <section id="viewAgents" class="hidden space-y-6">
           
-          <!-- BANDEAU KPI CUMULÉ DU SUIVI TERRAIN -->
           <div>
             <div class="flex justify-between items-center mb-2 px-1">
               <div class="flex items-center gap-2">
@@ -348,18 +361,20 @@
             </div>
           </div>
 
-          <!-- LISTE DES AGENTS SOUS FORME DE CARTES BLANCHES ET ACCORDÉONS -->
           <div id="agentsAccordionContainer" class="space-y-4"></div>
         </section>
 
         <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
-              Cartographie Terrain en Temps Réel
-            </h3>
-            <span class="text-xs text-slate-500">Position GPS des inventaires</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
+                Cartographie Interactive du Terrain
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Survolez un point pour voir l'agent et son statut • Cliquez pour le résumé d'activité et le filtre direct</p>
+            </div>
+            <span class="text-xs font-mono text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
           </div>
           <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-xs">
             <div id="mapContainer"></div>
@@ -399,6 +414,36 @@
     let filterOnlyActiveAgents = false;
     let openDrawers = {};
 
+    // =========================================================================
+    // UTILITAIRES DE GESTION DES DATES AU FORMAT STRICT JOUR / MOIS / ANNÉE
+    // =========================================================================
+    function parseItemDate(str) {
+      if (!str) return new Date(0);
+      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (parts) {
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
+      }
+      const iso = new Date(str);
+      return isNaN(iso.getTime()) ? new Date(0) : iso;
+    }
+
+    function formatDateDMY(dateInput, includeTime = false) {
+      if (!dateInput) return "--/--/----";
+      const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
+      if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
+      
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      
+      if (!includeTime) {
+        return `${day}/${month}/${year}`;
+      }
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       initMultiSelects();
@@ -411,7 +456,6 @@
         document.getElementById("authModal").classList.add("hidden");
       }
 
-      // Fermeture des volets déroulants au clic extérieur
       document.addEventListener("click", () => {
         ['dropdownAgents', 'dropdownContractors', 'dropdownTrades'].forEach(id => {
           const el = document.getElementById(id);
@@ -423,7 +467,6 @@
       applyFilters();
     });
 
-    // --- GESTION DES VOLETS MULTI-CHOIX ---
     function toggleFilterDropdown(id) {
       ['dropdownAgents', 'dropdownContractors', 'dropdownTrades'].forEach(otherId => {
         if (otherId !== id) {
@@ -436,7 +479,6 @@
     }
 
     function initMultiSelects() {
-      // Magasiniers
       const cAgents = document.getElementById("checkboxesAgents");
       cAgents.innerHTML = availableAgents.map(a => `
         <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
@@ -445,7 +487,6 @@
         </label>
       `).join('');
 
-      // Entrepreneurs
       const cContractors = document.getElementById("checkboxesContractors");
       cContractors.innerHTML = availableContractors.map(c => `
         <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
@@ -454,7 +495,6 @@
         </label>
       `).join('');
 
-      // Métiers
       const cTrades = document.getElementById("checkboxesTrades");
       cTrades.innerHTML = availableTrades.map(t => `
         <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
@@ -463,7 +503,6 @@
         </label>
       `).join('');
 
-      // Sélecteur superviseur modal
       const adminSel = document.getElementById("authAdminSelect");
       if (adminAgents.length > 0) {
         adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
@@ -493,6 +532,14 @@
 
       document.querySelectorAll(selector).forEach(box => box.checked = check);
       onCheckboxChange(type);
+    }
+
+    function resetFiltersToAll() {
+      selectAll('agents', false);
+      selectAll('contractors', false);
+      selectAll('trades', false);
+      document.getElementById("tableSearchInput").value = "";
+      applyFilters();
     }
 
     function authenticateAdmin() {
@@ -594,16 +641,6 @@
       applyFilters();
     }
 
-    function parseEntryDate(dateStr) {
-      if (!dateStr) return null;
-      const parts = dateStr.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-      if (parts) {
-        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]);
-      }
-      const iso = new Date(dateStr);
-      return isNaN(iso.getTime()) ? null : iso;
-    }
-
     function toggleActiveAgentsFilter() {
       filterOnlyActiveAgents = !filterOnlyActiveAgents;
       const btn = document.getElementById("btnFilterActiveAgentsOnly");
@@ -623,11 +660,11 @@
 
       let periodLabel = "Tout l'historique";
       if (sDateVal && eDateVal) {
-        periodLabel = `Du ${new Date(sDateVal).toLocaleDateString("fr-FR")} au ${new Date(eDateVal).toLocaleDateString("fr-FR")}`;
+        periodLabel = `Du ${formatDateDMY(sDate)} au ${formatDateDMY(eDate)}`;
       } else if (sDateVal) {
-        periodLabel = `À partir du ${new Date(sDateVal).toLocaleDateString("fr-FR")}`;
+        periodLabel = `À partir du ${formatDateDMY(sDate)}`;
       } else if (eDateVal) {
-        periodLabel = `Jusqu'au ${new Date(eDateVal).toLocaleDateString("fr-FR")}`;
+        periodLabel = `Jusqu'au ${formatDateDMY(eDate)}`;
       }
       document.getElementById("periodBadgeGlobal").innerText = periodLabel;
       document.getElementById("periodBadgeAgents").innerText = periodLabel;
@@ -635,7 +672,7 @@
       const term = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").toLowerCase().trim();
 
       const filtered = cachedHistory.filter(item => {
-        const itDate = parseEntryDate(item.timestamp);
+        const itDate = parseItemDate(item.timestamp);
         if (sDate && itDate && itDate < sDate) return false;
         if (eDate && itDate && itDate > eDate) return false;
 
@@ -688,9 +725,10 @@
       tbody.innerHTML = list.map(item => {
         const q = Number(item.quantity);
         const isAlert = (alertZero && q === 0) || q > maxQ;
+        const displayDate = formatDateDMY(item.timestamp, true);
         return `
           <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${item.timestamp}</td>
+            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${displayDate}</td>
             <td class="p-3 font-bold text-slate-900">${item.user}</td>
             <td class="p-3 text-slate-700">${item.contractor}</td>
             <td class="p-3 text-slate-500">${item.trade}</td>
@@ -699,7 +737,7 @@
             <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
             <td class="p-3 text-right whitespace-nowrap">
               <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-100 rounded text-slate-500 hover:text-rose-600 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
             </td>
           </tr>
         `;
@@ -733,7 +771,7 @@
         agentsToRender = agentsToRender.filter(agent => {
           const entries = list.filter(i => i.user === agent);
           if (entries.length === 0) return false;
-          const dt = parseEntryDate(entries[0].timestamp);
+          const dt = parseItemDate(entries[0].timestamp);
           return dt && (now - dt.getTime()) < fifteenMinMs;
         });
       }
@@ -755,8 +793,8 @@
         if (agentEntries.length > 0) {
           const lastOne = agentEntries[0];
           activeContractor = lastOne.contractor || "Entrepreneur indéterminé";
-          lastTimeStr = lastOne.timestamp ? (lastOne.timestamp.split(' ')[1] || lastOne.timestamp) : '--';
-          const dt = parseEntryDate(lastOne.timestamp);
+          lastTimeStr = formatDateDMY(lastOne.timestamp, true);
+          const dt = parseItemDate(lastOne.timestamp);
           if (dt && (now - dt.getTime()) < fifteenMinMs) {
             isActive = true;
           }
@@ -765,7 +803,7 @@
         let cadenceLh = agentEntries.length;
         let amplitudeHours = 0;
         if (agentEntries.length > 1) {
-          const times = agentEntries.map(e => parseEntryDate(e.timestamp)).filter(Boolean).map(d => d.getTime());
+          const times = agentEntries.map(e => parseItemDate(e.timestamp)).filter(Boolean).map(d => d.getTime());
           const minT = Math.min(...times);
           const maxT = Math.max(...times);
           amplitudeHours = (maxT - minT) / 3600000;
@@ -843,7 +881,7 @@
                       <div class="pt-1.5 flex justify-between items-center">
                         <div>
                           <div class="font-mono text-amber-700 font-bold">${an.sapRef} • <span class="text-slate-900 font-normal">${an.designation}</span></div>
-                          <div class="text-[10px] text-slate-500">${an.contractor} (${an.trade}) • ${an.timestamp}</div>
+                          <div class="text-[10px] text-slate-500">${an.contractor} (${an.trade}) • ${formatDateDMY(an.timestamp, true)}</div>
                         </div>
                         <div class="flex items-center space-x-1.5 shrink-0">
                           <span class="font-mono font-black ${Number(an.quantity) === 0 ? 'text-rose-600' : 'text-amber-700'} text-sm mr-1.5">${an.quantity}</span>
@@ -865,7 +903,7 @@
                     ${Object.entries(distinctPairs).map(([pair, info]) => `
                       <div class="flex justify-between items-center py-1 border-b border-slate-200 last:border-0 text-[11px]">
                         <span class="font-semibold text-slate-800">${pair}</span>
-                        <span class="text-slate-500 font-mono text-[10px]">${info.lastSeen} (${info.count} lig. / ${info.pieces} pcs)</span>
+                        <span class="text-slate-500 font-mono text-[10px]">${formatDateDMY(info.lastSeen, true)} (${info.count} lig. / ${info.pieces} pcs)</span>
                       </div>
                     `).join('')}
                   </div>
@@ -879,6 +917,9 @@
       lucide.createIcons();
     }
 
+    // =========================================================================
+    // CARTOGRAPHIE INTERACTIVE : TOOLTIP AU SURVOL + POPUP DÉTAILLÉ AVEC CROSS-FILTERING
+    // =========================================================================
     function renderMap(list) {
       if (!map) {
         map = L.map('mapContainer').setView([50.8503, 4.3517], 8);
@@ -891,37 +932,128 @@
 
       markersLayer.clearLayers();
       const points = [];
+      const now = new Date().getTime();
+      const fifteenMinMs = 15 * 60 * 1000;
 
       list.forEach(item => {
         const lat = Number(item.lat || item.latitude);
         const lng = Number(item.lng || item.longitude);
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
           points.push([lat, lng]);
+
+          // Statut dynamique de l'agent au moment de la consultation
+          const agentHistory = list.filter(h => h.user === item.user);
+          let isAgentActive = false;
+          if (agentHistory.length > 0) {
+            const dt = parseItemDate(agentHistory[0].timestamp);
+            if (dt && (now - dt.getTime()) < fifteenMinMs) {
+              isAgentActive = true;
+            }
+          }
+
+          // Statut du couple Entrepreneur / Métier (En cours si < 30 min, sinon finalisé/archivé)
+          const itemDt = parseItemDate(item.timestamp);
+          const isCurrentSession = (now - itemDt.getTime()) < (30 * 60 * 1000);
+          const statusBadgeHtml = isCurrentSession 
+            ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold">🟢 En cours</span>`
+            : `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold">🔵 Finalisé</span>`;
+
+          // Comptage des lignes pour ce couple spécifique
+          const linesForPair = list.filter(h => h.user === item.user && h.contractor === item.contractor && h.trade === item.trade).length;
+          const formattedEntryDate = formatDateDMY(item.timestamp, true);
+
           const marker = L.circleMarker([lat, lng], {
-            radius: 6,
-            fillColor: "#f97316",
+            radius: 7,
+            fillColor: isAgentActive ? "#10b981" : "#f97316",
             color: "#ffffff",
             weight: 2,
             opacity: 1,
             fillOpacity: 0.9
           }).addTo(markersLayer);
 
-          marker.bindTooltip(`<strong>${item.user}</strong>`, { direction: 'top' });
+          // 1. AU SURVOL DE LA SOURIS : Nom de l'agent et s'il a commencé le comptage
+          marker.bindTooltip(`
+            <div class="text-xs font-sans px-1 py-0.5">
+              <strong class="text-slate-900">${item.user}</strong><br>
+              <span class="text-[11px] ${isAgentActive ? 'text-emerald-700 font-bold' : 'text-slate-500'}">
+                ${isAgentActive ? '🟢 En cours de comptage' : '⚪ Pas de comptage en cours'}
+              </span>
+            </div>
+          `, { direction: 'top', offset: [0, -6] });
+
+          // 2. AU CLIC SUR LE POINT : Résumé en détail + BOUTON D'ACTION DIRECT VERS ACTIVITÉ GLOBALE
+          const safeUser = (item.user || '').replace(/'/g, "\\'");
+          const safeContractor = (item.contractor || '').replace(/'/g, "\\'");
+          const safeTrade = (item.trade || '').replace(/'/g, "\\'");
 
           marker.bindPopup(`
-            <div class="text-xs">
-              <strong>${item.user}</strong><br>
-              ${item.contractor} (${item.trade})<br>
-              ${item.designation} (Qté : ${item.quantity})<br>
-              <span class="text-[10px] text-gray-500">${item.timestamp}</span>
+            <div class="text-xs font-sans space-y-2 py-1 min-w-[210px]">
+              <div class="flex justify-between items-start border-b border-slate-100 pb-1.5">
+                <div>
+                  <strong class="text-slate-900 text-sm block">${item.contractor}</strong>
+                  <span class="text-slate-600 font-semibold">${item.trade}</span>
+                </div>
+                ${statusBadgeHtml}
+              </div>
+
+              <div class="space-y-1 text-slate-600 text-[11px]">
+                <div class="flex justify-between">
+                  <span>Magasinier :</span>
+                  <strong class="text-slate-800">${item.user}</strong>
+                </div>
+                <div class="flex justify-between">
+                  <span>Lignes traitées :</span>
+                  <strong class="text-indigo-600 font-mono text-xs">${linesForPair} ligne(s)</strong>
+                </div>
+                <div class="flex justify-between">
+                  <span>Dernière saisie :</span>
+                  <span class="font-mono text-slate-700">${formattedEntryDate}</span>
+                </div>
+              </div>
+
+              <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
+                      class="w-full mt-2 py-1.5 px-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-lg text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1">
+                <span>🔍 Filtrer dans l'Activité Globale</span>
+              </button>
             </div>
           `);
         }
       });
 
+      document.getElementById("mapPointsCountLabel").innerText = `${points.length} point(s) GPS`;
       if (points.length > 0) {
         map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
       }
+    }
+
+    // =========================================================================
+    // ACTION EN 1 CLIC : BASCULE SUR ACTIVITÉ GLOBALE ET APPLICATION DU FILTRE
+    // =========================================================================
+    function filterAndSwitchToGlobal(agent, contractor, trade) {
+      // 1. Coche ou isole l'agent
+      selectedAgents = agent ? [agent] : [];
+      document.querySelectorAll("#checkboxesAgents input").forEach(chk => {
+        chk.checked = (chk.value === agent);
+      });
+      document.getElementById("btnLabelAgents").innerText = agent ? `1 magasinier (${agent})` : "Tous les magasiniers";
+
+      // 2. Coche ou isole l'entrepreneur
+      selectedContractors = contractor ? [contractor] : [];
+      document.querySelectorAll("#checkboxesContractors input").forEach(chk => {
+        chk.checked = (chk.value === contractor);
+      });
+      document.getElementById("btnLabelContractors").innerText = contractor ? `1 entrepreneur (${contractor})` : "Tous les entrepreneurs";
+
+      // 3. Coche ou isole le métier
+      selectedTrades = trade ? [trade] : [];
+      document.querySelectorAll("#checkboxesTrades input").forEach(chk => {
+        chk.checked = (chk.value === trade);
+      });
+      document.getElementById("btnLabelTrades").innerText = trade ? `1 métier (${trade})` : "Tous les métiers";
+
+      // 4. Bascule sur l'onglet Activité Globale et recalcule
+      switchView('global');
+      applyFilters();
     }
 
     function switchView(v) {
@@ -994,7 +1126,7 @@
       const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
       const data = cachedHistory.filter(item => {
-        const itDate = parseEntryDate(item.timestamp);
+        const itDate = parseItemDate(item.timestamp);
         if (sDate && itDate && itDate < sDate) return false;
         if (eDate && itDate && itDate > eDate) return false;
 
@@ -1009,16 +1141,17 @@
         return;
       }
 
-      let csv = "\uFEFFHorodatage;Magasinier;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
+      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Magasinier;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
       data.forEach(r => {
-        csv += `"${r.timestamp || ''}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
+        const dmy = formatDateDMY(r.timestamp, true);
+        csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Inventaire_Export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `Inventaire_Export_${formatDateDMY(new Date()).replace(/\//g, '-')}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
