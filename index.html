@@ -112,7 +112,7 @@
     <div class="flex items-center space-x-2">
       <span id="adminBadge" class="hidden px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider border border-amber-500/30">ADMIN</span>
       
-      <!-- BOUTON ACTUALISER PLACÉ ENTRE ADMIN ET LE NOM DE L'AGENT -->
+      <!-- BOUTON ACTUALISER -->
       <button onclick="manualSync()" title="Actualiser les données" class="flex items-center space-x-1 bg-slate-850 hover:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs text-indigo-300 transition">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
         <span class="hidden sm:inline font-semibold">Actualiser</span>
@@ -197,7 +197,7 @@
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE CORRIGÉE & LISTE AGRANDIE -->
+          <!-- RECHERCHE CATALOGUE -->
           <div class="relative" id="searchCatalogueWrapper">
             <div class="flex justify-between items-center mb-1.5">
               <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
@@ -222,7 +222,6 @@
               </button>
             </div>
             
-            <!-- LISTE AGRANDIE max-h-[60vh] ET SANS BOUTON DOUBLON INTERNE -->
             <div id="suggestionsDropdown" 
                  ontouchstart="blurSearchInput()" 
                  class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[60vh] overflow-y-auto z-40 divide-y divide-slate-700"></div>
@@ -517,7 +516,7 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // FORCER L'OUVERTURE STRICTE SUR LA PREMIÈRE PAGE (COMPTAGE) AU LANCEMENT
+      // FORCER STRICTEMENT L'AFFICHAGE SUR LA PAGE DE COMPTAGE AU LANCEMENT
       switchTab('inventory');
 
       document.addEventListener("click", (e) => {
@@ -655,7 +654,6 @@
       }
       currentAgent = val;
       localStorage.setItem("inv_current_agent", currentAgent);
-      // Remarque: Entrepreneur et Métier restent mémorisés (pas de reset de leurs valeurs locales)
       isMonitoringUnlocked = false;
       updateAgentUI();
       document.getElementById("userModal").classList.add("hidden");
@@ -826,7 +824,6 @@
       renderSuggestions(sortedResults);
     }
 
-    // --- LISTE DES RÉSULTATS AGRANDIE SANS BOUTON DOUBLON INTERNE ---
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
       if (!dd) return;
@@ -1622,25 +1619,25 @@
         }
       }
 
-      inv.classList.add("hidden");
-      hist.classList.add("hidden");
-      mon.classList.add("hidden");
+      if (inv) inv.classList.add("hidden");
+      if (hist) hist.classList.add("hidden");
+      if (mon) mon.classList.add("hidden");
 
-      tInv.classList.replace("text-blue-400", "text-slate-400");
-      tHist.classList.replace("text-blue-400", "text-slate-400");
+      if (tInv) tInv.classList.replace("text-blue-400", "text-slate-400");
+      if (tHist) tHist.classList.replace("text-blue-400", "text-slate-400");
       if (tMon) tMon.classList.replace("text-blue-400", "text-slate-400");
 
       if (tab === 'inventory') {
-        inv.classList.remove("hidden");
-        tInv.classList.replace("text-slate-400", "text-blue-400");
+        if (inv) inv.classList.remove("hidden");
+        if (tInv) tInv.classList.replace("text-slate-400", "text-blue-400");
       } else if (tab === 'history') {
         if (isScanning) stopScanner();
-        hist.classList.remove("hidden");
-        tHist.classList.replace("text-slate-400", "text-blue-400");
+        if (hist) hist.classList.remove("hidden");
+        if (tHist) tHist.classList.replace("text-slate-400", "text-blue-400");
         renderHistory();
       } else if (tab === 'monitoring') {
         if (isScanning) stopScanner();
-        mon.classList.remove("hidden");
+        if (mon) mon.classList.remove("hidden");
         if (tMon) tMon.classList.replace("text-slate-400", "text-blue-400");
         renderMobileMonitoring();
       }
