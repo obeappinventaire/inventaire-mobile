@@ -3,950 +3,1342 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supervision Manager - CO2H2O srlu</title>
+  <title>Supervision & Pilotage Inventaire - Manager PC</title>
 
-  <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Leaflet CSS & JS pour la cartographie -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
-    #map { height: 560px; width: 100%; border-radius: 1rem; }
-    .leaflet-popup-content-wrapper { background-color: #0f172a; color: #f8fafc; border: 1px solid #334155; }
-    .leaflet-popup-tip { background-color: #0f172a; }
+
+    /* Style sombre des infobulles Leaflet */
+    .leaflet-popup-content-wrapper {
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 0;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+    }
+    .leaflet-popup-content {
+      margin: 12px 14px;
+      line-height: 1.4;
+    }
+    .leaflet-popup-tip { background: #0f172a; }
+
+    /* Tooltip personnalisé affiché au survol */
+    .custom-agent-tooltip {
+      background: #1e1b4b !important;
+      border: 1px solid #6366f1 !important;
+      color: #ffffff !important;
+      font-weight: 800 !important;
+      font-size: 11px !important;
+      padding: 3px 8px !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+    }
+    .custom-agent-tooltip::before {
+      border-top-color: #6366f1 !important;
+    }
   </style>
 </head>
-<body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
+<body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-slate-950" onclick="closeAllDropdowns(event)">
 
-  <!-- MODALE AUTHENTIFICATION ADMIN -->
-  <div id="authModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 text-center">
-      <img src="app_icon_co2h2o.png" alt="Logo" class="w-12 h-12 rounded-xl mx-auto border border-slate-700 shadow" onerror="this.style.display='none'">
-      <div>
-        <h2 class="text-lg font-bold text-white">Supervision Logistique</h2>
-        <p id="authStatusInfo" class="text-[11px] text-slate-400 mt-1">Connexion sécurisée en cours...</p>
+  <!-- ================= MODALE AUTHENTIFICATION ADMIN ================= -->
+  <div id="authModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="text-center space-y-1">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center mx-auto mb-2 border border-indigo-500/30">
+          <i data-lucide="shield-check" class="w-7 h-7"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white tracking-wide">Accès Réservé Supervision</h2>
+        <p class="text-xs text-slate-400">Identifiez-vous avec votre compte administrateur</p>
       </div>
 
-      <div class="space-y-3 text-left">
+      <div class="space-y-3">
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Superviseur / Manager</label>
-          <select id="authAdminSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500">
-            <option value="">Chargement des superviseurs...</option>
+          <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Administrateur / Manager</label>
+          <select id="authSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+            <option value="">Chargement des comptes...</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mot de passe</label>
-          <input type="password" id="authAdminPwd" placeholder="••••" onkeydown="if(event.key==='Enter') loginSupervisor()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white text-center tracking-widest focus:outline-none focus:border-indigo-500 font-mono">
+          <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mot de passe / Code PIN</label>
+          <input type="password" id="authPassword" placeholder="••••" 
+                 onkeydown="if(event.key==='Enter') loginAdmin()"
+                 class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono">
         </div>
       </div>
 
-      <button onclick="loginSupervisor()" class="w-full h-11 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-white shadow transition">
-        Se connecter
+      <button onclick="loginAdmin()" class="w-full h-12 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 transition">
+        <span>Ouvrir la session</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
-
-      <!-- Bouton secours de forçage manuel si le réseau Google tarde -->
-      <div id="fallbackAuthArea" class="pt-2 text-center">
-        <button onclick="forceFallbackProfiles()" class="text-[10px] text-slate-500 hover:text-indigo-400 underline">
-          Débloquer la sélection manuellement
-        </button>
-      </div>
     </div>
   </div>
 
+  <!-- ================= EN-TÊTE FIXE ================= -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white flex items-center gap-2">
+          Dashboard Manager
+          <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-500/30">Supervision PC</span>
+        </h1>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+        <i data-lucide="user-check" class="w-3.5 h-3.5 text-indigo-400"></i>
+        <span id="displayAdminName" class="font-bold text-white">--</span>
+      </div>
+
+      <button onclick="syncData()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-400"></i>
+        <span>Actualiser</span>
+      </button>
+
+      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 text-slate-400 hover:text-rose-400 transition">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= STRUCTURE : SIDEBAR + VUES ================= -->
   <div class="flex-1 flex overflow-hidden">
-    <!-- MENU LATÉRAL -->
-    <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+
+    <!-- MENU VERTICAL GAUCHE -->
+    <aside class="w-64 bg-slate-900/95 border-r border-slate-800 flex flex-col justify-between p-3.5 shrink-0 overflow-y-auto space-y-4">
       <div class="space-y-4">
-        <div class="p-5 flex items-center space-x-3 border-b border-slate-800">
-          <img src="app_icon_co2h2o.png" alt="Logo" class="w-8 h-8 rounded-lg shadow border border-slate-700" onerror="this.style.display='none'">
-          <div>
-            <h1 class="text-sm font-black text-white tracking-wide">CO2H2O srlu</h1>
-            <span class="text-[10px] text-indigo-400 font-bold">PORTAIL MANAGER</span>
-          </div>
-        </div>
-
-        <nav class="px-3 space-y-1">
-          <button id="navTabGlobal" onclick="setDashboardTab('global')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm transition">
-            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-            <span>Activité Globale</span>
+        <div class="space-y-1.5">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">Vues de Supervision</span>
+          
+          <button id="navTabGlobal" onclick="switchMainTab('global')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+            <span class="truncate">Activité Globale</span>
           </button>
-          <button id="navTabAgents" onclick="setDashboardTab('agents')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 font-bold text-sm transition">
+
+          <button id="navTabAgents" onclick="switchMainTab('agents')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60">
             <i data-lucide="users" class="w-4 h-4"></i>
-            <span>Suivi Terrain par Agent</span>
+            <span class="truncate">Suivi Terrain & Agents</span>
           </button>
-          <button id="navTabMap" onclick="setDashboardTab('map')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 font-bold text-sm transition">
-            <i data-lucide="map-pin" class="w-4 h-4"></i>
-            <span>Carte & Replay Tournée</span>
-          </button>
-        </nav>
 
-        <div class="px-4 pt-4 border-t border-slate-800/80 space-y-3">
-          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Période Active</label>
-          <select id="periodShortcut" onchange="handlePeriodShortcut(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-            <option value="today">Aujourd'hui</option>
-            <option value="week">Semaine en cours</option>
-            <option value="month">Mois en cours</option>
-            <option value="all">Tout l'historique</option>
-            <option value="custom">Personnalisé (Du... Au...)</option>
-          </select>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span class="text-[10px] text-slate-500 font-bold uppercase block">Du</span>
-              <input type="date" id="dateStart" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[11px] text-white">
-            </div>
-            <div>
-              <span class="text-[10px] text-slate-500 font-bold uppercase block">Au</span>
-              <input type="date" id="dateEnd" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[11px] text-white">
-            </div>
-          </div>
+          <!-- 3e Onglet Cartographie -->
+          <button id="navTabMap" onclick="switchMainTab('map')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <i data-lucide="map-pin" class="w-4 h-4"></i>
+            <span class="truncate">Carte & Géolocalisation</span>
+          </button>
         </div>
 
-        <div class="px-4">
-          <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
-            <div class="flex justify-between">
-              <span>Saisies période :</span>
-              <strong id="sideTotalCount" class="text-white font-mono">0</strong>
+        <!-- FILTRE PÉRIODE MAÎTRE -->
+        <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl space-y-2.5 shadow-inner">
+          <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période active
+          </span>
+
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Raccourci rapide</label>
+            <select id="periodPreset" onchange="applyPeriodPreset(this.value)" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-1.5 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">Tout l'historique</option>
+              <option value="TODAY">Aujourd'hui</option>
+              <option value="WEEK" selected>Semaine en cours (Lun-Dim)</option>
+              <option value="LAST_WEEK">Semaine précédente</option>
+              <option value="MONTH">Mois en cours</option>
+              <option value="CUSTOM">Personnalisé...</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5 pt-1">
+            <div>
+              <span class="text-[9px] text-slate-400 uppercase font-semibold block">Date début</span>
+              <input type="date" id="dateStart" onchange="onManualDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
             </div>
-            <div class="flex justify-between">
-              <span>Alertes période :</span>
-              <strong id="sideAlertCount" class="text-amber-400 font-mono">0</strong>
+            <div>
+              <span class="text-[9px] text-slate-400 uppercase font-semibold block">Date fin</span>
+              <input type="date" id="dateEnd" onchange="onManualDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
             </div>
           </div>
         </div>
       </div>
 
-      <div class="p-4 border-t border-slate-800 text-center">
-        <span class="text-[10px] text-slate-500">&copy; made by CO2H2O srlu</span>
+      <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+        <div class="flex justify-between">
+          <span>Saisies période :</span>
+          <strong id="sideTotalCount" class="text-white">0</strong>
+        </div>
+        <div class="flex justify-between">
+          <span>Alertes période :</span>
+          <strong id="sideAlertCount" class="text-amber-400">0</strong>
+        </div>
       </div>
     </aside>
 
-    <!-- ZONE CENTRALE -->
-    <main class="flex-1 flex flex-col overflow-y-auto bg-slate-950 p-6 space-y-6">
-      <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-        <div class="flex items-center space-x-2">
-          <span class="text-xs font-bold text-slate-400 uppercase">Clôture Rapide :</span>
-          <select id="pdfContractorSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
-            <option value="">-- Sélectionner Entrepreneur pour PV --</option>
-          </select>
-          <button onclick="generateClosingReportPDF()" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 font-bold text-xs rounded-lg text-white shadow flex items-center gap-1.5 transition">
-            <i data-lucide="file-text" class="w-4 h-4"></i>
-            <span>PV de Clôture PDF</span>
-          </button>
-        </div>
-        <button onclick="exportCSV()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold rounded-lg text-slate-300 flex items-center gap-1">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i>
-          <span>Export CSV</span>
-        </button>
-      </div>
+    <!-- ZONE DE CONTENU -->
+    <main class="flex-1 overflow-y-auto p-6 bg-slate-950 relative">
 
-      <!-- ONGLET 1 -->
-      <section id="tab-content-global" class="space-y-6">
+      <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
+      <section id="sectionGlobalView" class="space-y-6">
         <div>
           <div class="flex justify-between items-center mb-2">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Activité Entrepôt sur la période sélectionnée</span>
             <span id="periodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold">--</span>
           </div>
+
           <div class="grid grid-cols-4 gap-4">
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-              <span class="text-xs font-bold text-slate-400 uppercase">Total Lignes</span>
-              <h3 id="kpiRows" class="text-3xl font-black text-white mt-1 font-mono">0</h3>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-slate-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Lignes comptées</span>
+                <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+              </div>
+              <div id="kpiRows" class="text-2xl font-black text-white">0</div>
+              <span class="text-[11px] text-slate-500">Saisies de la période</span>
             </div>
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-              <span class="text-xs font-bold text-slate-400 uppercase">Total Pièces</span>
-              <h3 id="kpiQty" class="text-3xl font-black text-emerald-400 mt-1 font-mono">0</h3>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-slate-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Quantité Cumulée</span>
+                <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
+              </div>
+              <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
+              <span class="text-[11px] text-slate-500">Pièces sur la période</span>
             </div>
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-              <span class="text-xs font-bold text-amber-400 uppercase">Stocks à 0</span>
-              <h3 id="kpiZero" class="text-3xl font-black text-amber-400 mt-1 font-mono">0</h3>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-amber-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Stocks à 0</span>
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+              </div>
+              <div id="kpiZeroStock" class="text-2xl font-black text-amber-400">0</div>
+              <span class="text-[11px] text-slate-500">Ruptures signalées</span>
             </div>
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
-              <span class="text-xs font-bold text-rose-400 uppercase">Volumes > Seuil</span>
-              <h3 id="kpiOverMax" class="text-3xl font-black text-rose-400 mt-1 font-mono">0</h3>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
+              <div class="flex items-center justify-between text-rose-400 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Volumes > 50 pcs</span>
+                <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
+              </div>
+              <div id="kpiHighStock" class="text-2xl font-black text-rose-400">0</div>
+              <span class="text-[11px] text-slate-500">Quantités atypiques</span>
             </div>
           </div>
         </div>
 
-        <details class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-300">
-          <summary class="font-bold text-indigo-400 cursor-pointer flex items-center justify-between">
-            <span>⚙️ Définir les critères de saisies suspectes</span>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-          </summary>
-          <div class="grid grid-cols-2 gap-3 pt-3 mt-2 border-t border-slate-800">
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" id="cfgFlagZero" checked onchange="applyFilters()" class="rounded bg-slate-950 border-slate-700 text-indigo-600">
-              <span>Alerter si Stock = 0</span>
-            </label>
-            <div class="flex items-center space-x-2">
-              <label class="uppercase font-bold text-slate-400 text-[10px]">Alerter si Qté ></label>
-              <input type="number" id="cfgMaxQty" value="50" min="1" onchange="applyFilters()" class="bg-slate-950 border border-slate-700 rounded-lg p-1 text-xs text-white w-20 font-mono text-center">
-            </div>
-          </div>
-        </details>
-
-        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 shadow">
+        <!-- RUBRIQUE : FILTRES COMPLÉMENTAIRES & EXTRACTION -->
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-300 uppercase">Filtres Multicritères</span>
-            <button onclick="resetMultiFilters()" class="text-xs text-indigo-400 hover:underline">Réinitialiser les filtres</button>
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtres complémentaires & Extraction</span>
+            <div class="flex items-center space-x-2">
+              <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Exporter la sélection (CSV)</span>
+              </button>
+              <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser tous les filtres</button>
+            </div>
           </div>
-          <div class="grid grid-cols-3 gap-3">
-            <div class="relative">
-              <button onclick="toggleDropdownMenu('ddContractors')" id="btnFilterContractors" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-xs text-left text-white flex justify-between items-center">
-                <span class="truncate">Tous les entrepreneurs</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-              </button>
-              <div id="ddContractors" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-2xl z-30 space-y-2 max-h-48 overflow-y-auto"></div>
+
+          <div class="grid grid-cols-4 gap-3 items-end text-xs">
+            <!-- 1. Recherche mot-clé -->
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche mot-clé</label>
+              <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+                <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="SAP, désignation, ID..." class="w-full bg-slate-950 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
             </div>
-            <div class="relative">
-              <button onclick="toggleDropdownMenu('ddTrades')" id="btnFilterTrades" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-xs text-left text-white flex justify-between items-center">
-                <span class="truncate">Tous les corps d'état</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+
+            <!-- 2. Multi-choix Entrepreneurs -->
+            <div class="relative" onclick="event.stopPropagation()">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs</label>
+              <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
+                <span id="btnLabelContractors" class="truncate font-medium">Tous les entrepreneurs</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
               </button>
-              <div id="ddTrades" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-2xl z-30 space-y-2 max-h-48 overflow-y-auto"></div>
-            </div>
-            <div class="relative">
-              <button onclick="toggleDropdownMenu('ddAlerts')" id="btnFilterAlerts" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-xs text-left text-white flex justify-between items-center">
-                <span class="truncate">Tous les statuts</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-              </button>
-              <div id="ddAlerts" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-2xl z-30 space-y-2">
+
+              <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
                 <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
-                  <button type="button" onclick="selectAllAlerts(true)" class="text-indigo-400 hover:underline">Tout cocher</button>
-                  <button type="button" onclick="selectAllAlerts(false)" class="text-slate-400 hover:underline">Tout décocher</button>
+                  <button type="button" onclick="selectAll('contractors', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                  <button type="button" onclick="selectAll('contractors', false)" class="text-slate-400 hover:underline">Tout décocher</button>
                 </div>
-                <label class="flex items-center space-x-2 text-xs text-slate-300">
-                  <input type="checkbox" name="chkAlert" value="OK" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950 text-emerald-500">
-                  <span>Conformes</span>
-                </label>
-                <label class="flex items-center space-x-2 text-xs text-slate-300">
-                  <input type="checkbox" name="chkAlert" value="ZERO" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950 text-rose-500">
-                  <span class="text-rose-400 font-bold">Stocks à 0</span>
-                </label>
-                <label class="flex items-center space-x-2 text-xs text-slate-300">
-                  <input type="checkbox" name="chkAlert" value="HIGH" onchange="updateMultiFilter('alerts')" class="chk-alert rounded bg-slate-950 text-amber-500">
-                  <span class="text-amber-400 font-bold">Volumes > Seuil max</span>
-                </label>
+                <div id="checkboxesContractors" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
+              </div>
+            </div>
+
+            <!-- 3. Multi-choix Métiers -->
+            <div class="relative" onclick="event.stopPropagation()">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métiers</label>
+              <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
+                <span id="btnLabelTrades" class="truncate font-medium">Tous les métiers</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              </button>
+
+              <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
+                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
+                  <button type="button" onclick="selectAll('trades', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                  <button type="button" onclick="selectAll('trades', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+                </div>
+                <div id="checkboxesTrades" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
+              </div>
+            </div>
+
+            <!-- 4. Multi-choix Statuts / Anomalies -->
+            <div class="relative" onclick="event.stopPropagation()">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Statuts / Anomalies</label>
+              <button type="button" onclick="toggleFilterDropdown('dropdownAlerts')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
+                <span id="btnLabelAlerts" class="truncate font-medium">Tous les statuts</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              </button>
+
+              <div id="dropdownAlerts" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-30 space-y-2">
+                <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
+                  <button type="button" onclick="selectAll('alerts', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
+                  <button type="button" onclick="selectAll('alerts', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+                </div>
+                <div class="space-y-1">
+                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" name="chkAlert" value="OK" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0">
+                    <span class="text-slate-200">Conformes</span>
+                  </label>
+                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" name="chkAlert" value="ZERO" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-rose-500 focus:ring-0">
+                    <span class="text-rose-400 font-bold">Stocks à 0</span>
+                  </label>
+                  <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" name="chkAlert" value="HIGH" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-amber-500 focus:ring-0">
+                    <span class="text-amber-400 font-bold">Volumes > 50 pièces</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow space-y-3">
-          <div class="flex items-center justify-between">
-            <h4 class="text-sm font-bold text-white uppercase tracking-wider">Inventaires Enregistrés</h4>
-            <input type="text" id="globalSearchInput" oninput="applyFilters()" placeholder="Recherche rapide (Réf, Libellé, Agent...)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white w-64">
+        <!-- TABLEAU DES DONNÉES -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
+          <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
+            <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
+            <span class="text-[11px] text-slate-500">Données synchronisées avec Google Sheets & Audit_Logs</span>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-300">
-              <thead class="bg-slate-950 text-slate-400 uppercase font-bold border-b border-slate-800">
+
+          <div class="overflow-x-auto max-h-[520px]">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-950 sticky top-0 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider z-10">
                 <tr>
-                  <th class="p-2.5">Date/Heure</th>
-                  <th class="p-2.5">Agent</th>
-                  <th class="p-2.5">Entrepreneur</th>
-                  <th class="p-2.5">Métier</th>
-                  <th class="p-2.5">SAP</th>
-                  <th class="p-2.5">Désignation</th>
-                  <th class="p-2.5 text-right">Quantité</th>
-                  <th class="p-2.5 text-center">Actions</th>
+                  <th class="p-3">Horodatage / ID</th>
+                  <th class="p-3">Agent</th>
+                  <th class="p-3">Entrepreneur & Métier</th>
+                  <th class="p-3">Réf SAP</th>
+                  <th class="p-3">Désignation Matériel</th>
+                  <th class="p-3">Codes Barres</th>
+                  <th class="p-3 text-center">Quantité</th>
+                  <th class="p-3 text-center">GPS</th>
+                  <th class="p-3 text-center">Statut</th>
+                  <th class="p-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="tableInventoryBody" class="divide-y divide-slate-800 font-medium"></tbody>
+              <tbody id="inventoryTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ONGLET 2 -->
-      <section id="tab-content-agents" class="hidden space-y-4">
-        <div id="agentCardsContainer" class="space-y-4"></div>
+      <!-- ================= ONGLET 2 : SUIVI TERRAIN AGENTS ================= -->
+      <section id="sectionAgentsView" class="hidden space-y-4">
+        <div class="flex justify-between items-end">
+          <div>
+            <h2 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
+              Suivi Terrain par Agent & Statut Entrepreneur
+            </h2>
+            <p class="text-xs text-slate-400">Activité bornée sur la période sélectionnée dans le menu latéral</p>
+          </div>
+          <span id="agentsPeriodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">--</span>
+        </div>
+
+        <div id="agentAccordionContainer" class="space-y-3"></div>
       </section>
 
-      <!-- ONGLET 3 -->
-      <section id="tab-content-map" class="hidden space-y-4">
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <label class="text-xs font-bold text-slate-400 uppercase">Replay Tournée :</label>
-            <select id="mapAgentFilter" onchange="updateTourReplay()" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
-              <option value="">-- Choisir un agent pour tracer le parcours --</option>
-            </select>
+      <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
+      <section id="sectionMapView" class="hidden absolute inset-0 z-10">
+        <div class="absolute top-4 right-4 z-[1000] bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-xl space-y-2 text-xs shadow-xl pointer-events-auto">
+          <div class="font-bold text-white border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
+            <i data-lucide="map" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>Interactions Carte</span>
           </div>
-          <span class="text-xs text-slate-400">Tracé cyan chronologique fléché sur les relevés GPS</span>
+          <div class="text-[11px] text-slate-400 space-y-1">
+            <p>• <strong>Survol :</strong> Nom de l'agent</p>
+            <p>• <strong>Clic :</strong> Chantiers, métiers, lignes & statut</p>
+          </div>
+          <div class="pt-1.5 border-t border-slate-800 space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block border border-white/50"></span>
+              <span>Dernier scan agent</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+              <span>Inventaire terminé (≥ 3 lignes)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+              <span>Inventaire en cours / partiel</span>
+            </div>
+          </div>
         </div>
-        <div id="map"></div>
+        <div id="mapContainer" class="w-full h-full"></div>
       </section>
+
     </main>
   </div>
 
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-24 transition-transform duration-300 z-50 pointer-events-none">
+    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+    <div class="text-sm font-medium" id="toastMessage">Action validée</div>
+  </div>
+
   <script>
-    // ⚠️ METTEZ VOTRE VRAIE URL WEB APP ICI (/exec) :
+    // ⚠️ METTEZ VOTRE VRAIE URL WEB APP ICI :
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
-    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
-    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
-    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
-    let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
-    let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
+    let historyData = [];
+    let periodFilteredHistory = [];
+    let filteredData = [];
+    let availableAgents = [];
+    let availableContractors = [];
+    let availableTrades = [];
+    let adminAgents = [];
+    let adminPasswords = {};
 
-    let selectedContractors = [];
-    let selectedTrades = [];
-    let selectedAlertTypes = [];
-    let activeAccordionTab = {};
+    let currentAdmin = localStorage.getItem("inv_current_admin") || "";
+    let openDrawers = {};
 
     let map = null;
-    let mapMarkers = [];
-    let activePolyline = null;
-    let filteredHistory = [];
+    let mapMarkersLayer = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+      initDefaultPeriod();
+      await syncData();
+      checkAuth();
+    });
+
+    // --- GESTION DU FILTRE DE PÉRIODE MAÎTRE ---
+    function initDefaultPeriod() {
+      applyPeriodPreset("WEEK");
+    }
+
+    function applyPeriodPreset(preset) {
+      const now = new Date();
+      let start = new Date();
+      let end = new Date();
+
+      if (preset === "ALL") {
+        document.getElementById("dateStart").value = "";
+        document.getElementById("dateEnd").value = "";
+      } else if (preset === "TODAY") {
+        document.getElementById("dateStart").value = now.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = now.toISOString().slice(0, 10);
+      } else if (preset === "WEEK") {
+        const day = now.getDay();
+        const diffToMon = (day === 0 ? -6 : 1) - day;
+        start.setDate(now.getDate() + diffToMon);
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
+      } else if (preset === "LAST_WEEK") {
+        const day = now.getDay();
+        const diffToMon = (day === 0 ? -6 : 1) - day - 7;
+        start.setDate(now.getDate() + diffToMon);
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
+      } else if (preset === "MONTH") {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
+        document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
+      }
+
+      applyFilters();
+    }
+
+    function onManualDateChange() {
+      document.getElementById("periodPreset").value = "CUSTOM";
+      applyFilters();
+    }
 
     function parseItemDate(timestampStr) {
       if (!timestampStr) return new Date(0);
       if (timestampStr.includes('/')) {
         const parts = timestampStr.split(' ');
-        const dParts = parts[0].split('/');
-        const tParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-        return new Date(dParts[2], dParts[1] - 1, dParts[0], tParts[0] || 0, tParts[1] || 0, tParts[2] || 0);
+        const dateParts = parts[0].split('/');
+        const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
+        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
       }
       return new Date(timestampStr);
     }
 
-    function getEffectiveAgents() {
-      const set = new Set();
-      if (Array.isArray(availableAgents)) {
-        availableAgents.forEach(a => { if (a && String(a).trim()) set.add(String(a).trim()); });
-      }
-      if (Array.isArray(cachedHistory)) {
-        cachedHistory.forEach(h => { if (h.user && String(h.user).trim()) set.add(String(h.user).trim()); });
-      }
-      return Array.from(set);
-    }
+    function switchMainTab(tab) {
+      const secGlobal = document.getElementById("sectionGlobalView");
+      const secAgents = document.getElementById("sectionAgentsView");
+      const secMap = document.getElementById("sectionMapView");
+      const btnGlobal = document.getElementById("navTabGlobal");
+      const btnAgents = document.getElementById("navTabAgents");
+      const btnMap = document.getElementById("navTabMap");
 
-    // MODIFICATION CLEF : Affichage immédiat des profils connus dès le démarrage
-    document.addEventListener("DOMContentLoaded", () => {
+      secGlobal.classList.add("hidden");
+      secAgents.classList.add("hidden");
+      secMap.classList.add("hidden");
+
+      btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
+      btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
+      btnMap.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/60";
+
+      if (tab === 'global') {
+        secGlobal.classList.remove("hidden");
+        btnGlobal.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+      } else if (tab === 'agents') {
+        secAgents.classList.remove("hidden");
+        btnAgents.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+        renderAgentAccordions();
+      } else if (tab === 'map') {
+        secMap.classList.remove("hidden");
+        btnMap.className = "w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+        setTimeout(renderMap, 150);
+      }
       lucide.createIcons();
-      initDefaultDates();
-      
-      // 1. Initialise immédiatement les superviseurs depuis le cache pour ne jamais bloquer
-      populateAuthModal();
-      
-      // 2. Lance la synchronisation en arrière-plan sans geler l'écran
-      fetchRemoteData();
-    });
-
-    function initDefaultDates() {
-      const today = new Date().toISOString().slice(0, 10);
-      document.getElementById("dateStart").value = today;
-      document.getElementById("dateEnd").value = today;
     }
 
-    function handlePeriodShortcut(val) {
-      const start = document.getElementById("dateStart");
-      const end = document.getElementById("dateEnd");
-      const now = new Date();
-
-      if (val === 'today') {
-        const d = now.toISOString().slice(0, 10);
-        start.value = d; end.value = d;
-      } else if (val === 'week') {
-        const d = new Date(now.setDate(now.getDate() - 7)).toISOString().slice(0, 10);
-        start.value = d; end.value = new Date().toISOString().slice(0, 10);
-      } else if (val === 'month') {
-        const d = new Date(now.setMonth(now.getMonth() - 1)).toISOString().slice(0, 10);
-        start.value = d; end.value = new Date().toISOString().slice(0, 10);
-      } else if (val === 'all') {
-        start.value = ""; end.value = "";
-      }
-      applyFilters();
-    }
-
-    function populateAuthModal() {
-      const sel = document.getElementById("authAdminSelect");
-      const status = document.getElementById("authStatusInfo");
-
-      // Si des admins sont connus en mémoire
-      if (adminAgents && adminAgents.length > 0) {
-        sel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
-          adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-        status.innerText = "Sélectionnez votre profil";
+    // --- AUTHENTIFICATION SUPERVISEUR ---
+    function checkAuth() {
+      if (!currentAdmin || !adminAgents.includes(currentAdmin)) {
+        openAuthModal();
       } else {
-        // Mode secours : permet d'ouvrir immédiatement la session avec "Admin"
-        sel.innerHTML = '<option value="Admin">Admin Par Défaut</option>';
-        status.innerText = "Profil secours prêt (Mot de passe: 1234)";
-      }
-    }
-
-    function forceFallbackProfiles() {
-      adminAgents = ["Admin", "Dawson", "Sylvie"];
-      adminPasswords = { "Admin": "1234", "Dawson": "1234", "Sylvie": "1234" };
-      populateAuthModal();
-    }
-
-    function loginSupervisor() {
-      const user = document.getElementById("authAdminSelect").value;
-      const pwd = document.getElementById("authAdminPwd").value.trim();
-      const expected = (adminPasswords && adminPasswords[user]) ? adminPasswords[user] : "1234";
-
-      if (user && (pwd === expected || pwd === "1234")) {
+        document.getElementById("displayAdminName").innerText = currentAdmin;
         document.getElementById("authModal").classList.add("hidden");
-        initDashboard();
-      } else {
-        alert("Mot de passe incorrect (valeur par défaut : 1234).");
+        applyFilters();
       }
     }
 
-    async function fetchRemoteData() {
-      if (GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        document.getElementById("authStatusInfo").innerText = "⚠️ Indiquez votre GOOGLE_SCRIPT_URL (/exec)";
+    function openAuthModal() {
+      const select = document.getElementById("authSelect");
+      if (adminAgents.length === 0) {
+        select.innerHTML = '<option value="">Aucun compte administrateur configuré</option>';
+      } else {
+        select.innerHTML = '<option value="">-- Choisir votre profil --</option>' +
+          adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+      document.getElementById("authPassword").value = "";
+      document.getElementById("authModal").classList.remove("hidden");
+    }
+
+    function loginAdmin() {
+      const selectedAdmin = document.getElementById("authSelect").value;
+      const enteredPassword = document.getElementById("authPassword").value;
+
+      if (!selectedAdmin) {
+        alert("Veuillez sélectionner un compte administrateur.");
         return;
       }
 
+      const expectedPassword = adminPasswords[selectedAdmin] || "1234";
+      if (enteredPassword !== expectedPassword) {
+        alert("Mot de passe incorrect.");
+        document.getElementById("authPassword").value = "";
+        document.getElementById("authPassword").focus();
+        return;
+      }
+
+      currentAdmin = selectedAdmin;
+      localStorage.setItem("inv_current_admin", currentAdmin);
+      document.getElementById("displayAdminName").innerText = currentAdmin;
+      document.getElementById("authModal").classList.add("hidden");
+      showToast(`Session Superviseur : ${currentAdmin}`);
+      applyFilters();
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem("inv_current_admin");
+      currentAdmin = "";
+      location.reload();
+    }
+
+    // --- MENUS DÉROULANTS MULTI-CHOIX ---
+    function toggleFilterDropdown(id) {
+      const el = document.getElementById(id);
+      const isHidden = el.classList.contains("hidden");
+      closeAllDropdowns();
+      if (isHidden) el.classList.remove("hidden");
+    }
+
+    function closeAllDropdowns(event) {
+      if (event && event.target && event.target.closest && (event.target.closest('#dropdownContractors') || event.target.closest('#dropdownTrades') || event.target.closest('#dropdownAlerts'))) {
+        return;
+      }
+      ["dropdownContractors", "dropdownTrades", "dropdownAlerts"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
+    }
+
+    function buildMultiSelectCheckboxes() {
+      const containerC = document.getElementById("checkboxesContractors");
+      containerC.innerHTML = availableContractors.map(c => `
+        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+          <input type="checkbox" name="chkContractor" value="${c}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
+          <span class="text-slate-200 truncate" title="${c}">${c}</span>
+        </label>
+      `).join('');
+
+      const containerT = document.getElementById("checkboxesTrades");
+      containerT.innerHTML = availableTrades.map(t => `
+        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
+          <input type="checkbox" name="chkTrade" value="${t}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
+          <span class="text-slate-200 truncate" title="${t}">${t}</span>
+        </label>
+      `).join('');
+
+      updateDropdownButtonLabels();
+    }
+
+    function selectAll(type, check) {
+      let selector = "";
+      if (type === 'contractors') selector = 'input[name="chkContractor"]';
+      if (type === 'trades') selector = 'input[name="chkTrade"]';
+      if (type === 'alerts') selector = 'input[name="chkAlert"]';
+
+      document.querySelectorAll(selector).forEach(chk => chk.checked = check);
+      onCheckboxChange();
+    }
+
+    function onCheckboxChange() {
+      updateDropdownButtonLabels();
+      applyFilters();
+    }
+
+    function updateDropdownButtonLabels() {
+      const checkedC = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked'));
+      const lblC = document.getElementById("btnLabelContractors");
+      if (checkedC.length === 0 || checkedC.length === availableContractors.length) {
+        lblC.innerText = "Tous les entrepreneurs";
+      } else {
+        lblC.innerText = `${checkedC.length} entrepreneur(s) sélectionné(s)`;
+      }
+
+      const checkedT = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked'));
+      const lblT = document.getElementById("btnLabelTrades");
+      if (checkedT.length === 0 || checkedT.length === availableTrades.length) {
+        lblT.innerText = "Tous les métiers";
+      } else {
+        lblT.innerText = `${checkedT.length} métier(s) sélectionné(s)`;
+      }
+
+      const checkedA = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked'));
+      const lblA = document.getElementById("btnLabelAlerts");
+      if (checkedA.length === 0 || checkedA.length === 3) {
+        lblA.innerText = "Tous les statuts";
+      } else {
+        lblA.innerText = `${checkedA.length} statut(s) sélectionné(s)`;
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById("filterSearch").value = "";
+      document.querySelectorAll('input[name="chkContractor"]').forEach(c => c.checked = false);
+      document.querySelectorAll('input[name="chkTrade"]').forEach(c => c.checked = false);
+      document.querySelectorAll('input[name="chkAlert"]').forEach(c => c.checked = false);
+      updateDropdownButtonLabels();
+      applyFilters();
+    }
+
+    // --- SYNCHRONISATION ---
+    async function syncData() {
+      if (GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
       try {
-        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
+        const res = await fetch(GOOGLE_SCRIPT_URL);
         const data = await res.json();
         if (data.status === "success") {
-          if (data.admins && data.admins.length > 0) {
-            adminAgents = data.admins;
-            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
-          }
-          if (data.adminPasswords) {
-            adminPasswords = data.adminPasswords;
-            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
-          }
-          if (data.contractors && data.contractors.length > 0) {
-            availableContractors = data.contractors;
-            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
-          }
-          if (data.trades && data.trades.length > 0) {
-            availableTrades = data.trades;
-            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
-          }
-          if (data.agents && data.agents.length > 0) {
-            availableAgents = data.agents;
-            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
-          }
-          if (data.history) {
-            cachedHistory = data.history;
-            localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-          }
+          availableAgents = data.agents || [];
+          availableContractors = data.contractors || [];
+          availableTrades = data.trades || [];
+          adminAgents = data.admins || [];
+          adminPasswords = data.adminPasswords || {};
+          historyData = data.history || [];
 
-          populateAuthModal();
-          populateDropdowns();
-          renderMultiDropdowns();
+          buildMultiSelectCheckboxes();
           applyFilters();
-          renderAgentCards();
         }
-      } catch (e) {
-        console.warn("Échec récupération distante :", e);
-        document.getElementById("authStatusInfo").innerText = "Hors-ligne ou attente réseau (Mode local actif)";
+      } catch (err) {
+        console.warn("Erreur de synchronisation :", err);
       }
     }
 
-    function initDashboard() {
-      renderMultiDropdowns();
-      populateDropdowns();
-      applyFilters();
-      renderAgentCards();
-      initLeafletMap();
-    }
-
-    function populateDropdowns() {
-      const cSel = document.getElementById("pdfContractorSelect");
-      const mSel = document.getElementById("mapAgentFilter");
-
-      const uniqueContractors = [...new Set(cachedHistory.map(i => i.contractor).filter(Boolean))];
-      cSel.innerHTML = '<option value="">-- Sélectionner Entrepreneur pour PV --</option>' +
-        uniqueContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-
-      const effAgents = getEffectiveAgents();
-      mSel.innerHTML = '<option value="">-- Choisir un agent pour tracer la tournée --</option>' +
-        effAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-    }
-
-    function toggleDropdownMenu(id) {
-      document.getElementById(id).classList.toggle("hidden");
-    }
-
-    function renderMultiDropdowns() {
-      const cBox = document.getElementById("ddContractors");
-      const tBox = document.getElementById("ddTrades");
-
-      cBox.innerHTML = `
-        <div class="flex justify-between pb-1 mb-1 border-b border-slate-800 text-[10px]">
-          <button onclick="checkAll('contractors', true)" class="text-indigo-400">Tout cocher</button>
-          <button onclick="checkAll('contractors', false)" class="text-slate-400">Tout décocher</button>
-        </div>` + 
-        availableContractors.map(c => `
-          <label class="flex items-center space-x-2 text-xs text-slate-300">
-            <input type="checkbox" value="${c}" onchange="updateMultiFilter('contractors')" class="chk-contractor rounded bg-slate-950">
-            <span>${c}</span>
-          </label>
-        `).join('');
-
-      tBox.innerHTML = `
-        <div class="flex justify-between pb-1 mb-1 border-b border-slate-800 text-[10px]">
-          <button onclick="checkAll('trades', true)" class="text-indigo-400">Tout cocher</button>
-          <button onclick="checkAll('trades', false)" class="text-slate-400">Tout décocher</button>
-        </div>` + 
-        availableTrades.map(t => `
-          <label class="flex items-center space-x-2 text-xs text-slate-300">
-            <input type="checkbox" value="${t}" onchange="updateMultiFilter('trades')" class="chk-trade rounded bg-slate-950">
-            <span>${t}</span>
-          </label>
-        `).join('');
-    }
-
-    function checkAll(type, check) {
-      document.querySelectorAll(`.chk-${type === 'contractors' ? 'contractor' : 'trade'}`).forEach(cb => cb.checked = check);
-      updateMultiFilter(type);
-    }
-
-    function selectAllAlerts(check) {
-      document.querySelectorAll('.chk-alert').forEach(cb => cb.checked = check);
-      updateMultiFilter('alerts');
-    }
-
-    function updateMultiFilter(type) {
-      if (type === 'contractors') {
-        selectedContractors = Array.from(document.querySelectorAll('.chk-contractor:checked')).map(cb => cb.value);
-        document.getElementById("btnFilterContractors").querySelector('span').innerText = selectedContractors.length ? `${selectedContractors.length} entrepreneur(s)` : 'Tous les entrepreneurs';
-      } else if (type === 'trades') {
-        selectedTrades = Array.from(document.querySelectorAll('.chk-trade:checked')).map(cb => cb.value);
-        document.getElementById("btnFilterTrades").querySelector('span').innerText = selectedTrades.length ? `${selectedTrades.length} corps d'état` : 'Tous les corps d'état';
-      } else if (type === 'alerts') {
-        selectedAlertTypes = Array.from(document.querySelectorAll('.chk-alert:checked')).map(cb => cb.value);
-        document.getElementById("btnFilterAlerts").querySelector('span').innerText = selectedAlertTypes.length ? `${selectedAlertTypes.length} statut(s)` : 'Tous les statuts';
+    function getAgentLiveStatus(agentName, agentEntries) {
+      if (!agentEntries || agentEntries.length === 0) {
+        return {
+          label: "En attente",
+          contractor: "Aucun entrepreneur débuté",
+          detail: "0 scan",
+          badgeClass: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+          dotClass: "bg-amber-400"
+        };
       }
-      applyFilters();
+
+      const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
+      const lastEntry = sorted[0];
+      const lastTime = lastEntry.timestamp ? (lastEntry.timestamp.split(' ')[1] || lastEntry.timestamp) : '--';
+      const activeContractor = lastEntry.contractor || "Entrepreneur indéterminé";
+
+      return {
+        label: "En cours",
+        contractor: activeContractor,
+        detail: lastTime,
+        badgeClass: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+        dotClass: "bg-emerald-400 animate-pulse"
+      };
     }
 
-    function resetMultiFilters() {
-      document.querySelectorAll('.chk-contractor, .chk-trade, .chk-alert').forEach(cb => cb.checked = false);
-      selectedContractors = []; selectedTrades = []; selectedAlertTypes = [];
-      document.getElementById("btnFilterContractors").querySelector('span').innerText = 'Tous les entrepreneurs';
-      document.getElementById("btnFilterTrades").querySelector('span').innerText = 'Tous les corps d'état';
-      document.getElementById("btnFilterAlerts").querySelector('span').innerText = 'Tous les statuts';
-      applyFilters();
-    }
-
-    function setDashboardTab(tab) {
-      document.getElementById("tab-content-global").classList.add("hidden");
-      document.getElementById("tab-content-agents").classList.add("hidden");
-      document.getElementById("tab-content-map").classList.add("hidden");
-
-      document.getElementById("navTabGlobal").className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 font-bold text-sm transition";
-      document.getElementById("navTabAgents").className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 font-bold text-sm transition";
-      document.getElementById("navTabMap").className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 font-bold text-sm transition";
-
-      if (tab === 'global') {
-        document.getElementById("tab-content-global").classList.remove("hidden");
-        document.getElementById("navTabGlobal").className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm transition";
-      } else if (tab === 'agents') {
-        document.getElementById("tab-content-agents").classList.remove("hidden");
-        document.getElementById("navTabAgents").className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm transition";
-        renderAgentCards();
-      } else if (tab === 'map') {
-        document.getElementById("tab-content-map").classList.remove("hidden");
-        document.getElementById("navTabMap").className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm transition";
-        setTimeout(() => { map.invalidateSize(); renderMapMarkers(); }, 200);
-      }
-      lucide.createIcons();
-    }
-
+    // --- FILTRAGE CUMULATIF (DATE + CHECKBOXES) ---
     function applyFilters() {
-      const dStart = document.getElementById("dateStart").value;
-      const dEnd = document.getElementById("dateEnd").value;
-      const search = (document.getElementById("globalSearchInput").value || "").toLowerCase();
-      const flagZero = document.getElementById("cfgFlagZero").checked;
-      const maxQty = Number(document.getElementById("cfgMaxQty").value) || 50;
+      const dStartStr = document.getElementById("dateStart").value;
+      const dEndStr = document.getElementById("dateEnd").value;
+      const dStart = dStartStr ? new Date(dStartStr + "T00:00:00") : null;
+      const dEnd = dEndStr ? new Date(dEndStr + "T23:59:59") : null;
 
-      document.getElementById("periodLabelBadge").innerText = (dStart && dEnd) 
-        ? `${dStart.split('-').reverse().join('/')} ➔ ${dEnd.split('-').reverse().join('/')}` 
-        : 'Tout l\'historique';
-
-      filteredHistory = cachedHistory.filter(row => {
-        if (search) {
-          const t = `${row.sapRef} ${row.designation} ${row.user} ${row.contractor} ${row.trade}`.toLowerCase();
-          if (!t.includes(search)) return false;
-        }
-        if (dStart || dEnd) {
-          if (!row.timestamp) return false;
-          const parts = row.timestamp.match(/(\d+)\/(\d+)\/(\d+)/);
-          if (parts) {
-            const rowDate = `${parts[3]}-${parts[2].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
-            if (dStart && rowDate < dStart) return false;
-            if (dEnd && rowDate > dEnd) return false;
-          }
-        }
-        if (selectedContractors.length > 0 && !selectedContractors.includes(row.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(row.trade)) return false;
-        if (selectedAlertTypes.length > 0) {
-          const q = Number(row.quantity);
-          const isZ = (q === 0);
-          const isH = (q > maxQty);
-          const isOK = (!isZ && !isH);
-
-          const matchZ = selectedAlertTypes.includes("ZERO") && isZ;
-          const matchH = selectedAlertTypes.includes("HIGH") && isH;
-          const matchOK = selectedAlertTypes.includes("OK") && isOK;
-          if (!matchZ && !matchH && !matchOK) return false;
-        }
+      periodFilteredHistory = historyData.filter(item => {
+        const itemDate = parseItemDate(item.timestamp);
+        if (dStart && itemDate < dStart) return false;
+        if (dEnd && itemDate > dEnd) return false;
         return true;
       });
 
-      renderGlobalKpis(maxQty);
-      renderTable();
-      renderAgentCards();
-    }
-
-    function renderGlobalKpis(maxQty) {
-      const rowsCount = filteredHistory.length;
-      const qtySum = filteredHistory.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-      const zeroCount = filteredHistory.filter(r => Number(r.quantity) === 0).length;
-      const overCount = filteredHistory.filter(r => Number(r.quantity) > maxQty).length;
-
-      document.getElementById("kpiRows").innerText = rowsCount;
-      document.getElementById("kpiQty").innerText = qtySum;
-      document.getElementById("kpiZero").innerText = zeroCount;
-      document.getElementById("kpiOverMax").innerText = overCount;
-
-      document.getElementById("sideTotalCount").innerText = rowsCount;
-      document.getElementById("sideAlertCount").innerText = zeroCount + overCount;
-    }
-
-    function renderTable() {
-      const tbody = document.getElementById("tableInventoryBody");
-      if (filteredHistory.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">Aucune saisie trouvée pour cette sélection.</td></tr>`;
-        return;
+      let labelP = "Tout l'historique";
+      if (dStartStr && dEndStr) {
+        labelP = `Du ${new Date(dStartStr).toLocaleDateString("fr-FR")} au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
+      } else if (dStartStr) {
+        labelP = `À partir du ${new Date(dStartStr).toLocaleDateString("fr-FR")}`;
+      } else if (dEndStr) {
+        labelP = `Jusqu'au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
       }
-      tbody.innerHTML = filteredHistory.map(r => `
-        <tr class="hover:bg-slate-850">
-          <td class="p-2.5 font-mono text-[11px] text-slate-400">${r.timestamp}</td>
-          <td class="p-2.5 font-bold text-indigo-400">${r.user}</td>
-          <td class="p-2.5">${r.contractor}</td>
-          <td class="p-2.5 text-slate-400">${r.trade}</td>
-          <td class="p-2.5 font-mono font-bold text-amber-500">${r.sapRef}</td>
-          <td class="p-2.5 truncate max-w-xs text-white">${r.designation}</td>
-          <td class="p-2.5 text-right font-mono font-black text-emerald-400">${r.quantity}</td>
-          <td class="p-2.5 text-center">
-            <button onclick="editItemFromMonitoring('${r.id}', ${r.quantity})" class="p-1 hover:text-white text-slate-400" title="Modifier">✏️</button>
-            <button onclick="deleteItemFromMonitoring('${r.id}')" class="p-1 hover:text-rose-400 text-slate-400" title="Supprimer">🗑️</button>
-          </td>
-        </tr>
-      `).join('');
-    }
+      document.getElementById("periodLabelBadge").innerText = labelP;
+      document.getElementById("agentsPeriodLabelBadge").innerText = labelP;
 
-    function toggleAccordion(agent, tab) {
-      if (activeAccordionTab[agent] === tab) activeAccordionTab[agent] = null;
-      else activeAccordionTab[agent] = tab;
-      renderAgentCards();
-    }
+      const totalRows = periodFilteredHistory.length;
+      const totalQty = periodFilteredHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
+      const zeroStockCount = periodFilteredHistory.filter(i => Number(i.quantity) === 0).length;
+      const highStockCount = periodFilteredHistory.filter(i => Number(i.quantity) > 50).length;
+      const totalAlerts = zeroStockCount + highStockCount;
 
-    function renderAgentCards() {
-      const c = document.getElementById("agentCardsContainer");
-      if (!c) return;
+      document.getElementById("kpiRows").innerText = totalRows;
+      document.getElementById("kpiTotalQty").innerText = totalQty;
+      document.getElementById("kpiZeroStock").innerText = zeroStockCount;
+      document.getElementById("kpiHighStock").innerText = highStockCount;
 
-      const maxQty = Number(document.getElementById("cfgMaxQty").value) || 50;
-      const effAgents = getEffectiveAgents();
+      document.getElementById("sideTotalCount").innerText = totalRows;
+      document.getElementById("sideAlertCount").innerText = totalAlerts;
 
-      if (effAgents.length === 0) {
-        c.innerHTML = `<div class="p-8 text-center text-slate-500 bg-slate-900 rounded-2xl border border-slate-800">Aucun agent configuré ou actif.</div>`;
-        return;
-      }
+      const search = document.getElementById("filterSearch").value.trim().toLowerCase();
+      const selectedContractors = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked')).map(c => c.value);
+      const selectedTrades = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked')).map(c => c.value);
+      const selectedAlerts = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked')).map(c => c.value);
 
-      c.innerHTML = effAgents.map(agent => {
-        const rows = filteredHistory.filter(r => r.user === agent);
-        const qty = rows.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-        const anomalies = rows.filter(r => Number(r.quantity) === 0 || Number(r.quantity) > maxQty);
-        const anomalieRate = rows.length > 0 ? Math.round((anomalies.length / rows.length) * 100) : 0;
-        const lastScan = rows.length > 0 ? rows[0].timestamp : "--";
-        const lastContractor = rows.length > 0 ? rows[0].contractor : "Aucun";
-
-        let cadence = rows.length;
-        let durationFormatted = "Session courte";
-        if (rows.length > 1) {
-          const timestamps = rows.map(r => parseItemDate(r.timestamp).getTime()).filter(t => t > 0);
-          if (timestamps.length > 1) {
-            const minT = Math.min(...timestamps);
-            const maxT = Math.max(...timestamps);
-            const durationHours = (maxT - minT) / (1000 * 60 * 60);
-            if (durationHours > 0.05) {
-              cadence = Math.round(rows.length / durationHours);
-              const totalMins = Math.round(durationHours * 60);
-              const h = Math.floor(totalMins / 60);
-              const m = totalMins % 60;
-              durationFormatted = `${h}h ${m < 10 ? '0' : ''}${m}min active`;
-            }
-          }
+      filteredData = periodFilteredHistory.filter(item => {
+        const q = Number(item.quantity) || 0;
+        
+        if (search) {
+          const matchSearch = 
+            (item.sapRef && item.sapRef.toLowerCase().includes(search)) ||
+            (item.designation && item.designation.toLowerCase().includes(search)) ||
+            (item.id && item.id.toLowerCase().includes(search));
+          if (!matchSearch) return false;
         }
 
-        const treatedContractors = new Set(rows.map(r => r.contractor).filter(Boolean));
-        const currentTab = activeAccordionTab[agent];
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+
+        if (selectedAlerts.length > 0) {
+          let itemStatut = "OK";
+          if (q === 0) itemStatut = "ZERO";
+          else if (q > 50) itemStatut = "HIGH";
+          if (!selectedAlerts.includes(itemStatut)) return false;
+        }
+
+        return true;
+      });
+
+      renderTable();
+      renderAgentAccordions();
+
+      if (!document.getElementById("sectionMapView").classList.contains("hidden")) {
+        renderMap();
+      }
+    }
+
+    function toggleAgentDrawer(agentName, drawerType) {
+      openDrawers[agentName] = (openDrawers[agentName] === drawerType) ? null : drawerType;
+      renderAgentAccordions();
+    }
+
+    // --- RENDU TIROIRS ACCORDÉONS PAR AGENT ---
+    function renderAgentAccordions() {
+      const container = document.getElementById("agentAccordionContainer");
+      if (availableAgents.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Aucun agent configuré.</div>`;
+        return;
+      }
+
+      container.innerHTML = availableAgents.map(agent => {
+        const agentEntries = periodFilteredHistory.filter(i => i.user === agent);
+        const totalQty = agentEntries.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
+        const status = getAgentLiveStatus(agent, agentEntries);
+
+        let cadence = agentEntries.length;
+        let firstScanTime = "--";
+        let lastScanTime = "--";
+        let durationHours = 0;
+        if (agentEntries.length > 1) {
+          const timestamps = agentEntries.map(i => parseItemDate(i.timestamp).getTime());
+          const minT = Math.min(...timestamps);
+          const maxT = Math.max(...timestamps);
+          durationHours = (maxT - minT) / (1000 * 60 * 60);
+          cadence = durationHours > 0.05 ? Math.round(agentEntries.length / durationHours) : agentEntries.length;
+          firstScanTime = new Date(minT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
+          lastScanTime = new Date(maxT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
+        } else if (agentEntries.length === 1) {
+          firstScanTime = lastScanTime = agentEntries[0].timestamp.split(' ')[1] || agentEntries[0].timestamp;
+        }
+
+        const suspiciousEntries = agentEntries.filter(i => {
+          const q = Number(i.quantity);
+          return q === 0 || q > 50;
+        });
+        const anomalyRate = agentEntries.length > 0 ? Math.round((suspiciousEntries.length / agentEntries.length) * 100) : 0;
+
+        const treatedContractorMap = {};
+        const treatedTradeMap = {};
+
+        agentEntries.forEach(item => {
+          const c = item.contractor;
+          const t = item.trade;
+          const d = parseItemDate(item.timestamp);
+
+          if (c) {
+            if (!treatedContractorMap[c] || d > treatedContractorMap[c].lastDate) {
+              treatedContractorMap[c] = {
+                lastDate: d,
+                lastTimeStr: item.timestamp,
+                lines: (treatedContractorMap[c]?.lines || 0) + 1,
+                qty: (treatedContractorMap[c]?.qty || 0) + (Number(item.quantity) || 0)
+              };
+            } else {
+              treatedContractorMap[c].lines += 1;
+              treatedContractorMap[c].qty += (Number(item.quantity) || 0);
+            }
+          }
+
+          if (t) {
+            if (!treatedTradeMap[t] || d > treatedTradeMap[t].lastDate) {
+              treatedTradeMap[t] = {
+                lastDate: d,
+                lastTimeStr: item.timestamp,
+                lines: (treatedTradeMap[t]?.lines || 0) + 1,
+                qty: (treatedTradeMap[t]?.qty || 0) + (Number(item.quantity) || 0)
+              };
+            } else {
+              treatedTradeMap[t].lines += 1;
+              treatedTradeMap[t].qty += (Number(item.quantity) || 0);
+            }
+          }
+        });
+
+        const activeDrawer = openDrawers[agent];
+
+        let drawerContent = "";
+        if (activeDrawer === 'cadence') {
+          drawerContent = `
+            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-2">
+              <div class="font-bold text-indigo-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <span>⚡ Rythme & Amplitude sur la période (${agent})</span>
+                <span class="text-[11px] text-slate-400">Vitesse : <strong class="text-white">${cadence} lignes / h</strong></span>
+              </div>
+              <div class="grid grid-cols-3 gap-3 text-slate-300 pt-1">
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Premier scan</span><strong class="text-emerald-400">${firstScanTime}</strong></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Dernier scan</span><strong class="text-emerald-400">${lastScanTime}</strong></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Durée active</span><strong>${durationHours > 0 ? durationHours.toFixed(1) + ' heure(s)' : 'En cours'}</strong></div>
+              </div>
+            </div>
+          `;
+        } else if (activeDrawer === 'anomalies') {
+          const rowsHtml = suspiciousEntries.length === 0 
+            ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie constatée sur cette période.</div>`
+            : suspiciousEntries.map(item => `
+                <div class="flex items-center justify-between py-2 border-b border-slate-850 last:border-0 text-xs">
+                  <div class="min-w-0 flex-1 pr-2">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-mono font-bold text-indigo-400">${item.sapRef}</span>
+                      <span class="text-[10px] text-slate-400">• ${item.timestamp}</span>
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${Number(item.quantity) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
+                        ${Number(item.quantity) === 0 ? 'STOCK 0' : '> 50 PCS'}
+                      </span>
+                    </div>
+                    <div class="text-slate-200 font-semibold truncate">${item.designation}</div>
+                    <div class="text-[11px] text-slate-400 truncate">${item.contractor} (${item.trade})</div>
+                  </div>
+                  <div class="flex items-center space-x-2 shrink-0">
+                    <span class="text-base font-black ${Number(item.quantity) === 0 ? 'text-rose-400' : 'text-amber-400'}">${item.quantity}</span>
+                    <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300" title="Corriger"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                    <button onclick="deleteItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1 rounded bg-slate-800 hover:bg-rose-600 text-rose-400" title="Supprimer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                </div>
+              `).join('');
+
+          drawerContent = `
+            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-rose-500/30 text-xs space-y-2">
+              <div class="font-bold text-rose-400 flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <span>⚠️ ${suspiciousEntries.length} saisie(s) non conforme(s) sur la période</span>
+                <span class="text-[10px] text-slate-400">Tracé dans Audit_Logs</span>
+              </div>
+              <div class="divide-y divide-slate-800/80 max-h-60 overflow-y-auto">${rowsHtml}</div>
+            </div>
+          `;
+        } else if (activeDrawer === 'perimetre') {
+          const contractorKeys = Object.keys(treatedContractorMap);
+          const tradeKeys = Object.keys(treatedTradeMap);
+
+          const contractorListHtml = contractorKeys.length === 0
+            ? `<div class="text-slate-500 text-xs py-1">Aucun entrepreneur entamé sur cette période.</div>`
+            : contractorKeys.map(c => `
+                <div class="p-2 rounded-lg bg-indigo-950/40 border border-indigo-500/40 text-xs space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-indigo-300 truncate">${c}</span>
+                    <span class="font-mono text-[10px] text-slate-400">${treatedContractorMap[c].lines} lig. (${treatedContractorMap[c].qty} pcs)</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                    <i data-lucide="calendar" class="w-3 h-3 text-indigo-400"></i>
+                    Dernière saisie : <strong class="text-slate-200">${treatedContractorMap[c].lastTimeStr}</strong>
+                  </div>
+                </div>
+              `).join('');
+
+          const tradeListHtml = tradeKeys.length === 0
+            ? `<div class="text-slate-500 text-xs py-1">Aucun corps d'état entamé sur cette période.</div>`
+            : tradeKeys.map(t => `
+                <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-emerald-300 truncate">${t}</span>
+                    <span class="font-mono text-[10px] text-slate-400">${treatedTradeMap[t].lines} lig. (${treatedTradeMap[t].qty} pcs)</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3 h-3 text-emerald-400"></i>
+                    Dernière saisie : <strong class="text-slate-200">${treatedTradeMap[t].lastTimeStr}</strong>
+                  </div>
+                </div>
+              `).join('');
+
+          drawerContent = `
+            <div class="mt-3 p-3.5 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-3">
+              <div class="font-bold text-indigo-300 border-b border-slate-800 pb-1.5 flex justify-between items-center">
+                <span>🌐 Entrepreneurs & Métiers traités sur la période (${agent})</span>
+                <span class="text-[10px] text-slate-400 font-normal">Dates et heures de passage</span>
+              </div>
+              <div>
+                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Entrepreneurs traités (${contractorKeys.length}) :</span>
+                <div class="grid grid-cols-2 gap-2">${contractorListHtml}</div>
+              </div>
+              <div>
+                <span class="font-bold text-slate-400 uppercase text-[10px] block mb-1.5">Corps d'état / Métiers traités (${tradeKeys.length}) :</span>
+                <div class="grid grid-cols-2 gap-2">${tradeListHtml}</div>
+              </div>
+            </div>
+          `;
+        }
 
         return `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow space-y-4">
-            <div class="flex justify-between items-center">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow transition">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
               <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold">
-                  ${agent.slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h3 class="text-base font-bold text-white">${agent}</h3>
-                  <span class="text-xs text-slate-400">En cours chez : <strong class="text-indigo-300">${lastContractor}</strong></span>
-                </div>
+                <span class="text-sm font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
+                  ${agent}
+                </span>
+
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${status.badgeClass}">
+                  <span class="w-1.5 h-1.5 rounded-full ${status.dotClass}"></span>
+                  <span>${status.label}</span>
+                  <span class="text-slate-400">•</span>
+                  <span class="text-slate-100 font-extrabold truncate max-w-[160px]" title="${status.contractor}">
+                    ${status.contractor}
+                  </span>
+                  <span class="text-slate-400">(${status.detail})</span>
+                </span>
               </div>
-              <span class="text-[11px] bg-slate-950 px-2.5 py-1 rounded text-slate-400 border border-slate-800 font-mono">Dernier scan : ${lastScan}</span>
+
+              <span class="text-xs font-bold text-slate-400">
+                ${agentEntries.length} ligne(s) • <span class="text-emerald-400 font-black">${totalQty} pc(s)</span>
+              </span>
             </div>
 
-            <div class="grid grid-cols-3 gap-3">
-              <button onclick="toggleAccordion('${agent}', 'cadence')" class="p-3 rounded-xl border text-center transition ${currentTab === 'cadence' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
-                <span class="text-[10px] font-bold block uppercase opacity-75">⚡ Cadence</span>
-                <span class="text-xl font-black font-mono mt-0.5 block">${cadence} <span class="text-xs font-normal">l/h</span></span>
+            <div class="grid grid-cols-3 gap-3 pt-3">
+              <button onclick="toggleAgentDrawer('${agent}', 'cadence')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'cadence' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
+                  <span>⚡ Cadence</span>
+                  <span>${activeDrawer === 'cadence' ? '▲' : '▼'}</span>
+                </div>
+                <div class="text-sm font-black text-emerald-400">${cadence} <span class="text-[10px] font-normal text-slate-400">l/h</span></div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'cadence' ? 'Fermer' : 'Déplier'}</div>
               </button>
-              <button onclick="toggleAccordion('${agent}', 'anomalies')" class="p-3 rounded-xl border text-center transition ${currentTab === 'anomalies' ? 'bg-amber-600 border-amber-400 text-white' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
-                <span class="text-[10px] font-bold block uppercase opacity-75">🛡️ Anomalies</span>
-                <span class="text-xl font-black font-mono mt-0.5 block">${anomalieRate}% <span class="text-xs font-normal">(${anomalies.length})</span></span>
+
+              <button onclick="toggleAgentDrawer('${agent}', 'anomalies')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'anomalies' ? 'bg-rose-950/60 border-rose-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
+                  <span>🛡️ Anomalies</span>
+                  <span>${activeDrawer === 'anomalies' ? '▲' : '▼'}</span>
+                </div>
+                <div class="text-sm font-black ${anomalyRate > 10 ? 'text-rose-400' : 'text-amber-400'}">
+                  ${anomalyRate}% <span class="text-[10px] font-normal text-slate-400">(${suspiciousEntries.length})</span>
+                </div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'anomalies' ? 'Fermer' : 'Déplier'}</div>
               </button>
-              <button onclick="toggleAccordion('${agent}', 'perimetre')" class="p-3 rounded-xl border text-center transition ${currentTab === 'perimetre' ? 'bg-blue-600 border-blue-400 text-white' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
-                <span class="text-[10px] font-bold block uppercase opacity-75">🌐 Périmètre</span>
-                <span class="text-xl font-black font-mono mt-0.5 block">${treatedContractors.size} <span class="text-xs font-normal">/ ${availableContractors.length || treatedContractors.size}</span></span>
+
+              <button onclick="toggleAgentDrawer('${agent}', 'perimetre')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'perimetre' ? 'bg-indigo-950/60 border-indigo-500 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+                <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5">
+                  <span>🌐 Traités</span>
+                  <span>${activeDrawer === 'perimetre' ? '▲' : '▼'}</span>
+                </div>
+                <div class="text-sm font-black text-slate-200">
+                  ${Object.keys(treatedContractorMap).length} <span class="text-[10px] font-normal text-slate-400">ent. démarrés</span>
+                </div>
+                <div class="text-[10px] text-slate-500 truncate">${activeDrawer === 'perimetre' ? 'Fermer' : 'Voir dates'}</div>
               </button>
             </div>
 
-            ${currentTab === 'cadence' ? `
-              <div class="p-3 bg-slate-950 rounded-xl border border-indigo-500/40 text-xs space-y-1">
-                <strong class="text-indigo-400 block font-bold">Détail de la Session :</strong>
-                <p>Volume : <strong>${rows.length} lignes</strong> | <strong>${qty} pièces</strong> saisies.</p>
-                <p class="text-slate-400 font-mono text-[11px]">Amplitude horaire : ${durationFormatted}</p>
-              </div>
-            ` : ''}
-
-            ${currentTab === 'anomalies' ? `
-              <div class="p-3 bg-slate-950 rounded-xl border border-amber-500/40 text-xs space-y-2">
-                <strong class="text-amber-400 block font-bold">Détail des Anomalies (${anomalies.length}) :</strong>
-                ${anomalies.length === 0 ? '<p class="text-slate-500">Aucune anomalie sur la période.</p>' : 
-                  anomalies.map(a => `
-                    <div class="flex justify-between items-center py-1 border-b border-slate-850">
-                      <div><strong class="text-white">${a.sapRef}</strong> - ${a.designation} (${a.contractor})</div>
-                      <div class="flex items-center space-x-2">
-                        <span class="font-bold font-mono ${Number(a.quantity) === 0 ? 'text-rose-400' : 'text-amber-400'}">${a.quantity}</span>
-                        <button onclick="editItemFromMonitoring('${a.id}', ${a.quantity})" class="text-slate-400 hover:text-white">✏️</button>
-                        <button onclick="deleteItemFromMonitoring('${a.id}')" class="text-slate-400 hover:text-rose-400">🗑️</button>
-                      </div>
-                    </div>
-                  `).join('')
-                }
-              </div>
-            ` : ''}
-
-            ${currentTab === 'perimetre' ? `
-              <div class="p-3 bg-slate-950 rounded-xl border border-blue-500/40 text-xs space-y-2">
-                <strong class="text-blue-400 block font-bold">Entrepreneurs démarrés :</strong>
-                <div class="space-y-1">
-                  ${(availableContractors.length > 0 ? availableContractors : Array.from(treatedContractors)).map(cName => {
-                    const cRows = rows.filter(r => r.contractor === cName);
-                    const isDone = cRows.length > 0;
-                    return `
-                      <div class="flex justify-between items-center py-1 border-b border-slate-850">
-                        <div class="flex items-center space-x-2">
-                          <span>${isDone ? '✅' : '⬜'}</span>
-                          <span class="${isDone ? 'text-white font-bold' : 'text-slate-500'}">${cName}</span>
-                        </div>
-                        <span class="font-mono text-[10px] text-slate-400">
-                          ${isDone ? `${cRows.length} ligne(s) • Dernier : ${cRows[0].timestamp}` : '[Non débuté]'}
-                        </span>
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-            ` : ''}
+            ${drawerContent}
           </div>
         `;
       }).join('');
+
       lucide.createIcons();
     }
 
-    async function editItemFromMonitoring(id, oldQty) {
-      const val = prompt("Modifier la quantité :", oldQty);
-      if (val === null) return;
-      const q = parseInt(val, 10);
-      if (isNaN(q) || q < 0) return alert("Quantité >= 0 requise.");
+    // --- TABLEAU DE SUPERVISION ---
+    function renderTable() {
+      const tbody = document.getElementById("inventoryTableBody");
+      document.getElementById("tableCountLabel").innerText = `${filteredData.length} ligne(s) affichée(s) sur ${periodFilteredHistory.length} (période active)`;
 
-      const item = cachedHistory.find(i => i.id === id);
-      if (item) item.quantity = q;
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      applyFilters();
-
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "UPDATE", id: id, quantity: q, user: "Manager" })
-        });
-      }
-    }
-
-    async function deleteItemFromMonitoring(id) {
-      if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
-      cachedHistory = cachedHistory.filter(i => i.id !== id);
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      applyFilters();
-
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "DELETE", id: id, user: "Manager" })
-        });
-      }
-    }
-
-    function initLeafletMap() {
-      if (map) return;
-      map = L.map('map').setView([48.8566, 2.3522], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(map);
-    }
-
-    function renderMapMarkers() {
-      if (!map) return;
-      mapMarkers.forEach(m => map.removeLayer(m));
-      mapMarkers = [];
-
-      const validPoints = filteredHistory.filter(r => (r.lat || r.latitude) && (r.lng || r.longitude));
-      if (validPoints.length === 0) return;
-
-      const group = [];
-      validPoints.forEach(p => {
-        const lat = Number(p.lat || p.latitude);
-        const lng = Number(p.lng || p.longitude);
-        const marker = L.circleMarker([lat, lng], {
-          radius: 7,
-          fillColor: '#6366f1',
-          color: '#ffffff',
-          weight: 2,
-          fillOpacity: 0.9
-        }).addTo(map);
-
-        marker.bindPopup(`
-          <div class="text-xs font-sans space-y-1">
-            <strong class="text-indigo-400 block">${p.user}</strong>
-            <span>${p.designation} (${p.quantity} pcs)</span><br>
-            <span class="text-[10px] text-slate-400 font-mono">${p.contractor} - ${p.timestamp}</span>
-          </div>
-        `);
-        mapMarkers.push(marker);
-        group.push([lat, lng]);
-      });
-
-      if (group.length > 0 && !activePolyline) {
-        map.fitBounds(L.latLngBounds(group), { padding: [30, 30] });
-      }
-    }
-
-    function updateTourReplay() {
-      const agent = document.getElementById("mapAgentFilter").value;
-      if (activePolyline) {
-        map.removeLayer(activePolyline);
-        activePolyline = null;
-      }
-      if (!agent) return;
-
-      const agentRows = cachedHistory
-        .filter(r => r.user === agent && (r.lat || r.latitude) && (r.lng || r.longitude))
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-      if (agentRows.length < 2) {
-        alert(`Points GPS insuffisants (${agentRows.length}) pour tracer le parcours.`);
+      if (filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 text-xs">Aucune saisie ne correspond aux filtres et à la période sélectionnée.</td></tr>`;
         return;
       }
 
-      const coords = agentRows.map(r => [Number(r.lat || r.latitude), Number(r.lng || r.longitude)]);
-      activePolyline = L.polyline(coords, {
-        color: '#06b6d4',
-        weight: 4,
-        opacity: 0.9,
-        dashArray: '8, 8'
-      }).addTo(map);
+      tbody.innerHTML = filteredData.map(item => {
+        const q = Number(item.quantity) || 0;
+        let badgeStatus = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">CONFORME</span>`;
+        if (q === 0) {
+          badgeStatus = `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">STOCK 0</span>`;
+        } else if (q > 50) {
+          badgeStatus = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">> 50 PCS</span>`;
+        }
 
-      map.fitBounds(activePolyline.getBounds(), { padding: [40, 40] });
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="p-3">
+              <div class="text-white font-mono font-bold">${item.timestamp}</div>
+              <div class="text-[10px] text-slate-500 font-mono">${item.id}</div>
+            </td>
+            <td class="p-3">
+              <span class="inline-flex items-center gap-1 font-bold text-indigo-300">
+                <i data-lucide="user" class="w-3 h-3"></i> ${item.user}
+              </span>
+            </td>
+            <td class="p-3">
+              <div class="font-bold text-slate-200">${item.contractor}</div>
+              <div class="text-[11px] text-slate-400">${item.trade}</div>
+            </td>
+            <td class="p-3 font-mono font-bold text-indigo-400">${item.sapRef}</td>
+            <td class="p-3 max-w-xs">
+              <div class="truncate font-semibold text-slate-100" title="${item.designation}">${item.designation}</div>
+              <div class="text-[11px] text-slate-400 font-mono">Fourn: ${item.supplierRef || '--'}</div>
+            </td>
+            <td class="p-3 text-[11px] font-mono text-slate-400">
+              <div>EAN: ${item.ean || '--'}</div>
+              <div>QR: ${item.qr || '--'}</div>
+            </td>
+            <td class="p-3 text-center">
+              <span class="text-base font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'}">${q}</span>
+            </td>
+            <td class="p-3 text-center">
+              ${item.lat && item.lng ? `<span class="text-emerald-400 font-mono text-[10px]" title="${item.lat},${item.lng}">📍 GPS</span>` : `<span class="text-slate-600">--</span>`}
+            </td>
+            <td class="p-3 text-center">${badgeStatus}</td>
+            <td class="p-3 text-right space-x-1 whitespace-nowrap">
+              <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1.5 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white transition" title="Modifier la quantité">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="deleteItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 rounded bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white transition" title="Supprimer la saisie">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
     }
 
-    function generateClosingReportPDF() {
-      const contractor = document.getElementById("pdfContractorSelect").value;
-      if (!contractor) return alert("Veuillez sélectionner un entrepreneur.");
-      const rows = cachedHistory.filter(i => i.contractor === contractor);
-      if (rows.length === 0) return alert(`Aucun inventaire pour ${contractor}.`);
+    // ================= MOTEUR CARTOGRAPHIQUE AVEC HOVER (AGENT) ET CLIC (DÉTAILS) =================
+    function renderMap() {
+      if (!map) {
+        map = L.map('mapContainer').setView([50.85, 4.35], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        mapMarkersLayer = L.layerGroup().addTo(map);
+      }
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const dateStr = new Date().toLocaleDateString("fr-FR");
-      const totalPieces = rows.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
+      mapMarkersLayer.clearLayers();
+      const bounds = [];
 
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, 210, 26, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(15);
-      doc.setFont('helvetica', 'bold');
-      doc.text("PROCÈS-VERBAL DE CLÔTURE D'INVENTAIRE", 14, 17);
+      // 1. POSITION GPS RÉCENTE DES AGENTS
+      availableAgents.forEach(agent => {
+        const agentEntries = periodFilteredHistory.filter(r => r.user === agent && r.lat && r.lng);
+        if (agentEntries.length > 0) {
+          const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
+          const last = sorted[0];
+          bounds.push([last.lat, last.lng]);
 
-      doc.setTextColor(51, 65, 85);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Entrepreneur : ${contractor}`, 14, 34);
-      doc.text(`Date : ${dateStr} | Saisies : ${rows.length} lignes | Total pièces : ${totalPieces}`, 14, 40);
+          // Recensement des métiers traités par cet agent chez cet entrepreneur
+          const tradesList = Array.from(new Set(agentEntries.filter(i => i.contractor === last.contractor).map(i => i.trade))).filter(Boolean);
 
-      const tableData = rows.map(r => [
-        r.timestamp ? (r.timestamp.split(' ')[1] || r.timestamp) : '--',
-        r.user || '--',
-        r.trade || '--',
-        r.sapRef || '--',
-        r.designation || '--',
-        r.quantity
+          const agentIcon = L.divIcon({
+            className: 'custom-icon-agent',
+            html: `<div class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-lg text-xs font-bold ring-2 ring-blue-400/50">👤</div>`,
+            iconSize: [28, 28]
+          });
+
+          const marker = L.marker([last.lat, last.lng], { icon: agentIcon }).addTo(mapMarkersLayer);
+
+          // RÈGLE 1 : AU SURVOL -> AFFICHE LE NOM DE L'AGENT
+          marker.bindTooltip(`👤 Agent : ${agent}`, {
+            permanent: false,
+            direction: 'top',
+            offset: [0, -14],
+            className: 'custom-agent-tooltip'
+          });
+
+          // RÈGLE 2 : AU CLIC -> AFFICHE L'ENTREPRENEUR, LES MÉTIERS, LES LIGNES ET LE STATUT DÉTAILLÉ
+          marker.bindPopup(`
+            <div class="text-xs space-y-2">
+              <div class="border-b border-slate-700 pb-1.5 flex justify-between items-center">
+                <span class="font-bold text-blue-400 text-sm">👤 ${agent}</span>
+                <span class="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.5 rounded">AGENT</span>
+              </div>
+              <div class="space-y-1">
+                <div><span class="text-slate-400">Entrepreneur :</span> <strong class="text-white">${last.contractor}</strong></div>
+                <div><span class="text-slate-400">Métier(s) :</span> <span class="text-indigo-300">${tradesList.join(', ') || 'Non précisé'}</span></div>
+                <div><span class="text-slate-400">Lignes validées :</span> <strong class="text-emerald-400 font-bold">${agentEntries.length} ligne(s)</strong></div>
+                <div class="flex items-center gap-1.5 pt-0.5">
+                  <span class="text-slate-400">Statut :</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    🟢 En cours (${last.timestamp})
+                  </span>
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-800">
+                GPS : ${last.lat.toFixed(5)}, ${last.lng.toFixed(5)}
+              </div>
+            </div>
+          `);
+        }
+      });
+
+      // 2. POSITION DES CHANTIERS / ENTREPRENEURS
+      const contractorMap = {};
+      periodFilteredHistory.forEach(item => {
+        if (item.lat && item.lng && item.contractor) {
+          if (!contractorMap[item.contractor]) {
+            contractorMap[item.contractor] = {
+              contractor: item.contractor,
+              lat: item.lat,
+              lng: item.lng,
+              linesCount: 0,
+              lastTimestamp: item.timestamp,
+              agents: new Set(),
+              trades: new Set()
+            };
+          }
+          contractorMap[item.contractor].linesCount++;
+          if (item.user) contractorMap[item.contractor].agents.add(item.user);
+          if (item.trade) contractorMap[item.contractor].trades.add(item.trade);
+          if (parseItemDate(item.timestamp) > parseItemDate(contractorMap[item.contractor].lastTimestamp)) {
+            contractorMap[item.contractor].lastTimestamp = item.timestamp;
+          }
+        }
+      });
+
+      Object.values(contractorMap).forEach(site => {
+        bounds.push([site.lat, site.lng]);
+        const isDone = site.linesCount >= 3;
+        const color = isDone ? 'bg-emerald-500' : 'bg-amber-500';
+        const labelStatut = isDone ? 'Terminé (Validé)' : 'En cours';
+        const badgeClass = isDone ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+
+        const siteIcon = L.divIcon({
+          className: 'custom-icon-site',
+          html: `<div class="${color} text-white w-6 h-6 rounded-md flex items-center justify-center border border-slate-900 shadow-md text-[10px] font-black">📦</div>`,
+          iconSize: [24, 24]
+        });
+
+        const marker = L.marker([site.lat, site.lng], { icon: siteIcon }).addTo(mapMarkersLayer);
+
+        // RÈGLE 1 : AU SURVOL -> AFFICHE LE NOM DE L'AGENT QUI EST INTERVENU (OU LES AGENTS)
+        const agentNames = Array.from(site.agents).join(', ') || 'Inconnu';
+        marker.bindTooltip(`👤 Agent(s) : ${agentNames}`, {
+          permanent: false,
+          direction: 'top',
+          offset: [0, -12],
+          className: 'custom-agent-tooltip'
+        });
+
+        // RÈGLE 2 : AU CLIC -> AFFICHE L'ENTREPRENEUR, MÉTIERS, LIGNES ET STATUT COMPLET
+        marker.bindPopup(`
+          <div class="text-xs space-y-2">
+            <div class="border-b border-slate-700 pb-1.5 flex justify-between items-center">
+              <span class="font-bold text-white text-sm">📦 ${site.contractor}</span>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeClass}">${labelStatut}</span>
+            </div>
+            <div class="space-y-1">
+              <div><span class="text-slate-400">Agent(s) présent(s) :</span> <strong class="text-indigo-300">${agentNames}</strong></div>
+              <div><span class="text-slate-400">Métier(s) traité(s) :</span> <span class="text-slate-200">${Array.from(site.trades).join(', ') || 'Tous corps'}</span></div>
+              <div><span class="text-slate-400">Lignes constatées :</span> <strong class="text-white font-bold">${site.linesCount} ligne(s)</strong></div>
+              <div><span class="text-slate-400">Dernier scan :</span> <strong class="text-slate-200">${site.lastTimestamp}</strong></div>
+            </div>
+          </div>
+        `);
+      });
+
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }
+
+    // --- ACTIONS D'AUDIT MODIFIER / SUPPRIMER ---
+    async function editItem(id, currentQty) {
+      const newQtyStr = prompt("Superviseur : Nouvelle quantité constatée (>= 0) :", currentQty);
+      if (newQtyStr === null) return;
+
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide. Doit être égale à 0 ou supérieure.");
+        return;
+      }
+
+      showToast("Mise à jour dans Google Sheets...");
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "UPDATE",
+            id: id,
+            quantity: newQty,
+            user: `${currentAdmin} (Admin PC)`
+          })
+        });
+
+        const target = historyData.find(i => i.id === id);
+        if (target) target.quantity = newQty;
+        applyFilters();
+        showToast("Quantité modifiée et auditée !");
+      } catch (err) {
+        alert("Erreur lors de la modification.");
+      }
+    }
+
+    async function deleteItem(id, designation) {
+      if (!confirm(`Superviseur : Confirmer la suppression définitive de la saisie ?\n\n"${designation}"\n\nCette action sera tracée dans Audit_Logs.`)) {
+        return;
+      }
+
+      showToast("Suppression en cours...");
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "DELETE",
+            id: id,
+            user: `${currentAdmin} (Admin PC)`
+          })
+        });
+
+        historyData = historyData.filter(i => i.id !== id);
+        applyFilters();
+        showToast("Saisie supprimée !");
+      } catch (err) {
+        alert("Erreur lors de la suppression.");
+      }
+    }
+
+    // --- EXPORT CSV SUR LA PÉRIODE SÉLECTIONNÉE ---
+    function exportToCSV() {
+      if (filteredData.length === 0) {
+        alert("Aucune donnée à exporter.");
+        return;
+      }
+
+      const headers = ["ID Inventaire", "Horodatage", "Magasinier", "Entrepreneur", "Metier", "Ref SAP", "Designation", "Ref Fournisseur", "EAN", "QR", "Quantite", "Latitude", "Longitude"];
+      const rows = filteredData.map(i => [
+        `"${i.id || ''}"`,
+        `"${i.timestamp || ''}"`,
+        `"${i.user || ''}"`,
+        `"${i.contractor || ''}"`,
+        `"${i.trade || ''}"`,
+        `"${i.sapRef || ''}"`,
+        `"${(i.designation || '').replace(/"/g, '""')}"`,
+        `"${i.supplierRef || ''}"`,
+        `"${i.ean || ''}"`,
+        `"${i.qr || ''}"`,
+        i.quantity,
+        `"${i.lat || ''}"`,
+        `"${i.lng || ''}"`
       ]);
 
-      doc.autoTable({
-        startY: 46,
-        head: [['Heure', 'Agent', 'Métier', 'Réf SAP', 'Désignation', 'Qté']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [79, 70, 229] },
-        styles: { fontSize: 8, cellPadding: 2 }
-      });
-
-      const finalY = doc.lastAutoTable.finalY + 15;
-      if (finalY < 240) {
-        doc.setFontSize(9);
-        doc.text("Visa Magasinier Superviseur :", 14, finalY);
-        doc.rect(14, finalY + 3, 80, 25);
-        doc.text("Signature Responsable Entrepreneur :", 115, finalY);
-        doc.rect(115, finalY + 3, 80, 25);
-      }
-      doc.save(`PV_Cloture_${contractor}_${dateStr.replace(/\//g, '-')}.pdf`);
+      const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Inventaires_Extraction_${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Extraction CSV téléchargée !");
     }
 
-    function exportCSV() {
-      if (filteredHistory.length === 0) return alert("Aucune donnée.");
-      let csv = "ID;Timestamp;Agent;Entrepreneur;Metier;SAP;Designation;Quantite;Latitude;Longitude\n";
-      filteredHistory.forEach(r => {
-        csv += `"${r.id}";"${r.timestamp}";"${r.user}";"${r.contractor}";"${r.trade}";"${r.sapRef}";"${r.designation}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
-      });
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Export_Inventaire_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastMessage").innerText = msg;
+      toast.classList.remove("translate-y-24");
+      toast.classList.add("translate-y-0");
+      setTimeout(() => {
+        toast.classList.remove("translate-y-0");
+        toast.classList.add("translate-y-24");
+      }, 2500);
     }
   </script>
 </body>
