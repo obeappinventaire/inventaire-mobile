@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-50">
+<html lang="fr" class="h-full bg-slate-950">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supervision Inventaire - Monitoring Manager</title>
+  <title>Supervision Inventaire - Monitoring</title>
 
-  <!-- FAVICON ET ICÔNES OFFICIELLES -->
+  <!-- FAVICON ET ICÔNE OFFICIELLE -->
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
-  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#0f172a">
 
   <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,85 +16,65 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- LEAFLET MARKERCLUSTER CSS & JS (POUR LE SPIDERFY) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
-    
-    .leaflet-popup-content-wrapper {
-      border-radius: 16px;
-      box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.15), 0 6px 12px -4px rgba(15, 23, 42, 0.08);
-      padding: 6px;
-      border: 1px solid #e2e8f0;
-      background: #ffffff;
-      width: auto !important;
-      max-width: 360px !important;
-    }
-    .leaflet-popup-content { 
-      margin: 10px 14px; 
-      line-height: 1.4;
-      width: auto !important;
-      word-break: break-word;
-    }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    #mapContainer { height: 560px; width: 100%; border-radius: 12px; z-index: 1; }
   </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
+<body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
   <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
-  <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
-      <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
+  <div id="authModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-slate-950 border border-slate-700 flex items-center justify-center mx-auto shadow-md overflow-hidden">
         <img src="app_icon_co2h2o.png" alt="Logo" class="w-10 h-10 object-contain" onerror="this.src='icon.svg'">
       </div>
       <div>
-        <h2 class="text-xl font-bold text-slate-900 tracking-wide">Accès Supervision</h2>
-        <p class="text-xs text-slate-500 mt-1">Console d'administration & pilotage</p>
+        <h2 class="text-xl font-bold text-white tracking-wide">Accès Supervision</h2>
+        <p class="text-xs text-slate-400 mt-1">Console d'administration & pilotage</p>
       </div>
 
       <div class="space-y-3 text-left">
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Superviseur</label>
-          <select id="authAdminSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 font-medium focus:border-orange-500 focus:bg-white focus:outline-none">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Superviseur</label>
+          <select id="authAdminSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white font-medium focus:border-indigo-500 focus:outline-none">
             <option value="">Chargement des administrateurs...</option>
           </select>
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mot de passe / Code PIN</label>
-          <input type="password" id="authPassword" placeholder="••••" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 focus:border-orange-500 focus:bg-white focus:outline-none text-center font-mono text-base">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Mot de passe / Code PIN</label>
+          <input type="password" id="authPassword" placeholder="••••" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:border-indigo-500 focus:outline-none text-center font-mono text-base">
         </div>
       </div>
 
-      <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition mt-2">
+      <!-- Bouton orange assorti à l'icône -->
+      <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-sm transition">
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
 
       <div class="pt-2">
-        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
-          &copy; made by CO2H2O srlu
+        <span class="text-[10px] font-medium text-slate-500 tracking-wider">
+          &copy; made by CO2H2O srlu[cite: 1, 2]
         </span>
       </div>
     </div>
   </div>
 
   <!-- ================= EN-TÊTE FIXE ================= -->
-  <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
     <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
+      <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center shadow">
         <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 object-contain" onerror="this.src='icon.svg'">
       </div>
       <div>
-        <h1 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+        <h1 class="text-sm font-bold text-white flex items-center gap-2">
           Dashboard Manager
-          <span class="px-2 py-0.5 rounded bg-orange-50 text-orange-700 text-[10px] font-mono font-bold tracking-wide uppercase border border-orange-200">Supervision Centrale</span>
+          <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-indigo-500/30">Supervision Centrale</span>
         </h1>
       </div>
     </div>
@@ -103,246 +82,164 @@
     <div class="flex items-center space-x-4">
       <div class="flex items-center space-x-2">
         <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-        <span id="statusText" class="text-xs font-bold text-emerald-600">Connecté</span>
+        <span id="statusText" class="text-xs font-bold text-emerald-400">Connecté</span>
       </div>
-      <div class="h-4 w-px bg-slate-200"></div>
+      <div class="h-4 w-px bg-slate-800"></div>
       <div class="flex items-center space-x-2">
-        <span class="text-xs text-slate-500">Admin :</span>
-        <span id="activeAdminName" class="text-xs font-black text-orange-700">--</span>
+        <span class="text-xs text-slate-400">Admin :</span>
+        <span id="activeAdminName" class="text-xs font-black text-amber-400">--</span>
       </div>
-      <button onclick="syncMonitoringData()" title="Actualiser" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
-        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-      </button>
-      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition">
+      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition">
         <i data-lucide="log-out" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
 
-  <!-- ================= STRUCTURE EN DEUX COLONNES ================= -->
+  <!-- ================= CORPS DE PAGE EN DEUX COLONNES ================= -->
   <div class="flex-1 flex overflow-hidden">
     
     <!-- BARRE LATÉRALE (SIDEBAR GAUCHE) -->
-    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0">
-      <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
+    <aside class="w-72 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <div class="p-4 space-y-6 overflow-y-auto custom-scrollbar">
         
-        <!-- Navigation Vues Principales -->
+        <!-- Navigation Vues -->
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
-          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition">
+          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md transition">
             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
             <span>Activité Globale</span>
           </button>
-          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>Suivi Terrain & Agents</span>
           </button>
-          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
             <i data-lucide="map" class="w-4 h-4"></i>
             <span>Carte & Géolocalisation</span>
           </button>
         </div>
 
-        <!-- SÉLECTEUR DE PÉRIODE AVEC NUMÉRO DE SEMAINE SXX YYYY -->
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
-            </span>
-            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-200">--</span>
+        <!-- Filtre Maître : Période -->
+        <div class="space-y-3 pt-3 border-t border-slate-800">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">Période Active</span>
+          
+          <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+            <button onclick="setPeriodShortcut('today')" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-center transition">Aujourd'hui</button>
+            <button onclick="setPeriodShortcut('week')" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-center transition">Semaine</button>
+            <button onclick="setPeriodShortcut('month')" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-center transition">Mois</button>
+            <button onclick="setPeriodShortcut('all')" class="px-2 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold text-center transition">Tout</button>
           </div>
 
-          <div class="relative">
-            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
-              <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
-              <option value="PREV_WEEK">◀ Semaine précédente</option>
-              <option value="TODAY">☀️ Aujourd'hui</option>
-              <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
-              <option value="ALL">🌐 Tout l'historique</option>
-              <option value="CUSTOM">⚙️ Période personnalisée...</option>
-            </select>
-          </div>
-
-          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-200">
+          <div class="space-y-2 pt-1">
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du (JJ/MM/AAAA) :</label>
-              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Du :</label>
+              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
             </div>
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au (JJ/MM/AAAA) :</label>
-              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Au :</label>
+              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500">
             </div>
           </div>
         </div>
 
-        <!-- CRITÈRES D'ANOMALIES & AUDIT -->
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2.5">
+        <!-- Configuration des seuils d'anomalies -->
+        <div class="space-y-2 pt-3 border-t border-slate-800 text-xs">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">Critères Anomalies</span>
+          <label class="flex items-center space-x-2 text-slate-300">
+            <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="rounded bg-slate-950 border-slate-700 text-indigo-600">
+            <span class="text-[11px]">Alerter Stock = 0</span>
+          </label>
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i> Critères d'Anomalies
-            </span>
-            <span class="text-[9px] bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
-          </div>
-
-          <div class="space-y-2 text-xs pt-1">
-            <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-slate-300 transition shadow-xs">
-              <span class="text-[11px] text-slate-700 font-medium">Alerter Rupture (Stock = 0)</span>
-              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            </label>
-
-            <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] text-slate-700 font-medium">Seuil volume atypique</span>
-                <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">50</span> pcs</span>
-              </div>
-              <input type="number" id="cfgMaxQty" value="50" min="1" oninput="document.getElementById('cfgMaxQtyDisplay').innerText=this.value; applyFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
-            </div>
+            <span class="text-[11px] text-slate-400">Alerter si Qté ></span>
+            <input type="number" id="cfgMaxQty" value="50" min="1" onchange="applyFilters()" class="w-16 bg-slate-950 border border-slate-700 rounded p-1 text-center font-mono text-white text-xs">
           </div>
         </div>
 
       </div>
 
-      <!-- Mention de copyright obligatoire -->
-      <div class="p-4 border-t border-slate-200 text-center bg-slate-50/70 shrink-0">
+      <!-- Mention légale obligatoire dans la barre latérale -->
+      <div class="p-4 border-t border-slate-800 text-center bg-slate-950/40">
         <span class="text-[10px] font-medium text-slate-400 tracking-wider">
-          &copy; made by CO2H2O srlu
+          &copy; made by CO2H2O srlu[cite: 1, 2]
         </span>
       </div>
     </aside>
 
     <!-- ZONE PRINCIPALE D'AFFICHAGE -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col justify-between bg-slate-50">
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col justify-between">
       
       <div class="space-y-6">
-        
         <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
         <section id="viewGlobal" class="space-y-6">
           
-          <div>
-            <div class="flex justify-between items-center mb-2 px-1">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
-              <span id="periodBadgeGlobal" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
+          <!-- Cartes KPI Fixes -->
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-slate-400 uppercase block">Lignes Saisies</span>
+              <span id="kpiTotalRows" class="text-2xl font-black text-white mt-1 block">0</span>
             </div>
-            <div class="grid grid-cols-4 gap-4">
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Saisies</span>
-                <span id="kpiTotalRows" class="text-2xl font-black text-slate-900 mt-1 block">0</span>
-              </div>
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Total Pièces</span>
-                <span id="kpiTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
-              </div>
-
-              <!-- KPI RUPTURES -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
-                  <button onclick="filterByKpi('ZERO')" title="Afficher la liste des ruptures dans le tableau" 
-                          class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
-                    <i data-lucide="list-filter" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                <span id="kpiZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
-              </div>
-
-              <!-- KPI ALERTES ATYPIQUES -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-amber-600 uppercase">Alertes Atypiques</span>
-                  <button onclick="filterByKpi('HIGH')" title="Afficher la liste des volumes atypiques dans le tableau" 
-                          class="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
-                    <i data-lucide="list-filter" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                <span id="kpiAtypicalStock" class="text-2xl font-black text-amber-600 mt-1 block">0</span>
-              </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-slate-400 uppercase block">Total Pièces</span>
+              <span id="kpiTotalPieces" class="text-2xl font-black text-indigo-400 mt-1 block">0</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-rose-400 uppercase block">Ruptures (Qté 0)</span>
+              <span id="kpiZeroStock" class="text-2xl font-black text-rose-400 mt-1 block">0</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+              <span class="text-xs font-bold text-amber-400 uppercase block">Alertes (> 50)</span>
+              <span id="kpiAtypicalStock" class="text-2xl font-black text-amber-400 mt-1 block">0</span>
             </div>
           </div>
 
-          <!-- FILTRES MULTI-SÉLECTIONS & EXPORT CSV -->
-          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
+          <!-- Filtres & Extraction -->
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow space-y-4">
             <div class="flex items-center justify-between gap-4">
               <div class="flex-1 relative">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Rechercher par désignation, réf SAP..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Rechercher par article, réf SAP, entrepreneur..." class="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-9 pr-4 text-xs text-white focus:outline-none focus:border-indigo-500">
               </div>
-              <div class="flex items-center space-x-2">
-                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
-                  Effacer filtres
-                </button>
-                <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs">
-                  <i data-lucide="download" class="w-4 h-4"></i>
-                  <span>Exporter CSV</span>
-                </button>
-              </div>
+              <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Exporter CSV</span>
+              </button>
             </div>
 
-            <!-- GRILLE DES 3 VOLETS MULTI-CHOIX -->
+            <!-- Menus déroulants multi-critères -->
             <div class="grid grid-cols-3 gap-3">
-              
-              <!-- Multi-sélection Agents -->
-              <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
-                  <span id="btnLabelAgents" class="truncate font-semibold">Tous les agents</span>
-                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                </button>
-                <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('agents', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('agents', false)" class="text-slate-500 hover:underline">Tout décocher</button>
-                  </div>
-                  <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
-                </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Magasiniers</label>
+                <select id="filterAgentSelect" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                  <option value="">Tous les magasiniers</option>
+                </select>
               </div>
-
-              <!-- Multi-sélection Entrepreneurs -->
-              <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
-                  <span id="btnLabelContractors" class="truncate font-semibold">Tous les entrepreneurs</span>
-                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                </button>
-                <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('contractors', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('contractors', false)" class="text-slate-500 hover:underline">Tout décocher</button>
-                  </div>
-                  <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
-                </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs</label>
+                <select id="filterContractorSelect" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                  <option value="">Tous les entrepreneurs</option>
+                </select>
               </div>
-
-              <!-- Multi-sélection Métiers -->
-              <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
-                  <span id="btnLabelTrades" class="truncate font-semibold">Tous les métiers</span>
-                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                </button>
-                <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('trades', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('trades', false)" class="text-slate-500 hover:underline">Tout décocher</button>
-                  </div>
-                  <div id="checkboxesTrades" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
-                </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métiers</label>
+                <select id="filterTradeSelect" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                  <option value="">Tous les métiers</option>
+                </select>
               </div>
-
             </div>
           </div>
 
-          <!-- GRAND TABLEAU DE SUPERVISION SUR FOND BLANC -->
-          <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
-              <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
-              <span class="text-slate-400 text-[11px]">Format Date : JJ/MM/AAAA</span>
+          <!-- Grand Tableau de Supervision -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center text-xs">
+              <span id="tableCountLabel" class="font-bold text-slate-300">0 résultat(s)</span>
+              <span class="text-slate-500 text-[11px]">Synchronisation automatique</span>
             </div>
             <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
               <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
+                <thead class="bg-slate-950 text-slate-400 uppercase font-bold sticky top-0 border-b border-slate-800">
                   <tr>
-                    <th class="p-3">Horodatage (JJ/MM/AAAA)</th>
-                    <th class="p-3">Agent</th>
+                    <th class="p-3">Horodatage</th>
+                    <th class="p-3">Magasinier</th>
                     <th class="p-3">Entrepreneur</th>
                     <th class="p-3">Métier</th>
                     <th class="p-3">Réf SAP</th>
@@ -351,93 +248,43 @@
                     <th class="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="supervisionTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                <tbody id="supervisionTableBody" class="divide-y divide-slate-800 text-slate-200"></tbody>
               </table>
             </div>
           </div>
         </section>
 
         <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS ================= -->
-        <section id="viewAgents" class="hidden space-y-6">
-          
-          <div>
-            <div class="flex justify-between items-center mb-2 px-1">
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
-                <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
-              </div>
-              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition shadow-xs">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>En cours de comptage uniquement</span>
-              </button>
-            </div>
-            <div class="grid grid-cols-4 gap-4">
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
-                <span id="kpiAgentsTotalRows" class="text-2xl font-black text-slate-900 mt-1 block">0</span>
-              </div>
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Pièces Totales</span>
-                <span id="kpiAgentsTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
-              </div>
-
-              <!-- KPI RUPTURES DÉCLARÉES AVEC ICÔNE LISTE -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
-                  <button onclick="filterByKpi('ZERO')" title="Afficher la liste des ruptures dans l'Activité Globale" 
-                          class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
-                    <i data-lucide="list-filter" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                <span id="kpiAgentsZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
-              </div>
-
-              <!-- KPI ALERTES FLOTTE AVEC ICÔNE LISTE -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-amber-600 uppercase">Alertes Flotte</span>
-                  <button onclick="filterByKpi('HIGH')" title="Afficher la liste des alertes dans l'Activité Globale" 
-                          class="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
-                    <i data-lucide="list-filter" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                <span id="kpiAgentsAtypicalStock" class="text-2xl font-black text-amber-600 mt-1 block">0</span>
-              </div>
-            </div>
+        <section id="viewAgents" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i>
+              Statut des Équipes & Avancement par Entrepreneur
+            </h3>
+            <span class="text-xs text-slate-400">Tiroirs interactifs cliquables</span>
           </div>
-
           <div id="agentsAccordionContainer" class="space-y-4"></div>
         </section>
 
         <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
-                Cartographie Interactive du Terrain (Belgique)
-              </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Survolez un spot pour voir le nombre d'agents • Cliquez pour éclater ou voir les détails</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs transition flex items-center gap-1">
-                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
-                <span>Recentrer Belgique</span>
-              </button>
-              <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
-            </div>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-indigo-400"></i>
+              Cartographie Terrain en Temps Réel
+            </h3>
+            <span class="text-xs text-slate-400">Puces GPS des saisies et des magasiniers</span>
           </div>
-          <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-xs">
+          <div class="bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow">
             <div id="mapContainer"></div>
           </div>
         </section>
       </div>
 
-      <!-- Mention de copyright obligatoire -->
-      <div class="text-center pt-8 pb-3 border-t border-slate-200">
+      <!-- Mention légale obligatoire en bas de page principale -->
+      <div class="text-center pt-8 pb-3 border-t border-slate-800/80">
         <span class="text-[11px] font-medium text-slate-400 tracking-wider">
-          &copy; made by CO2H2O srlu
+          &copy; made by CO2H2O srlu[cite: 1, 2]
         </span>
       </div>
     </main>
@@ -446,291 +293,94 @@
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
     let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
     let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
     let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
-    let syncQueue = JSON.parse(localStorage.getItem("offline_sync_queue") || "[]");
 
-    let currentAgent = localStorage.getItem("inv_current_agent") || "";
-    let isMonitoringUnlocked = false;
-    let activeItem = null;
-    let html5QrCode = null;
-    let isScanning = false;
-    let ocrInterval = null;
-    let isOcrBusy = false;
-    let isTorchOn = false;
-    let isStartingScanner = false;
-
-    let ocrWorker = null;
-    let latestCoords = { lat: null, lng: null };
-
-    const BELGIUM_CENTER = [50.64, 4.67];
-    const BELGIUM_ZOOM = 8;
-    const BELGIUM_BOUNDS = [
-      [49.40, 2.45],
-      [51.55, 6.50]
-    ];
-
-    function getISOWeekNumber(d) {
-      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-      const weekNo = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
-      return { week: weekNo, year: date.getUTCFullYear() };
-    }
-
-    function updateWeekBadge(startDateStr) {
-      const targetDate = startDateStr ? new Date(startDateStr) : new Date();
-      const iso = getISOWeekNumber(targetDate);
-      const weekStr = String(iso.week).padStart(2, '0');
-      const badge = document.getElementById("weekBadgeLabel");
-      if (badge) badge.innerText = `S${weekStr} ${iso.year}`;
-    }
-
-    function parseItemDate(str) {
-      if (!str) return new Date(0);
-      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
-      if (parts) {
-        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
-      }
-      const iso = new Date(str);
-      return isNaN(iso.getTime()) ? new Date(0) : iso;
-    }
-
-    function formatDateDMY(dateInput, includeTime = false) {
-      if (!dateInput) return "--/--/----";
-      const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
-      if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
-      
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      
-      if (!includeTime) return `${day}/${month}/${year}`;
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    }
+    let currentAdmin = sessionStorage.getItem("mon_current_admin") || "";
+    let activeView = 'global';
+    let map = null;
+    let markersLayer = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
-      updateAgentUI();
-      populateDropdowns();
-      initContinuousGps();
-      updateSyncBadge();
+      populateAdminDropdown(); // Charger immédiatement depuis le cache local pour éviter tout blocage
 
-      // CORRECTION CRITIQUE : FORCER L'OUVERTURE STRICTE SUR LA PREMIÈRE PAGE (COMPTAGE) AU LANCEMENT
-      switchTab('inventory');
-
-      // Gérer l'affichage de la modale d'identification si aucun agent n'est mémorisé
-      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
-        openAgentModal();
+      if (!currentAdmin) {
+        document.getElementById("authModal").classList.remove("hidden");
+      } else {
+        document.getElementById("activeAdminName").innerText = currentAdmin;
+        document.getElementById("authModal").classList.add("hidden");
       }
 
-      document.addEventListener("click", (e) => {
-        const wrapper = document.getElementById("searchCatalogueWrapper");
-        const dd = document.getElementById("suggestionsDropdown");
-        const searchInput = document.getElementById("articleSearchInput");
-        const clearBtn = document.getElementById("clearSearchBtn");
-        const dismissBtn = document.getElementById("btnDismissKeyboard");
-        
-        if (wrapper && !wrapper.contains(e.target) && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
-          if (dd) dd.classList.add("hidden");
-          blurSearchInput();
-          if (!activeItem && searchInput && searchInput.value.trim() !== "") {
-            clearSearch();
-          }
-        }
-      });
-
-      window.addEventListener("online", () => {
-        updateNetworkStatus(true);
-        processSyncQueue();
-      });
-      window.addEventListener("offline", () => updateNetworkStatus(false));
-
-      initOcrWorker();
-      await syncData();
+      await syncMonitoringData();
+      populateDropdowns();
+      applyFilters();
     });
 
-    function initContinuousGps() {
-      if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(
-          (pos) => {
-            latestCoords.lat = pos.coords.latitude;
-            latestCoords.lng = pos.coords.longitude;
-          },
-          (err) => console.warn("GPS tracking:", err.message),
-          { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
-        );
+    function populateAdminDropdown() {
+      const adminSel = document.getElementById("authAdminSelect");
+      if (adminSel) {
+        if (adminAgents.length > 0) {
+          adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
+            adminAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+        } else {
+          // Valeur de secours si le cache est vide pour éviter de rester bloqué sur "Chargement..."
+          adminSel.innerHTML = '<option value="">(Mode secours) Entrez votre nom</option>';
+        }
       }
-    }
-
-    function updateNetworkStatus(isOnline) {
-      const dot = document.getElementById("statusDot");
-      const txt = document.getElementById("statusText");
-      if (isOnline) {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-        txt.className = "text-[11px] font-bold uppercase tracking-wider text-emerald-400";
-        txt.innerText = "En ligne";
-      } else {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-        txt.className = "text-[11px] font-bold uppercase tracking-wider text-rose-400";
-        txt.innerText = "Hors-ligne";
-      }
-    }
-
-    async function initOcrWorker() {
-      try {
-        ocrWorker = await Tesseract.createWorker('eng');
-        await ocrWorker.setParameters({
-          tessedit_char_whitelist: '0123456789',
-          tessedit_pageseg_mode: '7'
-        });
-      } catch (err) {
-        console.warn("Worker OCR warning:", err);
-      }
-    }
-
-    function onSearchFocus() {
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-      if (dismissBtn) dismissBtn.classList.remove("hidden");
-
-      const main = document.getElementById("mainContent");
-      if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function blurSearchInput() {
-      const input = document.getElementById("articleSearchInput");
-      if (input && document.activeElement === input) {
-        input.blur();
-      }
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-      if (dismissBtn) dismissBtn.classList.add("hidden");
-    }
-
-    function resetQuantity() {
-      const input = document.getElementById("qtyInput");
-      input.value = 0;
-      if (navigator.vibrate) navigator.vibrate(30);
-    }
-
-    function isAdmin() {
-      return adminAgents.includes(currentAgent);
-    }
-
-    function updateAgentUI() {
-      document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
-      const adminBadge = document.getElementById("adminBadge");
-      const monNavBtn = document.getElementById("tabNavMonitoring");
-      const navContainer = document.getElementById("bottomNav");
-
-      if (isAdmin()) {
-        adminBadge.classList.remove("hidden");
-        monNavBtn.classList.remove("hidden");
-        monNavBtn.classList.add("flex");
-        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-3 h-16 max-w-md mx-auto z-20";
-      } else {
-        adminBadge.classList.add("hidden");
-        monNavBtn.classList.add("hidden");
-        monNavBtn.classList.remove("flex");
-        navContainer.className = "fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto z-20";
-      }
-    }
-
-    function openAgentModal() {
-      const select = document.getElementById("modalAgentSelect");
-      if (availableAgents.length === 0) {
-        select.innerHTML = '<option value="">En attente de connexion Google Sheets...</option>';
-      } else {
-        select.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
-          availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
-      }
-      document.getElementById("userModal").classList.remove("hidden");
-    }
-
-    function confirmAgentSelection() {
-      const val = document.getElementById("modalAgentSelect").value;
-      if (!val) {
-        alert("Veuillez sélectionner votre profil.");
-        return;
-      }
-      currentAgent = val;
-      localStorage.setItem("inv_current_agent", currentAgent);
-      isMonitoringUnlocked = false;
-      updateAgentUI();
-      document.getElementById("userModal").classList.add("hidden");
-      renderHistory();
-      showToast(`Session : ${currentAgent}`);
     }
 
     function populateDropdowns() {
-      const cSelect = document.getElementById("contractorSelect");
-      const tSelect = document.getElementById("tradeSelect");
+      populateAdminDropdown();
 
-      if (availableContractors.length > 0) {
-        cSelect.innerHTML = '<option value="">-- Sélectionner l\'entrepreneur (Obligatoire) --</option>' + 
-          availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      } else {
-        cSelect.innerHTML = '<option value="">Chargement des entrepreneurs...</option>';
-      }
+      const agSel = document.getElementById("filterAgentSelect");
+      if (agSel) agSel.innerHTML = '<option value="">Tous les magasiniers</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
 
-      if (availableTrades.length > 0) {
-        tSelect.innerHTML = '<option value="">-- Sélectionner le métier (Obligatoire) --</option>' + 
-          availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
-      } else {
-        tSelect.innerHTML = '<option value="">Chargement des métiers...</option>';
-      }
+      const coSel = document.getElementById("filterContractorSelect");
+      if (coSel) coSel.innerHTML = '<option value="">Tous les entrepreneurs</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
 
-      restoreSavedSelections();
+      const trSel = document.getElementById("filterTradeSelect");
+      if (trSel) trSel.innerHTML = '<option value="">Tous les métiers</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
-    function updateSyncBadge() {
-      const badge = document.getElementById("syncBadge");
-      if (!badge) return;
-      if (syncQueue.length > 0) {
-        badge.innerText = `${syncQueue.length} en attente`;
-        badge.classList.remove("hidden");
-      } else {
-        badge.classList.add("hidden");
+    function authenticateAdmin() {
+      const adminSel = document.getElementById("authAdminSelect");
+      const selected = adminSel ? adminSel.value : "";
+      const pwd = document.getElementById("authPassword").value;
+
+      if (!selected) {
+        alert("Veuillez choisir ou indiquer un superviseur.");
+        return;
       }
+      const expected = adminPasswords[selected] || "1234";
+      if (pwd !== expected && adminPasswords[selected]) {
+        alert("Mot de passe incorrect.");
+        return;
+      }
+
+      currentAdmin = selected;
+      sessionStorage.setItem("mon_current_admin", currentAdmin);
+      document.getElementById("activeAdminName").innerText = currentAdmin;
+      document.getElementById("authModal").classList.add("hidden");
+      applyFilters();
     }
 
-    async function processSyncQueue() {
-      if (!navigator.onLine || syncQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
-
-      const queueCopy = [...syncQueue];
-      for (const item of queueCopy) {
-        try {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(item)
-          });
-          syncQueue = syncQueue.filter(q => !(q.id === item.id && q.action === item.action));
-          localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-          updateSyncBadge();
-        } catch (e) {
-          console.warn("Échec synchro queue :", e);
-          break;
-        }
-      }
+    function logoutAdmin() {
+      sessionStorage.removeItem("mon_current_admin");
+      currentAdmin = "";
+      document.getElementById("authPassword").value = "";
+      document.getElementById("authModal").classList.remove("hidden");
     }
 
-    async function syncData() {
+    async function syncMonitoringData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
-
-      await processSyncQueue();
-
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
-        
         if (data.status === "success") {
           if (data.agents) {
             availableAgents = data.agents;
@@ -752,917 +402,355 @@
             adminPasswords = data.adminPasswords;
             localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
           }
-          if (data.catalog) {
-            catalog = data.catalog;
-            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
-          }
-          
           if (data.history) {
-            const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
-            const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
-            
-            const localCreatedItems = cachedHistory.filter(i => pendingCreateIds.has(i.id));
-            const cleanRemote = data.history.filter(r => !pendingDeletedIds.has(r.id) && !pendingCreateIds.has(r.id));
-            
-            cachedHistory = [...localCreatedItems, ...cleanRemote];
+            cachedHistory = data.history;
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
-
           populateDropdowns();
-          updateAgentUI();
-
-          const modalSelect = document.getElementById("modalAgentSelect");
-          if (modalSelect && availableAgents.length > 0) {
-            modalSelect.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
-              availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
-          }
-
-          renderHistory();
-          if (isAdmin()) renderMobileMonitoring();
+          applyFilters();
         }
       } catch (err) {
-        console.warn("Synchronisation échouée :", err);
+        console.warn("Échec actualisation :", err);
       }
     }
 
-    function manualSync() {
-      showToast("Actualisation...");
-      syncData().then(() => showToast("Données synchronisées"));
-    }
+    function setPeriodShortcut(type) {
+      const now = new Date();
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
 
-    function normalizeStr(str) {
-      return String(str || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-    }
-
-    function onSearchInput(rawVal) {
-      const val = String(rawVal || "").trim();
-      const dd = document.getElementById("suggestionsDropdown");
-      const clearBtn = document.getElementById("clearSearchBtn");
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-
-      activeItem = null;
-      document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
-      document.getElementById("dispSupplier").innerText = "--";
-      document.getElementById("dispSap").innerText = "--";
-      document.getElementById("badgeIdentified").classList.add("hidden");
-
-      if (val.length > 0) {
-        if (clearBtn) clearBtn.classList.remove("hidden");
-        if (dismissBtn) dismissBtn.classList.remove("hidden");
-      } else {
-        if (clearBtn) clearBtn.classList.add("hidden");
-        if (dismissBtn) dismissBtn.classList.add("hidden");
-        if (dd) dd.classList.add("hidden");
-        return;
+      if (type === 'all') {
+        sInput.value = "";
+        eInput.value = "";
+      } else if (type === 'today') {
+        const dStr = now.toISOString().split('T')[0];
+        sInput.value = dStr;
+        eInput.value = dStr;
+      } else if (type === 'week') {
+        const day = now.getDay() || 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        sInput.value = monday.toISOString().split('T')[0];
+        eInput.value = now.toISOString().split('T')[0];
+      } else if (type === 'month') {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        sInput.value = firstDay.toISOString().split('T')[0];
+        eInput.value = now.toISOString().split('T')[0];
       }
-
-      const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
-      const filtered = catalog.filter(item => {
-        const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""} ${item.sapRef || ""} ${item.ean || ""} ${item.qr || ""}`);
-        return searchTerms.every(term => textTarget.includes(term));
-      });
-
-      const sortedResults = filtered.sort((a, b) => {
-        return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
-      });
-
-      renderSuggestions(sortedResults);
+      applyFilters();
     }
 
-    function renderSuggestions(results) {
-      const dd = document.getElementById("suggestionsDropdown");
-      if (!dd) return;
-
-      if (!results || results.length === 0) {
-        dd.innerHTML = `<div class="p-4 text-sm text-slate-300 text-center font-medium">Aucun article correspondant dans le catalogue.</div>`;
-        dd.classList.remove("hidden");
-        return;
+    function parseEntryDate(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
+      if (parts) {
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]);
       }
-
-      let html = `
-        <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between items-center border-b border-slate-700 sticky top-0 z-10 backdrop-blur-sm">
-          <span>${results.length} article(s) trouvé(s)</span>
-        </div>
-      `;
-
-      html += results.map(item => `
-        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-650 cursor-pointer transition">
-          <p class="text-base font-bold text-white leading-snug">${item.designation || 'Sans désignation'}</p>
-          <div class="flex justify-between items-center text-xs mt-2 pt-1.5 border-t border-slate-700/70">
-            <div class="flex items-center space-x-1.5">
-              <span class="text-[11px] text-slate-300 uppercase font-bold">RÉF :</span>
-              <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-900 px-2.5 py-0.5 rounded border border-amber-500/30">${item.sapRef}</span>
-            </div>
-            <div class="text-right truncate max-w-[170px]">
-              <span class="text-slate-300">Fourn : </span>
-              <strong class="font-mono text-blue-300 text-sm">${item.supplierRef || 'N/A'}</strong>
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      dd.innerHTML = html;
-      dd.classList.remove("hidden");
+      const iso = new Date(dateStr);
+      return isNaN(iso.getTime()) ? null : iso;
     }
 
-    function selectArticleBySap(sapRef) {
-      const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
-      if (!item) return;
-      activeItem = { ...item };
+    function applyFilters() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
-      document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
-      document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
-      document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
-      document.getElementById("articleSearchInput").value = `${activeItem.sapRef} - ${activeItem.designation}`;
-      document.getElementById("badgeIdentified").classList.remove("hidden");
-      document.getElementById("suggestionsDropdown").classList.add("hidden");
-      document.getElementById("clearSearchBtn").classList.remove("hidden");
-      blurSearchInput();
-      
-      if (navigator.vibrate) navigator.vibrate(50);
-      speakRefSelection(activeItem.sapRef);
-    }
+      const selAgent = document.getElementById("filterAgentSelect").value;
+      const selContractor = document.getElementById("filterContractorSelect").value;
+      const selTrade = document.getElementById("filterTradeSelect").value;
+      const term = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").toLowerCase().trim();
 
-    function clearSearch() {
-      document.getElementById("articleSearchInput").value = "";
-      document.getElementById("clearSearchBtn").classList.add("hidden");
-      document.getElementById("suggestionsDropdown").classList.add("hidden");
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-      if (dismissBtn) dismissBtn.classList.add("hidden");
-      activeItem = null;
-      document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
-      document.getElementById("dispSupplier").innerText = "--";
-      document.getElementById("dispSap").innerText = "--";
-      document.getElementById("badgeIdentified").classList.add("hidden");
-      blurSearchInput();
-    }
+      const filtered = cachedHistory.filter(item => {
+        const itDate = parseEntryDate(item.timestamp);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
 
-    async function toggleScanner() {
-      const container = document.getElementById("scannerContainer");
-      const btnText = document.getElementById("btnScanText");
+        if (selAgent && item.user !== selAgent) return false;
+        if (selContractor && item.contractor !== selContractor) return false;
+        if (selTrade && item.trade !== selTrade) return false;
 
-      if (isScanning || isStartingScanner) {
-        await stopScanner();
-        return;
-      }
-
-      isStartingScanner = true;
-      container.classList.remove("hidden");
-      container.classList.add("flex");
-      btnText.innerText = "FERMER CAMERA";
-
-      if (html5QrCode) {
-        try { await html5QrCode.clear(); } catch(e){}
-      }
-      html5QrCode = new Html5Qrcode("reader");
-
-      const qrConfig = {
-        fps: 15,
-        qrbox: { width: 270, height: 210 },
-        aspectRatio: 1.333333
-      };
-
-      try {
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length > 0) {
-          const backCam = devices[devices.length - 1];
-          await html5QrCode.start(
-            backCam.id,
-            qrConfig,
-            (decodedText) => handleExactCodeMatch(decodedText),
-            () => {}
-          );
-        } else {
-          await html5QrCode.start(
-            { facingMode: "environment" },
-            qrConfig,
-            (decodedText) => handleExactCodeMatch(decodedText),
-            () => {}
-          );
+        if (term) {
+          const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
+          if (!matchTarget.includes(term)) return false;
         }
-        
-        isScanning = true;
-        resetTorchUI();
-        startBackgroundOcr();
-
-      } catch (err) {
-        console.warn("Erreur capteur :", err);
-        container.classList.add("hidden");
-        container.classList.remove("flex");
-        btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-        alert("Accès caméra impossible : Vérifiez les autorisations HTTPS.");
-      } finally {
-        isStartingScanner = false;
-        lucide.createIcons();
-      }
-    }
-
-    async function stopScanner() {
-      if (ocrInterval) {
-        clearInterval(ocrInterval);
-        ocrInterval = null;
-      }
-
-      if (isTorchOn) {
-        await setTorch(false);
-      }
-
-      if (html5QrCode && isScanning) {
-        try {
-          await html5QrCode.stop();
-          html5QrCode.clear();
-        } catch(e){}
-      }
-
-      const video = document.querySelector("#reader video");
-      if (video && video.srcObject) {
-        try {
-          video.srcObject.getTracks().forEach(track => track.stop());
-        } catch (e) {}
-      }
-
-      isScanning = false;
-      resetTorchUI();
-      
-      const container = document.getElementById("scannerContainer");
-      container.classList.add("hidden");
-      container.classList.remove("flex");
-      
-      document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-      lucide.createIcons();
-    }
-
-    async function toggleTorch() {
-      if (!isScanning || !html5QrCode) return;
-      const targetState = !isTorchOn;
-      const success = await setTorch(targetState);
-      if (success) {
-        isTorchOn = targetState;
-        updateTorchUI();
-        showToast(isTorchOn ? "Lumière allumée" : "Lumière éteinte");
-      } else {
-        alert("La torche n'est pas supportée par ce capteur.");
-      }
-    }
-
-    async function setTorch(enable) {
-      try {
-        await html5QrCode.applyVideoConstraints({ advanced: [{ torch: enable }] });
         return true;
-      } catch (e) {
-        const video = document.querySelector("#reader video");
-        if (video && video.srcObject) {
-          const track = video.srcObject.getVideoTracks()[0];
-          if (track && typeof track.applyConstraints === "function") {
-            try {
-              await track.applyConstraints({ advanced: [{ torch: enable }] });
-              return true;
-            } catch (err2) {
-              return false;
-            }
-          }
-        }
-        return false;
-      }
-    }
-
-    function updateTorchUI() {
-      const btn = document.getElementById("btnTorch");
-      const icon = document.getElementById("torchIcon");
-      if (!btn || !icon) return;
-
-      if (isTorchOn) {
-        btn.className = "w-[52px] h-[52px] shrink-0 bg-amber-400 active:bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center border border-amber-300 transition shadow";
-        icon.className = "w-6 h-6 text-slate-950 fill-slate-950";
-      } else {
-        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
-        icon.className = "w-6 h-6 text-slate-300";
-      }
-      lucide.createIcons();
-    }
-
-    function resetTorchUI() {
-      isTorchOn = false;
-      const btn = document.getElementById("btnTorch");
-      const icon = document.getElementById("torchIcon");
-      if (btn && icon) {
-        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
-        icon.className = "w-6 h-6 text-slate-300";
-      }
-      lucide.createIcons();
-    }
-
-    function startBackgroundOcr() {
-      ocrInterval = setInterval(async () => {
-        if (!isScanning || isOcrBusy) return;
-        await processVideoOcr(false);
-      }, 1600);
-    }
-
-    async function triggerManualOcrCapture() {
-      if (!isScanning) return;
-      showToast("Lecture Réf SAP...");
-      await processVideoOcr(true);
-    }
-
-    function getLevenshteinDistance(a, b) {
-      if (a.length === 0) return b.length;
-      if (b.length === 0) return a.length;
-      const matrix = [];
-      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-
-      for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-          if (b.charAt(i - 1) === a.charAt(j - 1)) {
-            matrix[i][j] = matrix[i - 1][j - 1];
-          } else {
-            matrix[i][j] = Math.min(
-              matrix[i - 1][j - 1] + 1,
-              matrix[i][j - 1] + 1,
-              matrix[i - 1][j] + 1
-            );
-          }
-        }
-      }
-      return matrix[b.length][a.length];
-    }
-
-    async function processVideoOcr(forceToast = false) {
-      const video = document.querySelector("#reader video");
-      if (!video || video.readyState < 2 || !video.videoWidth) return;
-
-      const canvas = document.getElementById("ocrCanvas");
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-      const cropW = Math.floor(video.videoWidth * 0.82);
-      const cropH = Math.floor(video.videoHeight * 0.44);
-      const startX = Math.floor((video.videoWidth - cropW) / 2);
-      const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
-
-      canvas.width = cropW * 2;
-      canvas.height = cropH * 2;
-
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
-
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const d = imgData.data;
-      let minLum = 255;
-      let maxLum = 0;
-
-      for (let i = 0; i < d.length; i += 4) {
-        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-        if (lum < minLum) minLum = lum;
-        if (lum > maxLum) maxLum = lum;
-      }
-
-      const range = (maxLum - minLum) || 1;
-      for (let i = 0; i < d.length; i += 4) {
-        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-        let stretched = ((lum - minLum) / range) * 255;
-        const finalVal = stretched > 135 ? 255 : (stretched < 70 ? 0 : stretched);
-        d[i] = finalVal;
-        d[i + 1] = finalVal;
-        d[i + 2] = finalVal;
-      }
-      ctx.putImageData(imgData, 0, 0);
-
-      isOcrBusy = true;
-      try {
-        let textResult = "";
-        if (ocrWorker) {
-          const ret = await ocrWorker.recognize(canvas);
-          textResult = ret.data.text || "";
-        } else {
-          const ret = await Tesseract.recognize(canvas, 'eng', {
-            tessedit_char_whitelist: '0123456789',
-            tessedit_pageseg_mode: '7'
-          });
-          textResult = ret.data.text || "";
-        }
-
-        if (!isScanning) return;
-
-        const rawDigits = textResult.replace(/\D/g, "");
-        const validCatalogSaps = catalog
-          .map(i => String(i.sapRef).trim())
-          .filter(ref => ref.length === 6);
-
-        let bestSapMatch = null;
-
-        const direct6Matches = rawDigits.match(/\d{6}/g) || [];
-        for (const candidate of direct6Matches) {
-          if (validCatalogSaps.includes(candidate)) {
-            bestSapMatch = candidate;
-            break;
-          }
-        }
-
-        if (!bestSapMatch && rawDigits.length >= 6) {
-          for (let i = 0; i <= rawDigits.length - 6; i++) {
-            const slice = rawDigits.substring(i, i + 6);
-            if (validCatalogSaps.includes(slice)) {
-              bestSapMatch = slice;
-              break;
-            }
-          }
-        }
-
-        if (!bestSapMatch && validCatalogSaps.length > 0) {
-          const candidates = rawDigits.match(/\d{5,7}/g) || [];
-          for (const cand of candidates) {
-            let minDistance = 999;
-            let candidateSap = null;
-
-            for (const sap of validCatalogSaps) {
-              const dist = getLevenshteinDistance(cand, sap);
-              if (dist < minDistance) {
-                minDistance = dist;
-                candidateSap = sap;
-              }
-            }
-
-            if (minDistance <= 1 && candidateSap) {
-              bestSapMatch = candidateSap;
-              break;
-            }
-          }
-        }
-
-        if (bestSapMatch) {
-          stopScanner();
-          selectArticleBySap(bestSapMatch);
-          showToast(`Réf validée : ${bestSapMatch}`);
-          return;
-        }
-
-        if (forceToast) {
-          showToast("Réf non reconnue. Rapprochez le bac.");
-        }
-      } catch (e) {
-        console.warn("Erreur OCR :", e);
-      } finally {
-        isOcrBusy = false;
-      }
-    }
-
-    function handleExactCodeMatch(code) {
-      const clean = String(code).trim();
-      const match = catalog.find(item => 
-        String(item.sapRef).toUpperCase() === clean.toUpperCase() ||
-        String(item.ean).toUpperCase() === clean.toUpperCase() ||
-        String(item.qr).toUpperCase() === clean.toUpperCase() ||
-        String(item.supplierRef).toUpperCase() === clean.toUpperCase()
-      );
-
-      if (match) {
-        stopScanner();
-        selectArticleBySap(match.sapRef);
-        showToast("Identifié : " + match.designation);
-      } else {
-        activeItem = null;
-        document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
-        document.getElementById("dispSap").innerText = "--";
-        document.getElementById("dispSupplier").innerText = "--";
-        document.getElementById("badgeIdentified").classList.add("hidden");
-        
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        alert(`Article inconnu (${clean}) :\nAucune correspondance trouvée dans le catalogue Google Sheets.`);
-      }
-    }
-
-    async function editHistoryItem(id, oldQty) {
-      const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
-      if (newQtyStr === null) return;
-
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide (>= 0 attendue).");
-        return;
-      }
-
-      showToast("Mise à jour...");
-      const payload = { 
-        action: "UPDATE", 
-        id: id, 
-        quantity: newQty,
-        user: currentAgent 
-      };
-
-      const target = cachedHistory.find(item => item.id === id);
-      if (target) {
-        target.quantity = newQty;
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      }
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        showToast("Quantité modifiée !");
-      } catch (err) {
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Modifié en attente de synchronisation.");
-      } finally {
-        renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
-      }
-    }
-
-    async function deleteHistoryItem(id, designation) {
-      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
-
-      showToast("Suppression...");
-      const payload = { 
-        action: "DELETE", 
-        id: id, 
-        user: currentAgent 
-      };
-
-      cachedHistory = cachedHistory.filter(item => item.id !== id);
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        showToast("Saisie supprimée !");
-      } catch (err) {
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Supprimé en attente de synchronisation.");
-      } finally {
-        renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
-      }
-    }
-
-    async function submitInventory() {
-      if (!currentAgent) {
-        openAgentModal();
-        return;
-      }
-
-      const contractor = document.getElementById("contractorSelect").value;
-      const trade = document.getElementById("tradeSelect").value;
-
-      if (!contractor || contractor.trim() === "") {
-        alert("Action impossible :\nVeuillez impérativement sélectionner un Entrepreneur avant de valider.");
-        document.getElementById("contractorSelect").focus();
-        return;
-      }
-      if (!trade || trade.trim() === "") {
-        alert("Action impossible :\nVeuillez impérativement sélectionner un Métier avant de valider.");
-        document.getElementById("tradeSelect").focus();
-        return;
-      }
-
-      if (!activeItem || !catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim())) {
-        alert("Action impossible :\nAucun article valide du catalogue n'est sélectionné.");
-        return;
-      }
-
-      const qtyInput = document.getElementById("qtyInput");
-      const qty = parseInt(qtyInput.value, 10);
-      if (isNaN(qty) || qty < 0) {
-        alert("Veuillez renseigner une quantité valide (>= 0).");
-        qtyInput.focus();
-        return;
-      }
-
-      const nowMs = Date.now();
-      const fiveMinMs = 5 * 60 * 1000;
-
-      const recentDuplicate = cachedHistory.find(entry => {
-        if (
-          String(entry.sapRef) === String(activeItem.sapRef) &&
-          entry.contractor === contractor &&
-          entry.trade === trade
-        ) {
-          let entryTime = 0;
-          if (entry.id && entry.id.startsWith("INV-")) {
-            const timestampPart = entry.id.replace("INV-", "");
-            entryTime = parseInt(timestampPart, 36);
-          }
-          if (!entryTime && entry.timestamp) {
-            const parts = entry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-            if (parts) entryTime = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
-          }
-          return (nowMs - entryTime) < fiveMinMs;
-        }
-        return false;
       });
 
-      let finalQty = qty;
-      let targetUpdateId = null;
-
-      if (recentDuplicate) {
-        const confirmChoice = confirm(
-          `⚠️ Doublon détecté :\nVous avez déjà compté cet article il y a moins de 5 minutes (${recentDuplicate.quantity} pcs pour ${contractor} - ${trade}).\n\n` +
-          `• Cliquez sur [OK] pour CUMULER (+${qty} pcs, total = ${recentDuplicate.quantity + qty})\n` +
-          `• Cliquez sur [Annuler] pour ÉCRASER / REMPLACER (nouvelle valeur = ${qty})`
-        );
-
-        if (confirmChoice) {
-          finalQty = Number(recentDuplicate.quantity) + qty;
-          targetUpdateId = recentDuplicate.id;
-        } else {
-          targetUpdateId = recentDuplicate.id;
-        }
-      }
-
-      const btn = document.getElementById("btnSubmit");
-      const label = document.getElementById("submitLabel");
-      const icon = document.getElementById("submitIcon");
-
-      btn.disabled = true;
-      label.innerText = "ENREGISTREMENT...";
-      icon.className = "w-6 h-6 animate-spin";
-
-      speakValidationWithEncouragement(finalQty, currentAgent);
-
-      let payload;
-      if (targetUpdateId) {
-        payload = {
-          action: "UPDATE",
-          id: targetUpdateId,
-          quantity: finalQty,
-          user: currentAgent
-        };
-      } else {
-        payload = {
-          action: "CREATE",
-          id: "INV-" + Date.now().toString(36).toUpperCase(),
-          timestamp: new Date().toLocaleString("fr-FR"),
-          user: currentAgent,
-          contractor: contractor,
-          trade: trade,
-          sapRef: activeItem.sapRef,
-          designation: activeItem.designation,
-          supplierRef: activeItem.supplierRef || "",
-          ean: activeItem.ean || "",
-          qr: activeItem.qr || "",
-          quantity: finalQty,
-          lat: latestCoords.lat,
-          lng: latestCoords.lng,
-          latitude: latestCoords.lat,
-          longitude: latestCoords.lng
-        };
-      }
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        if (targetUpdateId) {
-          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
-          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
-        } else {
-          cachedHistory.unshift(payload);
-        }
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Inventaire synchronisé !");
-      } catch (e) {
-        if (targetUpdateId) {
-          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
-          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
-        } else {
-          cachedHistory.unshift(payload);
-        }
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Enregistré localement (en attente réseau).");
-      } finally {
-        qtyInput.value = 0;
-        clearSearch();
-        btn.disabled = false;
-        label.innerText = "VALIDER ET ARCHIVER";
-        icon.className = "w-6 h-6";
-        lucide.createIcons();
-        renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
-      }
+      renderKPIs(filtered);
+      renderTable(filtered);
+      renderAgentsView(filtered);
+      renderMap(filtered);
     }
 
-    function renderHistory() {
-      const c = document.getElementById("historyList");
-      const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
-      document.getElementById("historyHeaderLabel").innerText = isAdmin() ? `Toutes les saisies (${list.length})` : `Mes saisies (${list.length})`;
+    function renderKPIs(list) {
+      document.getElementById("kpiTotalRows").innerText = list.length;
+      document.getElementById("kpiTotalPieces").innerText = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+      document.getElementById("kpiZeroStock").innerText = list.filter(r => Number(r.quantity) === 0).length;
+      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
+      document.getElementById("kpiAtypicalStock").innerText = list.filter(r => Number(r.quantity) > maxQ).length;
+    }
+
+    function renderTable(list) {
+      document.getElementById("tableCountLabel").innerText = `${list.length} saisie(s) répertoriée(s)`;
+      const tbody = document.getElementById("supervisionTableBody");
+      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
 
       if (list.length === 0) {
-        c.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Aucune saisie enregistrée.</div>';
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 italic">Aucune saisie sur le filtre actif.</td></tr>`;
         return;
       }
 
-      const pendingIds = new Set(syncQueue.map(q => q.id));
-
-      c.innerHTML = list.map(it => {
-        const isPending = pendingIds.has(it.id);
-        const displayDate = formatDateDMY(it.timestamp, true);
+      tbody.innerHTML = list.map(item => {
+        const q = Number(item.quantity);
+        const isAlert = q === 0 || q > maxQ;
         return `
-          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800'} p-3.5 rounded-2xl shadow space-y-2.5">
-            <div class="flex items-center justify-between border-b border-slate-850 pb-2 text-xs">
-              <div class="min-w-0 pr-2">
-                <span class="font-bold text-white">${it.user}</span>
-                <span class="text-slate-400">• <strong class="text-slate-300 font-semibold">${it.contractor}</strong> (${it.trade})</span>
-              </div>
-              <div class="flex items-center space-x-1.5 shrink-0 text-[11px] font-mono text-slate-400">
-                <span>${displayDate}</span>
-                ${(it.lat || it.latitude) ? `<span class="text-emerald-400">📍</span>` : ''}
-                ${isPending ? `<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-bold">Attente</span>` : ''}
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between gap-2">
-              <div class="min-w-0 flex-1 pr-2">
-                <span class="font-mono font-black text-amber-400 text-base tracking-wider block">${it.sapRef}</span>
-                <p class="text-xs text-slate-300 truncate mt-0.5" title="${it.designation}">${it.designation}</p>
-              </div>
-
-              <div class="flex items-center space-x-2 shrink-0">
-                <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 min-w-[50px]">
-                  <span class="text-[9px] font-bold text-slate-400 uppercase">Qté</span>
-                  <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
-                </div>
-
-                <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" 
-                        class="w-10 h-10 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 active:bg-emerald-600 text-emerald-400 hover:text-emerald-100 flex items-center justify-center border border-emerald-500/40 transition shadow">
-                  <i data-lucide="edit-3" class="w-4 h-4"></i>
-                </button>
-
-                <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
-                        class="w-10 h-10 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 flex items-center justify-center border border-rose-500/40 transition shadow">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+          <tr class="hover:bg-slate-850/60 transition ${isAlert ? 'bg-amber-500/5' : ''}">
+            <td class="p-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">${item.timestamp}</td>
+            <td class="p-3 font-bold text-white">${item.user}</td>
+            <td class="p-3 text-slate-300">${item.contractor}</td>
+            <td class="p-3 text-slate-400">${item.trade}</td>
+            <td class="p-3 font-mono font-bold text-amber-400">${item.sapRef}</td>
+            <td class="p-3 text-slate-200 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
+            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${q}</td>
+            <td class="p-3 text-right whitespace-nowrap">
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1 hover:text-white text-slate-400 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1 hover:text-rose-400 text-slate-400 transition ml-2" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+            </td>
+          </tr>
         `;
       }).join('');
       lucide.createIcons();
     }
 
-    function renderMobileMonitoring() {
-      if (!isAdmin()) return;
-      document.getElementById("mobKpiRows").innerText = cachedHistory.length;
-      document.getElementById("mobKpiQty").innerText = cachedHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
-      document.getElementById("mobKpiAlerts").innerText = cachedHistory.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50).length;
+    function renderAgentsView(list) {
+      const container = document.getElementById("agentsAccordionContainer");
+      if (!container) return;
+
+      if (availableAgents.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-500 italic">Aucun agent configuré.</div>`;
+        return;
+      }
 
       const now = new Date().getTime();
-      const thirtyMinMs = 30 * 60 * 1000;
-      const container = document.getElementById("mobMonitoringList");
+      const fifteenMinMs = 15 * 60 * 1000;
 
-      const groups = {};
-      cachedHistory.forEach(item => {
-        const key = `${item.user}__${item.contractor}__${item.trade}`;
-        if (!groups[key]) {
-          groups[key] = {
-            user: item.user,
-            contractor: item.contractor,
-            trade: item.trade,
-            entries: []
-          };
+      container.innerHTML = availableAgents.map(agent => {
+        const agentEntries = list.filter(i => i.user === agent);
+        const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
+        const alerts = agentEntries.filter(r => Number(r.quantity) === 0 || Number(r.quantity) > 50).length;
+
+        let isActive = false;
+        let activeContractor = "Aucun chantier entamé";
+        let lastTimeStr = "--";
+
+        if (agentEntries.length > 0) {
+          const lastOne = agentEntries[0];
+          activeContractor = lastOne.contractor || "Entrepreneur inconnu";
+          lastTimeStr = lastOne.timestamp ? (lastOne.timestamp.split(' ')[1] || lastOne.timestamp) : '--';
+          const dt = parseEntryDate(lastOne.timestamp);
+          if (dt && (now - dt.getTime()) < fifteenMinMs) {
+            isActive = true;
+          }
         }
-        groups[key].entries.push(item);
-      });
 
-      const groupList = Object.values(groups);
-
-      if (groupList.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs italic">Aucune activité enregistrée.</div>`;
-        return;
-      }
-
-      container.innerHTML = groupList.map(grp => {
-        const sorted = [...grp.entries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
-        const firstEntry = sorted[0];
-        const lastEntry = sorted[sorted.length - 1];
-
-        const firstDateStr = formatDateDMY(firstEntry.timestamp, true);
-        const lastDateStr = formatDateDMY(lastEntry.timestamp, true);
-
-        const lastDt = parseItemDate(lastEntry.timestamp);
-        const isActive = (now - lastDt.getTime()) < thirtyMinMs;
+        const distinctPairs = {};
+        agentEntries.forEach(e => {
+          const key = `${e.contractor} - ${e.trade}`;
+          if (!distinctPairs[key]) distinctPairs[key] = { lastSeen: e.timestamp, count: 0 };
+          distinctPairs[key].count++;
+        });
 
         return `
-          <div class="bg-slate-950 p-3.5 rounded-2xl border ${isActive ? 'border-indigo-500/50' : 'border-slate-800'} text-xs space-y-2 shadow">
-            <div class="flex justify-between items-start border-b border-slate-850 pb-2">
-              <div>
-                <strong class="text-white text-sm block">${grp.contractor}</strong>
-                <span class="text-indigo-400 font-bold">${grp.trade}</span>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow space-y-3">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}"></div>
+                <span class="font-bold text-white text-sm">${agent}</span>
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}">
+                  ${isActive ? '🟢 En cours' : '⚪ Déconnecté'} • ${activeContractor} (${lastTimeStr})
+                </span>
               </div>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
-                ${isActive ? '🟢 En cours' : '🔵 Finalisé'}
-              </span>
+              <span class="text-xs font-mono text-slate-400">${agentEntries.length} lignes • ${totalPieces} pcs</span>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1">
-              <div>
-                <span>Agent :</span>
-                <strong class="text-slate-200 block">${grp.user}</strong>
+            <div class="grid grid-cols-3 gap-3 text-xs">
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Cadence Saisie</span>
+                <span class="font-black text-white text-base">${agentEntries.length} lignes traitées</span>
               </div>
-              <div>
-                <span>Lignes traitées :</span>
-                <strong class="text-emerald-400 font-mono text-xs block">${grp.entries.length} ligne(s)</strong>
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-amber-400 block text-[10px] uppercase font-bold">Anomalies relevées</span>
+                <span class="font-black text-amber-400 text-base">${alerts} alerte(s)</span>
               </div>
-              <div>
-                <span>1ère saisie :</span>
-                <span class="font-mono text-slate-300 block">${firstDateStr}</span>
-              </div>
-              <div>
-                <span>Dernière saisie :</span>
-                <span class="font-mono text-slate-300 block">${lastDateStr}</span>
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Chantiers / Métiers</span>
+                <span class="font-black text-indigo-300 text-base">${Object.keys(distinctPairs).length} traités</span>
               </div>
             </div>
+
+            <details class="text-xs text-slate-300 pt-1">
+              <summary class="cursor-pointer text-[11px] font-bold text-indigo-400 hover:text-indigo-300">
+                Voir le périmètre démarré et dates de passage &darr;
+              </summary>
+              <div class="mt-2 space-y-1 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                ${Object.keys(distinctPairs).length === 0 ? '<span class="text-slate-500 italic">Aucun périmètre entamé.</span>' : 
+                  Object.entries(distinctPairs).map(([pair, info]) => `
+                    <div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-900 last:border-0">
+                      <span class="font-semibold text-white">${pair}</span>
+                      <span class="text-slate-400 font-mono text-[10px]">${info.lastSeen} (${info.count} saisie[s])</span>
+                    </div>
+                  `).join('')}
+              </div>
+            </details>
           </div>
         `;
       }).join('');
       lucide.createIcons();
     }
 
-    function switchTab(tab) {
-      const inv = document.getElementById("view-inventory");
-      const hist = document.getElementById("view-history");
-      const mon = document.getElementById("view-monitoring");
-      const tInv = document.getElementById("tabNavInventory");
-      const tHist = document.getElementById("tabNavHistory");
-      const tMon = document.getElementById("tabNavMonitoring");
-
-      if (tab === 'monitoring') {
-        if (!isAdmin()) {
-          alert("Accès réservé aux administrateurs.");
-          return;
-        }
-        if (!isMonitoringUnlocked) {
-          const expected = adminPasswords[currentAgent] || "1234";
-          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe :`);
-          if (entered === null) return;
-          if (entered !== expected) {
-            alert("Mot de passe incorrect.");
-            return;
-          }
-          isMonitoringUnlocked = true;
-        }
+    function renderMap(list) {
+      if (!map) {
+        map = L.map('mapContainer').setView([50.8503, 4.3517], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
       }
 
-      if (inv) inv.classList.add("hidden");
-      if (hist) hist.classList.add("hidden");
-      if (mon) mon.classList.add("hidden");
+      markersLayer.clearLayers();
+      const points = [];
 
-      if (tInv) tInv.classList.replace("text-blue-400", "text-slate-400");
-      if (tHist) tHist.classList.replace("text-blue-400", "text-slate-400");
-      if (tMon) tMon.classList.replace("text-blue-400", "text-slate-400");
+      list.forEach(item => {
+        const lat = Number(item.lat || item.latitude);
+        const lng = Number(item.lng || item.longitude);
+        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+          points.push([lat, lng]);
+          L.circleMarker([lat, lng], {
+            radius: 6,
+            fillColor: "#f97316",
+            color: "#ffffff",
+            weight: 1.5,
+            opacity: 1,
+            fillOpacity: 0.85
+          }).addTo(markersLayer).bindPopup(`
+            <div class="text-xs">
+              <strong>${item.user}</strong><br>
+              ${item.contractor} (${item.trade})<br>
+              ${item.designation} (Qté : ${item.quantity})<br>
+              <span class="text-[10px] text-gray-500">${item.timestamp}</span>
+            </div>
+          `);
+        }
+      });
 
-      if (tab === 'inventory') {
-        if (inv) inv.classList.remove("hidden");
-        if (tInv) tInv.classList.replace("text-slate-400", "text-blue-400");
-      } else if (tab === 'history') {
-        if (isScanning) stopScanner();
-        if (hist) hist.classList.remove("hidden");
-        if (tHist) tHist.classList.replace("text-slate-400", "text-blue-400");
-        renderHistory();
-      } else if (tab === 'monitoring') {
-        if (isScanning) stopScanner();
-        if (mon) mon.classList.remove("hidden");
-        if (tMon) tMon.classList.replace("text-slate-400", "text-blue-400");
-        renderMobileMonitoring();
+      if (points.length > 0) {
+        map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
       }
+    }
 
-      syncData();
+    function switchView(v) {
+      activeView = v;
+      document.getElementById("viewGlobal").classList.add("hidden");
+      document.getElementById("viewAgents").classList.add("hidden");
+      document.getElementById("viewMap").classList.add("hidden");
+
+      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition";
+      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition";
+      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition";
+
+      if (v === 'global') {
+        document.getElementById("viewGlobal").classList.remove("hidden");
+        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md transition";
+      } else if (v === 'agents') {
+        document.getElementById("viewAgents").classList.remove("hidden");
+        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md transition";
+      } else if (v === 'map') {
+        document.getElementById("viewMap").classList.remove("hidden");
+        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md transition";
+        setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+      }
       lucide.createIcons();
     }
 
-    function showToast(msg) {
-      const t = document.getElementById("toast");
-      document.getElementById("toastMessage").innerText = msg;
-      t.classList.remove("-translate-y-28");
-      t.classList.add("translate-y-0");
-      setTimeout(() => {
-        t.classList.remove("translate-y-0");
-        t.classList.add("-translate-y-28");
-      }, 2200);
+    async function editTableItem(id, oldQty) {
+      const newQtyStr = prompt("Modifier la quantité :", oldQty);
+      if (newQtyStr === null) return;
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide.");
+        return;
+      }
+
+      const target = cachedHistory.find(i => i.id === id);
+      if (target) target.quantity = newQty;
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      applyFilters();
+
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "UPDATE", id: id, quantity: newQty, user: currentAdmin })
+        });
+      }
+    }
+
+    async function deleteTableItem(id, label) {
+      if (!confirm(`Supprimer définitivement :\n"${label}" ?`)) return;
+
+      cachedHistory = cachedHistory.filter(i => i.id !== id);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      applyFilters();
+
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "DELETE", id: id, user: currentAdmin })
+        });
+      }
+    }
+
+    function exportTableToCSV() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      const selAgent = document.getElementById("filterAgentSelect").value;
+      const selContractor = document.getElementById("filterContractorSelect").value;
+      const selTrade = document.getElementById("filterTradeSelect").value;
+
+      const data = cachedHistory.filter(item => {
+        const itDate = parseEntryDate(item.timestamp);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        if (selAgent && item.user !== selAgent) return false;
+        if (selContractor && item.contractor !== selContractor) return false;
+        if (selTrade && item.trade !== selTrade) return false;
+        return true;
+      });
+
+      if (data.length === 0) {
+        alert("Aucune donnée à exporter sur ce filtre.");
+        return;
+      }
+
+      let csv = "\uFEFFHorodatage;Magasinier;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
+      data.forEach(r => {
+        csv += `"${r.timestamp || ''}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Inventaire_Export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   </script>
 </body>
