@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-950">
+<html lang="fr" class="h-full bg-slate-950 overflow-hidden">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CO2H2O - Inventaire Mobile</title>
+  <title>Inventaire Logistique Terrain</title>
 
-  <!-- ICÔNE & PWA -->
+  <!-- ICÔNES & PWA -->
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
@@ -14,103 +14,139 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
 
-  <!-- SCRIPTS EXTERNES -->
+  <!-- SCRIPTS & LIBRAIRIES EXTERNES -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
-    body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
-    #scannerContainer { max-height: 100vh !important; }
-    #reader, #reader video {
-      height: 310px !important;
-      max-height: 310px !important;
+    html, body {
+      overscroll-behavior: none !important;
+      overscroll-behavior-y: none !important;
+      -webkit-overscroll-behavior: none !important;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: pan-x pan-y;
+    }
+    
+    #mainContent {
+      overscroll-behavior-y: contain !important;
+    }
+
+    #reader {
+      height: 330px !important;
+      max-height: 330px !important;
+      width: 100% !important;
+      overflow: hidden !important;
+      position: relative !important;
+      background: #000;
+    }
+    #reader video {
+      height: 330px !important;
+      max-height: 330px !important;
       width: 100% !important;
       object-fit: cover !important;
-      border-radius: 0.75rem;
     }
-    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Réticule de visée SAP centré avec coins/style épuré */
     .ocr-reticle {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 82%;
-      height: 32%;
-      border: 2px solid #10b981;
+      height: 44%;
+      border: 2.5px solid #10b981;
       border-radius: 12px;
-      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55);
+      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
       pointer-events: none;
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      padding-bottom: 6px;
+      padding-bottom: 4px;
       z-index: 5;
     }
   </style>
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
-  <!-- MODALE D'IDENTIFICATION -->
+  <!-- ================= MODALE D'IDENTIFICATION ================= -->
   <div id="userModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center mx-auto">
-        <i data-lucide="user" class="w-7 h-7"></i>
+        <i data-lucide="user-check" class="w-7 h-7"></i>
       </div>
       <div>
         <h2 class="text-xl font-bold text-white tracking-wide">Identification</h2>
         <p class="text-xs text-slate-400 mt-1">Sélectionnez votre profil pour débuter</p>
       </div>
+
       <div class="text-left">
         <select id="modalAgentSelect" class="w-full bg-slate-950 border-2 border-slate-700 rounded-xl p-3.5 text-sm text-white font-medium focus:border-amber-500 focus:outline-none">
-          <option value="">Chargement...</option>
+          <option value="">Chargement depuis Google Sheets...</option>
         </select>
       </div>
-      <button onclick="confirmAgentSelection()" class="w-full h-12 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+
+      <button id="btnConfirmAgent" onclick="confirmAgentSelection()" class="w-full h-12 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-sm transition">
         <span>Commencer la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
     </div>
   </div>
 
-  <!-- EN-TÊTE FIXE -->
-  <header class="bg-slate-950 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0 z-10">
+  <!-- ================= EN-TÊTE FIXE ================= -->
+  <header id="appHeader" class="bg-slate-950 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0 z-10 transition-all duration-200">
     <div class="flex items-center space-x-2">
-      <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800" onerror="this.style.display='none'">
+      <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800" onerror="this.src='icon.svg'">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
       <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">En ligne</span>
       <span id="syncBadge" class="hidden text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded">0 en attente</span>
     </div>
+
     <div class="flex items-center space-x-2">
       <span id="adminBadge" class="hidden px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wider border border-amber-500/30">ADMIN</span>
+      
+      <button onclick="manualSync()" title="Actualiser les données" class="flex items-center space-x-1 bg-slate-850 hover:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 text-xs text-indigo-300 transition">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline font-semibold">Actualiser</span>
+      </button>
+
       <button onclick="openAgentModal()" class="flex items-center space-x-1.5 bg-slate-850 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-200">
         <i data-lucide="user" class="w-3.5 h-3.5 text-amber-500"></i>
-        <span id="currentAgentName" class="font-bold truncate max-w-[110px]">Chargement...</span>
+        <span id="currentAgentName" class="font-bold truncate max-w-[90px]">Chargement...</span>
         <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400 ml-0.5"></i>
       </button>
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL -->
-  <main class="flex-1 overflow-y-auto bg-slate-900 border-x border-slate-800/60 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
+  <!-- ================= CONTENU PRINCIPAL ================= -->
+  <main id="mainContent" class="flex-1 overflow-y-auto bg-slate-900 border-x border-slate-800/60 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
+
     <div class="space-y-4">
-      <!-- VUE COMPTAGE -->
+      <!-- ========== VUE 1 : COMPTAGE ========== -->
       <section id="view-inventory" class="space-y-4">
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
+        
+        <div id="selectorsBox" class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur <span class="text-rose-400 font-bold">*</span></label>
-            <select id="contractorSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
-              <option value="">-- Sélectionner l'entrepreneur --</option>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+              Entrepreneur <span class="text-rose-400 font-bold">*</span>
+            </label>
+            <select id="contractorSelect" onchange="persistSelection('contractor', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
+              <option value="">-- Sélectionner l'entrepreneur (Obligatoire) --</option>
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métier <span class="text-rose-400 font-bold">*</span></label>
-            <select id="tradeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
-              <option value="">-- Sélectionner le métier --</option>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+              Métier <span class="text-rose-400 font-bold">*</span>
+            </label>
+            <select id="tradeSelect" onchange="persistSelection('trade', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500">
+              <option value="">-- Sélectionner le métier (Obligatoire) --</option>
             </select>
           </div>
         </div>
@@ -121,53 +157,76 @@
             <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
           </button>
 
-          <!-- MODALE CAMÉRA -->
+          <!-- MODALE CAMÉRA CENTRÉE -->
           <div id="scannerContainer" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm items-center justify-center p-4">
-            <div class="relative w-full max-w-sm bg-black rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
-              <!-- Bandeau supérieur QR / EAN -->
-              <div class="absolute top-2.5 inset-x-0 z-20 flex justify-center pointer-events-none">
-                <span class="text-[10px] font-bold font-mono tracking-wider bg-slate-950/90 text-indigo-300 border border-indigo-500/50 px-3 py-1 rounded-full shadow-lg">ZONE POUR QR / EAN</span>
+            <div class="relative w-full max-w-sm bg-slate-950 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
+              
+              <div class="absolute top-2.5 inset-x-0 flex justify-center z-10 pointer-events-none">
+                <span class="text-xs font-mono font-black text-indigo-200 bg-slate-950/90 px-3 py-1 rounded border border-indigo-500/50 tracking-wider shadow">
+                  ZONE POUR QR / EAN
+                </span>
               </div>
+
               <div id="reader" class="w-full relative"></div>
-              <!-- Réticule centré SAP -->
+              
               <div class="ocr-reticle">
-                <span class="text-[9px] font-mono text-emerald-300 bg-slate-950/95 px-2.5 py-0.5 rounded-md border border-emerald-500/50 tracking-wider font-black uppercase">Zone pour réf SAP 6 chiffres</span>
+                <span class="text-xs font-mono font-black text-emerald-300 bg-slate-950/90 px-2.5 py-1 rounded border border-emerald-500/50 tracking-wider shadow mb-0.5">
+                  ZONE POUR RÉF SAP 6 CHIFFRES
+                </span>
               </div>
               <canvas id="ocrCanvas" class="hidden"></canvas>
               
-              <!-- Boutons de commande unifiés (mêmes tailles, alignés et centrés) -->
-              <div class="p-3 bg-slate-900/95 border-t border-slate-800 z-10 relative">
-                <div class="grid grid-cols-3 gap-2 w-full">
-                  <button id="btnTorch" onclick="toggleTorch()" class="h-12 bg-slate-800 active:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700">
-                    <i data-lucide="flashlight" id="torchIcon" class="w-4 h-4 text-slate-300"></i>
-                    <span id="torchLabel">Flash</span>
-                  </button>
-                  <button onclick="triggerManualOcrCapture()" class="h-12 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 border border-emerald-400/40">
-                    <i data-lucide="scan-line" class="w-4 h-4"></i>
-                    <span>Scanner SAP</span>
-                  </button>
-                  <button onclick="stopScanner()" class="h-12 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 rounded-xl border border-rose-500/40 flex items-center justify-center gap-1.5">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                    <span class="font-bold text-xs">Fermer</span>
-                  </button>
-                </div>
+              <div class="p-3 bg-slate-900/95 flex items-center justify-between gap-3 border-t border-slate-800 z-10 relative">
+                <button id="btnTorch" onclick="toggleTorch()" title="Lampe" 
+                        class="w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow">
+                  <i data-lucide="flashlight" id="torchIcon" class="w-6 h-6 text-slate-300"></i>
+                </button>
+
+                <button onclick="triggerManualOcrCapture()" 
+                        class="h-[52px] flex-1 max-w-[185px] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="scan-line" class="w-5 h-5 shrink-0"></i>
+                  <span class="truncate">Scan Réf SAP</span>
+                </button>
+
+                <button onclick="stopScanner()" title="Fermer" 
+                        class="w-[52px] h-[52px] shrink-0 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 rounded-xl border border-rose-500/40 flex items-center justify-center shadow transition">
+                  <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
               </div>
             </div>
           </div>
 
           <!-- RECHERCHE CATALOGUE -->
-          <div class="relative">
-            <label class="block text-xs font-bold text-slate-300 uppercase mb-1.5">Recherche Catalogue</label>
+          <div class="relative" id="searchCatalogueWrapper">
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
+              <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" class="hidden h-9 px-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-amber-300 border border-amber-500/40 font-black rounded-xl text-xs flex items-center gap-1 shadow-md transition">
+                <span>Fermer clavier</span>
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+
             <div class="relative flex items-center">
               <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-slate-400 pointer-events-none"></i>
-              <input type="text" id="articleSearchInput" oninput="onSearchInput(this.value)" onfocus="this.select()" placeholder="Tapez un mot-clé ou ref SAP..." autocomplete="off" class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3.5 pl-11 pr-10 text-base text-white font-medium focus:outline-none focus:border-indigo-500">
+              <input type="text" id="articleSearchInput" 
+                     oninput="onSearchInput(this.value)" 
+                     onfocus="onSearchFocus()"
+                     onkeydown="if(event.key==='Enter') blurSearchInput()"
+                     placeholder="Tapez un mot-clé ou un chiffre..." 
+                     autocomplete="off"
+                     enterkeyhint="search"
+                     class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3.5 pl-11 pr-10 text-base text-white font-medium focus:outline-none focus:border-indigo-500 shadow-inner">
               <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1">
                 <i data-lucide="x" class="w-5 h-5"></i>
               </button>
             </div>
-            <div id="suggestionsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[26rem] overflow-y-auto z-40 divide-y divide-slate-700"></div>
+            
+            <div id="suggestionsDropdown" 
+                 ontouchstart="blurSearchInput()" 
+                 class="hidden absolute left-0 right-0 top-full mt-2 bg-slate-800 border-2 border-slate-600 rounded-2xl shadow-2xl max-h-[60vh] overflow-y-auto z-40 divide-y divide-slate-700"></div>
           </div>
 
+          <!-- FICHE MATÉRIEL IDENTIFIÉ -->
           <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
             <div class="flex items-start justify-between">
               <div class="min-w-0 pr-2">
@@ -189,14 +248,18 @@
           </div>
         </div>
 
+        <!-- SAISIE DE QUANTITÉ -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-md">
-          <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (>= 0)</label>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase text-center mb-2">Quantité inventoriée (&gt;= 0)</label>
           <div class="flex items-center justify-center space-x-3">
-            <button type="button" onclick="adjustQuantity(-1)" class="w-14 h-16 bg-slate-900 border border-slate-700 text-white text-2xl font-bold rounded-2xl shadow">-</button>
-            <input type="number" id="qtyInput" placeholder="0" min="0" value="0" onfocus="if(this.value==='0') this.value='';" onblur="if(this.value==='') this.value='0';" class="flex-1 max-w-[140px] h-16 bg-slate-900 border-2 border-slate-700 rounded-2xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none font-mono">
-            <button type="button" onclick="adjustQuantity(1)" class="w-14 h-16 bg-slate-900 border border-slate-700 text-white text-2xl font-bold rounded-2xl shadow">+</button>
-            <button type="button" onclick="resetQuantity()" title="Remettre à 0" class="h-16 px-4 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold rounded-2xl shadow flex items-center justify-center">
+            <input type="number" id="qtyInput" placeholder="0" min="0" value="0" 
+                   onfocus="if(this.value==='0') this.value='';" 
+                   onblur="if(this.value==='') this.value='0';"
+                   class="flex-1 max-w-[200px] h-16 bg-slate-900 border-2 border-slate-700 rounded-2xl text-center text-3xl font-black text-white focus:border-blue-500 focus:outline-none font-mono">
+            <button type="button" onclick="resetQuantity()" title="Remettre à 0" 
+                    class="h-16 px-5 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 border border-rose-500/40 font-bold rounded-2xl shadow flex items-center justify-center space-x-2 transition">
               <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+              <span class="text-xs uppercase tracking-wider font-extrabold">Reset</span>
             </button>
           </div>
         </div>
@@ -207,7 +270,7 @@
         </button>
       </section>
 
-      <!-- VUE HISTORIQUE -->
+      <!-- ========== VUE 2 : HISTORIQUE ========== -->
       <section id="view-history" class="hidden space-y-4">
         <div class="flex justify-between items-center text-xs text-slate-400 px-1">
           <span id="historyHeaderLabel">Mes saisies</span>
@@ -219,14 +282,16 @@
         <div id="historyList" class="space-y-3"></div>
       </section>
 
-      <!-- VUE MONITORING MOBILE -->
+      <!-- ========== VUE 3 : MONITORING MOBILE ========== -->
       <section id="view-monitoring" class="hidden space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i> Supervision Entrepôt
+            <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
+            Supervision Entrepôt
           </h3>
           <button onclick="manualSync()" class="text-xs bg-slate-950 px-2.5 py-1 rounded text-indigo-400 border border-slate-800">Actualiser</button>
         </div>
+
         <div class="grid grid-cols-3 gap-2 text-center">
           <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl shadow">
             <span class="text-[10px] text-slate-400 block font-bold uppercase">Lignes</span>
@@ -241,26 +306,38 @@
             <span id="mobKpiAlerts" class="text-xl font-black text-amber-400">0</span>
           </div>
         </div>
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 shadow space-y-2.5">
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Statut des Magasiniers</span>
-          <div id="agentStatusList" class="space-y-2"></div>
-        </div>
+
         <div class="space-y-2">
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-1 block">Flux récent</span>
-          <div id="mobMonitoringList" class="space-y-2"></div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-1 block">Chantiers & Tournées en cours</span>
+          <div id="mobMonitoringList" class="space-y-3"></div>
         </div>
       </section>
     </div>
 
+    <!-- MENTION LÉGALE -->
     <div class="text-center pt-6 pb-2 mb-1">
-      <span class="text-[10px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
+      <span class="text-[10px] font-medium text-slate-400 tracking-wider">
+        &copy; made by CO2H2O srlu
+      </span>
     </div>
   </main>
 
   <!-- NAVIGATION INFÉRIEURE -->
-  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto z-20">
+  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-400">
-      <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <g stroke="currentColor" stroke-width="4">
+          <path d="M 12 28 V 20 A 8 8 0 0 1 20 12 H 28"/>
+          <path d="M 72 12 H 80 A 8 8 0 0 1 88 20 V 28"/>
+          <path d="M 88 72 V 80 A 8 8 0 0 1 80 88 H 72"/>
+          <path d="M 28 88 H 20 A 8 8 0 0 1 12 80 V 72"/>
+        </g>
+        <g stroke="#f97316" stroke-width="8">
+          <line x1="33" y1="28" x2="33" y2="72"/>
+          <line x1="50" y1="28" x2="50" y2="72"/>
+          <line x1="67" y1="28" x2="67" y2="72"/>
+        </g>
+      </svg>
       <span class="text-xs font-semibold mt-1">Comptage</span>
     </button>
     <button id="tabNavHistory" onclick="switchTab('history')" class="flex flex-col items-center justify-center text-slate-400">
@@ -273,14 +350,14 @@
     </button>
   </nav>
 
-  <!-- TOAST -->
+  <!-- TOAST NOTIFICATION -->
   <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
     <div id="toastIcon" class="text-emerald-400"><i data-lucide="check" class="w-5 h-5"></i></div>
     <div class="flex-1 text-sm font-medium" id="toastMessage">Action validée</div>
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "VOTRE_URL_GOOGLE_APPS_SCRIPT_ICI";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
@@ -300,8 +377,128 @@
     let isOcrBusy = false;
     let isTorchOn = false;
     let isStartingScanner = false;
+
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
+
+    let sessionValidationCount = parseInt(sessionStorage.getItem("inv_session_validations") || "0", 10);
+
+    function formatNumberToBelgianFrench(n) {
+      const num = parseInt(n, 10);
+      if (isNaN(num)) return String(num);
+      
+      const units = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
+                     "onze", "douze", "treize", "quatorze", "quinze", "seize"];
+      if (num <= 16) return units[num];
+
+      if (num < 70) return String(num);
+      if (num >= 70 && num < 80) {
+        const rem = num - 70;
+        if (rem === 0) return "septante";
+        if (rem === 1) return "septante et un";
+        return "septante-" + units[rem];
+      }
+      if (num >= 80 && num < 90) {
+        const rem = num - 80;
+        if (rem === 0) return "quatre-vingts";
+        return "quatre-vingt-" + units[rem];
+      }
+      if (num >= 90 && num < 100) {
+        const rem = num - 90;
+        if (rem === 0) return "nonante";
+        if (rem === 1) return "nonante et un";
+        return "nonante-" + units[rem];
+      }
+      return String(num);
+    }
+
+    function formatDigitsSpaced(str) {
+      return String(str || "").replace(/\D/g, "").split("").join(" ");
+    }
+
+    function speakFeedback(text) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'fr-BE';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } catch(e) {}
+    }
+
+    function speakRefSelection(sapRef) {
+      const digits = formatDigitsSpaced(sapRef);
+      speakFeedback(`Réf ${digits} sélectionnée`);
+    }
+
+    function speakValidationWithEncouragement(qty, agentName) {
+      sessionValidationCount++;
+      sessionStorage.setItem("inv_session_validations", sessionValidationCount);
+
+      const qtyBelgian = formatNumberToBelgianFrench(qty);
+      let encouragement = "";
+
+      if (sessionValidationCount >= 90) {
+        encouragement = "ne pense pas à l'apéro de ce soir reste focus";
+      } else if (sessionValidationCount >= 51) {
+        encouragement = "continue sur ta lancée félicitations";
+      } else if (sessionValidationCount >= 30) {
+        encouragement = "tu tiens le bon rythme";
+      } else if (sessionValidationCount >= 15) {
+        encouragement = "courage";
+      }
+
+      let phrase = "";
+      if (encouragement !== "") {
+        phrase = `${qtyBelgian}, Ok, ${encouragement} ${agentName}`;
+      } else {
+        phrase = `${qtyBelgian}, Ok ${agentName}`;
+      }
+
+      speakFeedback(phrase);
+    }
+
+    function parseItemDate(str) {
+      if (!str) return new Date(0);
+      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (parts) {
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
+      }
+      const iso = new Date(str);
+      return isNaN(iso.getTime()) ? new Date(0) : iso;
+    }
+
+    function formatDateDMY(dateInput, includeTime = false) {
+      if (!dateInput) return "--/--/----";
+      const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
+      if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
+      
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      
+      if (!includeTime) return `${day}/${month}/${year}`;
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
+    function persistSelection(field, val) {
+      if (field === 'contractor') localStorage.setItem("inv_saved_contractor", val);
+      else if (field === 'trade') localStorage.setItem("inv_saved_trade", val);
+    }
+
+    function restoreSavedSelections() {
+      const savedContractor = localStorage.getItem("inv_saved_contractor");
+      const savedTrade = localStorage.getItem("inv_saved_trade");
+      const cSelect = document.getElementById("contractorSelect");
+      const tSelect = document.getElementById("tradeSelect");
+
+      if (savedContractor && cSelect) cSelect.value = savedContractor;
+      if (savedTrade && tSelect) tSelect.value = savedTrade;
+    }
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
@@ -310,31 +507,47 @@
       initContinuousGps();
       updateSyncBadge();
 
-      document.addEventListener("click", (e) => {
-        const dd = document.getElementById("suggestionsDropdown");
-        const searchInput = document.getElementById("articleSearchInput");
-        const clearBtn = document.getElementById("clearSearchBtn");
-        if (dd && !dd.contains(e.target) && e.target !== searchInput && (!clearBtn || !clearBtn.contains(e.target))) {
-          dd.classList.add("hidden");
-        }
-      });
-
-      window.addEventListener("online", () => { updateNetworkStatus(true); processSyncQueue(); });
-      window.addEventListener("offline", () => updateNetworkStatus(false));
-
-      initOcrWorker();
-      await syncData();
+      // FORCER STRICTEMENT L'OUVERTURE SUR LA PAGE DE COMPTAGE AU LANCEMENT
+      switchTab('inventory');
 
       if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
         openAgentModal();
       }
+
+      document.addEventListener("click", (e) => {
+        const wrapper = document.getElementById("searchCatalogueWrapper");
+        const dd = document.getElementById("suggestionsDropdown");
+        const searchInput = document.getElementById("articleSearchInput");
+        const clearBtn = document.getElementById("clearSearchBtn");
+        const dismissBtn = document.getElementById("btnDismissKeyboard");
+        
+        if (wrapper && !wrapper.contains(e.target) && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
+          if (dd) dd.classList.add("hidden");
+          blurSearchInput();
+          if (!activeItem && searchInput && searchInput.value.trim() !== "") {
+            clearSearch();
+          }
+        }
+      });
+
+      window.addEventListener("online", () => {
+        updateNetworkStatus(true);
+        processSyncQueue();
+      });
+      window.addEventListener("offline", () => updateNetworkStatus(false));
+
+      initOcrWorker();
+      await syncData();
     });
 
     function initContinuousGps() {
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(
-          (pos) => { latestCoords.lat = pos.coords.latitude; latestCoords.lng = pos.coords.longitude; },
-          () => {},
+          (pos) => {
+            latestCoords.lat = pos.coords.latitude;
+            latestCoords.lng = pos.coords.longitude;
+          },
+          (err) => console.warn("GPS tracking:", err.message),
           { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
         );
       }
@@ -357,16 +570,42 @@
     async function initOcrWorker() {
       try {
         ocrWorker = await Tesseract.createWorker('eng');
-        await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7' });
-      } catch (err) {}
+        await ocrWorker.setParameters({
+          tessedit_char_whitelist: '0123456789',
+          tessedit_pageseg_mode: '7'
+        });
+      } catch (err) {
+        console.warn("Worker OCR warning:", err);
+      }
+    }
+
+    function onSearchFocus() {
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.remove("hidden");
+
+      const main = document.getElementById("mainContent");
+      if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function blurSearchInput() {
+      const input = document.getElementById("articleSearchInput");
+      if (input && document.activeElement === input) {
+        input.blur();
+      }
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.add("hidden");
     }
 
     function resetQuantity() {
-      document.getElementById("qtyInput").value = 0;
+      const input = document.getElementById("qtyInput");
+      input.value = 0;
       if (navigator.vibrate) navigator.vibrate(30);
     }
 
-    function isAdmin() { return adminAgents.includes(currentAgent); }
+    function isAdmin() {
+      return adminAgents.includes(currentAgent);
+    }
 
     function updateAgentUI() {
       document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
@@ -390,7 +629,7 @@
     function openAgentModal() {
       const select = document.getElementById("modalAgentSelect");
       if (availableAgents.length === 0) {
-        select.innerHTML = '<option value="">En attente de connexion...</option>';
+        select.innerHTML = '<option value="">En attente de connexion Google Sheets...</option>';
       } else {
         select.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
           availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
@@ -400,7 +639,10 @@
 
     function confirmAgentSelection() {
       const val = document.getElementById("modalAgentSelect").value;
-      if (!val) { alert("Veuillez sélectionner votre profil."); return; }
+      if (!val) {
+        alert("Veuillez sélectionner votre profil.");
+        return;
+      }
       currentAgent = val;
       localStorage.setItem("inv_current_agent", currentAgent);
       isMonitoringUnlocked = false;
@@ -413,12 +655,22 @@
     function populateDropdowns() {
       const cSelect = document.getElementById("contractorSelect");
       const tSelect = document.getElementById("tradeSelect");
+
       if (availableContractors.length > 0) {
-        cSelect.innerHTML = '<option value="">-- Sélectionner l\'entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+        cSelect.innerHTML = '<option value="">-- Sélectionner l\'entrepreneur (Obligatoire) --</option>' + 
+          availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      } else {
+        cSelect.innerHTML = '<option value="">Chargement des entrepreneurs...</option>';
       }
+
       if (availableTrades.length > 0) {
-        tSelect.innerHTML = '<option value="">-- Sélectionner le métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+        tSelect.innerHTML = '<option value="">-- Sélectionner le métier (Obligatoire) --</option>' + 
+          availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      } else {
+        tSelect.innerHTML = '<option value="">Chargement des métiers...</option>';
       }
+
+      restoreSavedSelections();
     }
 
     function updateSyncBadge() {
@@ -433,69 +685,106 @@
     }
 
     async function processSyncQueue() {
-      if (!navigator.onLine || syncQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("VOTRE_URL")) return;
+      if (!navigator.onLine || syncQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
       const queueCopy = [...syncQueue];
       for (const item of queueCopy) {
         try {
-          await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(item) });
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(item)
+          });
           syncQueue = syncQueue.filter(q => !(q.id === item.id && q.action === item.action));
           localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
           updateSyncBadge();
-        } catch (e) { break; }
+        } catch (e) {
+          console.warn("Échec synchro queue :", e);
+          break;
+        }
       }
     }
 
     async function syncData() {
-      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("VOTRE_URL")) return;
+      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+
       await processSyncQueue();
+
       try {
-        const res = await fetch(GOOGLE_SCRIPT_URL);
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
+        
         if (data.status === "success") {
-          if (data.agents) { availableAgents = data.agents; localStorage.setItem("offline_agents", JSON.stringify(availableAgents)); }
-          if (data.contractors) { availableContractors = data.contractors; localStorage.setItem("offline_contractors", JSON.stringify(availableContractors)); }
-          if (data.trades) { availableTrades = data.trades; localStorage.setItem("offline_trades", JSON.stringify(availableTrades)); }
-          if (data.admins) { adminAgents = data.admins; localStorage.setItem("offline_admins", JSON.stringify(adminAgents)); }
-          if (data.adminPasswords) { adminPasswords = data.adminPasswords; localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords)); }
-          if (data.catalog) { catalog = data.catalog; localStorage.setItem("offline_catalog", JSON.stringify(catalog)); }
+          if (data.agents) {
+            availableAgents = data.agents;
+            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
+          }
+          if (data.contractors) {
+            availableContractors = data.contractors;
+            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
+          }
+          if (data.trades) {
+            availableTrades = data.trades;
+            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
+          }
+          if (data.admins) {
+            adminAgents = data.admins;
+            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
+          }
+          if (data.adminPasswords) {
+            adminPasswords = data.adminPasswords;
+            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
+          }
+          if (data.catalog) {
+            catalog = data.catalog;
+            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
+          }
+          
           if (data.history) {
             const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
             const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
+            
             const localCreatedItems = cachedHistory.filter(i => pendingCreateIds.has(i.id));
             const cleanRemote = data.history.filter(r => !pendingDeletedIds.has(r.id) && !pendingCreateIds.has(r.id));
+            
             cachedHistory = [...localCreatedItems, ...cleanRemote];
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
+
           populateDropdowns();
           updateAgentUI();
+
+          const modalSelect = document.getElementById("modalAgentSelect");
+          if (modalSelect && availableAgents.length > 0) {
+            modalSelect.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
+              availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
+          }
+
           renderHistory();
           if (isAdmin()) renderMobileMonitoring();
         }
-      } catch (err) {}
+      } catch (err) {
+        console.warn("Synchronisation échouée :", err);
+      }
     }
 
-    async function manualSync() {
+    function manualSync() {
       showToast("Actualisation...");
-      await syncData();
-      showToast("Synchronisé");
-    }
-
-    function adjustQuantity(delta) {
-      const el = document.getElementById("qtyInput");
-      let val = parseInt(el.value, 10);
-      if (isNaN(val)) val = delta > 0 ? delta : 0;
-      else val = Math.max(0, val + delta);
-      el.value = val;
+      syncData().then(() => showToast("Données synchronisées"));
     }
 
     function normalizeStr(str) {
-      return String(str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return String(str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
     }
 
     function onSearchInput(rawVal) {
-      const val = rawVal.trim();
+      const val = String(rawVal || "").trim();
       const dd = document.getElementById("suggestionsDropdown");
       const clearBtn = document.getElementById("clearSearchBtn");
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
 
       activeItem = null;
       document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
@@ -503,8 +792,15 @@
       document.getElementById("dispSap").innerText = "--";
       document.getElementById("badgeIdentified").classList.add("hidden");
 
-      if (val.length > 0) { clearBtn.classList.remove("hidden"); }
-      else { clearBtn.classList.add("hidden"); dd.classList.add("hidden"); return; }
+      if (val.length > 0) {
+        if (clearBtn) clearBtn.classList.remove("hidden");
+        if (dismissBtn) dismissBtn.classList.remove("hidden");
+      } else {
+        if (clearBtn) clearBtn.classList.add("hidden");
+        if (dismissBtn) dismissBtn.classList.add("hidden");
+        if (dd) dd.classList.add("hidden");
+        return;
+      }
 
       const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
       const filtered = catalog.filter(item => {
@@ -512,38 +808,52 @@
         return searchTerms.every(term => textTarget.includes(term));
       });
 
-      const sortedResults = filtered.sort((a, b) => (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' }));
+      const sortedResults = filtered.sort((a, b) => {
+        return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
+      });
+
       renderSuggestions(sortedResults);
     }
 
     function renderSuggestions(results) {
       const dd = document.getElementById("suggestionsDropdown");
+      if (!dd) return;
+
       if (!results || results.length === 0) {
-        dd.innerHTML = `<div class="p-4 text-sm text-slate-300 text-center font-medium">Aucun article correspondant.</div>`;
+        dd.innerHTML = `<div class="p-4 text-sm text-slate-300 text-center font-medium">Aucun article correspondant dans le catalogue.</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
-      let html = `<div class="px-4 py-2 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between border-b border-slate-700"><span>${results.length} article(s)</span><span class="text-amber-400">Touchez pour sélectionner</span></div>`;
+      let html = `
+        <div class="px-4 py-2.5 bg-slate-750 text-xs font-bold text-slate-300 flex justify-between items-center border-b border-slate-700 sticky top-0 z-10 backdrop-blur-sm">
+          <span>${results.length} article(s) trouvé(s)</span>
+        </div>
+      `;
+
       html += results.map(item => `
-        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-650 cursor-pointer transition space-y-1">
+        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-slate-800 hover:bg-slate-700 active:bg-slate-650 cursor-pointer transition">
           <p class="text-base font-bold text-white leading-snug">${item.designation || 'Sans désignation'}</p>
-          <div class="flex justify-between items-center text-xs pt-1.5 border-t border-slate-700/70">
-            <div class="text-slate-300">Fourn : <strong class="font-mono text-blue-300">${item.supplierRef || 'N/A'}</strong></div>
-            <div class="flex items-center space-x-1">
-              <span class="text-[11px] text-slate-400 uppercase font-bold">SAP :</span>
+          <div class="flex justify-between items-center text-xs mt-2 pt-1.5 border-t border-slate-700/70">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[11px] text-slate-300 uppercase font-bold">RÉF :</span>
               <span class="font-mono font-black text-amber-400 text-base tracking-wider bg-slate-900 px-2.5 py-0.5 rounded border border-amber-500/30">${item.sapRef}</span>
+            </div>
+            <div class="text-right truncate max-w-[170px]">
+              <span class="text-slate-300">Fourn : </span>
+              <strong class="font-mono text-blue-300 text-sm">${item.supplierRef || 'N/A'}</strong>
             </div>
           </div>
         </div>
       `).join('');
+
       dd.innerHTML = html;
       dd.classList.remove("hidden");
     }
 
     function selectArticleBySap(sapRef) {
       const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
-      if (!item) { activeItem = null; return; }
+      if (!item) return;
       activeItem = { ...item };
 
       document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
@@ -553,71 +863,117 @@
       document.getElementById("badgeIdentified").classList.remove("hidden");
       document.getElementById("suggestionsDropdown").classList.add("hidden");
       document.getElementById("clearSearchBtn").classList.remove("hidden");
+      blurSearchInput();
       
       if (navigator.vibrate) navigator.vibrate(50);
-
-      // SYNTHÈSE VOCALE (AUDIO FEEDBACK)
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(`${activeItem.designation}. Référence SAP ${activeItem.sapRef}`);
-        utterance.lang = 'fr-FR';
-        window.speechSynthesis.speak(utterance);
-      }
+      speakRefSelection(activeItem.sapRef);
     }
 
     function clearSearch() {
       document.getElementById("articleSearchInput").value = "";
       document.getElementById("clearSearchBtn").classList.add("hidden");
       document.getElementById("suggestionsDropdown").classList.add("hidden");
+      const dismissBtn = document.getElementById("btnDismissKeyboard");
+      if (dismissBtn) dismissBtn.classList.add("hidden");
       activeItem = null;
       document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
       document.getElementById("dispSupplier").innerText = "--";
       document.getElementById("dispSap").innerText = "--";
       document.getElementById("badgeIdentified").classList.add("hidden");
+      blurSearchInput();
     }
 
     async function toggleScanner() {
       const container = document.getElementById("scannerContainer");
       const btnText = document.getElementById("btnScanText");
-      if (isScanning || isStartingScanner) { await stopScanner(); return; }
+
+      if (isScanning || isStartingScanner) {
+        await stopScanner();
+        return;
+      }
 
       isStartingScanner = true;
       container.classList.remove("hidden");
       container.classList.add("flex");
       btnText.innerText = "FERMER CAMERA";
 
-      if (html5QrCode) { try { await html5QrCode.clear(); } catch(e){} }
+      if (html5QrCode) {
+        try { await html5QrCode.clear(); } catch(e){}
+      }
       html5QrCode = new Html5Qrcode("reader");
 
-      const qrConfig = { fps: 15, qrbox: { width: 280, height: 180 }, aspectRatio: 1.333333 };
+      const qrConfig = {
+        fps: 15,
+        qrbox: { width: 270, height: 210 },
+        aspectRatio: 1.333333
+      };
+
       try {
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
-          await html5QrCode.start(devices[devices.length - 1].id, qrConfig, (d) => { handleExactCodeMatch(d); stopScanner(); }, () => {});
+          const backCam = devices[devices.length - 1];
+          await html5QrCode.start(
+            backCam.id,
+            qrConfig,
+            (decodedText) => handleExactCodeMatch(decodedText),
+            () => {}
+          );
         } else {
-          await html5QrCode.start({ facingMode: "environment" }, qrConfig, (d) => { handleExactCodeMatch(d); stopScanner(); }, () => {});
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            qrConfig,
+            (decodedText) => handleExactCodeMatch(decodedText),
+            () => {}
+          );
         }
+        
         isScanning = true;
         resetTorchUI();
         startBackgroundOcr();
+
       } catch (err) {
+        console.warn("Erreur capteur :", err);
         container.classList.add("hidden");
         container.classList.remove("flex");
         btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-        alert("Accès caméra impossible.");
-      } finally { isStartingScanner = false; }
+        alert("Accès caméra impossible : Vérifiez les autorisations HTTPS.");
+      } finally {
+        isStartingScanner = false;
+        lucide.createIcons();
+      }
     }
 
     async function stopScanner() {
-      if (ocrInterval) { clearInterval(ocrInterval); ocrInterval = null; }
-      if (isTorchOn) { await setTorch(false); }
-      if (html5QrCode && isScanning) {
-        try { await html5QrCode.stop(); html5QrCode.clear(); } catch(e){}
+      if (ocrInterval) {
+        clearInterval(ocrInterval);
+        ocrInterval = null;
       }
+
+      if (isTorchOn) {
+        await setTorch(false);
+      }
+
+      if (html5QrCode && isScanning) {
+        try {
+          await html5QrCode.stop();
+          html5QrCode.clear();
+        } catch(e){}
+      }
+
+      const video = document.querySelector("#reader video");
+      if (video && video.srcObject) {
+        try {
+          video.srcObject.getTracks().forEach(track => track.stop());
+        } catch (e) {}
+      }
+
       isScanning = false;
       resetTorchUI();
-      document.getElementById("scannerContainer").classList.add("hidden");
-      document.getElementById("scannerContainer").classList.remove("flex");
+      
+      const container = document.getElementById("scannerContainer");
+      container.classList.add("hidden");
+      container.classList.remove("flex");
+      
       document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
       lucide.createIcons();
     }
@@ -626,34 +982,60 @@
       if (!isScanning || !html5QrCode) return;
       const targetState = !isTorchOn;
       const success = await setTorch(targetState);
-      if (success) { isTorchOn = targetState; updateTorchUI(); }
+      if (success) {
+        isTorchOn = targetState;
+        updateTorchUI();
+        showToast(isTorchOn ? "Lumière allumée" : "Lumière éteinte");
+      } else {
+        alert("La torche n'est pas supportée par ce capteur.");
+      }
     }
 
     async function setTorch(enable) {
       try {
         await html5QrCode.applyVideoConstraints({ advanced: [{ torch: enable }] });
         return true;
-      } catch (e) { return false; }
+      } catch (e) {
+        const video = document.querySelector("#reader video");
+        if (video && video.srcObject) {
+          const track = video.srcObject.getVideoTracks()[0];
+          if (track && typeof track.applyConstraints === "function") {
+            try {
+              await track.applyConstraints({ advanced: [{ torch: enable }] });
+              return true;
+            } catch (err2) {
+              return false;
+            }
+          }
+        }
+        return false;
+      }
     }
 
     function updateTorchUI() {
       const btn = document.getElementById("btnTorch");
-      const label = document.getElementById("torchLabel");
       const icon = document.getElementById("torchIcon");
-      if (!btn) return;
+      if (!btn || !icon) return;
+
       if (isTorchOn) {
-        btn.className = "h-12 bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-amber-300";
-        label.innerText = "Allumé";
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-amber-400 active:bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center border border-amber-300 transition shadow";
+        icon.className = "w-6 h-6 text-slate-950 fill-slate-950";
       } else {
-        btn.className = "h-12 bg-slate-800 text-slate-200 font-bold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 border border-slate-700";
-        label.innerText = "Flash";
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
+        icon.className = "w-6 h-6 text-slate-300";
       }
       lucide.createIcons();
     }
 
     function resetTorchUI() {
       isTorchOn = false;
-      updateTorchUI();
+      const btn = document.getElementById("btnTorch");
+      const icon = document.getElementById("torchIcon");
+      if (btn && icon) {
+        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
+        icon.className = "w-6 h-6 text-slate-300";
+      }
+      lucide.createIcons();
     }
 
     function startBackgroundOcr() {
@@ -665,7 +1047,31 @@
 
     async function triggerManualOcrCapture() {
       if (!isScanning) return;
+      showToast("Lecture Réf SAP...");
       await processVideoOcr(true);
+    }
+
+    function getLevenshteinDistance(a, b) {
+      if (a.length === 0) return b.length;
+      if (b.length === 0) return a.length;
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
+        }
+      }
+      return matrix[b.length][a.length];
     }
 
     async function processVideoOcr(forceToast = false) {
@@ -674,38 +1080,118 @@
 
       const canvas = document.getElementById("ocrCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
       const cropW = Math.floor(video.videoWidth * 0.82);
-      const cropH = Math.floor(video.videoHeight * 0.32);
+      const cropH = Math.floor(video.videoHeight * 0.44);
       const startX = Math.floor((video.videoWidth - cropW) / 2);
       const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
 
       canvas.width = cropW * 2;
       canvas.height = cropH * 2;
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+      let minLum = 255;
+      let maxLum = 0;
+
+      for (let i = 0; i < d.length; i += 4) {
+        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+        if (lum < minLum) minLum = lum;
+        if (lum > maxLum) maxLum = lum;
+      }
+
+      const range = (maxLum - minLum) || 1;
+      for (let i = 0; i < d.length; i += 4) {
+        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+        let stretched = ((lum - minLum) / range) * 255;
+        const finalVal = stretched > 135 ? 255 : (stretched < 70 ? 0 : stretched);
+        d[i] = finalVal;
+        d[i + 1] = finalVal;
+        d[i + 2] = finalVal;
+      }
+      ctx.putImageData(imgData, 0, 0);
 
       isOcrBusy = true;
       try {
-        const ret = ocrWorker ? await ocrWorker.recognize(canvas) : await Tesseract.recognize(canvas, 'eng', { tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7' });
-        const textResult = ret.data.text || "";
+        let textResult = "";
+        if (ocrWorker) {
+          const ret = await ocrWorker.recognize(canvas);
+          textResult = ret.data.text || "";
+        } else {
+          const ret = await Tesseract.recognize(canvas, 'eng', {
+            tessedit_char_whitelist: '0123456789',
+            tessedit_pageseg_mode: '7'
+          });
+          textResult = ret.data.text || "";
+        }
+
         if (!isScanning) return;
 
         const rawDigits = textResult.replace(/\D/g, "");
-        const validCatalogSaps = catalog.map(i => String(i.sapRef).trim()).filter(ref => ref.length === 6);
+        const validCatalogSaps = catalog
+          .map(i => String(i.sapRef).trim())
+          .filter(ref => ref.length === 6);
 
         let bestSapMatch = null;
+
         const direct6Matches = rawDigits.match(/\d{6}/g) || [];
         for (const candidate of direct6Matches) {
-          if (validCatalogSaps.includes(candidate)) { bestSapMatch = candidate; break; }
+          if (validCatalogSaps.includes(candidate)) {
+            bestSapMatch = candidate;
+            break;
+          }
+        }
+
+        if (!bestSapMatch && rawDigits.length >= 6) {
+          for (let i = 0; i <= rawDigits.length - 6; i++) {
+            const slice = rawDigits.substring(i, i + 6);
+            if (validCatalogSaps.includes(slice)) {
+              bestSapMatch = slice;
+              break;
+            }
+          }
+        }
+
+        if (!bestSapMatch && validCatalogSaps.length > 0) {
+          const candidates = rawDigits.match(/\d{5,7}/g) || [];
+          for (const cand of candidates) {
+            let minDistance = 999;
+            let candidateSap = null;
+
+            for (const sap of validCatalogSaps) {
+              const dist = getLevenshteinDistance(cand, sap);
+              if (dist < minDistance) {
+                minDistance = dist;
+                candidateSap = sap;
+              }
+            }
+
+            if (minDistance <= 1 && candidateSap) {
+              bestSapMatch = candidateSap;
+              break;
+            }
+          }
         }
 
         if (bestSapMatch) {
           stopScanner();
           selectArticleBySap(bestSapMatch);
-          showToast(`Réf SAP validée : ${bestSapMatch}`);
+          showToast(`Réf validée : ${bestSapMatch}`);
           return;
         }
-        if (forceToast) { showToast("⚠️ Réf SAP inconnue dans le catalogue."); }
-      } catch (e) {} finally { isOcrBusy = false; }
+
+        if (forceToast) {
+          showToast("Réf non reconnue. Rapprochez le bac.");
+        }
+      } catch (e) {
+        console.warn("Erreur OCR :", e);
+      } finally {
+        isOcrBusy = false;
+      }
     }
 
     function handleExactCodeMatch(code) {
@@ -716,125 +1202,248 @@
         String(item.qr).toUpperCase() === clean.toUpperCase() ||
         String(item.supplierRef).toUpperCase() === clean.toUpperCase()
       );
+
       if (match) {
+        stopScanner();
         selectArticleBySap(match.sapRef);
         showToast("Identifié : " + match.designation);
       } else {
-        clearSearch();
-        alert(`Échec : Le code [${clean}] n'existe pas dans le catalogue officiel.`);
+        activeItem = null;
+        document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
+        document.getElementById("dispSap").innerText = "--";
+        document.getElementById("dispSupplier").innerText = "--";
+        document.getElementById("badgeIdentified").classList.add("hidden");
+        
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        alert(`Article inconnu (${clean}) :\nAucune correspondance trouvée dans le catalogue Google Sheets.`);
       }
     }
 
     async function editHistoryItem(id, oldQty) {
       const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
       if (newQtyStr === null) return;
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) { alert("Quantité invalide."); return; }
 
-      const payload = { action: "UPDATE", id: id, quantity: newQty, user: currentAgent };
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide (>= 0 attendue).");
+        return;
+      }
+
+      showToast("Mise à jour...");
+      const payload = { 
+        action: "UPDATE", 
+        id: id, 
+        quantity: newQty,
+        user: currentAgent 
+      };
+
       const target = cachedHistory.find(item => item.id === id);
-      if (target) { target.quantity = newQty; localStorage.setItem("offline_history", JSON.stringify(cachedHistory)); }
+      if (target) {
+        target.quantity = newQty;
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      }
 
       try {
-        if (!GOOGLE_SCRIPT_URL.includes("VOTRE_URL")) {
-          await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
         }
         showToast("Quantité modifiée !");
       } catch (err) {
         syncQueue.push(payload);
         localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
         updateSyncBadge();
-      } finally { renderHistory(); if (isAdmin()) renderMobileMonitoring(); }
+        showToast("Modifié en attente de synchronisation.");
+      } finally {
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+      }
     }
 
     async function deleteHistoryItem(id, designation) {
-      if (!confirm(`Supprimer la saisie :\n"${designation}" ?`)) return;
-      const payload = { action: "DELETE", id: id, user: currentAgent };
+      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
+
+      showToast("Suppression...");
+      const payload = { 
+        action: "DELETE", 
+        id: id, 
+        user: currentAgent 
+      };
+
       cachedHistory = cachedHistory.filter(item => item.id !== id);
       localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
 
       try {
-        if (!GOOGLE_SCRIPT_URL.includes("VOTRE_URL")) {
-          await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
         }
-        showToast("Supprimé !");
+        showToast("Saisie supprimée !");
       } catch (err) {
         syncQueue.push(payload);
         localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
         updateSyncBadge();
-      } finally { renderHistory(); if (isAdmin()) renderMobileMonitoring(); }
+        showToast("Supprimé en attente de synchronisation.");
+      } finally {
+        renderHistory();
+        if (isAdmin()) renderMobileMonitoring();
+      }
     }
 
     async function submitInventory() {
-      if (!currentAgent) { openAgentModal(); return; }
+      if (!currentAgent) {
+        openAgentModal();
+        return;
+      }
+
       const contractor = document.getElementById("contractorSelect").value;
       const trade = document.getElementById("tradeSelect").value;
 
-      if (!contractor) { alert("Sélectionnez un Entrepreneur."); return; }
-      if (!trade) { alert("Sélectionnez un Métier."); return; }
-      if (!activeItem || !activeItem.sapRef) { alert("Aucun article sélectionné."); return; }
+      if (!contractor || contractor.trim() === "") {
+        alert("Action impossible :\nVeuillez impérativement sélectionner un Entrepreneur avant de valider.");
+        document.getElementById("contractorSelect").focus();
+        return;
+      }
+      if (!trade || trade.trim() === "") {
+        alert("Action impossible :\nVeuillez impérativement sélectionner un Métier avant de valider.");
+        document.getElementById("tradeSelect").focus();
+        return;
+      }
 
-      const isSapInCatalog = catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim());
-      if (!isSapInCatalog) { alert("Référence SAP absente du catalogue."); clearSearch(); return; }
+      if (!activeItem || !catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim())) {
+        alert("Action impossible :\nAucun article valide du catalogue n'est sélectionné.");
+        return;
+      }
 
       const qtyInput = document.getElementById("qtyInput");
       const qty = parseInt(qtyInput.value, 10);
-      if (isNaN(qty) || qty < 0) { alert("Quantité invalide."); return; }
+      if (isNaN(qty) || qty < 0) {
+        alert("Veuillez renseigner une quantité valide (>= 0).");
+        qtyInput.focus();
+        return;
+      }
 
-      // VÉRIFICATION ANTI-DOUBLON STRICTE À 5 MINUTES
-      const fiveMinAgo = Date.now() - (5 * 60 * 1000);
-      const recentDuplicate = cachedHistory.find(item => {
-        if (item.user === currentAgent && item.contractor === contractor && item.trade === trade && String(item.sapRef) === String(activeItem.sapRef)) {
-          const parts = item.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-          if (parts) {
-            const entryTime = new Date(parts[3], parts[2]-1, parts[1], parts[4], parts[5]).getTime();
-            return entryTime > fiveMinAgo;
+      const nowMs = Date.now();
+      const fiveMinMs = 5 * 60 * 1000;
+
+      const recentDuplicate = cachedHistory.find(entry => {
+        if (
+          String(entry.sapRef) === String(activeItem.sapRef) &&
+          entry.contractor === contractor &&
+          entry.trade === trade
+        ) {
+          let entryTime = 0;
+          if (entry.id && entry.id.startsWith("INV-")) {
+            const timestampPart = entry.id.replace("INV-", "");
+            entryTime = parseInt(timestampPart, 36);
           }
+          if (!entryTime && entry.timestamp) {
+            const parts = entry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
+            if (parts) entryTime = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
+          }
+          return (nowMs - entryTime) < fiveMinMs;
         }
         return false;
       });
 
+      let finalQty = qty;
+      let targetUpdateId = null;
+
       if (recentDuplicate) {
-        const choice = confirm(`⚠️ Attention !\nVous avez déjà compté cet article [SAP ${activeItem.sapRef}] chez "${contractor}" il y a moins de 5 minutes (${recentDuplicate.quantity} pcs).\n\nVoulez-vous CUMULER avec la quantité précédente ?\n(OK = Cumuler | Annuler = Remplacer/Ignorer)`);
-        if (choice) {
-          qty += Number(recentDuplicate.quantity);
+        const confirmChoice = confirm(
+          `⚠️ Doublon détecté :\nVous avez déjà compté cet article il y a moins de 5 minutes (${recentDuplicate.quantity} pcs pour ${contractor} - ${trade}).\n\n` +
+          `• Cliquez sur [OK] pour CUMULER (+${qty} pcs, total = ${recentDuplicate.quantity + qty})\n` +
+          `• Cliquez sur [Annuler] pour ÉCRASER / REMPLACER (nouvelle valeur = ${qty})`
+        );
+
+        if (confirmChoice) {
+          finalQty = Number(recentDuplicate.quantity) + qty;
+          targetUpdateId = recentDuplicate.id;
+        } else {
+          targetUpdateId = recentDuplicate.id;
         }
       }
 
-      const payload = {
-        action: "CREATE",
-        id: "INV-" + Date.now().toString(36).toUpperCase(),
-        timestamp: new Date().toLocaleString("fr-FR"),
-        user: currentAgent,
-        contractor: contractor,
-        trade: trade,
-        sapRef: activeItem.sapRef,
-        designation: activeItem.designation,
-        supplierRef: activeItem.supplierRef || "",
-        ean: activeItem.ean || "",
-        qr: activeItem.qr || "",
-        quantity: qty,
-        lat: latestCoords.lat,
-        lng: latestCoords.lng
-      };
+      const btn = document.getElementById("btnSubmit");
+      const label = document.getElementById("submitLabel");
+      const icon = document.getElementById("submitIcon");
+
+      btn.disabled = true;
+      label.innerText = "ENREGISTREMENT...";
+      icon.className = "w-6 h-6 animate-spin";
+
+      speakValidationWithEncouragement(finalQty, currentAgent);
+
+      let payload;
+      if (targetUpdateId) {
+        payload = {
+          action: "UPDATE",
+          id: targetUpdateId,
+          quantity: finalQty,
+          user: currentAgent
+        };
+      } else {
+        payload = {
+          action: "CREATE",
+          id: "INV-" + Date.now().toString(36).toUpperCase(),
+          timestamp: new Date().toLocaleString("fr-FR"),
+          user: currentAgent,
+          contractor: contractor,
+          trade: trade,
+          sapRef: activeItem.sapRef,
+          designation: activeItem.designation,
+          supplierRef: activeItem.supplierRef || "",
+          ean: activeItem.ean || "",
+          qr: activeItem.qr || "",
+          quantity: finalQty,
+          lat: latestCoords.lat,
+          lng: latestCoords.lng,
+          latitude: latestCoords.lat,
+          longitude: latestCoords.lng
+        };
+      }
 
       try {
-        if (!GOOGLE_SCRIPT_URL.includes("VOTRE_URL")) {
-          await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
         }
-        cachedHistory.unshift(payload);
+        if (targetUpdateId) {
+          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
+          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
+        } else {
+          cachedHistory.unshift(payload);
+        }
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Inventaire archivé !");
+        showToast("Inventaire synchronisé !");
       } catch (e) {
-        cachedHistory.unshift(payload);
+        if (targetUpdateId) {
+          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
+          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
+        } else {
+          cachedHistory.unshift(payload);
+        }
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         syncQueue.push(payload);
         localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
         updateSyncBadge();
-        showToast("Enregistré hors-ligne.");
+        showToast("Enregistré localement (en attente réseau).");
       } finally {
         qtyInput.value = 0;
         clearSearch();
+        btn.disabled = false;
+        label.innerText = "VALIDER ET ARCHIVER";
+        icon.className = "w-6 h-6";
+        lucide.createIcons();
         renderHistory();
         if (isAdmin()) renderMobileMonitoring();
       }
@@ -846,41 +1455,51 @@
       document.getElementById("historyHeaderLabel").innerText = isAdmin() ? `Toutes les saisies (${list.length})` : `Mes saisies (${list.length})`;
 
       if (list.length === 0) {
-        c.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Aucune saisie.</div>';
+        c.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Aucune saisie enregistrée.</div>';
         return;
       }
 
       const pendingIds = new Set(syncQueue.map(q => q.id));
+
       c.innerHTML = list.map(it => {
         const isPending = pendingIds.has(it.id);
-        const safeDesignation = (it.designation || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const displayDate = formatDateDMY(it.timestamp, true);
         return `
-          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800'} rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3">
-            <div class="flex items-start justify-between border-b border-slate-800/80 pb-2.5">
-              <div class="space-y-1">
-                <div class="flex items-center space-x-2 flex-wrap">
-                  <span class="font-mono font-black text-amber-400 text-base">${it.sapRef}</span>
-                  ${isAdmin() ? `<span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded font-bold">${it.user}</span>` : ''}
-                  ${isPending ? `<span class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">En attente</span>` : ''}
+          <div class="bg-slate-950 border ${isPending ? 'border-amber-500/50' : 'border-slate-800'} p-3.5 rounded-2xl shadow space-y-2.5">
+            <div class="flex items-center justify-between border-b border-slate-850 pb-2 text-xs">
+              <div class="min-w-0 pr-2">
+                <span class="font-bold text-white">${it.user}</span>
+                <span class="text-slate-400">• <strong class="text-slate-300 font-semibold">${it.contractor}</strong> (${it.trade})</span>
+              </div>
+              <div class="flex items-center space-x-1.5 shrink-0 text-[11px] font-mono text-slate-400">
+                <span>${displayDate}</span>
+                ${(it.lat || it.latitude) ? `<span class="text-emerald-400">📍</span>` : ''}
+                ${isPending ? `<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-bold">Attente</span>` : ''}
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1 pr-2">
+                <span class="font-mono font-black text-amber-400 text-base tracking-wider block">${it.sapRef}</span>
+                <p class="text-xs text-slate-300 truncate mt-0.5" title="${it.designation}">${it.designation}</p>
+              </div>
+
+              <div class="flex items-center space-x-2 shrink-0">
+                <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 min-w-[50px]">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase">Qté</span>
+                  <span class="text-lg font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
                 </div>
-                <div class="text-[11px] text-slate-400"><span>${it.timestamp}</span></div>
+
+                <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" 
+                        class="w-10 h-10 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 active:bg-emerald-600 text-emerald-400 hover:text-emerald-100 flex items-center justify-center border border-emerald-500/40 transition shadow">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+
+                <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
+                        class="w-10 h-10 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 flex items-center justify-center border border-rose-500/40 transition shadow">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
               </div>
-              <div class="flex flex-col items-center justify-center bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-1.5 min-w-[64px]">
-                <span class="text-[9px] font-bold text-slate-400 uppercase">Qté</span>
-                <span class="text-xl font-black text-emerald-400 font-mono leading-none">${it.quantity}</span>
-              </div>
-            </div>
-            <div class="space-y-1">
-              <p class="text-sm font-bold text-slate-100 leading-snug">${it.designation}</p>
-              <p class="text-xs text-slate-400"><span class="text-slate-300">${it.contractor}</span> • <span class="italic">${it.trade}</span></p>
-            </div>
-            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
-              <button onclick="editHistoryItem('${it.id}', ${it.quantity})" class="h-11 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 flex items-center justify-center space-x-2">
-                <i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i><span>Modifier</span>
-              </button>
-              <button onclick="deleteHistoryItem('${it.id}', '${safeDesignation}')" class="h-11 bg-slate-900 hover:bg-rose-950/40 text-rose-300 font-bold text-xs rounded-xl border border-slate-700 flex items-center justify-center space-x-2">
-                <i data-lucide="trash-2" class="w-4 h-4 text-rose-400"></i><span>Supprimer</span>
-              </button>
             </div>
           </div>
         `;
@@ -895,32 +1514,75 @@
       document.getElementById("mobKpiAlerts").innerText = cachedHistory.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50).length;
 
       const now = new Date().getTime();
-      const statusContainer = document.getElementById("agentStatusList");
-      statusContainer.innerHTML = availableAgents.map(agent => {
-        const agentHistory = cachedHistory.filter(h => h.user === agent);
-        let isActive = false;
-        let lastTimeLabel = "Aucune saisie";
-        if (agentHistory.length > 0) {
-          const lastEntry = agentHistory[0];
-          lastTimeLabel = lastEntry.timestamp;
-          const parts = lastEntry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-          if (parts) {
-            const entryDate = new Date(parts[3], parts[2]-1, parts[1], parts[4], parts[5]).getTime();
-            if (now - entryDate < 15*60*1000) isActive = true;
-          }
+      const thirtyMinMs = 30 * 60 * 1000;
+      const container = document.getElementById("mobMonitoringList");
+
+      const groups = {};
+      cachedHistory.forEach(item => {
+        const key = `${item.user}__${item.contractor}__${item.trade}`;
+        if (!groups[key]) {
+          groups[key] = {
+            user: item.user,
+            contractor: item.contractor,
+            trade: item.trade,
+            entries: []
+          };
         }
+        groups[key].entries.push(item);
+      });
+
+      const groupList = Object.values(groups);
+
+      if (groupList.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs italic">Aucune activité enregistrée.</div>`;
+        return;
+      }
+
+      container.innerHTML = groupList.map(grp => {
+        const sorted = [...grp.entries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
+        const firstEntry = sorted[0];
+        const lastEntry = sorted[sorted.length - 1];
+
+        const firstDateStr = formatDateDMY(firstEntry.timestamp, true);
+        const lastDateStr = formatDateDMY(lastEntry.timestamp, true);
+
+        const lastDt = parseItemDate(lastEntry.timestamp);
+        const isActive = (now - lastDt.getTime()) < thirtyMinMs;
+
         return `
-          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}"></div>
-              <span class="font-bold text-white">${agent}</span>
+          <div class="bg-slate-950 p-3.5 rounded-2xl border ${isActive ? 'border-indigo-500/50' : 'border-slate-800'} text-xs space-y-2 shadow">
+            <div class="flex justify-between items-start border-b border-slate-850 pb-2">
+              <div>
+                <strong class="text-white text-sm block">${grp.contractor}</strong>
+                <span class="text-indigo-400 font-bold">${grp.trade}</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                ${isActive ? '🟢 En cours' : '🔵 Finalisé'}
+              </span>
             </div>
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
-              ${isActive ? 'Actif' : 'Inactif'}
-            </span>
+
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1">
+              <div>
+                <span>Agent :</span>
+                <strong class="text-slate-200 block">${grp.user}</strong>
+              </div>
+              <div>
+                <span>Lignes traitées :</span>
+                <strong class="text-emerald-400 font-mono text-xs block">${grp.entries.length} ligne(s)</strong>
+              </div>
+              <div>
+                <span>1ère saisie :</span>
+                <span class="font-mono text-slate-300 block">${firstDateStr}</span>
+              </div>
+              <div>
+                <span>Dernière saisie :</span>
+                <span class="font-mono text-slate-300 block">${lastDateStr}</span>
+              </div>
+            </div>
           </div>
         `;
       }).join('');
+      lucide.createIcons();
     }
 
     function switchTab(tab) {
@@ -932,23 +1594,45 @@
       const tMon = document.getElementById("tabNavMonitoring");
 
       if (tab === 'monitoring') {
-        if (!isAdmin()) { alert("Réservé aux administrateurs."); return; }
+        if (!isAdmin()) {
+          alert("Accès réservé aux administrateurs.");
+          return;
+        }
         if (!isMonitoringUnlocked) {
           const expected = adminPasswords[currentAgent] || "1234";
-          const entered = prompt(`Mot de passe admin (${currentAgent}) :`);
-          if (entered !== expected) { alert("Incorrect."); return; }
+          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe :`);
+          if (entered === null) return;
+          if (entered !== expected) {
+            alert("Mot de passe incorrect.");
+            return;
+          }
           isMonitoringUnlocked = true;
         }
       }
 
-      inv.classList.add("hidden"); hist.classList.add("hidden"); mon.classList.add("hidden");
-      tInv.classList.replace("text-blue-400", "text-slate-400");
-      tHist.classList.replace("text-blue-400", "text-slate-400");
+      if (inv) inv.classList.add("hidden");
+      if (hist) hist.classList.add("hidden");
+      if (mon) mon.classList.add("hidden");
+
+      if (tInv) tInv.classList.replace("text-blue-400", "text-slate-400");
+      if (tHist) tHist.classList.replace("text-blue-400", "text-slate-400");
       if (tMon) tMon.classList.replace("text-blue-400", "text-slate-400");
 
-      if (tab === 'inventory') { inv.classList.remove("hidden"); tInv.classList.replace("text-slate-400", "text-blue-400"); }
-      else if (tab === 'history') { if (isScanning) stopScanner(); hist.classList.remove("hidden"); tHist.classList.replace("text-slate-400", "text-blue-400"); renderHistory(); }
-      else if (tab === 'monitoring') { if (isScanning) stopScanner(); mon.classList.remove("hidden"); if (tMon) tMon.classList.replace("text-slate-400", "text-blue-400"); renderMobileMonitoring(); }
+      if (tab === 'inventory') {
+        if (inv) inv.classList.remove("hidden");
+        if (tInv) tInv.classList.replace("text-slate-400", "text-blue-400");
+      } else if (tab === 'history') {
+        if (isScanning) stopScanner();
+        if (hist) hist.classList.remove("hidden");
+        if (tHist) tHist.classList.replace("text-slate-400", "text-blue-400");
+        renderHistory();
+      } else if (tab === 'monitoring') {
+        if (isScanning) stopScanner();
+        if (mon) mon.classList.remove("hidden");
+        if (tMon) tMon.classList.replace("text-slate-400", "text-blue-400");
+        renderMobileMonitoring();
+      }
+
       syncData();
       lucide.createIcons();
     }
@@ -958,7 +1642,10 @@
       document.getElementById("toastMessage").innerText = msg;
       t.classList.remove("-translate-y-28");
       t.classList.add("translate-y-0");
-      setTimeout(() => { t.classList.remove("translate-y-0"); t.classList.add("-translate-y-28"); }, 2200);
+      setTimeout(() => {
+        t.classList.remove("translate-y-0");
+        t.classList.add("-translate-y-28");
+      }, 2200);
     }
   </script>
 </body>
