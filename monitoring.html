@@ -116,7 +116,7 @@
   <!-- ================= STRUCTURE EN DEUX COLONNES ================= -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE - PLUS FONCÉE & CONTRASTÉE) -->
+    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE - PLUS FONCÉE) -->
     <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 text-slate-100">
       <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
         
@@ -424,7 +424,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL & EXCEL INTELLIGENT) ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL RESTAURÉ & BOUTON NOUVELLE TÂCHE) ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -432,7 +432,7 @@
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
                 Planning Semaine & Suivi des Tournées
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural hebdomadaire synchronisée avec la période active • Modèle Excel multi-onglets</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural interactif (glissez les tâches d'un jour à l'autre) • Modèle Excel multi-onglets</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
@@ -444,13 +444,18 @@
                 <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
                 <span>Importer Planning</span>
               </button>
+              <!-- BOUTON NOUVELLE TÂCHE RÉINTÉGRÉ DANS L'EN-TÊTE -->
+              <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Nouvelle Tâche</span>
+              </button>
             </div>
           </div>
 
           <!-- DOUBLE PANNEAU (70% AGENDA MURAL / 30% COMPLETION) -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE (HAUTEUR INITIALE RESTAURÉE) -->
+            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE (HAUTEUR INITIALE + DRAG & DROP + [+MATIN/APRES-MIDI]) -->
             <div class="lg:col-span-8 space-y-4">
               
               <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
@@ -463,10 +468,10 @@
                 <div class="text-xs font-mono text-orange-700 font-bold" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- GRILLE PLANNING MURAL (HAUTEUR ORIGINALE & COMPACTE) -->
+              <!-- GRILLE PLANNING MURAL (HAUTEUR ORIGINALE & DRAG AND DROP ACTIF) -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
-                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Basée sur la période active gauche)</span>
+                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Glissez une tâche sur un autre jour)</span>
                 </div>
 
                 <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[220px]"></div>
@@ -517,7 +522,7 @@
     </main>
   </div>
 
-  <!-- ================= MODALE ASSIGNATION MANUELLE (BOUTON DE CRÉATION AU-DESSUS DE LA DATE) ================= -->
+  <!-- ================= MODALE ASSIGNATION MANUELLE ================= -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -550,7 +555,6 @@
           </div>
         </div>
 
-        <!-- BOUTON DE CRÉATION RAPIDE JUSTE AU-DESSUS DE LA DATE -->
         <div class="flex items-center justify-between pt-1">
           <label class="font-bold text-slate-700 uppercase tracking-wide">Date & Tranche de planification :</label>
           <button onclick="submitManualTourneeAssignment()" class="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg text-xs shadow-2xs transition cursor-pointer flex items-center gap-1">
@@ -687,7 +691,6 @@
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
 
-    // FORMAT DATE VISUEL ET ÉPURÉ EN FRANÇAIS
     function formatDateFrench(dateInput) {
       if (!dateInput) return "--/--/----";
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
@@ -750,7 +753,13 @@
       applyFilters();
     });
 
-    function openManualAssignModal() {
+    function openManualAssignModal(defaultDate = null, defaultTranche = 'MATIN') {
+      if (defaultDate) {
+        document.getElementById("adminAssignDate").value = defaultDate;
+      }
+      if (defaultTranche) {
+        document.getElementById("adminAssignTranche").value = defaultTranche;
+      }
       document.getElementById("manualAssignModal").classList.remove("hidden");
       renderAdminCatalogPicker("");
     }
@@ -1031,7 +1040,7 @@
       }
     }
 
-    // ================= PLANNING MURAL HEBDOMADAIRE =================
+    // ================= PLANNING MURAL HEBDOMADAIRE (AVEC DRAG & DROP & CLIC RAPIDE MATIN/APRES-MIDI) =================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const weekLabel = document.getElementById("wallPlanningWeekLabel");
@@ -1072,10 +1081,18 @@
         });
 
         return `
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-col space-y-1.5 min-h-[180px]">
-            <div class="text-center pb-1 border-b border-slate-200">
-              <span class="text-[11px] font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
-              <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-col space-y-1.5 min-h-[220px]"
+               ondragover="event.preventDefault()" 
+               ondrop="handleDropOnDay(event, '${dateStr}')">
+            <div class="text-center pb-1 border-b border-slate-200 flex justify-between items-center px-1">
+              <div>
+                <span class="text-[11px] font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
+                <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <button onclick="openManualAssignModal('${dateStr}', 'MATIN')" title="Ajouter Matin" class="text-[8px] bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold px-1.5 rounded cursor-pointer">+ Matin</button>
+                <button onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" title="Ajouter Après-midi" class="text-[8px] bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold px-1.5 rounded cursor-pointer">+ AP</button>
+              </div>
             </div>
 
             <div class="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar">
@@ -1092,11 +1109,14 @@
                 else if (isPartDone) badgeColor = "bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200";
 
                 const tooltipText = tasks.map(t => `• ${t.sapRef} (${t.contractor})`).join('\n');
+                const firstId = tasks[0].id;
 
                 return `
-                  <div onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
-                       title="${agent} :\n${tooltipText}"
-                       class="p-1.5 rounded-lg border ${badgeColor} cursor-pointer shadow-2xs transition group relative">
+                  <div draggable="true" 
+                       ondragstart="handleDragStart(event, '${agent}', '${dateStr}')"
+                       onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
+                       title="${agent} :\n${tooltipText}\n(Glissez pour déplacer)"
+                       class="p-1.5 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition group relative">
                     <div class="flex justify-between items-center text-[10px] font-bold">
                       <span class="truncate">${agent}</span>
                       <span class="font-mono text-[9px]">${done}/${total}</span>
@@ -1112,6 +1132,41 @@
 
       renderCompletionMetrics(cachedTournees || [], weekDays);
       lucide.createIcons();
+    }
+
+    // GESTION DU GLISSER-DÉPOSER (DRAG & DROP ENTRE LES JOURS)
+    let draggedAgent = null;
+    let draggedSourceDate = null;
+
+    function handleDragStart(e, agent, dateStr) {
+      draggedAgent = agent;
+      draggedSourceDate = dateStr;
+      e.dataTransfer.setData('text/plain', agent);
+    }
+
+    function handleDropOnDay(e, targetDateStr) {
+      e.preventDefault();
+      if (!draggedAgent || !draggedSourceDate) return;
+      if (draggedSourceDate === targetDateStr) return;
+
+      // Déplacer toutes les tâches de cet agent de la source vers la cible pour cette date
+      cachedTournees.forEach(t => {
+        if (t.agent === draggedAgent && t.date === draggedSourceDate) {
+          t.date = targetDateStr;
+        }
+      });
+
+      localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+      renderWallPlanning();
+
+      // Synchro silencieuse si en ligne
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        // Envoi simplifié ou recharge
+        syncMonitoringData();
+      }
+
+      draggedAgent = null;
+      draggedSourceDate = null;
     }
 
     function openTourneeDetailsForDay(dateStr, agentName) {
@@ -1145,7 +1200,6 @@
       lucide.createIcons();
     }
 
-    // N'AFFICHER QUE LES AGENTS QUI ONT DES AFFECTATIONS DANS LA SEMAINE/PÉRIODE
     function renderCompletionMetrics(allTournees, weekDays) {
       const weekDateStrs = weekDays ? weekDays.map(d => d.toISOString().split('T')[0]) : [];
       const periodTournees = allTournees.filter(t => weekDateStrs.length === 0 || weekDateStrs.includes(t.date));
@@ -1163,7 +1217,6 @@
       const agentListContainer = document.getElementById("agentCompletionList");
       if (!agentListContainer) return;
 
-      // Filtrer uniquement les agents ayant des tâches sur cette période
       const activeAgentsThisPeriod = availableAgents.filter(agent => {
         return periodTournees.some(t => t.agent === agent);
       });
