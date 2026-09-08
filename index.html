@@ -56,16 +56,30 @@
     
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
+      <!-- BANDEAU MISSION ACTIVE (VERROUILLAGE TOURNÉE) -->
+      <div id="activeMissionBanner" class="hidden bg-orange-50 border-2 border-orange-400 p-3.5 rounded-2xl shadow-xs space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="clipboard-check" class="w-4 h-4 text-orange-600"></i>
+            Tâche de Tournée Assignée
+          </span>
+          <button onclick="cancelActiveMission()" class="text-[10px] font-bold text-rose-600 hover:bg-rose-100/60 px-2 py-0.5 rounded-lg border border-rose-200 transition cursor-pointer">
+            Mode Libre ✕
+          </button>
+        </div>
+        <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
+      </div>
+
       <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Paramètres de Saisie</h2>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
-            <select id="selectContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
+            <select id="selectContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"></select>
           </div>
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Métier</label>
-            <select id="selectTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
+            <select id="selectTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"></select>
           </div>
         </div>
       </div>
@@ -112,7 +126,7 @@
       </div>
     </section>
 
-    <!-- ONGLET 2 : HISTORIQUE -->
+    <!-- ONGLET 2 : HISTORIQUE (CONSULTATION PURE SANS REBOND) -->
     <section id="tabHistorique" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
@@ -217,6 +231,7 @@
     let pendingSyncQueue = JSON.parse(localStorage.getItem("offline_pending_sync") || "[]");
 
     let selectedArticle = null;
+    let activeMissionContext = null; // Contexte strict de la tournée engagée
     let currentGpsCoords = { lat: null, lng: null };
     let mediaStream = null;
     let barcodeDetector = null;
@@ -261,8 +276,36 @@
 
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
-      if (cSel && availableContractors.length > 0) cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (tSel && availableTrades.length > 0) tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      if (cSel && availableContractors.length > 0) {
+        cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      if (tSel && availableTrades.length > 0) {
+        tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
+    }
+
+    // Fonction d'affectation dynamique avec tolérance (crée l'option si absente du catalogue)
+    function setSelectValueWithFallback(selectId, val) {
+      const sel = document.getElementById(selectId);
+      if (!sel || !val) return;
+      const targetVal = String(val).trim();
+      let found = false;
+
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value.trim().toLowerCase() === targetVal.toLowerCase()) {
+          sel.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        const opt = document.createElement("option");
+        opt.value = targetVal;
+        opt.textContent = targetVal;
+        opt.selected = true;
+        sel.appendChild(opt);
+      }
     }
 
     function openConfigModal() {
@@ -277,7 +320,9 @@
       document.getElementById("headerAgentName").innerText = currentAgent;
       document.getElementById("configModal").classList.add("hidden");
 
-      // Rechargement immédiat de l'historique propre au nouvel agent depuis la copie serveur
+      cancelActiveMission();
+
+      // Réinitialisation stricte de l'historique sur l'agent connecté
       const allHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
       const activeAgentNorm = String(currentAgent).trim().toLowerCase();
       const serverAgentHistory = allHistory.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
@@ -334,7 +379,7 @@
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
       if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
-      // 1. Dépilement de la file d'attente hors ligne (sync montante)
+      // Dépilement de la file d'attente hors ligne
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
@@ -354,7 +399,7 @@
         updatePendingBadge();
       }
 
-      // 2. Récupération des données distantes (sync descendante)
+      // Synchronisation descendante
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
@@ -364,11 +409,10 @@
           if (data.contractors) localStorage.setItem("offline_contractors", JSON.stringify(availableContractors = data.contractors));
           if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(availableTrades = data.trades));
 
-          // Tournées : conservation des validations locales récentes
           if (data.tournees) {
             const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
             const localValides = new Set(
-              currentLocal.filter(t => t.statut === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`)
+              currentLocal.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`)
             );
 
             cachedTournees = data.tournees.map(serverTask => {
@@ -382,7 +426,6 @@
             localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
           }
 
-          // STABILISATION HISTORIQUE : RÉCONCILIATION STRICTE AVEC GOOGLE SHEETS
           if (data.history) {
             localStorage.setItem("offline_history", JSON.stringify(data.history));
 
@@ -392,7 +435,6 @@
             );
             const serverIds = new Set(serverAgentItems.map(h => String(h.id)));
 
-            // Garde les saisies créées hors-ligne qui n'ont pas encore été reçues par le serveur
             const pendingCreates = pendingSyncQueue
               .filter(p => p.action === 'CREATE' && String(p.user || '').trim().toLowerCase() === activeAgentNorm && !serverIds.has(String(p.id)))
               .map(p => ({ ...p, isPending: true }));
@@ -411,6 +453,73 @@
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
+    }
+
+    // Gestion du contexte de tournée
+    function selectTourneeTask(tourneeId) {
+      cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
+      const task = cachedTournees.find(t => String(t.id).trim() === String(tourneeId).trim());
+      if (!task) return;
+
+      if (String(task.statut || '').trim().toUpperCase() === 'VALIDE') {
+        return; // Verrou strict : impossible de recharger une tâche déjà validée
+      }
+
+      activeMissionContext = {
+        id: task.id,
+        sapRef: task.sapRef,
+        designation: task.designation,
+        contractor: task.contractor,
+        trade: task.trade
+      };
+
+      // 1. Mise à jour forcée des listes déroulantes
+      setSelectValueWithFallback("selectContractor", task.contractor);
+      setSelectValueWithFallback("selectTrade", task.trade);
+
+      // 2. Verrouillage des sélecteurs pour empêcher la divergence
+      const cSel = document.getElementById("selectContractor");
+      const tSel = document.getElementById("selectTrade");
+      if (cSel) cSel.disabled = true;
+      if (tSel) tSel.disabled = true;
+
+      // 3. Affichage du bandeau de mission
+      const banner = document.getElementById("activeMissionBanner");
+      const bannerInfo = document.getElementById("missionBannerInfo");
+      if (banner && bannerInfo) {
+        bannerInfo.innerText = `${task.contractor} (${task.trade}) • Réf: ${task.sapRef}`;
+        banner.classList.remove("hidden");
+      }
+
+      // 4. Pré-sélection de l'article
+      const item = catalog.find(i => String(i.sapRef).trim() === String(task.sapRef).trim());
+      selectArticleFromSearch(item || {
+        sapRef: task.sapRef,
+        designation: task.designation || 'Article de tournée',
+        supplierRef: ''
+      });
+
+      switchMobileTab('comptage');
+    }
+
+    function cancelActiveMission() {
+      activeMissionContext = null;
+      const cSel = document.getElementById("selectContractor");
+      const tSel = document.getElementById("selectTrade");
+      if (cSel) cSel.disabled = false;
+      if (tSel) tSel.disabled = false;
+
+      const banner = document.getElementById("activeMissionBanner");
+      if (banner) banner.classList.add("hidden");
+
+      resetComptageForm();
+    }
+
+    function resetComptageForm() {
+      selectedArticle = null;
+      document.getElementById("sapSearchInput").value = "";
+      document.getElementById("selectedArticleCard").classList.add("hidden");
+      document.getElementById("inputQuantity").value = "0";
     }
 
     async function openScanModal() {
@@ -531,8 +640,11 @@
       if (!selectedArticle) { alert("Veuillez sélectionner un article SAP."); return; }
 
       const qty = parseInt(document.getElementById("inputQuantity").value, 10) || 0;
-      const contractor = document.getElementById("selectContractor").value;
-      const trade = document.getElementById("selectTrade").value;
+
+      // Priorité stricte au contexte de tournée si engagé
+      const contractor = activeMissionContext ? activeMissionContext.contractor : document.getElementById("selectContractor").value;
+      const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
+      const tourneeId = activeMissionContext ? activeMissionContext.id : null;
 
       const record = {
         id: "INV-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
@@ -544,37 +656,42 @@
         designation: selectedArticle.designation,
         quantity: qty,
         lat: currentGpsCoords.lat,
-        lng: currentGpsCoords.lng
+        lng: currentGpsCoords.lng,
+        tourneeId: tourneeId
       };
 
-      // Ajout optimiste immédiat
       sessionHistory.unshift({ ...record, isPending: !navigator.onLine });
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
 
-      // Validation locale et mise en file de la tournée correspondante
-      let matchedTourneeId = null;
+      // Validation locale ciblée par ID unique
+      let matchedTourneeId = tourneeId;
       cachedTournees.forEach(t => {
-        if (t.agent === currentAgent && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim()) {
+        const matchById = tourneeId && String(t.id).trim() === String(tourneeId).trim();
+        const matchBySap = !tourneeId && String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim();
+        if (matchById || matchBySap) {
           t.statut = 'VALIDE';
-          matchedTourneeId = t.id;
+          if (!matchedTourneeId) matchedTourneeId = t.id;
         }
       });
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
       pendingSyncQueue.push({ action: "CREATE", ...record });
       if (matchedTourneeId) {
-        pendingSyncQueue.push({ action: "UPDATE_TOURNEE_STATUS", id: matchedTourneeId, statut: 'VALIDE', user: currentAgent, sapRef: selectedArticle.sapRef });
+        pendingSyncQueue.push({ 
+          action: "UPDATE_TOURNEE_STATUS", 
+          id: matchedTourneeId, 
+          statut: 'VALIDE', 
+          user: currentAgent, 
+          sapRef: selectedArticle.sapRef 
+        });
       }
       localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
       updatePendingBadge();
 
+      // Réinitialisation et libération du formulaire
+      cancelActiveMission();
       renderHistory();
       renderTournee();
-
-      selectedArticle = null;
-      document.getElementById("sapSearchInput").value = "";
-      document.getElementById("selectedArticleCard").classList.add("hidden");
-      document.getElementById("inputQuantity").value = "0";
 
       switchMobileTab('historique');
       if (navigator.onLine) syncMobileData();
@@ -585,7 +702,6 @@
       const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
       const todayStr = normalizeDateYMD(new Date());
 
-      // Affichage des inventaires de l'agent actif pour aujourd'hui
       const agentHistory = sessionHistory.filter(h => {
         const matchUser = !activeAgentNorm || String(h.user || "").trim().toLowerCase() === activeAgentNorm;
         const matchDay = normalizeDateYMD(h.timestamp) === todayStr;
@@ -600,7 +716,6 @@
         container.innerHTML = `
           <div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl space-y-1">
             <p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p>
-            <p class="text-[10px]">Toutes les saisies supprimées dans Google Sheets disparaissent automatiquement.</p>
           </div>
         `;
         return;
@@ -609,10 +724,11 @@
       container.innerHTML = agentHistory.map(h => {
         const isPending = !!h.isPending;
         return `
-          <div class="bg-white border ${isPending ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs space-y-1 text-xs transition">
+          <div class="bg-white border ${isPending ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs space-y-1 text-xs cursor-default">
             <div class="flex justify-between items-center">
               <div class="flex items-center space-x-2">
-                <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>${isPending 
+                <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>
+                ${isPending 
                   ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">⏳ EN ATTENTE</span>' 
                   : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">✓ SYNCHRONISÉ</span>'
                 }
@@ -693,10 +809,14 @@
       }
 
       container.innerHTML = agentTournees.map(t => {
-        const isDone = t.statut === 'VALIDE';
+        const isDone = String(t.statut || '').trim().toUpperCase() === 'VALIDE';
         const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
-        const clickAttr = isDone ? '' : `onclick="selectArticleFromTournee('${t.sapRef}')"`;
-        const styleClass = isDone ? 'border-emerald-300 bg-emerald-50/60 opacity-90 cursor-default' : 'border-slate-200 hover:border-orange-300 cursor-pointer';
+        
+        // Neutralisation absolue du clic si la tâche est validée
+        const clickAttr = isDone ? '' : `onclick="selectTourneeTask('${t.id}')"`;
+        const styleClass = isDone 
+          ? 'border-emerald-300 bg-emerald-50/60 opacity-90 cursor-default pointer-events-none' 
+          : 'border-slate-200 hover:border-orange-300 cursor-pointer';
 
         return `
           <div ${clickAttr} class="bg-white border ${styleClass} p-3.5 rounded-2xl shadow-xs transition space-y-1.5">
@@ -716,27 +836,6 @@
         `;
       }).join('');
       lucide.createIcons();
-    }
-
-    function selectArticleFromTournee(sapRef) {
-      const tourneeItem = (cachedTournees || []).find(t => 
-        String(t.sapRef).trim() === String(sapRef).trim() && 
-        String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() &&
-        t.statut !== 'VALIDE'
-      );
-
-      if (tourneeItem) {
-        if (tourneeItem.contractor) document.getElementById("selectContractor").value = tourneeItem.contractor;
-        if (tourneeItem.trade) document.getElementById("selectTrade").value = tourneeItem.trade;
-      }
-
-      const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
-      if (item) {
-        selectArticleFromSearch(item);
-        switchMobileTab('comptage');
-      } else {
-        alert("Article non répertorié dans le catalogue.");
-      }
     }
 
     function switchMobileTab(tab) {
