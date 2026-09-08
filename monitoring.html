@@ -134,8 +134,8 @@
             <span>Carte & Géolocalisation</span>
           </button>
           <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
-            <i data-lucide="route" class="w-4 h-4"></i>
-            <span>Tournées & Missions</span>
+            <i data-lucide="calendar-range" class="w-4 h-4"></i>
+            <span>Agenda & Tournées</span>
           </button>
         </div>
 
@@ -422,143 +422,118 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : TOURNÉES & MISSIONS (SOLUTION A) ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (DOUBLE PANNEAU) ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="route" class="w-4 h-4 text-orange-600"></i>
-                Gestion & Attribution des Tournées
+                <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
+                Agenda Prévisionnel & Suivi des Tournées
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Assignation manuelle ou import en masse de listes de comptage pour les agents</p>
+              <p class="text-xs text-slate-500 mt-0.5">Planification, affectation manuelle et suivi en temps réel de la complétion des missions</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="downloadTourneeTemplateCSV()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-2 rounded-xl shadow-xs transition flex items-center gap-1.5">
-                <i data-lucide="download" class="w-4 h-4 text-emerald-600"></i>
-                <span>Télécharger Modèle CSV</span>
+              <button onclick="downloadTourneeTemplateCSV()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>Modèle CSV</span>
+              </button>
+              <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Nouvelle Tâche</span>
               </button>
             </div>
           </div>
 
-          <!-- DOUBLE PANNEAU : ASSIGNATION MANUELLE ET IMPORT FICHIER -->
-          <div class="grid grid-cols-2 gap-4">
+          <!-- DOUBLE PANNEAU (70% AGENDA / 30% COMPLETION) -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- PANNEAU 1 : ASSIGNATION MANUELLE -->
-            <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
-              <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                <i data-lucide="user-plus" class="w-4 h-4 text-orange-600"></i> 1. Attribution Manuelle
-              </h4>
+            <!-- PANNEAU GAUCHE (7/12 ou 8/12) : AGENDA & FILTRES -->
+            <div class="lg:col-span-8 space-y-4">
+              
+              <!-- FILTRES RAPIDES AGENDA -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-bold text-slate-500 uppercase">Filtrer Agenda :</span>
+                  <input type="date" id="agendaFilterDate" onchange="renderAgendaTable()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
+                  <button onclick="document.getElementById('agendaFilterDate').value=''; renderAgendaTable();" class="text-xs text-slate-400 hover:text-slate-600 underline">Tous les jours</button>
+                </div>
 
-              <div class="space-y-3 text-xs">
-                <div>
-                  <label class="block font-bold text-slate-500 uppercase mb-1">Agent Cible :</label>
-                  <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
-                    <option value="">-- Choisir un agent --</option>
+                <div class="flex items-center space-x-2">
+                  <select id="agendaFilterAgent" onchange="renderAgendaTable()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
+                    <option value="">Tous les agents</option>
                   </select>
                 </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block font-bold text-slate-500 uppercase mb-1">Entrepreneur :</label>
-                    <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
-                      <option value="">-- Entrepreneur --</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block font-bold text-slate-500 uppercase mb-1">Métier :</label>
-                    <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
-                      <option value="">-- Métier --</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block font-bold text-slate-500 uppercase mb-1">Date Prévisionnelle :</label>
-                  <input type="date" id="adminAssignDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-mono text-slate-800 focus:outline-none focus:border-orange-500">
-                </div>
-
-                <!-- SÉLECTION DES ARTICLES DU CATALOGUE -->
-                <div class="space-y-1.5">
-                  <div class="flex justify-between items-center">
-                    <label class="font-bold text-slate-500 uppercase">Sélectionner les articles à assigner :</label>
-                    <span id="adminCatalogCount" class="text-[10px] font-mono text-slate-400 font-bold">0 article(s)</span>
-                  </div>
-                  <div class="relative">
-                    <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Filtrer le catalogue par réf ou désignation..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-3 pr-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500">
-                  </div>
-                  <div id="adminCatalogPickerList" class="max-h-40 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
-                </div>
               </div>
 
-              <button onclick="submitManualTourneeAssignment()" class="w-full h-11 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center justify-center gap-1.5">
-                <i data-lucide="check" class="w-4 h-4"></i>
-                <span>Enregistrer & Assigner la tournée</span>
-              </button>
+              <!-- TABLEAU DE L'AGENDA PRÉVISIONNEL -->
+              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
+                  <span id="agendaCountLabel" class="font-bold text-slate-700">0 mission(s) planifiée(s)</span>
+                  <span class="text-slate-400 text-[11px]">Tranche / Date</span>
+                </div>
+                <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
+                      <tr>
+                        <th class="p-3">Date / Tranche</th>
+                        <th class="p-3">Agent</th>
+                        <th class="p-3">Chantier</th>
+                        <th class="p-3">Article (Réf SAP)</th>
+                        <th class="p-3 text-center">Ordre</th>
+                        <th class="p-3 text-center">Statut</th>
+                        <th class="p-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="agendaTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
-            <!-- PANNEAU 2 : IMPORT DRAG & DROP CSV / EXCEL -->
-            <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4 flex flex-col justify-between">
-              <div class="space-y-4">
-                <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                  <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-600"></i> 2. Import en Masse (Drag & Drop)
-                </h4>
-
-                <div id="dropZone" ondragover="event.preventDefault()" ondrop="handleFileDrop(event)" 
-                     class="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 rounded-2xl p-8 text-center space-y-2 cursor-pointer transition flex flex-col items-center justify-center">
-                  <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shadow-2xs">
-                    <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
-                  </div>
-                  <div>
-                    <span class="text-xs font-bold text-slate-700 block">Glissez votre fichier CSV ici</span>
-                    <span class="text-[10px] text-slate-400">ou cliquez pour parcourir les fichiers</span>
-                  </div>
-                  <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileSelect(event)" class="hidden">
-                  <button type="button" onclick="document.getElementById('csvFileInput').click()" class="mt-2 px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50">
-                    Parcourir un fichier
-                  </button>
+            <!-- PANNEAU DROIT (4/12 ou 5/12) : SUIVI & TAUX DE COMPLÉTION -->
+            <div class="lg:col-span-4 space-y-4">
+              
+              <!-- JAUGE DE COMPLÉTION GLOBALE -->
+              <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Complétion Globale</span>
+                  <span id="globalCompletionPct" class="text-lg font-black text-orange-600 font-mono">0%</span>
                 </div>
 
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
-                  <strong class="text-slate-800 block">Format CSV attendu (avec séparateur point-virgule ;) :</strong>
-                  <code class="block font-mono text-[10px] bg-white p-1.5 rounded border border-slate-200 text-slate-700">agent;contractor;trade;sapRef;ordre;date_assignation</code>
+                <div class="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden border border-slate-200">
+                  <div id="globalCompletionBar" class="bg-emerald-500 h-full transition-all duration-300 rounded-full" style="width: 0%"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-center text-xs">
+                  <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span class="text-[10px] text-slate-400 block uppercase font-bold">Validées</span>
+                    <strong id="kpiDoneTasks" class="text-base font-black text-emerald-600 font-mono">0</strong>
+                  </div>
+                  <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span class="text-[10px] text-slate-400 block uppercase font-bold">Restantes</span>
+                    <strong id="kpiPendingTasks" class="text-base font-black text-amber-600 font-mono">0</strong>
+                  </div>
                 </div>
               </div>
 
-              <div id="importPreviewBox" class="hidden space-y-2">
-                <span id="importPreviewLabel" class="text-xs font-bold text-emerald-700">0 ligne(s) prête(s) à être importée(s)</span>
-                <button onclick="confirmBulkImport()" class="w-full h-11 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center justify-center gap-1.5">
-                  <i data-lucide="upload" class="w-4 h-4"></i>
-                  <span>Valider l'importation en masse</span>
+              <!-- SUIVI EN DIRECT PAR AGENT -->
+              <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Jour)</span>
+                <div id="agentCompletionList" class="space-y-2 max-h-[340px] overflow-y-auto custom-scrollbar pr-1"></div>
+              </div>
+
+              <!-- ZONE IMPORT CSV DISCRÈTE -->
+              <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-xs space-y-2 text-center">
+                <span class="text-[11px] font-bold text-slate-600 block">Import rapide par fichier CSV</span>
+                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileSelect(event)" class="hidden">
+                <button type="button" onclick="document.getElementById('csvFileInput').click()" class="w-full h-10 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition flex items-center justify-center gap-2">
+                  <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-600"></i>
+                  <span>Glisser ou parcourir un planning CSV</span>
                 </button>
               </div>
+
             </div>
 
-          </div>
-
-          <!-- TABLEAU DE PILOTAGE DES TOURNÉES ACTIVES -->
-          <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
-              <span id="adminTourneesCountLabel" class="font-bold text-slate-700">0 tournée(s) active(s)</span>
-              <button onclick="syncMonitoringData()" class="text-indigo-600 hover:underline font-bold flex items-center gap-1">
-                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualiser les données
-              </button>
-            </div>
-            <div class="overflow-x-auto max-h-[400px] custom-scrollbar">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
-                  <tr>
-                    <th class="p-3">Date</th>
-                    <th class="p-3">Agent</th>
-                    <th class="p-3">Entrepreneur / Métier</th>
-                    <th class="p-3">Réf SAP & Désignation</th>
-                    <th class="p-3 text-center">Ordre</th>
-                    <th class="p-3 text-center">Statut</th>
-                    <th class="p-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="adminTourneesTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
-              </table>
-            </div>
           </div>
         </section>
 
@@ -568,6 +543,71 @@
         <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
       </div>
     </main>
+  </div>
+
+  <!-- ================= MODALE ASSIGNATION MANUELLE ================= -->
+  <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-4 h-4 text-orange-600"></i>
+          Nouvelle Affectation de Tâche
+        </h3>
+        <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-500 uppercase mb-1">Agent :</label>
+            <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
+              <option value="">-- Choisir un agent --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-500 uppercase mb-1">Tranche Horaire :</label>
+            <select id="adminAssignTranche" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
+              <option value="MATIN">Matin (08:00 - 12:00)</option>
+              <option value="APRES_MIDI">Après-midi (13:00 - 17:00)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-500 uppercase mb-1">Entrepreneur :</label>
+            <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
+              <option value="">-- Entrepreneur --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-500 uppercase mb-1">Métier :</label>
+            <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
+              <option value="">-- Métier --</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-500 uppercase mb-1">Date Prévisionnelle :</label>
+          <input type="date" id="adminAssignDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-mono text-slate-800 focus:outline-none focus:border-orange-500">
+        </div>
+
+        <div class="space-y-1.5 pt-1">
+          <div class="flex justify-between items-center">
+            <label class="font-bold text-slate-500 uppercase">Articles du catalogue à assigner :</label>
+            <span id="adminCatalogCount" class="text-[10px] font-mono text-slate-400 font-bold">0 article(s)</span>
+          </div>
+          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Filtrer le catalogue..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500">
+          <div id="adminCatalogPickerList" class="max-h-44 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex gap-2">
+        <button onclick="closeManualAssignModal()" class="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Annuler</button>
+        <button onclick="submitManualTourneeAssignment()" class="flex-1 h-11 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold rounded-xl text-xs shadow-xs transition">Enregistrer</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -611,7 +651,6 @@
     let selectedTrades = [];
     let selectedArticleTags = [];
     let manualSelectedCatalogSaps = [];
-    let parsedBulkImportData = [];
 
     let activeKpiFilter = null;
     let filterOnlyActiveAgents = true; 
@@ -707,22 +746,29 @@
       applyFilters();
     });
 
+    function openManualAssignModal() {
+      document.getElementById("manualAssignModal").classList.remove("hidden");
+    }
+
+    function closeManualAssignModal() {
+      document.getElementById("manualAssignModal").classList.add("hidden");
+    }
+
     function populateTourneeAdminDropdowns() {
       const agentSel = document.getElementById("adminAssignAgent");
       const contractorSel = document.getElementById("adminAssignContractor");
       const tradeSel = document.getElementById("adminAssignTrade");
+      const filterAgentSel = document.getElementById("agendaFilterAgent");
 
-      if (agentSel) {
-        agentSel.innerHTML = '<option value="">-- Choisir un agent --</option>' + 
-          availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
+      const agentOptions = '<option value="">-- Choisir un agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      if (agentSel) agentSel.innerHTML = agentOptions;
+      if (filterAgentSel) filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+
       if (contractorSel) {
-        contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + 
-          availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+        contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
       }
       if (tradeSel) {
-        tradeSel.innerHTML = '<option value="">-- Métier --</option>' + 
-          availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+        tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
       }
 
       renderAdminCatalogPicker("");
@@ -745,14 +791,14 @@
         return;
       }
 
-      container.innerHTML = filtered.slice(0, 50).map(item => {
+      container.innerHTML = filtered.slice(0, 40).map(item => {
         const isChecked = manualSelectedCatalogSaps.includes(String(item.sapRef).trim());
         return `
-          <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-white cursor-pointer text-xs text-slate-700">
+          <label class="flex items-center justify-between p-1 rounded hover:bg-white cursor-pointer text-xs text-slate-700">
             <div class="flex items-center space-x-2 min-w-0 pr-2">
               <input type="checkbox" value="${item.sapRef}" onchange="toggleManualCatalogSelection('${item.sapRef}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
               <span class="font-mono font-bold text-amber-700">${item.sapRef}</span>
-              <span class="truncate max-w-[200px]" title="${item.designation}">${item.designation}</span>
+              <span class="truncate max-w-[220px]" title="${item.designation}">${item.designation}</span>
             </div>
           </label>
         `;
@@ -770,6 +816,7 @@
 
     async function submitManualTourneeAssignment() {
       const agent = document.getElementById("adminAssignAgent").value;
+      const tranche = document.getElementById("adminAssignTranche").value;
       const contractor = document.getElementById("adminAssignContractor").value;
       const trade = document.getElementById("adminAssignTrade").value;
       const date = document.getElementById("adminAssignDate").value;
@@ -792,7 +839,8 @@
           sapRef: sapRef,
           designation: catItem ? catItem.designation : '',
           ordre: idx + 1,
-          date: date || new Date().toISOString().split('T')[0]
+          date: date || new Date().toISOString().split('T')[0],
+          tranche: tranche || 'MATIN'
         };
       });
 
@@ -811,7 +859,6 @@
           });
         }
         
-        // Ajout local provisoire
         items.forEach(it => {
           cachedTournees.push({
             id: "TRN-LOC-" + Date.now().toString(36) + Math.random(),
@@ -822,40 +869,34 @@
             designation: it.designation,
             ordre: it.ordre,
             statut: 'A_FAIRE',
-            date: it.date
+            date: it.date,
+            tranche: it.tranche
           });
         });
         localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
-        alert(`${items.length} tournée(s) assignée(s) avec succès à ${agent} !`);
+        closeManualAssignModal();
         manualSelectedCatalogSaps = [];
-        renderAdminCatalogPicker("");
-        renderAdminTourneesTable();
+        renderAgendaTable();
       } catch (err) {
         alert("Erreur lors de l'enregistrement de la tournée : " + err);
       }
     }
 
-    // ================= DRAG & DROP & IMPORT CSV (MODE 2) =================
+    // ================= IMPORT FICHIER CSV MODÈLE =================
     function downloadTourneeTemplateCSV() {
-      const csvContent = "\uFEFFagent;contractor;trade;sapRef;ordre;date_assignation\n" +
-                         "Agent 1;ENTREPRENEUR A;Electricite;106626;1;2026-09-08\n" +
-                         "Agent 1;ENTREPRENEUR A;Electricite;128977;2;2026-09-08\n" +
-                         "Agent 2;ENTREPRENEUR B;Sanitaire;105500;1;2026-09-08";
+      const csvContent = "\uFEFFdate_previsionnelle;tranche_horaire;agent;contractor;trade;sapRef;ordre\n" +
+                         "2026-09-09;MATIN;Agent 1;ENTREPRENEUR A;Electricite;106626;1\n" +
+                         "2026-09-09;APRES_MIDI;Agent 1;ENTREPRENEUR A;Electricite;128977;2\n" +
+                         "2026-09-10;MATIN;Agent 2;ENTREPRENEUR B;Sanitaire;105500;1";
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "modele_import_tournees.csv";
+      a.download = "modele_agenda_tournees.csv";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    }
-
-    function handleFileDrop(e) {
-      e.preventDefault();
-      const files = e.dataTransfer.files;
-      if (files.length > 0) processCsvFile(files[0]);
     }
 
     function handleFileSelect(e) {
@@ -866,54 +907,48 @@
     function processCsvFile(file) {
       const reader = new FileReader();
       reader.onload = function(e) {
-        const text = e.target.result;
-        parseCsvText(text);
+        parseCsvText(e.target.result);
       };
       reader.readAsText(file, 'UTF-8');
     }
 
-    function parseCsvText(text) {
+    async function parseCsvText(text) {
       const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== "");
       if (lines.length <= 1) {
-        alert("Le fichier CSV est vide ou ne contient que l'en-tête.");
+        alert("Le fichier CSV est vide.");
         return;
       }
 
       const delimiter = lines[0].includes(';') ? ';' : ',';
-      parsedBulkImportData = [];
+      const bulkItems = [];
 
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(delimiter).map(c => c.replace(/^["']|["']$/g, '').trim());
-        if (cols.length >= 4) {
-          const sapRef = cols[3] || '';
+        if (cols.length >= 6) {
+          const sapRef = cols[5] || '';
           const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
-          parsedBulkImportData.push({
-            agent: cols[0] || '',
-            contractor: cols[1] || '',
-            trade: cols[2] || '',
+          bulkItems.push({
+            date: cols[0] || new Date().toISOString().split('T')[0],
+            tranche: cols[1] || 'MATIN',
+            agent: cols[2] || '',
+            contractor: cols[3] || '',
+            trade: cols[4] || '',
             sapRef: sapRef,
             designation: catItem ? catItem.designation : '',
-            ordre: Number(cols[4] || i),
-            date: cols[5] || new Date().toISOString().split('T')[0]
+            ordre: Number(cols[6] || i)
           });
         }
       }
 
-      const box = document.getElementById("importPreviewBox");
-      const label = document.getElementById("importPreviewLabel");
-      if (box && label) {
-        label.innerText = `${parsedBulkImportData.length} ligne(s) valide(s) prête(s) à être importée(s)`;
-        box.classList.remove("hidden");
+      if (bulkItems.length === 0) {
+        alert("Aucune ligne valide trouvée dans le CSV.");
+        return;
       }
-    }
-
-    async function confirmBulkImport() {
-      if (parsedBulkImportData.length === 0) return;
 
       const payload = {
         action: "CREATE_TOURNEES_BULK",
         user: currentAdmin,
-        items: parsedBulkImportData
+        items: bulkItems
       };
 
       try {
@@ -925,9 +960,9 @@
           });
         }
 
-        parsedBulkImportData.forEach(it => {
+        bulkItems.forEach(it => {
           cachedTournees.push({
-            id: "TRN-BULK-" + Date.now().toString(36) + Math.random(),
+            id: "TRN-CSV-" + Date.now().toString(36) + Math.random(),
             agent: it.agent,
             contractor: it.contractor,
             trade: it.trade,
@@ -935,67 +970,121 @@
             designation: it.designation,
             ordre: it.ordre,
             statut: 'A_FAIRE',
-            date: it.date
+            date: it.date,
+            tranche: it.tranche
           });
         });
         localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
-        alert(`${parsedBulkImportData.length} tournée(s) importée(s) avec succès !`);
-        parsedBulkImportData = [];
-        document.getElementById("importPreviewBox").classList.add("hidden");
-        renderAdminTourneesTable();
+        alert(`${bulkItems.length} mission(s) importée(s) avec succès dans l'agenda !`);
+        renderAgendaTable();
       } catch (err) {
-        alert("Erreur lors de l'import en masse : " + err);
+        alert("Erreur lors de l'import CSV : " + err);
       }
     }
 
-    function renderAdminTourneesTable() {
-      const tbody = document.getElementById("adminTourneesTableBody");
-      const countLabel = document.getElementById("adminTourneesCountLabel");
+    // ================= RENDU AGENDA & COMPLETION =================
+    function renderAgendaTable() {
+      const tbody = document.getElementById("agendaTableBody");
+      const countLabel = document.getElementById("agendaCountLabel");
+      const filterDate = document.getElementById("agendaFilterDate").value;
+      const filterAgent = document.getElementById("agendaFilterAgent").value;
+      
       if (!tbody) return;
 
-      if (!cachedTournees || cachedTournees.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">Aucune tournée active enregistrée.</td></tr>`;
-        if (countLabel) countLabel.innerText = "0 tournée(s) active(s)";
-        return;
+      let list = cachedTournees || [];
+      if (filterDate) {
+        list = list.filter(t => t.date === filterDate);
+      }
+      if (filterAgent) {
+        list = list.filter(t => t.agent === filterAgent);
       }
 
-      if (countLabel) countLabel.innerText = `${cachedTournees.length} tournée(s) active(s)`;
+      if (countLabel) countLabel.innerText = `${list.length} mission(s) planifiée(s)`;
 
-      tbody.innerHTML = cachedTournees.map(t => {
-        const isDone = t.statut === 'VALIDE';
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${t.date || '--'}</td>
-            <td class="p-3 font-bold text-slate-900">${t.agent}</td>
-            <td class="p-3 text-slate-700">${t.contractor || '--'} <span class="text-slate-400">(${t.trade || '--'})</span></td>
-            <td class="p-3">
-              <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
-              <span class="text-slate-600 truncate block max-w-[200px]" title="${t.designation}">${t.designation || '--'}</span>
-            </td>
-            <td class="p-3 text-center font-mono font-bold">${t.ordre || 1}</td>
-            <td class="p-3 text-center">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-                ${isDone ? 'VALIDE' : 'À FAIRE'}
-              </span>
-            </td>
-            <td class="p-3 text-right">
-              <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition" title="Supprimer">
-                <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">Aucune mission planifiée pour ces critères.</td></tr>`;
+      } else {
+        tbody.innerHTML = list.map(t => {
+          const isDone = t.statut === 'VALIDE';
+          const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-3 font-mono text-[11px] text-slate-700 whitespace-nowrap">
+                <strong class="block text-slate-900">${t.date || '--'}</strong>
+                <span class="text-[10px] text-slate-400">${trancheLabel}</span>
+              </td>
+              <td class="p-3 font-bold text-slate-900">${t.agent}</td>
+              <td class="p-3 text-slate-700">${t.contractor || '--'} <span class="text-slate-400">(${t.trade || '--'})</span></td>
+              <td class="p-3">
+                <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
+                <span class="text-slate-600 truncate block max-w-[180px]" title="${t.designation}">${t.designation || '--'}</span>
+              </td>
+              <td class="p-3 text-center font-mono font-bold">${t.ordre || 1}</td>
+              <td class="p-3 text-center">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+                  ${isDone ? 'VALIDE' : 'À FAIRE'}
+                </span>
+              </td>
+              <td class="p-3 text-right">
+                <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition" title="Supprimer">
+                  <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      renderCompletionMetrics(cachedTournees || []);
       lucide.createIcons();
     }
 
+    function renderCompletionMetrics(allTournees) {
+      const total = allTournees.length;
+      const done = allTournees.filter(t => t.statut === 'VALIDE').length;
+      const pending = total - done;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      document.getElementById("globalCompletionPct").innerText = `${pct}%`;
+      document.getElementById("globalCompletionBar").style.width = `${pct}%`;
+      document.getElementById("kpiDoneTasks").innerText = done;
+      document.getElementById("kpiPendingTasks").innerText = pending;
+
+      const agentListContainer = document.getElementById("agentCompletionList");
+      if (!agentListContainer) return;
+
+      if (availableAgents.length === 0) {
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic">Aucun agent configuré.</div>`;
+        return;
+      }
+
+      agentListContainer.innerHTML = availableAgents.map(agent => {
+        const agentTasks = allTournees.filter(t => t.agent === agent);
+        const aTotal = agentTasks.length;
+        const aDone = agentTasks.filter(t => t.statut === 'VALIDE').length;
+        const aPct = aTotal > 0 ? Math.round((aDone / aTotal) * 100) : 0;
+
+        return `
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-slate-900">${agent}</span>
+              <span class="font-mono text-xs font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-600'}">${aDone}/${aTotal} (${aPct}%)</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     async function deleteTourneeAdminItem(id) {
-      if (!confirm("Supprimer cette mission de tournée ?")) return;
+      if (!confirm("Supprimer cette mission de l'agenda ?")) return;
 
       cachedTournees = cachedTournees.filter(t => t.id !== id);
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
-      renderAdminTourneesTable();
+      renderAgendaTable();
 
       if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
         fetch(GOOGLE_SCRIPT_URL, {
@@ -1298,7 +1387,7 @@
           initMultiSelects();
           populateAdminDropdown();
           populateTourneeAdminDropdowns();
-          renderAdminTourneesTable();
+          renderAgendaTable();
           applyFilters();
         }
       } catch (err) {
@@ -1830,7 +1919,7 @@
           comboDetails[comboKey] = { count, timeStr };
         });
 
-        const comboList = Object.entries(comboDetails).map(([combo, data]) => `
+        const comboList = Object.entries(comboDetails).map(([combo, data] ) => `
           <li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-indigo-600">${data.timeStr}</strong> | <strong class="text-orange-600">${data.count} ligne(s)</strong></li>
         `).join('');
 
@@ -1975,7 +2064,7 @@
       } else if (v === 'tournees') {
         document.getElementById("viewTourneesAdmin").classList.remove("hidden");
         document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
-        renderAdminTourneesTable();
+        renderAgendaTable();
       }
       lucide.createIcons();
     }
