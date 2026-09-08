@@ -298,6 +298,22 @@
       }
     }
 
+    function normalizeDateYMD(dateVal) {
+      if (!dateVal) return "";
+      if (dateVal instanceof Date) {
+        const y = dateVal.getFullYear();
+        const m = String(dateVal.getMonth() + 1).padStart(2, '0');
+        const d = String(dateVal.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+      const str = String(dateVal).trim();
+      const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (parts) {
+        return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
+      }
+      return str.split('T')[0];
+    }
+
     async function syncMobileData() {
       if (!navigator.onLine) return;
       const dot = document.getElementById("syncDot");
@@ -323,7 +339,7 @@
         updatePendingBadge();
       }
 
-      // 2. Récupération des données distantes
+      // 2. Récupération des données distantes avec fusion protectrice
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
@@ -332,7 +348,23 @@
           if (data.agents) localStorage.setItem("offline_agents", JSON.stringify(availableAgents = data.agents));
           if (data.contractors) localStorage.setItem("offline_contractors", JSON.stringify(availableContractors = data.contractors));
           if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(availableTrades = data.trades));
-          if (data.tournees) localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees = data.tournees));
+          
+          if (data.tournees) {
+            const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
+            const localValides = new Set(
+              currentLocal.filter(t => t.statut === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`)
+            );
+
+            cachedTournees = data.tournees.map(serverTask => {
+              const key = `${serverTask.agent}_${serverTask.sapRef}`;
+              if (localValides.has(key)) {
+                return { ...serverTask, statut: 'VALIDE' };
+              }
+              return serverTask;
+            });
+
+            localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+          }
 
           initMobileDropdowns();
           renderTournee();
@@ -482,7 +514,7 @@
       sessionHistory.unshift(record);
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
 
-      // Validation locale et mise en file de tournée
+      // Validation locale et mise en file de la tournée correspondante
       let matchedTourneeId = null;
       cachedTournees.forEach(t => {
         if (t.agent === currentAgent && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim()) {
@@ -492,10 +524,9 @@
       });
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
-      // Ajout à la file d'attente hors ligne
       pendingSyncQueue.push({ action: "CREATE", ...record });
       if (matchedTourneeId) {
-        pendingSyncQueue.push({ action: "UPDATE_TOURNEE_STATUS", id: matchedTourneeId, statut: 'VALIDE', user: currentAgent });
+        pendingSyncQueue.push({ action: "UPDATE_TOURNEE_STATUS", id: matchedTourneeId, statut: 'VALIDE', user: currentAgent, sapRef: selectedArticle.sapRef });
       }
       localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
       updatePendingBadge();
@@ -509,17 +540,18 @@
       document.getElementById("inputQuantity").value = "0";
 
       alert("Saisie enregistrée avec succès !");
+      switchMobileTab('historique');
       if (navigator.onLine) syncMobileData();
     }
 
     function renderHistory() {
       sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = normalizeDateYMD(new Date());
 
       const agentHistory = sessionHistory.filter(h => {
         const matchUser = !activeAgentNorm || String(h.user || "").trim().toLowerCase() === activeAgentNorm;
-        const matchDay = String(h.timestamp || "").split('T')[0] === todayStr;
+        const matchDay = normalizeDateYMD(h.timestamp) === todayStr;
         return matchUser && matchDay;
       });
 
@@ -585,10 +617,10 @@
       const container = document.getElementById("tourneeListContainer");
       if (!container) return;
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = normalizeDateYMD(new Date());
       const agentTournees = (cachedTournees || []).filter(t => {
         const matchAgent = String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase();
-        return matchAgent && String(t.date || "") >= todayStr;
+        return matchAgent && normalizeDateYMD(t.date) >= todayStr;
       }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
       if (agentTournees.length === 0) {
@@ -599,13 +631,16 @@
       container.innerHTML = agentTournees.map(t => {
         const isDone = t.statut === 'VALIDE';
         const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
+        const clickAttr = isDone ? '' : `onclick="selectArticleFromTournee('${t.sapRef}')"`;
+        const styleClass = isDone ? 'border-emerald-300 bg-emerald-50/60 opacity-90 cursor-default' : 'border-slate-200 hover:border-orange-300 cursor-pointer';
+
         return `
-          <div onclick="selectArticleFromTournee('${t.sapRef}')" class="bg-white border ${isDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs cursor-pointer transition hover:border-orange-300 space-y-1.5">
+          <div ${clickAttr} class="bg-white border ${styleClass} p-3.5 rounded-2xl shadow-xs transition space-y-1.5">
             <div class="flex justify-between items-center text-xs">
               <span class="font-mono font-bold text-orange-800">${t.sapRef}</span>
               <div class="flex items-center space-x-2">
-                <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">${t.date}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? 'VALIDE' : 'À FAIRE'}</span>
+                <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">${normalizeDateYMD(t.date)}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800'}">${isDone ? '✓ VALIDÉ' : 'À FAIRE'}</span>
               </div>
             </div>
             <p class="text-xs font-bold text-slate-900 truncate">${t.designation || 'Sans libellé'}</p>
@@ -616,17 +651,22 @@
           </div>
         `;
       }).join('');
+      lucide.createIcons();
     }
 
     function selectArticleFromTournee(sapRef) {
-      const tourneeItem = cachedTournees.find(t => String(t.sapRef).trim() === String(sapRef).trim() && t.agent === currentAgent);
-      const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
+      const tourneeItem = (cachedTournees || []).find(t => 
+        String(t.sapRef).trim() === String(sapRef).trim() && 
+        String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() &&
+        t.statut !== 'VALIDE'
+      );
 
       if (tourneeItem) {
         if (tourneeItem.contractor) document.getElementById("selectContractor").value = tourneeItem.contractor;
         if (tourneeItem.trade) document.getElementById("selectTrade").value = tourneeItem.trade;
       }
 
+      const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
       if (item) {
         selectArticleFromSearch(item);
         switchMobileTab('comptage');
