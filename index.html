@@ -12,7 +12,6 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100 overflow-hidden">
 
-  <!-- EN-TÊTE MOBILE -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 z-20 shadow-xs">
     <div class="flex items-center space-x-2.5">
       <div class="w-8 h-8 rounded-lg overflow-hidden border bg-slate-50 flex items-center justify-center">
@@ -30,10 +29,8 @@
     </div>
   </header>
 
-  <!-- CONTENU -->
   <main class="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
     
-    <!-- COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
       <div class="bg-white border p-4 rounded-2xl shadow-xs space-y-3">
         <h2 class="text-xs font-bold text-slate-500 uppercase">Paramètres de Saisie</h2>
@@ -63,13 +60,11 @@
       </div>
     </section>
 
-    <!-- HISTORIQUE -->
     <section id="tabHistorique" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1"><h2 class="text-xs font-bold text-slate-500 uppercase">Saisies de la session</h2><span id="historyCount" class="text-xs font-mono font-bold text-orange-700">0</span></div>
       <div id="historyListContainer" class="space-y-2"></div>
     </section>
 
-    <!-- MA TOURNÉE -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="bg-white border p-4 rounded-2xl shadow-xs space-y-3">
         <h2 class="text-xs font-bold text-slate-500 uppercase">Feuille de route</h2>
@@ -78,14 +73,12 @@
     </section>
   </main>
 
-  <!-- NAVIGATION -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] cursor-pointer"><i data-lucide="calculator" class="w-5 h-5"></i><span>Comptage</span></button>
     <button onclick="switchMobileTab('historique')" id="navHistorique" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] cursor-pointer"><i data-lucide="history" class="w-5 h-5"></i><span>Historique</span></button>
     <button onclick="switchMobileTab('tournee')" id="navTournee" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] cursor-pointer"><i data-lucide="route" class="w-5 h-5"></i><span>Ma Tournée</span></button>
   </nav>
 
-  <!-- MODALE CONFIG -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <h2 class="text-base font-bold">Profil Collaborateur</h2>
@@ -180,10 +173,19 @@
           if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(data.trades));
 
           if (data.tournees) {
-            const localValides = new Set(cachedTournees.filter(t => t.statut === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`));
+            const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
+            const localValides = new Set(currentLocal.filter(t => t.statut === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`));
             cachedTournees = data.tournees.map(st => localValides.has(`${st.agent}_${st.sapRef}`) ? {...st, statut: 'VALIDE'} : st);
             localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
           }
+
+          if (data.history) {
+            const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
+            const serverAgentHistory = data.history.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
+            localStorage.setItem("mob_session_history", JSON.stringify(serverAgentHistory));
+            sessionHistory = serverAgentHistory;
+          }
+
           initMobileDropdowns();
           renderTournee();
           renderHistory();
@@ -268,12 +270,15 @@
     }
 
     function renderTournee() {
+      cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
       const today = normalizeDateYMD(new Date());
       const list = cachedTournees.filter(t => t.agent === currentAgent && normalizeDateYMD(t.date) >= today);
       document.getElementById("tourneeListContainer").innerHTML = list.length ? list.map(t => {
-        const isDone = t.statut === 'VALIDE';
+        const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+        const clickAttr = isDone ? '' : `onclick="selectArticleFromTournee('${t.sapRef}')"`;
+        const styleClass = isDone ? 'border-emerald-300 bg-emerald-50/60 opacity-90 cursor-default' : 'border-slate-200 hover:border-orange-300 cursor-pointer';
         return `
-          <div ${isDone ? '' : `onclick="selectArticleFromTournee('${t.sapRef}')"`} class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/50 opacity-85' : 'hover:border-orange-300 cursor-pointer'} p-3.5 rounded-2xl shadow-xs space-y-1">
+          <div ${clickAttr} class="bg-white border ${styleClass} p-3.5 rounded-2xl shadow-xs space-y-1">
             <div class="flex justify-between items-center text-xs font-bold">
               <span class="text-orange-800">${t.sapRef}</span>
               <span class="px-2 py-0.5 rounded text-[10px] ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? '✓ VALIDÉ' : 'À FAIRE'}</span>
@@ -285,10 +290,10 @@
     }
 
     function selectArticleFromTournee(sapRef) {
-      const task = cachedTournees.find(t => t.sapRef === sapRef && t.agent === currentAgent && t.statut !== 'VALIDE');
-      if (task) {
-        if (task.contractor) document.getElementById("selectContractor").value = task.contractor;
-        if (task.trade) document.getElementById("selectTrade").value = task.trade;
+      const tourneeItem = cachedTournees.find(t => t.sapRef === sapRef && t.agent === currentAgent && t.statut !== 'VALIDE');
+      if (tourneeItem) {
+        if (tourneeItem.contractor) document.getElementById("selectContractor").value = tourneeItem.contractor;
+        if (tourneeItem.trade) document.getElementById("selectTrade").value = tourneeItem.trade;
       }
       const item = catalog.find(i => i.sapRef === sapRef);
       if (item) { selectArticleFromSearch(item); switchMobileTab('comptage'); }
