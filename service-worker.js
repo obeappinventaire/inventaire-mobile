@@ -1,4 +1,4 @@
-const CACHE_NAME = 'inventaire-cache-v7';
+const CACHE_NAME = 'inventaire-cache-v8';
 
 const CORE_ASSETS = [
   './',
@@ -10,9 +10,7 @@ const CORE_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(CORE_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
   );
   self.skipWaiting();
 });
@@ -28,48 +26,61 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const requestUrl = event.request.url;
+  const request = event.request;
+  const url = new URL(request.url);
 
-  if (requestUrl.includes('script.google.com')) {
+  // Ignorer les requêtes non-GET et les requêtes vers Google Script
+  if (request.method !== 'GET' || url.hostname.includes('script.google.com')) {
     return;
   }
 
-  if (event.request.mode === 'navigate') {
+  // Stratégie pour la navigation HTML (Network-first avec fallback adapté par page)
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      fetch(request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
           return networkResponse;
         })
-        .catch(() => caches.match(event.request).then((res) => res || caches.match('./index.html')))
+        .catch(() => {
+          return caches.match(request).then((res) => {
+            if (res) return res;
+            if (request.url.includes('monitoring.html')) {
+              return caches.match('./monitoring.html');
+            }
+            return caches.match('./index.html');
+          });
+        })
     );
     return;
   }
 
+  // Stratégie Cache-First pour les assets statiques et CDN
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      return fetch(event.request)
+      return fetch(request)
         .then((networkResponse) => {
+          // Mise en cache des réponses valides (y compris CORS ou opaque pour CDNs)
           if (
             networkResponse &&
-            networkResponse.status === 200 &&
-            (networkResponse.type === 'basic' || networkResponse.type === 'cors')
+            (networkResponse.status === 200 || networkResponse.type === 'opaque')
           ) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
           return networkResponse;
         })
-        .catch(() => caches.match('./index.html'));
+        .catch(() => {
+          // NE PAS renvoyer index.html pour les images, CSS ou scripts JS
+          return new Response('', { status: 408, statusText: 'Offline Asset Unavailable' });
+        });
     })
   );
 });
