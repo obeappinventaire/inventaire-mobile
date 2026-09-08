@@ -349,7 +349,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS (AVEC LES CARTES DE SYNTHÈSE ET PÉRIMÈTRE DÉTAILLÉ) ================= -->
+        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS (AVEC LES 4 KPI DE SYNTHÈSE + CARTES DÉTAILLÉES PAR AGENT) ================= -->
         <section id="viewAgents" class="hidden space-y-6">
           
           <div>
@@ -364,7 +364,7 @@
               </button>
             </div>
             
-            <!-- BLOC DES 4 CARTES STATISTIQUES DÉDIÉES À L'ONGLET AGENTS -->
+            <!-- BLOC DES 4 CARTES KPI GLOBALES DE LA FLOTTE -->
             <div class="grid grid-cols-4 gap-4">
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
                 <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
@@ -399,6 +399,7 @@
             </div>
           </div>
 
+          <!-- CONTENEUR DES ACCORDÉONS ET CARTES DÉTAILLÉES PAR AGENT (AVEC DÉBIT L/H, ANOMALIES ET PÉRIMÈTRE) -->
           <div id="agentsAccordionContainer" class="space-y-4"></div>
         </section>
 
@@ -926,6 +927,7 @@
       lucide.createIcons();
     }
 
+    // FONCTION DE RENDU DE CHAQUE AGENT AVEC SES 3 KPIS DÉTAILLÉS (L/H, ANOMALIES, PÉRIMÈTRE)
     function renderAgentsView(list) {
       const container = document.getElementById("agentsAccordionContainer");
       if (!container) return;
@@ -958,7 +960,28 @@
         const agentEntries = cachedHistory.filter(i => i.user === agent);
         const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
         
-        // Calcul du périmètre de l'agent
+        // 1. Calcul du Débit L/h de l'agent
+        const times = agentEntries.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
+        let agentRateStr = "0 l/h";
+        if (times.length > 1) {
+          const minT = Math.min(...times);
+          const maxT = Math.max(...times);
+          const hours = (maxT - minT) / 3600000;
+          if (hours > 0.05) {
+            agentRateStr = `${Math.round(agentEntries.length / hours)} l/h`;
+          } else {
+            agentRateStr = `${agentEntries.length} l/h`;
+          }
+        } else {
+          agentRateStr = `${agentEntries.length} l/h`;
+        }
+
+        // 2. Calcul des Anomalies de l'agent (Ruptures + Atypiques)
+        const agentRuptures = agentEntries.filter(i => Number(i.quantity) === 0).length;
+        const agentAtyp = customMaxQty !== null ? agentEntries.filter(i => Number(i.quantity) > customMaxQty).length : 0;
+        const totalAnomalies = agentRuptures + agentAtyp;
+
+        // 3. Calcul du Périmètre de l'agent
         const contractorsSet = [...new Set(agentEntries.map(i => i.contractor).filter(Boolean))];
         const tradesSet = [...new Set(agentEntries.map(i => i.trade).filter(Boolean))];
         const perimetreStr = contractorsSet.length > 0 ? `${contractorsSet.join(', ')} (${tradesSet.join(', ')})` : "Aucun périmètre actif";
@@ -988,13 +1011,25 @@
               <span class="text-xs font-mono text-orange-700 font-bold bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100">${agentEntries.length} lignes • ${totalPieces} pcs</span>
             </div>
             
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
-              <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Périmètre d'intervention :</span>
-                <span class="font-semibold text-slate-800">${perimetreStr}</span>
+            <!-- LES 3 CARTES KPI INDIVIDUELLES DE L'AGENT -->
+            <div class="grid grid-cols-3 gap-3 pt-1">
+              <div class="bg-indigo-50/60 border border-indigo-100 p-2.5 rounded-xl text-center">
+                <span class="text-[10px] font-bold text-indigo-600 uppercase block">1. Débit / Vitesse</span>
+                <span class="text-base font-black text-indigo-700 font-mono mt-0.5 block">${agentRateStr}</span>
               </div>
-              <button onclick="filterAndSwitchToGlobal('${agent}', '', '')" class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-orange-700 transition shadow-xs flex items-center gap-1">
-                <span>Filtrer ses lignes</span>
+              <div class="bg-rose-50/60 border border-rose-100 p-2.5 rounded-xl text-center">
+                <span class="text-[10px] font-bold text-rose-600 uppercase block">2. Anomalies Signalées</span>
+                <span class="text-base font-black text-rose-700 font-mono mt-0.5 block">${totalAnomalies} <span class="text-[10px] font-normal text-rose-500">(0: ${agentRuptures}, >${customMaxQty || '--'}: ${agentAtyp})</span></span>
+              </div>
+              <div class="bg-amber-50/60 border border-amber-100 p-2.5 rounded-xl text-center flex flex-col justify-between">
+                <span class="text-[10px] font-bold text-amber-700 uppercase block">3. Périmètre d'action</span>
+                <span class="text-xs font-bold text-slate-800 truncate px-1" title="${perimetreStr}">${perimetreStr}</span>
+              </div>
+            </div>
+
+            <div class="pt-1 flex justify-end">
+              <button onclick="filterAndSwitchToGlobal('${agent}', '', '')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-orange-700 transition flex items-center gap-1">
+                <span>Filtrer ses lignes dans l'Activité Globale</span>
               </button>
             </div>
           </div>
