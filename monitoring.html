@@ -215,19 +215,19 @@
               <span id="periodBadgeGlobal" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
             </div>
             
-            <!-- BLOC DES 4 KPI GLOBAUX COMPACTS (MOINS LARGES) -->
+            <!-- BLOC DES 4 KPI GLOBAUX COMPACTS -->
             <div class="grid grid-cols-4 gap-3 max-w-5xl">
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Saisies</span>
                 <span id="kpiTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
 
               <!-- KPI RUPTURES -->
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs relative group">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
                   <button onclick="filterByKpi('ZERO')" title="Filtrer ruptures" 
@@ -239,7 +239,7 @@
               </div>
 
               <!-- KPI ALERTES ATYPIQUES -->
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs relative group">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
                   <button onclick="filterByKpi('HIGH')" title="Filtrer atypiques" 
@@ -369,19 +369,19 @@
               </button>
             </div>
             
-            <!-- BLOC DES 4 KPI GLOBAUX FLOTTE (MOINS LARGES) -->
+            <!-- BLOC DES 4 KPI GLOBAUX FLOTTE COMPACTS -->
             <div class="grid grid-cols-4 gap-3 max-w-5xl">
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
                 <span id="kpiAgentsTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Pièces Totales</span>
                 <span id="kpiAgentsTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
 
               <!-- KPI RUPTURES DÉCLARÉES -->
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
                   <span class="p-1 rounded-md bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition shadow-2xs">
@@ -392,7 +392,7 @@
               </div>
 
               <!-- KPI ALERTES FLOTTE -->
-              <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Flotte</span>
                   <span class="p-1 rounded-md bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition shadow-2xs">
@@ -404,7 +404,7 @@
             </div>
           </div>
 
-          <!-- CONTENEUR DES CARTES AGENTS AVEC TIROIRS ET LIGNES/PIECES RAPPROCHÉES -->
+          <!-- CONTENEUR DES CARTES AGENTS (TIROIRS COMPACTS) -->
           <div id="agentsAccordionContainer" class="space-y-3"></div>
         </section>
 
@@ -443,10 +443,22 @@
   </div>
 
   <script>
+    // Enregistrement et auto-actualisation sur prise de contrôle du nouveau Service Worker
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('SW Supervision enregistré:', reg.scope))
+          .then(reg => {
+            console.log('SW Supervision enregistré:', reg.scope);
+            reg.update();
+          })
           .catch(err => console.warn('Échec enregistrement SW:', err));
       });
     }
@@ -669,7 +681,7 @@
     }
 
     function getDistinctArticlesOnPeriod() {
-      const periodList = getPeriodFilteredHistory();
+      const periodList = getPeriodFilteredHistory() || [];
       const map = new Map();
       periodList.forEach(item => {
         const ref = String(item.sapRef || "").trim();
@@ -749,7 +761,7 @@
       if (!container) return;
 
       container.innerHTML = selectedArticleTags.map(ref => {
-        const item = cachedHistory.find(i => String(i.sapRef).trim() === ref);
+        const item = (cachedHistory || []).find(i => String(i.sapRef).trim() === ref);
         const label = item ? `${ref} - ${item.designation}` : ref;
         return `
           <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
@@ -922,7 +934,7 @@
       const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
       const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
-      return cachedHistory.filter(item => {
+      return (cachedHistory || []).filter(item => {
         const itDate = parseItemDate(item.timestamp);
         if (sDate && itDate && itDate < sDate) return false;
         if (eDate && itDate && itDate > eDate) return false;
@@ -1035,7 +1047,6 @@
       lucide.createIcons();
     }
 
-    // ================= SUIVI TERRAIN ET AGENTS AVEC TIROIR UNIFIÉ ET LIGNES/PIECES RAPPROCHÉES =================
     function toggleAgentDrawer(agent) {
       openDrawers[agent] = !openDrawers[agent];
       const drawer = document.getElementById(`agent-drawer-${agent.replace(/\s+/g, '_')}`);
@@ -1058,7 +1069,7 @@
       const container = document.getElementById("agentsAccordionContainer");
       if (!container) return;
 
-      if (availableAgents.length === 0) {
+      if (!availableAgents || availableAgents.length === 0) {
         container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Aucun agent configuré.</div>`;
         return;
       }
@@ -1072,7 +1083,7 @@
 
       if (filterOnlyActiveAgents) {
         agentsToRender = agentsToRender.filter(agent => {
-          const agentEntries = periodHistory.filter(i => i.user === agent);
+          const agentEntries = (periodHistory || []).filter(i => i.user === agent);
           if (agentEntries.length === 0) return false;
           const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
           const dt = parseItemDate(sorted[0].timestamp);
@@ -1086,14 +1097,13 @@
       }
 
       container.innerHTML = agentsToRender.map(agent => {
-        const agentEntries = periodHistory.filter(i => i.user === agent);
+        const agentEntries = (periodHistory || []).filter(i => i.user === agent);
         const totalLines = agentEntries.length;
         const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
 
         const sortedAsc = [...agentEntries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
         const sortedDesc = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
 
-        // Statut Tripartite
         let statusBadgeHtml = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Session close</span>`;
         let lastSignalStr = "--";
 
@@ -1110,7 +1120,6 @@
           }
         }
 
-        // Calcul Débit Net Combiné (L/h et Pcs/h)
         let netActiveMs = 0;
         const intervals = [];
 
@@ -1136,24 +1145,20 @@
 
         const combinedRateStr = `${rateLinesH} l/h • ${ratePiecesH} pcs/h`;
 
-        // Calcul Anomalies et Taux Relatif
         const ruptures = agentEntries.filter(i => Number(i.quantity) === 0).length;
         const atypiques = customMaxQty !== null ? agentEntries.filter(i => Number(i.quantity) > customMaxQty).length : 0;
         const totalAnomalies = ruptures + atypiques;
         const anomalyPercent = totalLines > 0 ? Math.round((totalAnomalies / totalLines) * 100) : 0;
 
-        // KPI Managériaux
         const intensityPcsLine = totalLines > 0 ? (totalPieces / totalLines).toFixed(1) : "0.0";
         const uniqueSaps = new Set(agentEntries.map(i => String(i.sapRef).trim())).size;
         const diversityRate = totalLines > 0 ? Math.round((uniqueSaps / totalLines) * 100) : 0;
         const avgGapMin = intervals.length > 0 ? (intervals.reduce((s, g) => s + g, 0) / intervals.length / 60000).toFixed(1) : "--";
 
-        // Périmètre
         const contractorsSet = [...new Set(agentEntries.map(i => i.contractor).filter(Boolean))];
         const tradesSet = [...new Set(agentEntries.map(i => i.trade).filter(Boolean))];
         const perimetreStr = contractorsSet.length > 0 ? `${contractorsSet.join(', ')} (${tradesSet.join(', ')})` : "Aucun chantier actif";
 
-        // Tiroir rétractable
         const lastFiveEntries = sortedDesc.slice(0, 5);
         const drawerId = `agent-drawer-${agent.replace(/\s+/g, '_')}`;
         const iconId = `agent-drawer-icon-${agent.replace(/\s+/g, '_')}`;
@@ -1163,13 +1168,11 @@
         return `
           <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-xs transition hover:border-slate-300">
             
-            <!-- LIGNE COMPACTE : NOM, STATUT ET LIGNES/PIECES RAPPROCHÉS À GAUCHE -->
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
                 <span class="font-black text-slate-900 text-sm tracking-wide">${agent}</span>
                 ${statusBadgeHtml}
                 
-                <!-- ZONE LIGNES ET PIECES RAPPROCHÉE DU PRÉNOM -->
                 <span class="text-xs font-mono text-orange-700 font-bold bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200 shadow-2xs">
                   ${totalLines} lignes • ${totalPieces} pcs
                 </span>
@@ -1177,7 +1180,6 @@
                 <span class="text-[10px] text-slate-400 font-mono hidden sm:inline">Signal : ${lastSignalStr}</span>
               </div>
 
-              <!-- ACTIONS RAPIDES À DROITE (TIROIR & FILTRAGE) -->
               <div class="flex items-center space-x-1.5 shrink-0">
                 <button onclick="toggleAgentDrawer('${agent}')" 
                         class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center gap-1">
@@ -1192,10 +1194,8 @@
               </div>
             </div>
 
-            <!-- MENU TIROIR ACCORDÉON (CONTIENT LES 4 CARTES KPI ET LE MINI-TABLEAU) -->
             <div id="${drawerId}" class="${isDrawerOpen ? '' : 'hidden'} mt-3 pt-3 border-t border-slate-100 space-y-3">
               
-              <!-- LES 4 CARTES KPI AGENT DÉSORMAIS INTÉGRÉES DANS LE TIROIR -->
               <div class="grid grid-cols-4 gap-2.5">
                 <div class="bg-indigo-50/60 border border-indigo-100 p-2 rounded-xl text-center">
                   <span class="text-[10px] font-bold text-indigo-600 uppercase block">1. Débit Combiné</span>
@@ -1224,7 +1224,6 @@
                 </div>
               </div>
 
-              <!-- MINI-TABLEAU DES 5 DERNIÈRES SAISIES DANS LE TIROIR -->
               <div class="bg-slate-50 rounded-xl border border-slate-200 p-2 overflow-x-auto">
                 <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide px-1 mb-1.5 flex justify-between">
                   <span>5 dernières lignes saisies par l'agent</span>
@@ -1301,7 +1300,7 @@
       const agentFinalizedGroups = {};
       const agentActiveGroups = {};
 
-      list.forEach(item => {
+      (list || []).forEach(item => {
         const lat = Number(item.lat || item.latitude);
         const lng = Number(item.lng || item.longitude);
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
