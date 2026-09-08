@@ -72,6 +72,17 @@
       padding-bottom: 4px;
       z-index: 5;
     }
+
+    @keyframes mic-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.75; }
+    }
+    .mic-listening {
+      animation: mic-pulse 1.2s infinite ease-in-out;
+      background-color: #ef4444 !important;
+      border-color: #f87171 !important;
+      color: #ffffff !important;
+    }
   </style>
 </head>
 <body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
@@ -196,7 +207,7 @@
             </div>
           </div>
 
-          <!-- RECHERCHE CATALOGUE -->
+          <!-- RECHERCHE CATALOGUE AVEC RECONNAISSANCE VOCALE -->
           <div class="relative" id="searchCatalogueWrapper">
             <div class="flex justify-between items-center mb-1.5">
               <label class="block text-xs font-bold text-slate-300 uppercase">Recherche Catalogue</label>
@@ -212,13 +223,22 @@
                      oninput="onSearchInput(this.value)" 
                      onfocus="onSearchFocus()"
                      onkeydown="if(event.key==='Enter') blurSearchInput()"
-                     placeholder="Tapez un mot-clé ou un chiffre..." 
+                     placeholder="Tapez un mot-clé ou dictez la réf..." 
                      autocomplete="off"
                      enterkeyhint="search"
-                     class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3.5 pl-11 pr-10 text-base text-white font-medium focus:outline-none focus:border-indigo-500 shadow-inner">
-              <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1">
-                <i data-lucide="x" class="w-5 h-5"></i>
-              </button>
+                     class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3.5 pl-11 pr-24 text-base text-white font-medium focus:outline-none focus:border-indigo-500 shadow-inner">
+              
+              <div class="absolute right-2 flex items-center space-x-1">
+                <!-- BOUTON RECONNAISSANCE VOCALE -->
+                <button type="button" id="btnVoiceSap" onclick="toggleVoiceSapRecognition()" title="Dicter la référence SAP"
+                        class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 hover:text-amber-300 transition shadow">
+                  <i data-lucide="mic" id="voiceSapIcon" class="w-4 h-4"></i>
+                </button>
+
+                <button id="clearSearchBtn" onclick="clearSearch()" class="hidden w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white transition">
+                  <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+              </div>
             </div>
             
             <div id="suggestionsDropdown" 
@@ -357,6 +377,7 @@
   </div>
 
   <script>
+    // Enregistrement du Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
@@ -388,6 +409,10 @@
 
     let ocrWorker = null;
     let latestCoords = { lat: null, lng: null };
+
+    // Gestion reconnaissance vocale
+    let speechRecognizer = null;
+    let isSpeechListening = false;
 
     let sessionValidationCount = parseInt(sessionStorage.getItem("inv_session_validations") || "0", 10);
 
@@ -460,6 +485,187 @@
 
       let phrase = encouragement !== "" ? `${qtyBelgian}, Ok, ${encouragement} ${agentName}` : `${qtyBelgian}, Ok ${agentName}`;
       speakFeedback(phrase);
+    }
+
+    // ================= RECONNAISSANCE VOCALE DE LA RÉF SAP =================
+    function initSpeechRecognizer() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.warn("SpeechRecognition non supporté sur ce navigateur.");
+        return null;
+      }
+
+      const recognizer = new SpeechRecognition();
+      recognizer.continuous = false;
+      recognizer.interimResults = false;
+      recognizer.lang = 'fr-BE';
+
+      recognizer.onstart = () => {
+        isSpeechListening = true;
+        updateVoiceButtonUI(true);
+        showToast("Écoute en cours... Dictez la référence SAP");
+      };
+
+      recognizer.onresult = (event) => {
+        const transcript = event.results[0][0].transcript || "";
+        console.log("Vocal reçu:", transcript);
+        processSpokenSap(transcript);
+      };
+
+      recognizer.onerror = (event) => {
+        console.warn("Erreur reconnaissance vocale:", event.error);
+        if (event.error === 'not-allowed') {
+          alert("Accès au microphone refusé. Veuillez autoriser le micro dans les paramètres du navigateur.");
+        } else if (event.error !== 'no-speech') {
+          showToast("Erreur audio. Réessayez.");
+        }
+      };
+
+      recognizer.onend = () => {
+        isSpeechListening = false;
+        updateVoiceButtonUI(false);
+      };
+
+      return recognizer;
+    }
+
+    function toggleVoiceSapRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("La reconnaissance vocale n'est pas supportée par votre navigateur mobile.");
+        return;
+      }
+
+      if (!speechRecognizer) {
+        speechRecognizer = initSpeechRecognizer();
+      }
+
+      if (isSpeechListening) {
+        try { speechRecognizer.stop(); } catch(e){}
+        isSpeechListening = false;
+        updateVoiceButtonUI(false);
+      } else {
+        try {
+          speechRecognizer.start();
+        } catch (e) {
+          console.warn("Erreur démarrage micro:", e);
+          speechRecognizer = initSpeechRecognizer();
+          try { speechRecognizer.start(); } catch(err){}
+        }
+      }
+    }
+
+    function updateVoiceButtonUI(listening) {
+      const btn = document.getElementById("btnVoiceSap");
+      const icon = document.getElementById("voiceSapIcon");
+      if (!btn || !icon) return;
+
+      if (listening) {
+        btn.classList.add("mic-listening");
+        icon.className = "w-4 h-4 text-white animate-pulse";
+      } else {
+        btn.classList.remove("mic-listening");
+        icon.className = "w-4 h-4 text-amber-400";
+      }
+      lucide.createIcons();
+    }
+
+    function parseSpokenWordsToDigits(str) {
+      let text = String(str || "").toLowerCase().trim();
+
+      const numMap = {
+        "zéro": "0", "zero": "0", "un": "1", "une": "1", "deux": "2", "de": "2", "trois": "3", "troi": "3",
+        "quatre": "4", "cinq": "5", "six": "6", "sept": "7", "huit": "8", "neuf": "9",
+        "dix": "10", "onze": "11", "douze": "12", "treize": "13", "quatorze": "14", "quinze": "15", "seize": "16",
+        "dix-sept": "17", "dix-huit": "18", "dix-neuf": "19",
+        "vingt": "20", "trente": "30", "quarante": "40", "cinquante": "50", "soixante": "60",
+        "septante": "70", "quatre-vingt": "80", "quatre-vingts": "80", "quatre vingt": "80", "quatre vingts": "80", "huitante": "80", "octante": "80",
+        "nonante": "90", "cent": "100", "mille": "1000"
+      };
+
+      // Remplacement direct des termes régionaux composés fréquents
+      text = text.replace(/quatre[\s\-]vingt[\s\-]dix/g, "90")
+                 .replace(/quatre[\s\-]vingt/g, "80")
+                 .replace(/dix[\s\-]sept/g, "17")
+                 .replace(/dix[\s\-]huit/g, "18")
+                 .replace(/dix[\s\-]neuf/g, "19");
+
+      // Remplacer les mots clés par leurs chiffres
+      for (const [word, digit] of Object.entries(numMap)) {
+        const regex = new RegExp(`\\b${word}\\b`, 'g');
+        text = text.replace(regex, digit);
+      }
+
+      // Nettoyer tous les mots restants et ne conserver que les chiffres
+      return text.replace(/\D/g, "");
+    }
+
+    function processSpokenSap(transcript) {
+      const parsedDigits = parseSpokenWordsToDigits(transcript);
+      console.log("Chiffres extraits du vocal:", parsedDigits);
+
+      if (!parsedDigits || parsedDigits.length < 4) {
+        showToast("Réf non reconnue (trop court). Réessayez.");
+        return;
+      }
+
+      const validCatalogSaps = catalog
+        .map(i => String(i.sapRef).trim())
+        .filter(ref => ref.length === 6);
+
+      let matchedSap = null;
+
+      // 1. Correspondance exacte à 6 chiffres
+      const directMatches = parsedDigits.match(/\d{6}/g) || [];
+      for (const cand of directMatches) {
+        if (validCatalogSaps.includes(cand)) {
+          matchedSap = cand;
+          break;
+        }
+      }
+
+      // 2. Fenêtre glissante de 6 chiffres si chaîne plus longue
+      if (!matchedSap && parsedDigits.length >= 6) {
+        for (let i = 0; i <= parsedDigits.length - 6; i++) {
+          const slice = parsedDigits.substring(i, i + 6);
+          if (validCatalogSaps.includes(slice)) {
+            matchedSap = slice;
+            break;
+          }
+        }
+      }
+
+      // 3. Tolérance de Levenshtein (si un chiffre est mal compris)
+      if (!matchedSap && validCatalogSaps.length > 0) {
+        const candidates = parsedDigits.match(/\d{5,7}/g) || [parsedDigits];
+        for (const cand of candidates) {
+          let minDistance = 999;
+          let bestCandidate = null;
+
+          for (const sap of validCatalogSaps) {
+            const dist = getLevenshteinDistance(cand, sap);
+            if (dist < minDistance) {
+              minDistance = dist;
+              bestCandidate = sap;
+            }
+          }
+
+          if (minDistance <= 1 && bestCandidate) {
+            matchedSap = bestCandidate;
+            break;
+          }
+        }
+      }
+
+      if (matchedSap) {
+        selectArticleBySap(matchedSap);
+        showToast(`Réf vocale validée : ${matchedSap}`);
+      } else {
+        // En cas de non correspondance exacte dans le catalogue, renseigner le champ de recherche pour filtrer
+        document.getElementById("articleSearchInput").value = parsedDigits;
+        onSearchInput(parsedDigits);
+        showToast(`Réf ${parsedDigits} non trouvée directement`);
+      }
     }
 
     function parseItemDate(str) {
