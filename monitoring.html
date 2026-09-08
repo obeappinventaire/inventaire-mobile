@@ -40,7 +40,7 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- MODALE AUTHENTIFICATION ADMIN -->
+  <!-- MODALE D'AUTHENTIFICATION ADMIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -113,7 +113,7 @@
   <!-- STRUCTURE CENTRALE -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- SIDEBAR -->
+    <!-- BARRE LATÉRALE -->
     <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100">
       <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
         
@@ -651,7 +651,7 @@
     }
 
     function updateWeekBadge(startDateStr) {
-      const targetDate = startDateStr ? new Date(startDateStr) : new Date();
+      const targetDate = startDateStr ? parseItemDate(startDateStr) : new Date();
       const iso = getISOWeekNumber(targetDate);
       const weekStr = String(iso.week).padStart(2, '0');
       const badge = document.getElementById("weekBadgeLabel");
@@ -669,6 +669,22 @@
       }
       const iso = new Date(str);
       return isNaN(iso.getTime()) ? new Date(0) : iso;
+    }
+
+    function normalizeDateYMD(dateVal) {
+      if (!dateVal) return "";
+      if (dateVal instanceof Date) {
+        const y = dateVal.getFullYear();
+        const m = String(dateVal.getMonth() + 1).padStart(2, '0');
+        const d = String(dateVal.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+      const str = String(dateVal).trim();
+      const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (parts) {
+        return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
+      }
+      return str.split('T')[0];
     }
 
     function formatDateFrench(dateInput) {
@@ -828,11 +844,19 @@
       manualSelectedCatalogSaps = [];
       renderWallPlanning();
 
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", user: currentAdmin, items: items })
-      }).catch(err => console.warn("Erreur synchronisation bulk:", err));
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", user: currentAdmin, items: items })
+        });
+        const result = await response.json();
+        if (result.status !== "success") {
+          alert("Erreur retournée par Google Sheets : " + (result.message || "Échec d'enregistrement distant"));
+        }
+      } catch (err) {
+        alert("Avertissement : La tâche est enregistrée localement mais la synchronisation distante a échoué (" + err.message + ")");
+      }
     }
 
     function downloadMasterdataExcelTemplate() {
@@ -877,7 +901,7 @@
             const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
 
             bulkItems.push({
-              date: String(row[dateIdx !== -1 ? dateIdx : 0] || new Date().toISOString().split('T')[0]),
+              date: normalizeDateYMD(row[dateIdx !== -1 ? dateIdx : 0] || new Date()),
               tranche: String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase(),
               agent: String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim(),
               contractor: String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim(),
@@ -927,7 +951,7 @@
 
       cachedTournees.forEach(t => {
         const matchTranche = (!t.tranche && draggedPayload.tranche === 'MATIN') || t.tranche === draggedPayload.tranche;
-        if (t.agent === draggedPayload.agent && t.date === draggedPayload.dateStr && matchTranche) {
+        if (t.agent === draggedPayload.agent && normalizeDateYMD(t.date) === draggedPayload.dateStr && matchTranche) {
           t.date = targetDateStr;
           t.tranche = targetTranche;
         }
@@ -944,7 +968,7 @@
       const sInputVal = document.getElementById("filterStartDate").value;
       if (!gridContainer) return;
 
-      const baseDate = sInputVal ? new Date(sInputVal) : new Date();
+      const baseDate = sInputVal ? parseItemDate(sInputVal) : new Date();
       const dayOfWeek = baseDate.getDay() || 7;
       const monday = new Date(baseDate);
       monday.setDate(baseDate.getDate() - dayOfWeek + 1);
@@ -958,8 +982,8 @@
       const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
       gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
-        const dateStr = dayObj.toISOString().split('T')[0];
-        let dayTasks = (cachedTournees || []).filter(t => t.date === dateStr);
+        const dateStr = normalizeDateYMD(dayObj);
+        let dayTasks = (cachedTournees || []).filter(t => normalizeDateYMD(t.date) === dateStr);
         if (filterAgent) dayTasks = dayTasks.filter(t => t.agent === filterAgent);
 
         const matinTasks = dayTasks.filter(t => !t.tranche || t.tranche === 'MATIN');
@@ -1017,7 +1041,7 @@
     }
 
     function openTourneeDetailsForDay(dateStr, agentName) {
-      const tasks = (cachedTournees || []).filter(t => t.date === dateStr && t.agent === agentName);
+      const tasks = (cachedTournees || []).filter(t => normalizeDateYMD(t.date) === dateStr && t.agent === agentName);
       document.getElementById("modalTourneeTitle").innerText = `Tournée de ${agentName}`;
       document.getElementById("modalTourneeSubtitle").innerText = `${formatDateFrench(dateStr)} • ${tasks.length} mission(s)`;
 
@@ -1041,8 +1065,9 @@
     }
 
     function renderCompletionMetrics(allTournees, weekDays) {
-      const weekDateStrs = weekDays ? weekDays.map(d => d.toISOString().split('T')[0]) : [];
-      const periodTournees = allTournees.filter(t => weekDateStrs.length === 0 || weekDateStrs.includes(t.date));
+      const weekDateStrs = weekDays ? weekDays.map(d => normalizeDateYMD(d)) : [];
+      const periodTournees = (allTournees || []).filter(t => weekDateStrs.length === 0 || weekDateStrs.includes(normalizeDateYMD(t.date)));
+      
       const total = periodTournees.length;
       const done = periodTournees.filter(t => t.statut === 'VALIDE').length;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -1057,7 +1082,7 @@
 
       const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
       if (activeAgentsThisPeriod.length === 0) {
-        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucun agent planifié.</div>`;
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucun agent planifié cette semaine.</div>`;
         return;
       }
 
@@ -1074,7 +1099,7 @@
               <span class="font-mono text-xs font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-600'}">${aDone}/${aTotal} (${aPct}%)</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-              <div class="bg-orange-500 h-full rounded-full" style="width: ${aPct}%"></div>
+              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
             </div>
           </div>
         `;
@@ -1329,23 +1354,23 @@
       if (mode === 'ALL') {
         sInput.value = ""; eInput.value = "";
       } else if (mode === 'TODAY') {
-        const dStr = now.toISOString().split('T')[0];
+        const dStr = normalizeDateYMD(now);
         sInput.value = dStr; eInput.value = dStr;
       } else if (mode === 'CURRENT_WEEK') {
         const day = now.getDay() || 7;
         const monday = new Date(now); monday.setDate(now.getDate() - day + 1);
         const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
-        sInput.value = monday.toISOString().split('T')[0];
-        eInput.value = sunday.toISOString().split('T')[0];
+        sInput.value = normalizeDateYMD(monday);
+        eInput.value = normalizeDateYMD(sunday);
       } else if (mode === 'PREV_WEEK') {
         const day = now.getDay() || 7;
         const prevMonday = new Date(now); prevMonday.setDate(now.getDate() - day - 6);
         const prevSunday = new Date(prevMonday); prevSunday.setDate(prevMonday.getDate() + 6);
-        sInput.value = prevMonday.toISOString().split('T')[0];
-        eInput.value = prevSunday.toISOString().split('T')[0];
+        sInput.value = normalizeDateYMD(prevMonday);
+        eInput.value = normalizeDateYMD(prevSunday);
       } else if (mode === 'CURRENT_MONTH') {
-        sInput.value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        eInput.value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+        eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
       }
       updateWeekBadge(sInput.value);
       applyFilters();
