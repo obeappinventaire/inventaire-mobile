@@ -22,7 +22,7 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50 overflow-hidden">
 
-  <!-- ================= BANDEAU DE MISE À JOUR PWA AUTOMATIQUE ================= -->
+  <!-- ================= BANDEAU DE MISE À JOUR PWA ================= -->
   <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
     <span class="font-bold">🔄 Mise à jour détectée !</span>
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
@@ -74,34 +74,38 @@
           <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Recherche active</h2>
         </div>
 
-        <div class="flex items-center space-x-2">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-            <input type="text" id="sapSearchInput" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-9 pr-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
-            <!-- LISTE DÉROULANTE ÉLARGIE ET AGRANDIE -->
-            <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
-          </div>
-          <button onclick="toggleVoiceSearch()" id="micBtn" class="p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer" title="Saisie vocale (6 chiffres)">
-            <i data-lucide="mic" class="w-5 h-5"></i>
+        <!-- CHAMP DE RECHERCHE PLEINE LARGEUR -->
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+          <input type="text" id="sapSearchInput" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-9 pr-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
+          <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
+        </div>
+
+        <!-- BOUTONS MICRO ET CAMÉRA SUR UNE LIGNE DÉDIÉE SOUS LA RECHERCHE -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="toggleVoiceSearch()" id="micBtn" class="h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer">
+            <i data-lucide="mic" class="w-4 h-4 text-orange-600"></i> Saisie Vocale
           </button>
-          <button onclick="openScanModal()" class="p-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white transition shrink-0 cursor-pointer shadow-xs" title="Scanner image du QR code, image EAN, image texte">
-            <i data-lucide="camera" class="w-5 h-5"></i>
+          <button onclick="openScanModal()" class="h-10 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-xs">
+            <i data-lucide="camera" class="w-4 h-4"></i> Scanner (QR / EAN / Texte)
           </button>
         </div>
 
-        <div id="selectedArticleCard" class="hidden bg-orange-50 border border-orange-200 p-3 rounded-2xl space-y-1">
+        <!-- CARTE ARTICLE SÉLECTIONNÉ AVEC RÉFÉRENCE FOURNISSEUR -->
+        <div id="selectedArticleCard" class="hidden bg-orange-50 border border-orange-200 p-3 rounded-2xl space-y-1 text-xs">
           <div class="flex justify-between items-start">
-            <span id="cardSapRef" class="font-mono text-xs font-bold text-orange-800">--</span>
-            <span id="cardDesignation" class="text-xs font-semibold text-slate-900 text-right truncate max-w-[200px]">--</span>
+            <span id="cardSapRef" class="font-mono font-bold text-orange-800">--</span>
+            <span id="cardSupplierRef" class="font-mono text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-orange-200">Fourn: --</span>
           </div>
+          <p id="cardDesignation" class="font-semibold text-slate-900 truncate">--</p>
         </div>
       </div>
 
       <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quantité Comptée</h2>
-        <!-- QUANTITÉ SANS BOUTONS - ET + -->
+        <!-- CHAMP QUANTITÉ À 0 PAR DÉFAUT, SANS BOUTONS - ET + -->
         <div class="flex items-center justify-center">
-          <input type="number" id="inputQuantity" value="1" min="0" class="w-36 h-14 text-center font-black text-2xl bg-slate-50 border border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 font-mono shadow-xs">
+          <input type="number" id="inputQuantity" value="0" min="0" class="w-36 h-14 text-center font-black text-2xl bg-slate-50 border border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 font-mono shadow-xs">
         </div>
 
         <button onclick="submitInventoryEntry()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 font-bold text-white rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs transition cursor-pointer">
@@ -111,7 +115,7 @@
       </div>
     </section>
 
-    <!-- ONGLET 2 : HISTORIQUE -->
+    <!-- ONGLET 2 : HISTORIQUE (AVEC MODIFICATION ET SUPPRESSION) -->
     <section id="tabHistorique" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
@@ -172,12 +176,12 @@
     </div>
   </div>
 
-  <!-- ================= MODALE CONFIGURATION & DÉCONNEXION AGENT ================= -->
+  <!-- ================= MODALE CONFIGURATION & DÉCONNEXION EN 2 ÉTAPES ================= -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div>
         <h2 class="text-base font-bold text-slate-900">Changement de profil agent</h2>
-        <p class="text-xs text-slate-500 mt-1">Sélectionnez votre nom ci-dessous pour activer votre session et charger votre tournée du jour.</p>
+        <p class="text-xs text-slate-500 mt-1">Sélectionnez votre nom ci-dessous pour activer votre session.</p>
       </div>
       <div>
         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Collaborateur</label>
@@ -185,7 +189,7 @@
       </div>
       <div class="space-y-2 pt-2">
         <button onclick="saveAgentConfig()" class="w-full h-11 bg-orange-600 hover:bg-orange-700 font-bold text-white rounded-xl text-xs shadow-md transition cursor-pointer">Activer ce profil</button>
-        <button onclick="logoutMobileAgent()" class="w-full h-10 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold rounded-xl text-xs transition cursor-pointer">Se déconnecter complètement</button>
+        <button onclick="logoutMobileAgentStep1()" class="w-full h-10 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold rounded-xl text-xs transition cursor-pointer">Se déconnecter (Étape 1/2)</button>
       </div>
     </div>
   </div>
@@ -270,14 +274,17 @@
       document.getElementById("headerAgentName").innerText = currentAgent;
       document.getElementById("configModal").classList.add("hidden");
       renderTournee();
+      renderHistory();
     }
 
-    function logoutMobileAgent() {
-      localStorage.removeItem("mob_current_agent");
-      currentAgent = "";
-      document.getElementById("headerAgentName").innerText = "--";
-      document.getElementById("configModal").classList.add("hidden");
-      openConfigModal();
+    // DÉCONNEXION EN DEUX ÉTAPES AVEC REFRESH COMPLET
+    function logoutMobileAgentStep1() {
+      if (confirm("Voulez-vous vraiment vous déconnecter complètement et réinitialiser la session ?")) {
+        localStorage.removeItem("mob_current_agent");
+        localStorage.removeItem("mob_session_history");
+        alert("Déconnexion effectuée. L'application va se recharger.");
+        window.location.reload(true);
+      }
     }
 
     async function syncMobileData() {
@@ -379,7 +386,7 @@
         return;
       }
 
-      const filtered = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 20);
+      const filtered = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 25);
 
       if (filtered.length === 0) {
         dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé</div>`;
@@ -388,9 +395,9 @@
       }
 
       dd.innerHTML = filtered.map(item => `
-        <div onclick='selectArticleFromSearch(${JSON.stringify(item)})' class="p-2.5 hover:bg-orange-50 rounded-xl cursor-pointer text-xs flex justify-between items-center border-b border-slate-100 last:border-0">
+        <div onclick='selectArticleFromSearch(${JSON.stringify(item)})' class="p-3 hover:bg-orange-50 rounded-xl cursor-pointer text-xs flex justify-between items-center border-b border-slate-100 last:border-0">
           <div>
-            <span class="font-mono font-bold text-orange-800">${item.sapRef}</span>
+            <span class="font-mono font-bold text-orange-800 text-sm">${item.sapRef}</span>
             <span class="text-slate-700 ml-2 font-medium">${item.designation}</span>
           </div>
         </div>
@@ -403,6 +410,7 @@
       document.getElementById("sapSearchInput").value = item.sapRef;
       document.getElementById("sapSuggestions").classList.add("hidden");
       document.getElementById("cardSapRef").innerText = item.sapRef;
+      document.getElementById("cardSupplierRef").innerText = `Fourn: ${item.supplierRef || 'N/C'}`;
       document.getElementById("cardDesignation").innerText = item.designation;
       document.getElementById("selectedArticleCard").classList.remove("hidden");
     }
@@ -451,7 +459,7 @@
       selectedArticle = null;
       document.getElementById("sapSearchInput").value = "";
       document.getElementById("selectedArticleCard").classList.add("hidden");
-      document.getElementById("inputQuantity").value = "1";
+      document.getElementById("inputQuantity").value = "0";
 
       alert("Saisie enregistrée avec succès !");
 
@@ -468,23 +476,31 @@
       }
     }
 
+    // HISTORIQUE FILTRÉ PAR AGENT AVEC ACTIONS DE MODIFICATION ET SUPPRESSION
     function renderHistory() {
       sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
+      // Filtrer pour l'agent connecté
+      const agentHistory = sessionHistory.filter(h => h.user === currentAgent);
+
       const container = document.getElementById("historyListContainer");
       const countLbl = document.getElementById("historyCount");
       if (!container) return;
 
-      countLbl.innerText = `${sessionHistory.length} ligne(s)`;
-      if (sessionHistory.length === 0) {
+      countLbl.innerText = `${agentHistory.length} ligne(s)`;
+      if (agentHistory.length === 0) {
         container.innerHTML = `<div class="p-6 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune saisie pour le moment.</div>`;
         return;
       }
 
-      container.innerHTML = sessionHistory.map(h => `
+      container.innerHTML = agentHistory.map(h => `
         <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs space-y-1 text-xs">
           <div class="flex justify-between items-center">
             <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>
-            <span class="font-mono font-black text-emerald-700 text-sm">Qté : ${h.quantity}</span>
+            <div class="flex items-center space-x-2">
+              <span class="font-mono font-black text-emerald-700 text-sm">Qté : ${h.quantity}</span>
+              <button onclick="editHistoryItem('${h.id}')" class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer" title="Modifier quantité"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+              <button onclick="deleteHistoryItem('${h.id}')" class="p-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
           </div>
           <p class="font-semibold text-slate-900 truncate">${h.designation}</p>
           <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100">
@@ -493,6 +509,29 @@
           </div>
         </div>
       `).join('');
+      lucide.createIcons();
+    }
+
+    function editHistoryItem(id) {
+      const item = sessionHistory.find(h => h.id === id);
+      if (!item) return;
+      const newQty = prompt("Modifier la quantité comptée :", item.quantity);
+      if (newQty === null) return;
+      const parsed = parseInt(newQty, 10);
+      if (isNaN(parsed) || parsed < 0) {
+        alert("Quantité invalide.");
+        return;
+      }
+      item.quantity = parsed;
+      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+      renderHistory();
+    }
+
+    function deleteHistoryItem(id) {
+      if (!confirm("Voulez-vous supprimer cette saisie de l'historique ?")) return;
+      sessionHistory = sessionHistory.filter(h => h.id !== id);
+      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+      renderHistory();
     }
 
     function renderTournee() {
@@ -565,7 +604,6 @@
       lucide.createIcons();
     }
 
-    // SAISIE VOCALE NETTOYÉE (SUPPRESSION D'ESPACES ET FORMAT 6 CHIFFRES STRICT)
     function toggleVoiceSearch() {
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         alert("La reconnaissance vocale n'est pas supportée par ce navigateur.");
@@ -577,7 +615,7 @@
       recognition.interimResults = false;
 
       const btn = document.getElementById("micBtn");
-      btn.className = "p-2.5 rounded-xl bg-rose-600 text-white transition shrink-0 animate-pulse cursor-pointer";
+      btn.className = "h-10 px-3 rounded-xl bg-rose-600 text-white transition shrink-0 animate-pulse cursor-pointer flex items-center justify-center gap-2 text-xs font-bold";
 
       recognition.onresult = function(event) {
         let transcript = event.results[0][0].transcript;
@@ -587,15 +625,15 @@
 
         document.getElementById("sapSearchInput").value = finalVal;
         onSapSearchInput(finalVal);
-        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer";
+        btn.className = "h-10 px-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer flex items-center justify-center gap-2 text-xs font-bold";
       };
 
       recognition.onerror = function() {
-        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer";
+        btn.className = "h-10 px-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer flex items-center justify-center gap-2 text-xs font-bold";
       };
 
       recognition.onend = function() {
-        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer";
+        btn.className = "h-10 px-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer flex items-center justify-center gap-2 text-xs font-bold";
       };
 
       recognition.start();
