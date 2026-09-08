@@ -187,7 +187,7 @@
                 <span class="text-[11px] text-slate-700 font-medium">Seuil volume atypique</span>
                 <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
               </div>
-              <input type="number" id="cfgMaxQty" value="" placeholder="Ex: 50" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
+              <input type="number" id="cfgMaxQty" value="" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
             </div>
           </div>
         </div>
@@ -413,7 +413,6 @@
               <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique • Bouton d'affichage ciblé sur la sélection active</p>
             </div>
             <div class="flex items-center gap-2">
-              <!-- BOUTON DÉDIÉ POUR AFFICHER UNIQUEMENT LA SÉLECTION SUR LA CARTE -->
               <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
                 <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
                 <span id="mapFilterBtnText">Afficher toute la période</span>
@@ -463,10 +462,9 @@
     let filterOnlyActiveAgents = true; 
     let openDrawers = {};
 
-    // SEUIL ATYPIQUE LIBRE (VIDE PAR DÉFAUT SI NON ENTRÉ)
+    // GESTION LIBRE DU SEUIL ATYPIQUE (NULL PAR DÉFAUT -> CHAMP VIDE)
     let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
 
-    // BOOLEEN POUR GÉRER L'AFFICHAGE DE LA CARTE SUR LA SÉLECTION OU SUR TOUT L'HISTORIQUE
     let mapFilterOnSelection = false;
 
     const BELGIUM_CENTER = [50.64, 4.67];
@@ -798,7 +796,6 @@
       applyFilters();
     }
 
-    // BOUTON DE BASCULE POUR FILTRER LA CARTE SUR LA SELECTION ACTIVE OU TOUT L'HISTORIQUE
     function toggleMapSelectionFilter() {
       mapFilterOnSelection = !mapFilterOnSelection;
       const btnText = document.getElementById("mapFilterBtnText");
@@ -875,7 +872,6 @@
       renderTable(filtered);
       renderAgentsView(filtered);
 
-      // LA CARTE S'APPUIE SOIT SUR LA SÉLECTION STRICTE SI ACTIVÉ, SOIT SUR TOUT L'HISTORIQUE DE BASE POUR ÉVITER LE DÉCOUPLAGE
       const mapSourceList = mapFilterOnSelection ? filtered : cachedHistory;
       renderMap(mapSourceList);
     }
