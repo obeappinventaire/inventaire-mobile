@@ -968,6 +968,7 @@
       const sInputVal = document.getElementById("filterStartDate").value;
       if (!gridContainer) return;
 
+      // Base temporelle calée sur le lundi de la semaine
       const baseDate = sInputVal ? parseItemDate(sInputVal) : new Date();
       const dayOfWeek = baseDate.getDay() || 7;
       const monday = new Date(baseDate);
@@ -983,6 +984,8 @@
 
       gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
         const dateStr = normalizeDateYMD(dayObj);
+        
+        // Comparaison robuste insensible aux fuseaux horaires et formats de chaînes
         let dayTasks = (cachedTournees || []).filter(t => normalizeDateYMD(t.date) === dateStr);
         if (filterAgent) dayTasks = dayTasks.filter(t => t.agent === filterAgent);
 
@@ -999,7 +1002,8 @@
           return Object.entries(agentGroups).map(([agent, tList]) => {
             const total = tList.length;
             const done = tList.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
-            let badgeColor = done === total ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-orange-100 text-orange-800 border-orange-300";
+            const isFullDone = done === total && total > 0;
+            const badgeColor = isFullDone ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-orange-100 text-orange-800 border-orange-300";
 
             return `
               <div draggable="true" 
@@ -1008,7 +1012,7 @@
                    class="p-1 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition text-[10px]">
                 <div class="flex justify-between items-center font-bold">
                   <span class="truncate">${agent}</span>
-                  <span class="font-mono text-[9px]">${done}/${total}</span>
+                  <span class="font-mono text-[9px] ${isFullDone ? 'text-emerald-700 font-black' : ''}">${done}/${total}</span>
                 </div>
                 <div class="text-[8px] text-slate-600 truncate">${tList[0].contractor || 'Divers'}</div>
               </div>
@@ -1661,10 +1665,12 @@
     async function deleteTableItem(id) {
       if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
 
+      // Suppression optimiste locale immédiate
       cachedHistory = cachedHistory.filter(h => h.id !== id);
       localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
       applyFilters();
 
+      // Notification Google Apps Script
       try {
         const response = await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
