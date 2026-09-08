@@ -424,7 +424,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL DIVISÉ MATIN / APRES-MIDI AVEC FOND "+") ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -464,11 +464,10 @@
                     <option value="">Tous les agents</option>
                   </select>
                 </div>
-                <!-- AFFICHAGE HARMONISÉ AU FORMAT SXX 2026 -->
                 <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- GRILLE PLANNING MURAL (HAUTEUR ALLONGÉE À 380PX & ZONES DIVISÉES MATIN / APRES-MIDI AVEC FOND "+") -->
+              <!-- GRILLE PLANNING MURAL -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Partie haute: Matin | Partie basse: Après-midi)</span>
@@ -751,9 +750,9 @@
       });
 
       updateActiveAgentsButtonUI();
-      await syncMonitoringData();
-      switchView(activeView);
+      renderWallPlanning();
       applyFilters();
+      await syncMonitoringData();
     });
 
     function openManualAssignModal(defaultDate = null, defaultTranche = 'MATIN') {
@@ -836,6 +835,7 @@
       }
     }
 
+    // ENREGISTREMENT INSTANTANÉ DE LA TÂCHE (CORRECTION DE LA LENTEUR & DISPARITION)
     async function submitManualTourneeAssignment() {
       const agent = document.getElementById("adminAssignAgent").value;
       const tranche = document.getElementById("adminAssignTranche").value;
@@ -855,53 +855,41 @@
       const items = manualSelectedCatalogSaps.map((sapRef, idx) => {
         const catItem = catalog.find(i => String(i.sapRef).trim() === sapRef);
         return {
+          id: "TRN-LOC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
           agent: agent,
           contractor: contractor || '',
           trade: trade || '',
           sapRef: sapRef,
           designation: catItem ? catItem.designation : '',
           ordre: idx + 1,
+          statut: 'A_FAIRE',
           date: date || new Date().toISOString().split('T')[0],
           tranche: tranche || 'MATIN'
         };
       });
 
+      // 1. Ajout instantané dans le cache local pour affichage immédiat sans latence
+      items.forEach(it => cachedTournees.push(it));
+      localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+
+      // 2. Fermeture immédiate de la modale et rafraîchissement du mur
+      closeManualAssignModal();
+      manualSelectedCatalogSaps = [];
+      renderWallPlanning();
+
+      // 3. Envoi asynchrone en arrière-plan sans bloquer l'UI
       const payload = {
         action: "CREATE_TOURNEES_BULK",
         user: currentAdmin,
         items: items
       };
 
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        
-        items.forEach(it => {
-          cachedTournees.push({
-            id: "TRN-LOC-" + Date.now().toString(36) + Math.random(),
-            agent: it.agent,
-            contractor: it.contractor,
-            trade: it.trade,
-            sapRef: it.sapRef,
-            designation: it.designation,
-            ordre: it.ordre,
-            statut: 'A_FAIRE',
-            date: it.date,
-            tranche: it.tranche
-          });
-        });
-        localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
-
-        closeManualAssignModal();
-        manualSelectedCatalogSaps = [];
-        renderWallPlanning();
-      } catch (err) {
-        alert("Erreur lors de l'enregistrement de la tournée : " + err);
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        }).catch(err => console.warn("Erreur synchro arrière-plan :", err));
       }
     }
 
@@ -1043,7 +1031,7 @@
       }
     }
 
-    // ================= PLANNING MURAL HEBDOMADAIRE (ZONES MATIN/APRES-MIDI AVEC FOND "+") =================
+    // ================= PLANNING MURAL HEBDOMADAIRE =================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const filterAgent = document.getElementById("agendaFilterAgent").value;
@@ -1119,7 +1107,7 @@
               <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
             </div>
 
-            <!-- PARTIE HAUTE : MATIN (AVEC FOND "+") -->
+            <!-- PARTIE HAUTE : MATIN -->
             <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" 
                  ondragover="event.preventDefault()" 
                  ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')"
@@ -1133,7 +1121,7 @@
               </div>
             </div>
 
-            <!-- PARTIE BASSE : APRÈS-MIDI (AVEC FOND "+") -->
+            <!-- PARTIE BASSE : APRÈS-MIDI -->
             <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" 
                  ondragover="event.preventDefault()" 
                  ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"
@@ -1561,7 +1549,17 @@
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
           if (data.tournees) {
-            cachedTournees = data.tournees;
+            // Fusion intelligente sans perdre les tâches créées localement à l'instant
+            const remoteTournees = data.tournees;
+            const localTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
+            const localOnly = localTournees.filter(lt => lt.id && lt.id.startsWith("TRN-LOC"));
+            
+            cachedTournees = [...remoteTournees];
+            localOnly.forEach(loc => {
+              if (!cachedTournees.some(rt => rt.id === loc.id)) {
+                cachedTournees.push(loc);
+              }
+            });
             localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
           }
           if (data.catalog) {
@@ -1768,456 +1766,6 @@
       lucide.createIcons();
     }
 
-    function toggleAgentDrawer(agent) {
-      openDrawers[agent] = !openDrawers[agent];
-      const drawer = document.getElementById(`agent-drawer-${agent.replace(/\s+/g, '_')}`);
-      const icon = document.getElementById(`agent-drawer-icon-${agent.replace(/\s+/g, '_')}`);
-      const btnLabel = document.getElementById(`agent-drawer-label-${agent.replace(/\s+/g, '_')}`);
-      if (drawer && icon) {
-        if (openDrawers[agent]) {
-          drawer.classList.remove("hidden");
-          icon.style.transform = "rotate(180deg)";
-          if (btnLabel) btnLabel.innerText = "Masquer détails";
-        } else {
-          drawer.classList.add("hidden");
-          icon.style.transform = "rotate(0deg)";
-          if (btnLabel) btnLabel.innerText = "Détails & KPI agent";
-        }
-      }
-    }
-
-    function renderAgentsView(periodHistory) {
-      const container = document.getElementById("agentsAccordionContainer");
-      if (!container) return;
-
-      if (!availableAgents || availableAgents.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Aucun agent configuré.</div>`;
-        return;
-      }
-
-      const now = Date.now();
-      const tenMinMs = 10 * 60 * 1000;
-      const thirtyMinMs = 30 * 60 * 1000;
-      const maxPauseGapMs = 15 * 60 * 1000;
-
-      let agentsToRender = selectedAgents.length > 0 ? availableAgents.filter(a => selectedAgents.includes(a)) : [...availableAgents];
-
-      if (filterOnlyActiveAgents) {
-        agentsToRender = agentsToRender.filter(agent => {
-          const agentEntries = (periodHistory || []).filter(i => i.user === agent);
-          if (agentEntries.length === 0) return false;
-          const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
-          const dt = parseItemDate(sorted[0].timestamp);
-          return dt && (now - dt.getTime()) < thirtyMinMs;
-        });
-      }
-
-      if (agentsToRender.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">Aucun agent ne correspond au filtre actif sur cette période.</div>`;
-        return;
-      }
-
-      container.innerHTML = agentsToRender.map(agent => {
-        const agentEntries = (periodHistory || []).filter(i => i.user === agent);
-        const totalLines = agentEntries.length;
-        const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-
-        const sortedAsc = [...agentEntries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
-        const sortedDesc = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
-
-        let statusBadgeHtml = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Session close</span>`;
-        let lastSignalStr = "--";
-
-        if (sortedDesc.length > 0) {
-          const lastTime = parseItemDate(sortedDesc[0].timestamp).getTime();
-          lastSignalStr = formatDateFrench(sortedDesc[0].timestamp);
-          const diffMs = now - lastTime;
-
-          if (diffMs < tenMinMs) {
-            statusBadgeHtml = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> En cours</span>`;
-          } else if (diffMs < thirtyMinMs) {
-            const pauseMins = Math.floor(diffMs / 60000);
-            statusBadgeHtml = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Pause (${pauseMins}m)</span>`;
-          }
-        }
-
-        let netActiveMs = 0;
-        const intervals = [];
-
-        for (let i = 1; i < sortedAsc.length; i++) {
-          const tPrev = parseItemDate(sortedAsc[i - 1].timestamp).getTime();
-          const tCurr = parseItemDate(sortedAsc[i].timestamp).getTime();
-          const gap = tCurr - tPrev;
-
-          if (gap > 0 && gap <= maxPauseGapMs) {
-            netActiveMs += gap;
-            intervals.push(gap);
-          }
-        }
-
-        let rateLinesH = totalLines > 0 ? totalLines : 0;
-        let ratePiecesH = totalPieces > 0 ? totalPieces : 0;
-
-        if (netActiveMs > 180000) {
-          const hours = netActiveMs / 3600000;
-          rateLinesH = Math.round(totalLines / hours);
-          ratePiecesH = Math.round(totalPieces / hours);
-        }
-
-        const combinedRateStr = `${rateLinesH} l/h • ${ratePiecesH} pcs/h`;
-
-        const ruptures = agentEntries.filter(i => Number(i.quantity) === 0).length;
-        const atypiques = customMaxQty !== null ? agentEntries.filter(i => Number(i.quantity) > customMaxQty).length : 0;
-        const totalAnomalies = ruptures + atypiques;
-        const anomalyPercent = totalLines > 0 ? Math.round((totalAnomalies / totalLines) * 100) : 0;
-
-        const intensityPcsLine = totalLines > 0 ? (totalPieces / totalLines).toFixed(1) : "0.0";
-        const uniqueSaps = new Set(agentEntries.map(i => String(i.sapRef).trim())).size;
-        const diversityRate = totalLines > 0 ? Math.round((uniqueSaps / totalLines) * 100) : 0;
-        const avgGapMin = intervals.length > 0 ? (intervals.reduce((s, g) => s + g, 0) / intervals.length / 60000).toFixed(1) : "--";
-
-        const contractorsSet = [...new Set(agentEntries.map(i => i.contractor).filter(Boolean))];
-        const tradesSet = [...new Set(agentEntries.map(i => i.trade).filter(Boolean))];
-        const perimetreStr = contractorsSet.length > 0 ? `${contractorsSet.join(', ')} (${tradesSet.join(', ')})` : "Aucun chantier actif";
-
-        const lastFiveEntries = sortedDesc.slice(0, 5);
-        const drawerId = `agent-drawer-${agent.replace(/\s+/g, '_')}`;
-        const iconId = `agent-drawer-icon-${agent.replace(/\s+/g, '_')}`;
-        const labelId = `agent-drawer-label-${agent.replace(/\s+/g, '_')}`;
-        const isDrawerOpen = !!openDrawers[agent];
-
-        return `
-          <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-xs transition hover:border-slate-300">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
-                <span class="font-black text-slate-900 text-sm tracking-wide">${agent}</span>
-                ${statusBadgeHtml}
-                <span class="text-xs font-mono text-orange-700 font-bold bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200 shadow-2xs">
-                  ${totalLines} lignes • ${totalPieces} pcs
-                </span>
-                <span class="text-[10px] text-slate-400 font-mono hidden sm:inline">Signal : ${lastSignalStr}</span>
-              </div>
-
-              <div class="flex items-center space-x-1.5 shrink-0">
-                <button onclick="toggleAgentDrawer('${agent}')" 
-                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center gap-1 cursor-pointer">
-                  <span id="${labelId}">${isDrawerOpen ? 'Masquer détails' : 'Détails & KPI agent'}</span>
-                  <i data-lucide="chevron-down" id="${iconId}" class="w-3.5 h-3.5 transition-transform duration-200 ${isDrawerOpen ? 'rotate-180' : ''}"></i>
-                </button>
-
-                <button onclick="filterAndSwitchToGlobal('${agent}', '', '')" title="Voir dans l'Activité Globale"
-                        class="p-1 rounded-lg bg-slate-100 hover:bg-orange-50 text-slate-600 hover:text-orange-700 transition cursor-pointer">
-                  <i data-lucide="list" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-
-            <div id="${drawerId}" class="${isDrawerOpen ? '' : 'hidden'} mt-3 pt-3 border-t border-slate-100 space-y-3">
-              <div class="grid grid-cols-4 gap-2.5">
-                <div class="bg-indigo-50/60 border border-indigo-100 p-2 rounded-xl text-center">
-                  <span class="text-[10px] font-bold text-indigo-600 uppercase block">1. Débit Combiné</span>
-                  <span class="text-xs font-black text-indigo-700 font-mono mt-0.5 block">${combinedRateStr}</span>
-                  <span class="text-[9px] text-indigo-500 font-semibold">Net hors pauses</span>
-                </div>
-
-                <div class="bg-rose-50/60 border border-rose-100 p-2 rounded-xl text-center">
-                  <span class="text-[10px] font-bold text-rose-600 uppercase block">2. Taux Anomalies</span>
-                  <span class="text-xs font-black text-rose-700 font-mono mt-0.5 block">${anomalyPercent}% <span class="text-[10px] font-semibold">(${totalAnomalies} l.)</span></span>
-                  <span class="text-[9px] text-rose-500 font-medium">0: ${ruptures} | >${customMaxQty || '--'}: ${atypiques}</span>
-                </div>
-
-                <div class="bg-emerald-50/60 border border-emerald-100 p-2 rounded-xl text-center">
-                  <span class="text-[10px] font-bold text-emerald-700 uppercase block">3. Intensité</span>
-                  <span class="text-xs font-black text-emerald-800 font-mono mt-0.5 block">${intensityPcsLine} pcs/l</span>
-                  <span class="text-[9px] text-emerald-600 font-semibold">Rythme: ${avgGapMin} min</span>
-                </div>
-
-                <div class="bg-amber-50/60 border border-amber-100 p-2 rounded-xl text-center flex flex-col justify-between">
-                  <div>
-                    <span class="text-[10px] font-bold text-amber-700 uppercase block">4. Réf Uniques</span>
-                    <span class="text-xs font-black text-slate-800 font-mono mt-0.5 block">${uniqueSaps} (${diversityRate}%)</span>
-                  </div>
-                  <span class="text-[9px] font-bold text-slate-500 truncate" title="${perimetreStr}">${perimetreStr}</span>
-                </div>
-              </div>
-
-              <div class="bg-slate-50 rounded-xl border border-slate-200 p-2 overflow-x-auto">
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide px-1 mb-1.5 flex justify-between">
-                  <span>5 dernières lignes saisies par l'agent</span>
-                  <span class="font-mono text-orange-700">Chantier actif : ${perimetreStr}</span>
-                </div>
-                <table class="w-full text-left text-[11px]">
-                  <thead class="text-slate-500 uppercase font-bold border-b border-slate-200">
-                    <tr>
-                      <th class="p-1.5">Horodatage</th>
-                      <th class="p-1.5">Chantier</th>
-                      <th class="p-1.5">Réf SAP</th>
-                      <th class="p-1.5">Désignation</th>
-                      <th class="p-1.5 text-center">Quantité</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-200/60">
-                    ${lastFiveEntries.length === 0 ? `<tr><td colspan="5" class="p-2 text-center text-slate-400 italic">Aucune saisie enregistrée sur la période.</td></tr>` : 
-                      lastFiveEntries.map(e => `
-                        <tr>
-                          <td class="p-1.5 font-mono text-slate-500 whitespace-nowrap">${formatDateFrench(e.timestamp)}</td>
-                          <td class="p-1.5 font-semibold text-slate-700 truncate max-w-[120px]">${e.contractor} (${e.trade})</td>
-                          <td class="p-1.5 font-mono font-bold text-amber-700">${e.sapRef}</td>
-                          <td class="p-1.5 text-slate-800 truncate max-w-[200px]" title="${e.designation}">${e.designation}</td>
-                          <td class="p-1.5 text-center font-mono font-black ${Number(e.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'}">${e.quantity}</td>
-                        </tr>
-                      `).join('')
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-      lucide.createIcons();
-    }
-
-    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
-      const R = 6371000;
-      const dLat = (lat2 - lat1) * (Math.PI / 180);
-      const dLon = (lon2 - lon1) * (Math.PI / 180);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
-                Math.sin(dLon / 2) * Math.sin(dLon / 2); 
-      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-    }
-
-    function renderMap(list) {
-      if (!map) {
-        map = L.map('mapContainer', {
-          center: BELGIUM_CENTER,
-          zoom: BELGIUM_ZOOM,
-          minZoom: 7,
-          maxZoom: 18,
-          maxBounds: BELGIUM_BOUNDS,
-          maxBoundsViscosity: 0.85
-        });
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
-
-        markersLayer = L.layerGroup().addTo(map);
-      }
-
-      markersLayer.clearLayers();
-      const points = [];
-      const now = new Date().getTime();
-      const thirtyMinMs = 30 * 60 * 1000;
-
-      const agentFinalizedGroups = {};
-      const agentActiveGroups = {};
-
-      (list || []).forEach(item => {
-        const lat = Number(item.lat || item.latitude);
-        const lng = Number(item.lng || item.longitude);
-        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-          const isFinalized = (now - parseItemDate(item.timestamp).getTime()) >= thirtyMinMs;
-          const agentKey = item.user || 'Inconnu';
-          
-          if (isFinalized) {
-            if (!agentFinalizedGroups[agentKey]) agentFinalizedGroups[agentKey] = [];
-            agentFinalizedGroups[agentKey].push({ ...item, lat, lng, status: 'Finalisé' });
-          } else {
-            if (!agentActiveGroups[agentKey]) agentActiveGroups[agentKey] = [];
-            agentActiveGroups[agentKey].push({ ...item, lat, lng, status: 'En cours' });
-          }
-        }
-      });
-
-      const processedClusters = [];
-
-      Object.entries(agentFinalizedGroups).forEach(([agent, items]) => {
-        const agentClusters = [];
-        items.forEach(item => {
-          let placed = false;
-          for (let cl of agentClusters) {
-            if (getDistanceFromLatLonInMeters(cl.lat, cl.lng, item.lat, item.lng) <= 5000) {
-              cl.items.push(item);
-              placed = true;
-              break;
-            }
-          }
-          if (!placed) {
-            agentClusters.push({ lat: item.lat, lng: item.lng, user: agent, status: 'Finalisé', items: [item] });
-          }
-        });
-        processedClusters.push(...agentClusters);
-      });
-
-      Object.entries(agentActiveGroups).forEach(([agent, items]) => {
-        const agentClusters = [];
-        items.forEach(item => {
-          let placed = false;
-          for (let cl of agentClusters) {
-            if (getDistanceFromLatLonInMeters(cl.lat, cl.lng, item.lat, item.lng) <= 5000) {
-              cl.items.push(item);
-              placed = true;
-              break;
-            }
-          }
-          if (!placed) {
-            agentClusters.push({ lat: item.lat, lng: item.lng, user: agent, status: 'En cours', items: [item] });
-          }
-        });
-        processedClusters.push(...agentClusters);
-      });
-
-      processedClusters.forEach(cluster => {
-        let { lat, lng, user, status, items } = cluster;
-        
-        processedClusters.forEach(other => {
-          if (other !== cluster && other.user === user && getDistanceFromLatLonInMeters(lat, lng, other.lat, other.lng) < 100) {
-            lat += 0.0015;
-            lng += 0.0015;
-          }
-        });
-
-        points.push([lat, lng]);
-
-        const isFinalizedCluster = (status === 'Finalisé');
-        const fillColor = isFinalizedCluster ? "#f97316" : "#10b981";
-
-        const comboItemsMap = {};
-        items.forEach(i => {
-          const comboKey = `${i.contractor} (${i.trade})`;
-          if (!comboItemsMap[comboKey]) comboItemsMap[comboKey] = [];
-          comboItemsMap[comboKey].push(parseItemDate(i.timestamp).getTime());
-        });
-
-        const comboDetails = {};
-        Object.entries(comboItemsMap).forEach(([comboKey, times]) => {
-          const count = times.length;
-          const minT = Math.min(...times);
-          const maxT = Math.max(...times);
-          const diffMinutes = Math.round((maxT - minT) / 60000);
-          const hours = Math.floor(diffMinutes / 60);
-          const mins = diffMinutes % 60;
-          const timeStr = hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
-          comboDetails[comboKey] = { count, timeStr };
-        });
-
-        const comboList = Object.entries(comboDetails).map(([combo, data]) => `
-          <li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-indigo-600">${data.timeStr}</strong> | <strong class="text-orange-600">${data.count} ligne(s)</strong></li>
-        `).join('');
-
-        const totalClusterLines = items.length;
-
-        const allClusterTimes = items.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
-        let globalRatioStr = "-- l/h";
-        if (allClusterTimes.length > 1) {
-          const minClusterTime = Math.min(...allClusterTimes);
-          const maxClusterTime = Math.max(...allClusterTimes);
-          const totalHours = (maxClusterTime - minClusterTime) / 3600000;
-          if (totalHours > 0.05) {
-            const ratio = Math.round(totalClusterLines / totalHours);
-            globalRatioStr = `${ratio} l/h`;
-          } else {
-            globalRatioStr = `${totalClusterLines} l/h`;
-          }
-        } else {
-          globalRatioStr = `${totalClusterLines} l/h`;
-        }
-
-        const tooltipContent = `
-          <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
-            <strong class="text-slate-900 block text-sm">Agent : ${user} (${status}) • ${globalRatioStr}</strong>
-            <div class="text-[11px] text-slate-600 font-semibold">Détail par Entrepreneur & Métier :</div>
-            <ul class="list-disc pl-4 text-[10px] text-slate-700 space-y-0.5">${comboList}</ul>
-          </div>
-        `;
-
-        const marker = L.circleMarker([lat, lng], {
-          radius: items.length > 1 ? 10 : 7,
-          fillColor: fillColor,
-          color: "#ffffff",
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.9
-        });
-
-        marker.bindTooltip(tooltipContent, { direction: 'top', offset: [0, -6] });
-
-        const sortedDates = items.map(i => parseItemDate(i.timestamp)).filter(d => !isNaN(d.getTime())).sort((a, b) => a - b);
-        let dateRangeStr = '--';
-        if (sortedDates.length > 0) {
-          const minDate = sortedDates[0];
-          const maxDate = sortedDates[sortedDates.length - 1];
-          dateRangeStr = sortedDates.length > 1 ? `${formatDateFrench(minDate)} au ${formatDateFrench(maxDate)}` : formatDateFrench(minDate);
-        }
-
-        const safeUser = user.replace(/'/g, "\\'");
-        const safeContractor = (items[0].contractor || '').replace(/'/g, "\\'");
-        const safeTrade = (items[0].trade || '').replace(/'/g, "\\'");
-
-        marker.bindPopup(`
-          <div class="text-xs font-sans space-y-2.5 py-1 min-w-[300px]">
-            <div class="flex justify-between items-start border-b border-slate-100 pb-2">
-              <div>
-                <strong class="text-slate-900 text-sm block">${user}</strong>
-                <span class="text-slate-500 text-[10px]">Statut : ${status}</span>
-              </div>
-              <div class="text-right">
-                <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold block">${totalClusterLines} saisie(s)</span>
-                <span class="font-mono text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold mt-1 inline-block">${globalRatioStr}</span>
-              </div>
-            </div>
-
-            <div class="space-y-1">
-              <span class="text-[10px] font-bold text-slate-400 uppercase block">Détails par Entrepreneur & Métier :</span>
-              <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
-                ${Object.entries(comboDetails).map(([combo, data]) => `
-                  <div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-200 last:border-0">
-                    <span class="font-semibold text-slate-800 truncate max-w-[140px]" title="${combo}">${combo}</span>
-                    <div class="flex items-center gap-2 shrink-0 font-mono">
-                      <span class="text-indigo-600 font-bold">${data.timeStr}</span>
-                      <span class="text-orange-700 font-bold">${data.count} ligne(s)</span>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-
-            <div class="text-[11px] text-slate-600">
-              <span>Date(s) : </span>
-              <strong class="font-mono text-slate-800">${dateRangeStr}</strong>
-            </div>
-
-            <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
-                    class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
-              <i data-lucide="list" class="w-3.5 h-3.5"></i>
-              <span>Voir le listing dans l'Activité Globale</span>
-            </button>
-          </div>
-        `, { autoPan: true, autoPanPadding: [80, 80] });
-
-        markersLayer.addLayer(marker);
-      });
-
-      document.getElementById("mapPointsCountLabel").innerText = `${points.length} point(s) GPS`;
-      lucide.createIcons();
-    }
-
-    function resetMapToBelgium() {
-      if (map) map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
-    }
-
-    function filterAndSwitchToGlobal(agent, contractor, trade) {
-      activeKpiFilter = null;
-      selectedAgents = agent ? [agent] : [];
-      selectedContractors = contractor ? [contractor] : [];
-      selectedTrades = trade ? [trade] : [];
-      switchView('global');
-      applyFilters();
-    }
-
     function switchView(v) {
       activeView = v;
       localStorage.setItem("mon_active_view", v);
@@ -2252,69 +1800,6 @@
         renderWallPlanning();
       }
       lucide.createIcons();
-    }
-
-    async function editTableItem(id, oldQty) {
-      const newQtyStr = prompt("Modifier la quantité :", oldQty);
-      if (newQtyStr === null) return;
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide.");
-        return;
-      }
-
-      const target = cachedHistory.find(i => i.id === id);
-      if (target) target.quantity = newQty;
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      applyFilters();
-
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "UPDATE", id: id, quantity: newQty, user: currentAdmin })
-        });
-      }
-    }
-
-    async function deleteTableItem(id, label) {
-      if (!confirm(`Supprimer définitivement :\n"${label}" ?`)) return;
-
-      cachedHistory = cachedHistory.filter(i => i.id !== id);
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      applyFilters();
-
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "DELETE", id: id, user: currentAdmin })
-        });
-      }
-    }
-
-    function exportTableToCSV() {
-      const data = getFilteredHistory();
-
-      if (data.length === 0) {
-        alert("Aucune donnée à exporter sur cette sélection.");
-        return;
-      }
-
-      let csv = "\uFEFFHorodatage;Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
-      data.forEach(r => {
-        const dmy = formatDateFrench(r.timestamp);
-        csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Inventaire_Export_Selection_${formatDateDMY(new Date()).replace(/\//g, '-')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
     }
   </script>
 </body>
