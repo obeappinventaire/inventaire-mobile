@@ -1,77 +1,74 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-50">
+<html lang="fr" class="h-full bg-slate-950">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision Inventaire - Monitoring Manager</title>
-  <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#0f172a">
 
   <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
   <style>
-    body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    body { overscroll-behavior-y: none; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
     #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
     
     .leaflet-popup-content-wrapper {
-      border-radius: 16px;
-      box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.15), 0 6px 12px -4px rgba(15, 23, 42, 0.08);
-      padding: 6px;
-      border: 1px solid #e2e8f0;
-      background: #ffffff;
-      width: auto !important;
-      max-width: 380px !important;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      padding: 4px;
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #334155;
     }
-    .leaflet-popup-content { 
-      margin: 10px 14px; 
-      line-height: 1.4;
-      width: auto !important;
-      word-break: break-word;
-    }
+    .leaflet-popup-content { margin: 10px 14px; line-height: 1.4; }
+    .leaflet-popup-tip { background: #0f172a; }
   </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
+<body class="h-full text-slate-100 flex flex-col font-sans select-none antialiased bg-slate-950">
 
   <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
-  <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
-    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
-      <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
+  <div id="authModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center mx-auto shadow-inner overflow-hidden">
         <img src="app_icon_co2h2o.png" alt="Logo" class="w-10 h-10 object-contain" onerror="this.src='icon.svg'">
       </div>
       <div>
-        <h2 class="text-xl font-bold text-slate-900 tracking-wide">Accès Supervision</h2>
-        <p class="text-xs text-slate-500 mt-1">Console d'administration & pilotage</p>
+        <h2 class="text-xl font-bold text-white tracking-wide">Accès Supervision</h2>
+        <p class="text-xs text-slate-400 mt-1">Console d'administration & pilotage</p>
       </div>
 
       <div class="space-y-3 text-left">
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Superviseur</label>
-          <select id="authAdminSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 font-medium focus:border-orange-500 focus:bg-white focus:outline-none">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Superviseur</label>
+          <select id="authAdminSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl h-11 px-3 text-sm text-white font-medium focus:border-orange-500 focus:outline-none">
             <option value="">-- Choisir votre profil --</option>
           </select>
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mot de passe / Code PIN</label>
-          <input type="password" id="authPassword" placeholder="••••" onkeydown="if(event.key==='Enter') authenticateAdmin()" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 focus:border-orange-500 focus:bg-white focus:outline-none text-center font-mono text-base">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Mot de passe / Code PIN</label>
+          <input type="password" id="authPassword" placeholder="••••" onkeydown="if(event.key==='Enter') authenticateAdmin()" class="w-full bg-slate-950 border border-slate-700 rounded-xl h-11 px-3 text-sm text-white focus:border-orange-500 focus:outline-none text-center font-mono text-base">
         </div>
       </div>
 
-      <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition mt-2">
+      <button onclick="authenticateAdmin()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 font-bold rounded-xl text-white shadow-lg flex items-center justify-center space-x-2 text-sm transition mt-2">
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
 
       <div class="pt-2">
-        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
+        <span class="text-[10px] font-medium text-slate-500 tracking-wider">
           &copy; made by CO2H2O srlu
         </span>
       </div>
@@ -79,15 +76,15 @@
   </div>
 
   <!-- ================= EN-TÊTE FIXE ================= -->
-  <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
     <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
-        <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 object-contain" onerror="this.src='icon.svg'">
+      <div class="w-9 h-9 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center shadow">
+        <img src="app_icon_co2h2o.png" alt="Logo" class="w-7 h-7 object-contain" onerror="this.src='icon.svg'">
       </div>
       <div>
-        <h1 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+        <h1 class="text-sm font-bold text-white flex items-center gap-2">
           Dashboard Manager
-          <span class="px-2 py-0.5 rounded bg-orange-50 text-orange-700 text-[10px] font-mono font-bold tracking-wide uppercase border border-orange-200">Supervision Centrale</span>
+          <span class="px-2 py-0.5 rounded bg-orange-500/15 text-orange-400 text-[10px] font-mono font-bold tracking-wide uppercase border border-orange-500/30">Supervision Centrale</span>
         </h1>
       </div>
     </div>
@@ -95,17 +92,17 @@
     <div class="flex items-center space-x-4">
       <div class="flex items-center space-x-2">
         <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-        <span id="statusText" class="text-xs font-bold text-emerald-600">Connecté</span>
+        <span id="statusText" class="text-xs font-bold text-emerald-400">Connecté</span>
       </div>
-      <div class="h-4 w-px bg-slate-200"></div>
+      <div class="h-4 w-px bg-slate-700"></div>
       <div class="flex items-center space-x-2">
-        <span class="text-xs text-slate-500">Admin :</span>
-        <span id="activeAdminName" class="text-xs font-black text-orange-700">--</span>
+        <span class="text-xs text-slate-400">Admin :</span>
+        <span id="activeAdminName" class="text-xs font-black text-orange-400">--</span>
       </div>
-      <button onclick="syncMonitoringData()" title="Actualiser" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
+      <button onclick="syncMonitoringData()" title="Actualiser" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
       </button>
-      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition">
+      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 transition">
         <i data-lucide="log-out" class="w-4 h-4"></i>
       </button>
     </div>
@@ -115,37 +112,37 @@
   <div class="flex-1 flex overflow-hidden">
     
     <!-- BARRE LATÉRALE (SIDEBAR GAUCHE) -->
-    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0">
-      <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
+    <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <div class="p-4 space-y-5 overflow-y-auto">
         
         <!-- Navigation Vues Principales -->
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
-          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition">
+          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-md transition">
             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
             <span>Activité Globale</span>
           </button>
-          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>Suivi Terrain & Agents</span>
           </button>
-          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition">
             <i data-lucide="map" class="w-4 h-4"></i>
             <span>Carte & Géolocalisation</span>
           </button>
         </div>
 
-        <!-- SÉLECTEUR DE PÉRIODE -->
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
+        <!-- SÉLECTEUR DE PÉRIODE (Filtre Maître) -->
+        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
             </span>
-            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-200">--</span>
+            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30">--</span>
           </div>
 
           <div class="relative">
-            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white font-semibold focus:outline-none focus:border-orange-500 cursor-pointer">
               <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
               <option value="PREV_WEEK">◀ Semaine précédente</option>
               <option value="TODAY">☀️ Aujourd'hui</option>
@@ -155,39 +152,39 @@
             </select>
           </div>
 
-          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-200">
+          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-800">
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du (JJ/MM/AAAA) :</label>
-              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Du (JJ/MM/AAAA) :</label>
+              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono focus:outline-none focus:border-orange-500">
             </div>
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au (JJ/MM/AAAA) :</label>
-              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Au (JJ/MM/AAAA) :</label>
+              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono focus:outline-none focus:border-orange-500">
             </div>
           </div>
         </div>
 
         <!-- CRITÈRES D'ANOMALIES & AUDIT -->
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2.5">
+        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i> Critères d'Anomalies
+            <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Critères d'Anomalies
             </span>
-            <span class="text-[9px] bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
+            <span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
           </div>
 
           <div class="space-y-2 text-xs pt-1">
-            <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-slate-300 transition shadow-xs">
-              <span class="text-[11px] text-slate-700 font-medium">Alerter Rupture (Stock = 0)</span>
-              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer hover:border-slate-700 transition">
+              <span class="text-[11px] text-slate-300 font-medium">Alerter Rupture (Stock = 0)</span>
+              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-orange-600 focus:ring-0">
             </label>
 
-            <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
               <div class="flex items-center justify-between">
-                <span class="text-[11px] text-slate-700 font-medium">Seuil volume atypique</span>
-                <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
+                <span class="text-[11px] text-slate-300 font-medium">Seuil volume atypique</span>
+                <span class="text-[11px] font-mono text-amber-400 font-bold">> <span id="cfgMaxQtyDisplay">50</span> pcs</span>
               </div>
-              <input type="number" id="cfgMaxQty" value="" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
+              <input type="number" id="cfgMaxQty" value="50" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono text-center">
             </div>
           </div>
         </div>
@@ -195,15 +192,15 @@
       </div>
 
       <!-- Mention de copyright obligatoire -->
-      <div class="p-4 border-t border-slate-200 text-center bg-slate-50/70 shrink-0">
-        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
+      <div class="p-4 border-t border-slate-800 text-center bg-slate-950/50 shrink-0">
+        <span class="text-[10px] font-medium text-slate-500 tracking-wider">
           &copy; made by CO2H2O srlu
         </span>
       </div>
     </aside>
 
     <!-- ZONE PRINCIPALE D'AFFICHAGE -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col justify-between bg-slate-50">
+    <main class="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col justify-between bg-slate-950">
       
       <div class="space-y-6">
         
@@ -212,128 +209,126 @@
           
           <div>
             <div class="flex justify-between items-center mb-2 px-1">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
-              <span id="periodBadgeGlobal" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
+              <span id="periodBadgeGlobal" class="text-xs text-orange-400 font-mono font-bold bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 shadow">--</span>
             </div>
             <div class="grid grid-cols-4 gap-4">
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Saisies</span>
-                <span id="kpiTotalRows" class="text-2xl font-black text-slate-900 mt-1 block">0</span>
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+                <span class="text-xs font-bold text-slate-400 uppercase block">Lignes Saisies</span>
+                <span id="kpiTotalRows" class="text-2xl font-black text-white mt-1 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Total Pièces</span>
-                <span id="kpiTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+                <span class="text-xs font-bold text-slate-400 uppercase block">Total Pièces</span>
+                <span id="kpiTotalPieces" class="text-2xl font-black text-orange-400 mt-1 block">0</span>
               </div>
 
               <!-- KPI RUPTURES -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow relative group cursor-pointer hover:border-rose-500/50 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
-                  <button onclick="filterByKpi('ZERO')" title="Afficher la liste des ruptures dans le tableau" 
-                          class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                  <span class="text-xs font-bold text-rose-400 uppercase">Ruptures (Qté 0)</span>
+                  <span class="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 transition flex items-center gap-1 text-[11px] font-bold">
                     <i data-lucide="list-filter" class="w-4 h-4"></i>
-                  </button>
+                  </span>
                 </div>
-                <span id="kpiZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
+                <span id="kpiZeroStock" class="text-2xl font-black text-rose-400 mt-1 block">0</span>
               </div>
 
               <!-- KPI ALERTES ATYPIQUES -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow relative group cursor-pointer hover:border-amber-500/50 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-amber-600 uppercase">Alertes Atypiques</span>
-                  <button onclick="filterByKpi('HIGH')" title="Afficher la liste des volumes atypiques dans le tableau" 
-                          class="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                  <span class="text-xs font-bold text-amber-400 uppercase">Alertes Atypiques</span>
+                  <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 transition flex items-center gap-1 text-[11px] font-bold">
                     <i data-lucide="list-filter" class="w-4 h-4"></i>
-                  </button>
+                  </span>
                 </div>
-                <span id="kpiAtypicalStock" class="text-2xl font-black text-amber-600 mt-1 block">0</span>
+                <span id="kpiAtypicalStock" class="text-2xl font-black text-amber-400 mt-1 block">0</span>
               </div>
             </div>
           </div>
 
           <!-- FILTRES MULTI-SÉLECTIONS & EXPORT CSV -->
-          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow space-y-4">
             <div class="flex items-center justify-between gap-4">
               <div class="flex-1 relative">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Recherche multi-mots/combos multiples (séparés par des virgules ou espaces, ex: 106626, 128977)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
+                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Recherche multi-mots/combos multiples (séparés par virgules, ex: 106626, 128977)..." class="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-orange-500">
               </div>
               <div class="flex items-center space-x-2">
-                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
+                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
                   Effacer filtres
                 </button>
-                <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs">
+                <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow">
                   <i data-lucide="download" class="w-4 h-4"></i>
                   <span>Exporter CSV (Sélection)</span>
                 </button>
               </div>
             </div>
 
-            <!-- GRILLE DES 3 VOLETS MULTI-CHOIX -->
+            <!-- GRILLE DES 3 VOLETS MULTI-CHOIX (Checkboxes Dropdowns) -->
             <div class="grid grid-cols-3 gap-3">
               
               <!-- Multi-sélection Agents -->
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Agents</label>
+                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-orange-500">
                   <span id="btnLabelAgents" class="truncate font-semibold">Tous les agents</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
-                <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('agents', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('agents', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl p-3 z-30 space-y-2">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-800 text-[11px]">
+                    <button type="button" onclick="selectAll('agents', true)" class="text-orange-400 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('agents', false)" class="text-slate-400 hover:underline">Tout décocher</button>
                   </div>
-                  <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                  <div id="checkboxesAgents" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
                 </div>
               </div>
 
               <!-- Multi-sélection Entrepreneurs -->
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs</label>
+                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-orange-500">
                   <span id="btnLabelContractors" class="truncate font-semibold">Tous les entrepreneurs</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
-                <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('contractors', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('contractors', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl p-3 z-30 space-y-2">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-800 text-[11px]">
+                    <button type="button" onclick="selectAll('contractors', true)" class="text-orange-400 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('contractors', false)" class="text-slate-400 hover:underline">Tout décocher</button>
                   </div>
-                  <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                  <div id="checkboxesContractors" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
                 </div>
               </div>
 
               <!-- Multi-sélection Métiers -->
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Métiers</label>
+                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-orange-500">
                   <span id="btnLabelTrades" class="truncate font-semibold">Tous les métiers</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
-                <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('trades', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('trades', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl p-3 z-30 space-y-2">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-800 text-[11px]">
+                    <button type="button" onclick="selectAll('trades', true)" class="text-orange-400 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('trades', false)" class="text-slate-400 hover:underline">Tout décocher</button>
                   </div>
-                  <div id="checkboxesTrades" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                  <div id="checkboxesTrades" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
                 </div>
               </div>
 
             </div>
           </div>
 
-          <!-- GRAND TABLEAU DE SUPERVISION SUR FOND BLANC -->
-          <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
-              <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
-              <span class="text-slate-400 text-[11px]">Format Date : JJ/MM/AAAA</span>
+          <!-- GRAND TABLEAU DE SUPERVISION SUR FOND SOMBRE -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center text-xs">
+              <span id="tableCountLabel" class="font-bold text-slate-300">0 résultat(s)</span>
+              <span class="text-slate-500 text-[11px]">Format Date : JJ/MM/AAAA</span>
             </div>
-            <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
+            <div class="overflow-x-auto max-h-[500px]">
               <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
+                <thead class="bg-slate-950 text-slate-400 uppercase font-bold sticky top-0 border-b border-slate-800">
                   <tr>
-                    <th class="p-3">Horodatage (JJ/MM/AAAA)</th>
+                    <th class="p-3">Horodatage</th>
                     <th class="p-3">Agent</th>
                     <th class="p-3">Entrepreneur</th>
                     <th class="p-3">Métier</th>
@@ -343,22 +338,22 @@
                     <th class="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="supervisionTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                <tbody id="supervisionTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
               </table>
             </div>
           </div>
         </section>
 
-        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS (AVEC LES 4 KPI DE SYNTHÈSE + CARTES DÉTAILLÉES PAR AGENT) ================= -->
+        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS ================= -->
         <section id="viewAgents" class="hidden space-y-6">
           
           <div>
             <div class="flex justify-between items-center mb-2 px-1">
               <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
-                <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
+                <span id="periodBadgeAgents" class="text-xs text-orange-400 font-mono font-bold bg-slate-900 px-2.5 py-0.5 rounded-lg border border-slate-800 shadow">--</span>
               </div>
-              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-4 py-2 rounded-xl text-xs font-bold transition shadow-md flex items-center gap-2">
+              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-4 py-2 rounded-xl text-xs font-bold transition shadow flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
                 <span id="btnFilterActiveText">En cours uniquement (Cliquer pour voir tous)</span>
               </button>
@@ -366,40 +361,36 @@
             
             <!-- BLOC DES 4 CARTES KPI GLOBALES DE LA FLOTTE -->
             <div class="grid grid-cols-4 gap-4">
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
-                <span id="kpiAgentsTotalRows" class="text-2xl font-black text-slate-900 mt-1 block">0</span>
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+                <span class="text-xs font-bold text-slate-400 uppercase block">Lignes Cumulées</span>
+                <span id="kpiAgentsTotalRows" class="text-2xl font-black text-white mt-1 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-500 uppercase block">Pièces Totales</span>
-                <span id="kpiAgentsTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow">
+                <span class="text-xs font-bold text-slate-400 uppercase block">Pièces Totales</span>
+                <span id="kpiAgentsTotalPieces" class="text-2xl font-black text-orange-400 mt-1 block">0</span>
               </div>
-
-              <!-- KPI RUPTURES DÉCLARÉES -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow cursor-pointer hover:border-rose-500/50 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
-                  <span class="p-1.5 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                  <span class="text-xs font-bold text-rose-400 uppercase">Ruptures Déclarées</span>
+                  <span class="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 transition flex items-center gap-1 text-[11px] font-bold">
                     <i data-lucide="list-filter" class="w-4 h-4"></i>
                   </span>
                 </div>
-                <span id="kpiAgentsZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
+                <span id="kpiAgentsZeroStock" class="text-2xl font-black text-rose-400 mt-1 block">0</span>
               </div>
-
-              <!-- KPI ALERTES FLOTTE -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow cursor-pointer hover:border-amber-500/50 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-amber-600 uppercase">Alertes Flotte</span>
-                  <span class="p-1.5 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                  <span class="text-xs font-bold text-amber-400 uppercase">Alertes Flotte</span>
+                  <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 transition flex items-center gap-1 text-[11px] font-bold">
                     <i data-lucide="list-filter" class="w-4 h-4"></i>
                   </span>
                 </div>
-                <span id="kpiAgentsAtypicalStock" class="text-2xl font-black text-amber-600 mt-1 block">0</span>
+                <span id="kpiAgentsAtypicalStock" class="text-2xl font-black text-amber-400 mt-1 block">0</span>
               </div>
             </div>
           </div>
 
-          <!-- CONTENEUR DES ACCORDÉONS ET CARTES DÉTAILLÉES PAR AGENT (AVEC DÉBIT L/H, ANOMALIES ET PÉRIMÈTRE) -->
+          <!-- CONTENEUR DES ACCORDÉONS ET CARTES DÉTAILLÉES PAR AGENT -->
           <div id="agentsAccordionContainer" class="space-y-4"></div>
         </section>
 
@@ -407,39 +398,39 @@
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-orange-400"></i>
                 Cartographie Interactive du Terrain (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique • Bouton d'affichage ciblé sur la sélection active</p>
+              <p class="text-xs text-slate-400 mt-0.5">Visualisation géographique • Suivi des tournées et tracé chronologique</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
-                <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
+              <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
+                <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-400"></i>
                 <span id="mapFilterBtnText">Afficher toute la période</span>
               </button>
-              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-400 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg shadow transition flex items-center gap-1">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
                 <span>Recentrer Belgique</span>
               </button>
-              <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
+              <span class="text-xs font-mono text-orange-400 bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-700 shadow" id="mapPointsCountLabel">0 point(s) GPS</span>
             </div>
           </div>
-          <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-xs">
+          <div class="bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow">
             <div id="mapContainer"></div>
           </div>
         </section>
       </div>
 
       <!-- Mention de copyright obligatoire -->
-      <div class="text-center pt-8 pb-3 border-t border-slate-200">
-        <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
+      <div class="text-center pt-8 pb-3 border-t border-slate-800">
+        <span class="text-[11px] font-medium text-slate-500 tracking-wider">&copy; made by CO2H2O srlu</span>
       </div>
     </main>
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
+    const GOOGLE_SCRIPT_URL = "VOTRE_URL_GOOGLE_APPS_SCRIPT_ICI";
 
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
@@ -459,9 +450,7 @@
 
     let activeKpiFilter = null;
     let filterOnlyActiveAgents = true; 
-    let openDrawers = {};
-
-    let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
+    let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : 50;
     let mapFilterOnSelection = false;
 
     const BELGIUM_CENTER = [50.64, 4.67];
@@ -521,8 +510,8 @@
       const qtyInput = document.getElementById("cfgMaxQty");
       const qtyDisplay = document.getElementById("cfgMaxQtyDisplay");
       if (qtyInput && qtyDisplay) {
-        qtyInput.value = customMaxQty !== null ? customMaxQty : "";
-        qtyDisplay.innerText = customMaxQty !== null ? customMaxQty : "--";
+        qtyInput.value = customMaxQty !== null ? customMaxQty : 50;
+        qtyDisplay.innerText = customMaxQty !== null ? customMaxQty : 50;
       }
 
       if (!currentAdmin) {
@@ -551,10 +540,10 @@
       if (!btn || !btnText) return;
 
       if (filterOnlyActiveAgents) {
-        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-md";
+        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow";
         btnText.innerText = "🟢 En cours uniquement (Cliquer pour voir tous)";
       } else {
-        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs";
+        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-2 transition shadow";
         btnText.innerText = "⚪ Affichage complet (Cliquer pour filtrer en cours)";
       }
     }
@@ -601,8 +590,8 @@
       const cAgents = document.getElementById("checkboxesAgents");
       if (cAgents) {
         cAgents.innerHTML = availableAgents.map(a => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-800 cursor-pointer text-xs text-slate-300">
+            <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-orange-600 focus:ring-0">
             <span class="truncate">${a}</span>
           </label>
         `).join('');
@@ -611,8 +600,8 @@
       const cContractors = document.getElementById("checkboxesContractors");
       if (cContractors) {
         cContractors.innerHTML = availableContractors.map(c => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-800 cursor-pointer text-xs text-slate-300">
+            <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-orange-600 focus:ring-0">
             <span class="truncate">${c}</span>
           </label>
         `).join('');
@@ -621,8 +610,8 @@
       const cTrades = document.getElementById("checkboxesTrades");
       if (cTrades) {
         cTrades.innerHTML = availableTrades.map(t => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-800 cursor-pointer text-xs text-slate-300">
+            <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-orange-600 focus:ring-0">
             <span class="truncate">${t}</span>
           </label>
         `).join('');
@@ -696,7 +685,7 @@
       sessionStorage.removeItem("mon_current_admin");
       currentAdmin = "";
       document.getElementById("authPassword").value = "";
-      document.getElementById("authModal").classList.add("hidden");
+      document.getElementById("authModal").classList.remove("hidden");
     }
 
     async function syncMonitoringData() {
@@ -798,10 +787,10 @@
       const btnText = document.getElementById("mapFilterBtnText");
       const btnEl = document.getElementById("btnMapSelectionFilter");
       if (mapFilterOnSelection) {
-        btnEl.className = "text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnEl.className = "text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5";
         btnText.innerText = "Afficher uniquement la sélection";
       } else {
-        btnEl.className = "text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnEl.className = "text-xs font-bold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5";
         btnText.innerText = "Afficher toute la période";
       }
       applyFilters();
@@ -900,7 +889,7 @@
       const alertZero = document.getElementById("cfgAlertZero").checked;
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée pour cette sélection.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 italic">Aucune saisie trouvée pour cette sélection.</td></tr>`;
         return;
       }
 
@@ -909,17 +898,17 @@
         const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
         const displayDate = formatDateDMY(item.timestamp, true);
         return `
-          <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${displayDate}</td>
-            <td class="p-3 font-bold text-slate-900">${item.user}</td>
-            <td class="p-3 text-slate-700">${item.contractor}</td>
-            <td class="p-3 text-slate-500">${item.trade}</td>
-            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
-            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
-            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
+          <tr class="hover:bg-slate-800/50 transition ${isAlert ? 'bg-amber-500/10' : ''}">
+            <td class="p-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">${displayDate}</td>
+            <td class="p-3 font-bold text-white">${item.user}</td>
+            <td class="p-3 text-slate-300">${item.contractor}</td>
+            <td class="p-3 text-slate-400">${item.trade}</td>
+            <td class="p-3 font-mono font-bold text-orange-400">${item.sapRef}</td>
+            <td class="p-3 text-slate-200 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
+            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${q}</td>
             <td class="p-3 text-right whitespace-nowrap">
-              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-500/20 rounded-lg text-slate-400 hover:text-rose-400 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
             </td>
           </tr>
         `;
@@ -927,13 +916,12 @@
       lucide.createIcons();
     }
 
-    // FONCTION DE RENDU DE CHAQUE AGENT AVEC SES 3 KPIS DÉTAILLÉS (L/H, ANOMALIES, PÉRIMÈTRE)
     function renderAgentsView(list) {
       const container = document.getElementById("agentsAccordionContainer");
       if (!container) return;
 
       if (availableAgents.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Aucun agent configuré.</div>`;
+        container.innerHTML = `<div class="p-6 text-center text-slate-500 italic">Aucun agent configuré.</div>`;
         return;
       }
 
@@ -952,7 +940,7 @@
       }
 
       if (agentsToRender.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">Aucun agent ne correspond au filtre actif.</div>`;
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-slate-900 border border-slate-800 rounded-2xl shadow">Aucun agent ne correspond au filtre actif.</div>`;
         return;
       }
 
@@ -960,7 +948,6 @@
         const agentEntries = cachedHistory.filter(i => i.user === agent);
         const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
         
-        // 1. Calcul du Débit L/h de l'agent
         const times = agentEntries.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
         let agentRateStr = "0 l/h";
         if (times.length > 1) {
@@ -976,12 +963,10 @@
           agentRateStr = `${agentEntries.length} l/h`;
         }
 
-        // 2. Calcul des Anomalies de l'agent (Ruptures + Atypiques)
         const agentRuptures = agentEntries.filter(i => Number(i.quantity) === 0).length;
         const agentAtyp = customMaxQty !== null ? agentEntries.filter(i => Number(i.quantity) > customMaxQty).length : 0;
         const totalAnomalies = agentRuptures + agentAtyp;
 
-        // 3. Calcul du Périmètre de l'agent
         const contractorsSet = [...new Set(agentEntries.map(i => i.contractor).filter(Boolean))];
         const tradesSet = [...new Set(agentEntries.map(i => i.trade).filter(Boolean))];
         const perimetreStr = contractorsSet.length > 0 ? `${contractorsSet.join(', ')} (${tradesSet.join(', ')})` : "Aucun périmètre actif";
@@ -999,36 +984,35 @@
         }
 
         return `
-          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
               <div class="flex items-center space-x-3">
-                <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}"></div>
-                <span class="font-bold text-slate-900 text-sm">${agent}</span>
-                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+                <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}"></div>
+                <span class="font-bold text-white text-sm">${agent}</span>
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}">
                   ${isActive ? '🟢 En cours' : '⚪ Déconnecté'} • Dernier signal : ${lastTimeStr}
                 </span>
               </div>
-              <span class="text-xs font-mono text-orange-700 font-bold bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100">${agentEntries.length} lignes • ${totalPieces} pcs</span>
+              <span class="text-xs font-mono text-orange-400 font-bold bg-orange-500/15 px-2.5 py-1 rounded-lg border border-orange-500/30">${agentEntries.length} lignes • ${totalPieces} pcs</span>
             </div>
             
-            <!-- LES 3 CARTES KPI INDIVIDUELLES DE L'AGENT -->
             <div class="grid grid-cols-3 gap-3 pt-1">
-              <div class="bg-indigo-50/60 border border-indigo-100 p-2.5 rounded-xl text-center">
-                <span class="text-[10px] font-bold text-indigo-600 uppercase block">1. Débit / Vitesse</span>
-                <span class="text-base font-black text-indigo-700 font-mono mt-0.5 block">${agentRateStr}</span>
+              <div class="bg-indigo-950/40 border border-indigo-500/30 p-2.5 rounded-xl text-center">
+                <span class="text-[10px] font-bold text-indigo-400 uppercase block">1. Débit / Vitesse</span>
+                <span class="text-base font-black text-indigo-300 font-mono mt-0.5 block">${agentRateStr}</span>
               </div>
-              <div class="bg-rose-50/60 border border-rose-100 p-2.5 rounded-xl text-center">
-                <span class="text-[10px] font-bold text-rose-600 uppercase block">2. Anomalies Signalées</span>
-                <span class="text-base font-black text-rose-700 font-mono mt-0.5 block">${totalAnomalies} <span class="text-[10px] font-normal text-rose-500">(0: ${agentRuptures}, >${customMaxQty || '--'}: ${agentAtyp})</span></span>
+              <div class="bg-rose-950/40 border border-rose-500/30 p-2.5 rounded-xl text-center">
+                <span class="text-[10px] font-bold text-rose-400 uppercase block">2. Anomalies Signalées</span>
+                <span class="text-base font-black text-rose-300 font-mono mt-0.5 block">${totalAnomalies} <span class="text-[10px] font-normal text-rose-400/85">(0: ${agentRuptures}, >${customMaxQty || '--'}: ${agentAtyp})</span></span>
               </div>
-              <div class="bg-amber-50/60 border border-amber-100 p-2.5 rounded-xl text-center flex flex-col justify-between">
-                <span class="text-[10px] font-bold text-amber-700 uppercase block">3. Périmètre d'action</span>
-                <span class="text-xs font-bold text-slate-800 truncate px-1" title="${perimetreStr}">${perimetreStr}</span>
+              <div class="bg-amber-950/40 border border-amber-500/30 p-2.5 rounded-xl text-center flex flex-col justify-between">
+                <span class="text-[10px] font-bold text-amber-400 uppercase block">3. Périmètre d'action</span>
+                <span class="text-xs font-bold text-slate-200 truncate px-1" title="${perimetreStr}">${perimetreStr}</span>
               </div>
             </div>
 
             <div class="pt-1 flex justify-end">
-              <button onclick="filterAndSwitchToGlobal('${agent}', '', '')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-orange-700 transition flex items-center gap-1">
+              <button onclick="filterAndSwitchToGlobal('${agent}', '', '')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold text-orange-400 transition flex items-center gap-1">
                 <span>Filtrer ses lignes dans l'Activité Globale</span>
               </button>
             </div>
@@ -1165,11 +1149,10 @@
         });
 
         const comboList = Object.entries(comboDetails).map(([combo, data]) => `
-          <li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-indigo-600">${data.timeStr}</strong> | <strong class="text-orange-600">${data.count} ligne(s)</strong></li>
+          <li><span class="text-slate-200">${combo}</span> : <strong class="text-indigo-400">${data.timeStr}</strong> | <strong class="text-orange-400">${data.count} ligne(s)</strong></li>
         `).join('');
 
         const totalClusterLines = items.length;
-
         const allClusterTimes = items.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
         let globalRatioStr = "-- l/h";
         if (allClusterTimes.length > 1) {
@@ -1188,9 +1171,9 @@
 
         const tooltipContent = `
           <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
-            <strong class="text-slate-900 block text-sm">Agent : ${user} (${status}) • ${globalRatioStr}</strong>
-            <div class="text-[11px] text-slate-600 font-semibold">Détail par Entrepreneur & Métier :</div>
-            <ul class="list-disc pl-4 text-[10px] text-slate-700 space-y-0.5">${comboList}</ul>
+            <strong class="text-white block text-sm">Agent : ${user} (${status}) • ${globalRatioStr}</strong>
+            <div class="text-[11px] text-slate-300 font-semibold">Détail par Entrepreneur & Métier :</div>
+            <ul class="list-disc pl-4 text-[10px] text-slate-300 space-y-0.5">${comboList}</ul>
           </div>
         `;
 
@@ -1218,40 +1201,20 @@
         const safeTrade = (items[0].trade || '').replace(/'/g, "\\'");
 
         marker.bindPopup(`
-          <div class="text-xs font-sans space-y-2.5 py-1 min-w-[300px]">
-            <div class="flex justify-between items-start border-b border-slate-100 pb-2">
+          <div class="text-xs font-sans space-y-2.5 py-1 min-w-[280px]">
+            <div class="flex justify-between items-start border-b border-slate-700 pb-2">
               <div>
-                <strong class="text-slate-900 text-sm block">${user}</strong>
-                <span class="text-slate-500 text-[10px]">Statut : ${status}</span>
+                <strong class="text-white text-sm block">${user}</strong>
+                <span class="text-slate-400 text-[10px]">Statut : ${status}</span>
               </div>
               <div class="text-right">
-                <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold block">${totalClusterLines} saisie(s)</span>
-                <span class="font-mono text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold mt-1 inline-block">${globalRatioStr}</span>
+                <span class="font-mono text-[10px] bg-slate-800 text-slate-200 px-2 py-0.5 rounded font-bold block">${totalClusterLines} saisie(s)</span>
+                <span class="font-mono text-[10px] bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded font-bold mt-1 inline-block">${globalRatioStr}</span>
               </div>
-            </div>
-
-            <div class="space-y-1">
-              <span class="text-[10px] font-bold text-slate-400 uppercase block">Détails par Entrepreneur & Métier :</span>
-              <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
-                ${Object.entries(comboDetails).map(([combo, data]) => `
-                  <div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-200 last:border-0">
-                    <span class="font-semibold text-slate-800 truncate max-w-[140px]" title="${combo}">${combo}</span>
-                    <div class="flex items-center gap-2 shrink-0 font-mono">
-                      <span class="text-indigo-600 font-bold">${data.timeStr}</span>
-                      <span class="text-orange-700 font-bold">${data.count} ligne(s)</span>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-
-            <div class="text-[11px] text-slate-600">
-              <span>Date(s) : </span>
-              <strong class="font-mono text-slate-800">${dateRangeStr}</strong>
             </div>
 
             <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
-                    class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5">
+                    class="w-full mt-2 py-2 px-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow transition flex items-center justify-center gap-1.5">
               <i data-lucide="list" class="w-3.5 h-3.5"></i>
               <span>Voir le listing dans l'Activité Globale</span>
             </button>
@@ -1285,19 +1248,19 @@
       document.getElementById("viewAgents").classList.add("hidden");
       document.getElementById("viewMap").classList.add("hidden");
 
-      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
+      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition";
+      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition";
+      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition";
 
       if (v === 'global') {
         document.getElementById("viewGlobal").classList.remove("hidden");
-        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-md transition";
       } else if (v === 'agents') {
         document.getElementById("viewAgents").classList.remove("hidden");
-        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-md transition";
       } else if (v === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-md transition";
         setTimeout(() => { 
           if (map) {
             map.invalidateSize();
