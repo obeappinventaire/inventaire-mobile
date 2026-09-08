@@ -57,13 +57,13 @@
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
       <!-- BANDEAU MISSION ACTIVE (VERROUILLAGE TOURNÉE) -->
-      <div id="activeMissionBanner" class="hidden bg-orange-50 border-2 border-orange-400 p-3.5 rounded-2xl shadow-xs space-y-2">
+      <div id="activeMissionBanner" class="hidden bg-amber-50 border-2 border-orange-500 p-3.5 rounded-2xl shadow-xs space-y-2">
         <div class="flex justify-between items-center">
           <span class="text-[11px] font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="clipboard-check" class="w-4 h-4 text-orange-600"></i>
             Tâche de Tournée Assignée
           </span>
-          <button onclick="cancelActiveMission()" class="text-[10px] font-bold text-rose-600 hover:bg-rose-100/60 px-2 py-0.5 rounded-lg border border-rose-200 transition cursor-pointer">
+          <button onclick="cancelActiveMission()" class="text-[10px] font-bold text-rose-600 bg-white hover:bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-300 transition cursor-pointer">
             Mode Libre ✕
           </button>
         </div>
@@ -75,11 +75,11 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
-            <select id="selectContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"></select>
+            <select id="selectContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
           </div>
           <div>
             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Métier</label>
-            <select id="selectTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"></select>
+            <select id="selectTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
           </div>
         </div>
       </div>
@@ -126,7 +126,7 @@
       </div>
     </section>
 
-    <!-- ONGLET 2 : HISTORIQUE (CONSULTATION PURE SANS REBOND) -->
+    <!-- ONGLET 2 : HISTORIQUE -->
     <section id="tabHistorique" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
@@ -227,11 +227,10 @@
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
     let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
     let cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
-    let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
     let pendingSyncQueue = JSON.parse(localStorage.getItem("offline_pending_sync") || "[]");
 
     let selectedArticle = null;
-    let activeMissionContext = null; // Contexte strict de la tournée engagée
+    let activeMissionContext = null;
     let currentGpsCoords = { lat: null, lng: null };
     let mediaStream = null;
     let barcodeDetector = null;
@@ -284,7 +283,6 @@
       }
     }
 
-    // Fonction d'affectation dynamique avec tolérance (crée l'option si absente du catalogue)
     function setSelectValueWithFallback(selectId, val) {
       const sel = document.getElementById(selectId);
       if (!sel || !val) return;
@@ -321,19 +319,6 @@
       document.getElementById("configModal").classList.add("hidden");
 
       cancelActiveMission();
-
-      // Réinitialisation stricte de l'historique sur l'agent connecté
-      const allHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
-      const activeAgentNorm = String(currentAgent).trim().toLowerCase();
-      const serverAgentHistory = allHistory.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
-      
-      const pendingIds = new Set(pendingSyncQueue.filter(p => p.action === 'CREATE').map(p => p.id));
-      const currentLocals = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
-      const pendingLocals = currentLocals.filter(h => pendingIds.has(h.id) && String(h.user || "").trim().toLowerCase() === activeAgentNorm);
-
-      sessionHistory = [...pendingLocals, ...serverAgentHistory.filter(h => !pendingIds.has(h.id))];
-      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
-
       renderTournee();
       renderHistory();
     }
@@ -379,7 +364,7 @@
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
       if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
-      // Dépilement de la file d'attente hors ligne
+      // 1. Dépilement de la file d'attente hors ligne
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
@@ -389,7 +374,7 @@
               headers: { "Content-Type": "text/plain;charset=utf-8" },
               body: JSON.stringify(item)
             });
-            pendingSyncQueue = pendingSyncQueue.filter(q => q !== item);
+            pendingSyncQueue = pendingSyncQueue.filter(q => q.id !== item.id);
             localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
           } catch (err) {
             console.warn("Échec envoi tâche différée :", err);
@@ -399,7 +384,7 @@
         updatePendingBadge();
       }
 
-      // Synchronisation descendante
+      // 2. Synchronisation descendante : Google Sheets est la source de vérité
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
@@ -409,6 +394,7 @@
           if (data.contractors) localStorage.setItem("offline_contractors", JSON.stringify(availableContractors = data.contractors));
           if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(availableTrades = data.trades));
 
+          // Tournées : conservation des validations locales récentes
           if (data.tournees) {
             const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
             const localValides = new Set(
@@ -426,21 +412,16 @@
             localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
           }
 
+          // HISTORIQUE : Purge immédiate des éléments supprimés dans Google Sheets
           if (data.history) {
             localStorage.setItem("offline_history", JSON.stringify(data.history));
-
+            
+            // On reconstruit mob_session_history à partir de la réponse serveur exacte
             const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
-            const serverAgentItems = data.history.filter(h => 
+            const serverAgentHistory = data.history.filter(h => 
               String(h.user || "").trim().toLowerCase() === activeAgentNorm
             );
-            const serverIds = new Set(serverAgentItems.map(h => String(h.id)));
-
-            const pendingCreates = pendingSyncQueue
-              .filter(p => p.action === 'CREATE' && String(p.user || '').trim().toLowerCase() === activeAgentNorm && !serverIds.has(String(p.id)))
-              .map(p => ({ ...p, isPending: true }));
-
-            sessionHistory = [...pendingCreates, ...serverAgentItems];
-            localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+            localStorage.setItem("mob_session_history", JSON.stringify(serverAgentHistory));
           }
 
           initMobileDropdowns();
@@ -455,14 +436,15 @@
       }
     }
 
-    // Gestion du contexte de tournée
+    // Gestion du verrouillage de mission
     function selectTourneeTask(tourneeId) {
       cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
       const task = cachedTournees.find(t => String(t.id).trim() === String(tourneeId).trim());
       if (!task) return;
 
+      // Garde-fou strict anti-réactivation
       if (String(task.statut || '').trim().toUpperCase() === 'VALIDE') {
-        return; // Verrou strict : impossible de recharger une tâche déjà validée
+        return;
       }
 
       activeMissionContext = {
@@ -473,17 +455,23 @@
         trade: task.trade
       };
 
-      // 1. Mise à jour forcée des listes déroulantes
+      // 1. Affectation des listes déroulantes
       setSelectValueWithFallback("selectContractor", task.contractor);
       setSelectValueWithFallback("selectTrade", task.trade);
 
-      // 2. Verrouillage des sélecteurs pour empêcher la divergence
+      // 2. Verrouillage effectif des sélecteurs
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
-      if (cSel) cSel.disabled = true;
-      if (tSel) tSel.disabled = true;
+      if (cSel) {
+        cSel.setAttribute("disabled", "disabled");
+        cSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
+      }
+      if (tSel) {
+        tSel.setAttribute("disabled", "disabled");
+        tSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
+      }
 
-      // 3. Affichage du bandeau de mission
+      // 3. Affichage obligatoire du bandeau de mission
       const banner = document.getElementById("activeMissionBanner");
       const bannerInfo = document.getElementById("missionBannerInfo");
       if (banner && bannerInfo) {
@@ -491,11 +479,11 @@
         banner.classList.remove("hidden");
       }
 
-      // 4. Pré-sélection de l'article
+      // 4. Sélection de l'article
       const item = catalog.find(i => String(i.sapRef).trim() === String(task.sapRef).trim());
       selectArticleFromSearch(item || {
         sapRef: task.sapRef,
-        designation: task.designation || 'Article de tournée',
+        designation: task.designation || 'Article assigné',
         supplierRef: ''
       });
 
@@ -506,8 +494,14 @@
       activeMissionContext = null;
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
-      if (cSel) cSel.disabled = false;
-      if (tSel) tSel.disabled = false;
+      if (cSel) {
+        cSel.removeAttribute("disabled");
+        cSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
+      }
+      if (tSel) {
+        tSel.removeAttribute("disabled");
+        tSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
+      }
 
       const banner = document.getElementById("activeMissionBanner");
       if (banner) banner.classList.add("hidden");
@@ -641,7 +635,7 @@
 
       const qty = parseInt(document.getElementById("inputQuantity").value, 10) || 0;
 
-      // Priorité stricte au contexte de tournée si engagé
+      // Verrouillage contextuel strict
       const contractor = activeMissionContext ? activeMissionContext.contractor : document.getElementById("selectContractor").value;
       const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
       const tourneeId = activeMissionContext ? activeMissionContext.id : null;
@@ -660,11 +654,14 @@
         tourneeId: tourneeId
       };
 
+      // 1. Mise à jour locale immédiate de l'historique
+      let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       sessionHistory.unshift({ ...record, isPending: !navigator.onLine });
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
 
-      // Validation locale ciblée par ID unique
+      // 2. Validation ciblée de la tournée
       let matchedTourneeId = tourneeId;
+      cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
       cachedTournees.forEach(t => {
         const matchById = tourneeId && String(t.id).trim() === String(tourneeId).trim();
         const matchBySap = !tourneeId && String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim();
@@ -675,6 +672,7 @@
       });
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
+      // 3. Mise en file d'attente
       pendingSyncQueue.push({ action: "CREATE", ...record });
       if (matchedTourneeId) {
         pendingSyncQueue.push({ 
@@ -688,49 +686,59 @@
       localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
       updatePendingBadge();
 
-      // Réinitialisation et libération du formulaire
+      // 4. Nettoyage et basculement garanti vers l'onglet Historique
       cancelActiveMission();
-      renderHistory();
       renderTournee();
-
+      renderHistory();
       switchMobileTab('historique');
-      if (navigator.onLine) syncMobileData();
+
+      // 5. Envoi serveur asynchrone non-bloquant
+      if (navigator.onLine) {
+        setTimeout(() => syncMobileData(), 100);
+      }
     }
 
     function renderHistory() {
-      sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
+      const container = document.getElementById("historyListContainer");
+      if (!container) return;
+
       const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
       const todayStr = normalizeDateYMD(new Date());
 
-      const agentHistory = sessionHistory.filter(h => {
-        const matchUser = !activeAgentNorm || String(h.user || "").trim().toLowerCase() === activeAgentNorm;
-        const matchDay = normalizeDateYMD(h.timestamp) === todayStr;
-        return matchUser && matchDay;
-      });
+      // 1. Éléments validés par Google Sheets
+      const serverHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]")
+        .filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
 
-      const container = document.getElementById("historyListContainer");
-      if (!container) return;
-      document.getElementById("historyCount").innerText = `${agentHistory.length} ligne(s)`;
+      // 2. Éléments saisis hors-ligne encore non synchronisés
+      const pendingIds = new Set(serverHistory.map(h => h.id));
+      const pendingItems = (JSON.parse(localStorage.getItem("offline_pending_sync") || "[]"))
+        .filter(p => p.action === 'CREATE' && String(p.user || '').trim().toLowerCase() === activeAgentNorm && !pendingIds.has(p.id))
+        .map(p => ({ ...p, isPending: true }));
 
-      if (agentHistory.length === 0) {
+      const fullHistory = [...pendingItems, ...serverHistory].filter(h => normalizeDateYMD(h.timestamp) === todayStr);
+
+      document.getElementById("historyCount").innerText = `${fullHistory.length} ligne(s)`;
+
+      if (fullHistory.length === 0) {
         container.innerHTML = `
           <div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl space-y-1">
             <p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p>
+            <p class="text-[10px]">Toute ligne supprimée dans Google Sheets disparaît automatiquement d'ici.</p>
           </div>
         `;
         return;
       }
 
-      container.innerHTML = agentHistory.map(h => {
+      container.innerHTML = fullHistory.map(h => {
         const isPending = !!h.isPending;
         return `
-          <div class="bg-white border ${isPending ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs space-y-1 text-xs cursor-default">
+          <div class="bg-white border ${isPending ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs space-y-1 text-xs cursor-default select-none">
             <div class="flex justify-between items-center">
               <div class="flex items-center space-x-2">
                 <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>
                 ${isPending 
                   ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">⏳ EN ATTENTE</span>' 
-                  : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">✓ SYNCHRONISÉ</span>'
+                  : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">✓ ENREGISTRÉ</span>'
                 }
               </div>
               <div class="flex items-center space-x-2">
@@ -751,6 +759,7 @@
     }
 
     function editHistoryItem(id) {
+      let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       const item = sessionHistory.find(h => h.id === id);
       if (!item) return;
       const newQty = prompt("Modifier la quantité :", item.quantity);
@@ -776,6 +785,7 @@
 
     function deleteHistoryItem(id) {
       if (!confirm("Supprimer cette saisie ?")) return;
+      let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       sessionHistory = sessionHistory.filter(h => h.id !== id);
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
 
@@ -812,10 +822,10 @@
         const isDone = String(t.statut || '').trim().toUpperCase() === 'VALIDE';
         const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
         
-        // Neutralisation absolue du clic si la tâche est validée
+        // Verrouillage total et suppression d'événement si validé
         const clickAttr = isDone ? '' : `onclick="selectTourneeTask('${t.id}')"`;
         const styleClass = isDone 
-          ? 'border-emerald-300 bg-emerald-50/60 opacity-90 cursor-default pointer-events-none' 
+          ? 'border-emerald-300 bg-emerald-50/70 opacity-85 cursor-default pointer-events-none select-none' 
           : 'border-slate-200 hover:border-orange-300 cursor-pointer';
 
         return `
@@ -840,11 +850,18 @@
 
     function switchMobileTab(tab) {
       ['Comptage', 'Historique', 'Tournee'].forEach(t => {
-        document.getElementById("tab" + t).classList.add("hidden");
-        document.getElementById("nav" + t).className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer";
+        const elTab = document.getElementById("tab" + t);
+        const elNav = document.getElementById("nav" + t);
+        if (elTab) elTab.classList.add("hidden");
+        if (elNav) elNav.className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer";
       });
-      document.getElementById("tab" + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove("hidden");
-      document.getElementById("nav" + tab.charAt(0).toUpperCase() + tab.slice(1)).className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition cursor-pointer";
+
+      const activeName = tab.charAt(0).toUpperCase() + tab.slice(1);
+      const targetTab = document.getElementById("tab" + activeName);
+      const targetNav = document.getElementById("nav" + activeName);
+      if (targetTab) targetTab.classList.remove("hidden");
+      if (targetNav) targetNav.className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition cursor-pointer";
+
       if (tab === 'historique') renderHistory();
       if (tab === 'tournee') renderTournee();
       lucide.createIcons();
