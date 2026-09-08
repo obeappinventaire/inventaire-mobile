@@ -783,13 +783,6 @@
         if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
         if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
 
-        if (filterOnlyActiveAgents) {
-          const nowMs = Date.now();
-          const fifteenMinMs = 15 * 60 * 1000;
-          const dt = parseItemDate(item.timestamp);
-          if (!dt || (nowMs - dt.getTime()) >= fifteenMinMs) return false;
-        }
-
         if (term) {
           const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
           if (!matchTarget.includes(term)) return false;
@@ -878,6 +871,21 @@
       const now = new Date().getTime();
       const fifteenMinMs = 15 * 60 * 1000;
       let agentsToRender = selectedAgents.length > 0 ? availableAgents.filter(a => selectedAgents.includes(a)) : [...availableAgents];
+
+      if (filterOnlyActiveAgents) {
+        agentsToRender = agentsToRender.filter(agent => {
+          const agentEntries = list.filter(i => i.user === agent);
+          if (agentEntries.length === 0) return false;
+          const lastOne = agentEntries[0];
+          const dt = parseItemDate(lastOne.timestamp);
+          return dt && (now - dt.getTime()) < fifteenMinMs;
+        });
+      }
+
+      if (agentsToRender.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">Aucun agent ne correspond au filtre actif.</div>`;
+        return;
+      }
 
       container.innerHTML = agentsToRender.map(agent => {
         const agentEntries = list.filter(i => i.user === agent);
@@ -1012,7 +1020,6 @@
       processedClusters.forEach(cluster => {
         let { lat, lng, user, status, items } = cluster;
         
-        // Si un agent a un cluster Finalisé ET un cluster En cours au même endroit, on décale légèrement l'un d'eux
         processedClusters.forEach(other => {
           if (other !== cluster && other.user === user && getDistanceFromLatLonInMeters(lat, lng, other.lat, other.lng) < 100) {
             lat += 0.0015;
@@ -1023,7 +1030,7 @@
         points.push([lat, lng]);
 
         const isFinalizedCluster = (status === 'Finalisé');
-        const fillColor = isFinalizedCluster ? "#f97316" : "#10b981"; // Orange pour finalisé, Vert pour en cours
+        const fillColor = isFinalizedCluster ? "#f97316" : "#10b981";
 
         const comboCounts = {};
         const comboStatus = {};
