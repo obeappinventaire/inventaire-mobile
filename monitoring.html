@@ -11,7 +11,6 @@
   <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- SHEETJS (XLSX) POUR GESTION MULTI-ONGLETS EXCEL -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -30,20 +29,18 @@
       padding: 6px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
-      width: auto !important;
       max-width: 380px !important;
     }
     .leaflet-popup-content { 
       margin: 10px 14px; 
       line-height: 1.4;
-      width: auto !important;
       word-break: break-word;
     }
   </style>
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
+  <!-- MODALE AUTHENTIFICATION ADMIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -80,7 +77,7 @@
     </div>
   </div>
 
-  <!-- ================= EN-TÊTE FIXE ================= -->
+  <!-- EN-TÊTE FIXE -->
   <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
     <div class="flex items-center space-x-3">
       <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
@@ -113,14 +110,13 @@
     </div>
   </header>
 
-  <!-- ================= STRUCTURE EN DEUX COLONNES ================= -->
+  <!-- STRUCTURE CENTRALE -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE - ÉCLAIRCIE EN SLATE-800) -->
+    <!-- SIDEBAR -->
     <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100">
       <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
         
-        <!-- Navigation Vues Principales -->
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
           <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer">
@@ -207,7 +203,7 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE D'AFFICHAGE -->
+    <!-- ZONE PRINCIPALE -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col justify-between bg-slate-50">
       
       <div class="space-y-6">
@@ -451,12 +447,8 @@
             </div>
           </div>
 
-          <!-- DOUBLE PANNEAU (70% AGENDA MURAL / 30% COMPLETION) -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE -->
             <div class="lg:col-span-8 space-y-4">
-              
               <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center space-x-2">
                   <span class="text-xs font-bold text-slate-500 uppercase">Filtre Agent :</span>
@@ -467,19 +459,15 @@
                 <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- GRILLE PLANNING MURAL -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Partie haute: Matin | Partie basse: Après-midi)</span>
                 </div>
-
                 <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[380px]"></div>
               </div>
             </div>
 
-            <!-- PANNEAU DROIT (4/12) : SUIVI & COMPLETION -->
             <div class="lg:col-span-4 space-y-4">
-              
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
                 <div class="flex justify-between items-center">
                   <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Complétion Globale</span>
@@ -506,22 +494,19 @@
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Actifs uniquement)</span>
                 <div id="agentCompletionList" class="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
-
             </div>
-
           </div>
         </section>
 
       </div>
 
-      <!-- FIN DE PAGE SANS DÉBORDEMENT -->
       <div class="text-center pt-8 pb-6 border-t border-slate-200 shrink-0">
         <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
       </div>
     </main>
   </div>
 
-  <!-- ================= MODALE ASSIGNATION MANUELLE ================= -->
+  <!-- MODALE ASSIGNATION MANUELLE -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -589,7 +574,7 @@
     </div>
   </div>
 
-  <!-- ================= MODALE DÉTAILS TOURNÉE ================= -->
+  <!-- MODALE DÉTAILS TOURNÉE -->
   <div id="tourneeDetailsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -620,10 +605,7 @@
 
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => {
-            console.log('SW Supervision enregistré:', reg.scope);
-            reg.update();
-          })
+          .then(reg => reg.update())
           .catch(err => console.warn('Échec enregistrement SW:', err));
       });
     }
@@ -659,10 +641,6 @@
 
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
-    const BELGIUM_BOUNDS = [
-      [49.40, 2.45],
-      [51.55, 6.50]
-    ];
 
     function getISOWeekNumber(d) {
       const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -685,9 +663,9 @@
 
     function parseItemDate(str) {
       if (!str) return new Date(0);
-      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})?(:(\d{1,2}))?)?/);
+      const parts = String(str).match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
       if (parts) {
-        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[7] || 0);
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
       }
       const iso = new Date(str);
       return isNaN(iso.getTime()) ? new Date(0) : iso;
@@ -697,20 +675,16 @@
       if (!dateInput) return "--/--/----";
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
       if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
-      
-      const options = { weekday: 'short', day: 'numeric', month: 'short' };
-      return d.toLocaleDateString('fr-FR', options);
+      return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
     }
 
     function formatDateDMY(dateInput, includeTime = false) {
       if (!dateInput) return "--/--/----";
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
       if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
-      
       const day = String(d.getDate()).padStart(2, '0');
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
-      
       if (!includeTime) return `${day}/${month}/${year}`;
       const hours = String(d.getHours()).padStart(2, '0');
       const minutes = String(d.getMinutes()).padStart(2, '0');
@@ -752,16 +726,13 @@
       updateActiveAgentsButtonUI();
       renderWallPlanning();
       applyFilters();
+      switchView(activeView);
       await syncMonitoringData();
     });
 
     function openManualAssignModal(defaultDate = null, defaultTranche = 'MATIN') {
-      if (defaultDate) {
-        document.getElementById("adminAssignDate").value = defaultDate;
-      }
-      if (defaultTranche) {
-        document.getElementById("adminAssignTranche").value = defaultTranche;
-      }
+      if (defaultDate) document.getElementById("adminAssignDate").value = defaultDate;
+      if (defaultTranche) document.getElementById("adminAssignTranche").value = defaultTranche;
       document.getElementById("manualAssignModal").classList.remove("hidden");
       renderAdminCatalogPicker("");
     }
@@ -783,13 +754,8 @@
       const agentOptions = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
       if (agentSel) agentSel.innerHTML = agentOptions;
       if (filterAgentSel) filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-
-      if (contractorSel) {
-        contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      }
-      if (tradeSel) {
-        tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
-      }
+      if (contractorSel) contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (tradeSel) tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
     function renderAdminCatalogPicker(filterText) {
@@ -797,29 +763,26 @@
       const countLabel = document.getElementById("adminCatalogCount");
       if (!container) return;
 
-      const rawQ = String(filterText || "").trim().toLowerCase();
-      const searchTerms = rawQ.split(/\s+/).filter(Boolean);
-
+      const searchTerms = String(filterText || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
       const filtered = (catalog || []).filter(item => {
         const textTarget = `${item.sapRef || ""} ${item.designation || ""} ${item.supplierRef || ""} ${item.ean || ""}`.toLowerCase();
         return searchTerms.every(term => textTarget.includes(term));
       });
 
-      if (countLabel) countLabel.innerText = `${filtered.length} article(s) trouvé(s) sur ${catalog.length} au total`;
-
+      if (countLabel) countLabel.innerText = `${filtered.length} article(s) trouvé(s) sur ${catalog.length}`;
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="p-2 text-center text-slate-400 text-xs italic">Aucun article trouvé dans le catalogue global.</div>`;
+        container.innerHTML = `<div class="p-2 text-center text-slate-400 text-xs italic">Aucun article trouvé.</div>`;
         return;
       }
 
-      container.innerHTML = filtered.slice(0, 80).map(item => {
+      container.innerHTML = filtered.slice(0, 60).map(item => {
         const isChecked = manualSelectedCatalogSaps.includes(String(item.sapRef).trim());
         return `
           <label class="flex items-center justify-between p-1 rounded hover:bg-white cursor-pointer text-xs text-slate-700">
             <div class="flex items-center space-x-2 min-w-0 pr-2">
               <input type="checkbox" value="${item.sapRef}" onchange="toggleManualCatalogSelection('${item.sapRef}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
               <span class="font-mono font-bold text-amber-700">${item.sapRef}</span>
-              <span class="truncate max-w-[280px]" title="${item.designation}">${item.designation}</span>
+              <span class="truncate max-w-[280px]">${item.designation}</span>
             </div>
           </label>
         `;
@@ -828,11 +791,9 @@
 
     function toggleManualCatalogSelection(sapRef) {
       const ref = String(sapRef).trim();
-      if (manualSelectedCatalogSaps.includes(ref)) {
-        manualSelectedCatalogSaps = manualSelectedCatalogSaps.filter(r => r !== ref);
-      } else {
-        manualSelectedCatalogSaps.push(ref);
-      }
+      manualSelectedCatalogSaps = manualSelectedCatalogSaps.includes(ref) 
+        ? manualSelectedCatalogSaps.filter(r => r !== ref) 
+        : [...manualSelectedCatalogSaps, ref];
     }
 
     async function submitManualTourneeAssignment() {
@@ -842,19 +803,13 @@
       const trade = document.getElementById("adminAssignTrade").value;
       const date = document.getElementById("adminAssignDate").value;
 
-      if (!agent) {
-        alert("Veuillez sélectionner un agent.");
-        return;
-      }
-      if (manualSelectedCatalogSaps.length === 0) {
-        alert("Veuillez cocher au moins un article dans le catalogue.");
-        return;
-      }
+      if (!agent) { alert("Veuillez sélectionner un agent."); return; }
+      if (manualSelectedCatalogSaps.length === 0) { alert("Veuillez cocher au moins un article."); return; }
 
       const items = manualSelectedCatalogSaps.map((sapRef, idx) => {
         const catItem = catalog.find(i => String(i.sapRef).trim() === sapRef);
         return {
-          id: "TRN-LOC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
+          id: "TRN-LOC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
           agent: agent,
           contractor: contractor || '',
           trade: trade || '',
@@ -869,57 +824,24 @@
 
       items.forEach(it => cachedTournees.push(it));
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
-
       closeManualAssignModal();
       manualSelectedCatalogSaps = [];
       renderWallPlanning();
 
-      const payload = {
-        action: "CREATE_TOURNEES_BULK",
-        user: currentAdmin,
-        items: items
-      };
-
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        }).catch(err => console.warn("Erreur synchro arrière-plan :", err));
-      }
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", user: currentAdmin, items: items })
+      }).catch(err => console.warn("Erreur synchronisation bulk:", err));
     }
 
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
-
       const planningData = [
         ["date_previsionnelle", "tranche_horaire", "agent", "contractor", "trade", "sapRef", "ordre"],
-        ["2026-09-09", "MATIN", availableAgents[0] || "Agent 1", availableContractors[0] || "ENTREPRENEUR A", availableTrades[0] || "Electricite", catalog[0] ? catalog[0].sapRef : "106626", 1],
-        ["2026-09-09", "APRES_MIDI", availableAgents[0] || "Agent 1", availableContractors[0] || "ENTREPRENEUR A", availableTrades[0] || "Electricite", catalog[1] ? catalog[1].sapRef : "128977", 2]
+        ["2026-09-09", "MATIN", availableAgents[0] || "Agent 1", availableContractors[0] || "ENTREPRENEUR A", availableTrades[0] || "Electricite", catalog[0] ? catalog[0].sapRef : "106626", 1]
       ];
-      const wsPlanning = XLSX.utils.aoa_to_sheet(planningData);
-      XLSX.utils.book_append_sheet(wb, wsPlanning, "Planning_Tournees");
-
-      const masterAgents = [["Liste_Agents"], ...(availableAgents.map(a => [a]))];
-      const masterContractors = [["Liste_Entrepreneurs"], ...(availableContractors.map(c => [c]))];
-      const masterTrades = [["Liste_Metiers"], ...(availableTrades.map(t => [t]))];
-
-      const refAgentsData = [];
-      const maxLen = Math.max(masterAgents.length, masterContractors.length, masterTrades.length);
-      for (let i = 0; i < maxLen; i++) {
-        refAgentsData.push([
-          masterAgents[i] ? masterAgents[i][0] : "",
-          masterContractors[i] ? masterContractors[i][0] : "",
-          masterTrades[i] ? masterTrades[i][0] : ""
-        ]);
-      }
-      const wsAgents = XLSX.utils.aoa_to_sheet([["Agents", "Entrepreneurs", "Métiers"], ...refAgentsData]);
-      XLSX.utils.book_append_sheet(wb, wsAgents, "Ref_Agents_Chantiers");
-
-      const catalogData = [["sapRef", "designation"], ...(catalog.map(c => [c.sapRef, c.designation]))];
-      const wsCatalog = XLSX.utils.aoa_to_sheet(catalogData);
-      XLSX.utils.book_append_sheet(wb, wsCatalog, "Ref_Catalogue_SAP");
-
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(planningData), "Planning_Tournees");
       XLSX.writeFile(wb, "Modele_Planning_Tournees.xlsx");
     }
 
@@ -934,15 +856,9 @@
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
-
           const sheetName = workbook.SheetNames.includes("Planning_Tournees") ? "Planning_Tournees" : workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-          if (jsonRows.length <= 1) {
-            alert("Le fichier Excel ne contient pas de données exploitables.");
-            return;
-          }
+          const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+          if (jsonRows.length <= 1) { alert("Le fichier Excel ne contient pas de données."); return; }
 
           const headers = jsonRows[0].map(h => String(h).trim().toLowerCase());
           const dateIdx = headers.findIndex(h => h.includes('date'));
@@ -957,7 +873,6 @@
           for (let i = 1; i < jsonRows.length; i++) {
             const row = jsonRows[i];
             if (!row || row.length === 0) continue;
-
             const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
             const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
 
@@ -972,64 +887,61 @@
               ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
             });
           }
-
-          if (bulkItems.length === 0) {
-            alert("Aucune ligne valide trouvée dans le fichier.");
-            return;
-          }
-
           uploadBulkTournees(bulkItems);
         } catch (err) {
-          alert("Erreur lors de la lecture du fichier Excel : " + err);
+          alert("Erreur fichier Excel : " + err);
         }
       };
       reader.readAsArrayBuffer(file);
     }
 
     async function uploadBulkTournees(bulkItems) {
-      const payload = {
-        action: "CREATE_TOURNEES_BULK",
-        user: currentAdmin,
-        items: bulkItems
-      };
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-
-        bulkItems.forEach(it => {
-          cachedTournees.push({
-            id: "TRN-EXC-" + Date.now().toString(36) + Math.random(),
-            agent: it.agent,
-            contractor: it.contractor,
-            trade: it.trade,
-            sapRef: it.sapRef,
-            designation: it.designation,
-            ordre: it.ordre,
-            statut: 'A_FAIRE',
-            date: it.date,
-            tranche: it.tranche
-          });
+      bulkItems.forEach(it => {
+        cachedTournees.push({
+          id: "TRN-EXC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
+          ...it,
+          statut: 'A_FAIRE'
         });
-        localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+      });
+      localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+      renderWallPlanning();
 
-        alert(`${bulkItems.length} mission(s) importée(s) avec succès dans le planning !`);
-        renderWallPlanning();
-      } catch (err) {
-        alert("Erreur lors de l'enregistrement : " + err);
-      }
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", user: currentAdmin, items: bulkItems })
+      }).catch(err => console.warn("Erreur sync bulk distant:", err));
+      alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
+    }
+
+    let draggedPayload = null;
+
+    function handleDragStart(e, agent, dateStr, tranche) {
+      draggedPayload = { agent, dateStr, tranche };
+      e.dataTransfer.setData('text/plain', JSON.stringify(draggedPayload));
+    }
+
+    function handleDropOnDay(e, targetDateStr, targetTranche) {
+      e.preventDefault();
+      if (!draggedPayload) return;
+
+      cachedTournees.forEach(t => {
+        const matchTranche = (!t.tranche && draggedPayload.tranche === 'MATIN') || t.tranche === draggedPayload.tranche;
+        if (t.agent === draggedPayload.agent && t.date === draggedPayload.dateStr && matchTranche) {
+          t.date = targetDateStr;
+          t.tranche = targetTranche;
+        }
+      });
+
+      localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+      renderWallPlanning();
+      draggedPayload = null;
     }
 
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const filterAgent = document.getElementById("agendaFilterAgent").value;
       const sInputVal = document.getElementById("filterStartDate").value;
-
       if (!gridContainer) return;
 
       const baseDate = sInputVal ? new Date(sInputVal) : new Date();
@@ -1037,52 +949,39 @@
       const monday = new Date(baseDate);
       monday.setDate(baseDate.getDate() - dayOfWeek + 1);
 
-      const weekDays = [];
-      for (let i = 0; i < 7; i++) {
+      const weekDays = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
-        weekDays.push(d);
-      }
+        return d;
+      });
 
       const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
       gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
         const dateStr = dayObj.toISOString().split('T')[0];
         let dayTasks = (cachedTournees || []).filter(t => t.date === dateStr);
-        if (filterAgent) {
-          dayTasks = dayTasks.filter(t => t.agent === filterAgent);
-        }
+        if (filterAgent) dayTasks = dayTasks.filter(t => t.agent === filterAgent);
 
         const matinTasks = dayTasks.filter(t => !t.tranche || t.tranche === 'MATIN');
         const apresMidiTasks = dayTasks.filter(t => t.tranche === 'APRES_MIDI');
 
-        const renderTaskGroups = (tasks) => {
+        const renderTaskGroups = (tasks, trancheName) => {
           const agentGroups = {};
           tasks.forEach(t => {
             if (!agentGroups[t.agent]) agentGroups[t.agent] = [];
             agentGroups[t.agent].push(t);
           });
 
-          if (Object.keys(agentGroups).length === 0) return '';
-
           return Object.entries(agentGroups).map(([agent, tList]) => {
             const total = tList.length;
             const done = tList.filter(t => t.statut === 'VALIDE').length;
-            const isAllDone = (done === total);
-            const isPartDone = (done > 0 && done < total);
-
-            let badgeColor = "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200";
-            if (isAllDone) badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200";
-            else if (isPartDone) badgeColor = "bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200";
-
-            const tooltipText = tList.map(t => `• ${t.sapRef} (${t.contractor})`).join('\n');
+            let badgeColor = done === total ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-orange-100 text-orange-800 border-orange-300";
 
             return `
               <div draggable="true" 
-                   ondragstart="handleDragStart(event, '${agent}', '${dateStr}')"
+                   ondragstart="handleDragStart(event, '${agent}', '${dateStr}', '${trancheName}')"
                    onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
-                   title="${agent} :\n${tooltipText}"
-                   class="p-1 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition group relative text-[10px]">
+                   class="p-1 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition text-[10px]">
                 <div class="flex justify-between items-center font-bold">
                   <span class="truncate">${agent}</span>
                   <span class="font-mono text-[9px]">${done}/${total}</span>
@@ -1100,32 +999,14 @@
               <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
             </div>
 
-            <!-- PARTIE HAUTE : MATIN -->
-            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" 
-                 ondragover="event.preventDefault()" 
-                 ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')"
-                 class="relative flex-1 bg-white/60 hover:bg-orange-50/40 border border-dashed border-slate-200 hover:border-orange-300 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar cursor-pointer transition group">
-              <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 group-hover:opacity-40 transition">
-                <span class="text-3xl font-light text-slate-400">+</span>
-              </div>
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider z-10">Matin</span>
-              <div class="space-y-1 z-10" onclick="event.stopPropagation()">
-                ${renderTaskGroups(matinTasks)}
-              </div>
+            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="relative flex-1 bg-white/70 hover:bg-orange-50/40 border border-dashed border-slate-200 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar cursor-pointer transition">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Matin</span>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderTaskGroups(matinTasks, 'MATIN')}</div>
             </div>
 
-            <!-- PARTIE BASSE : APRÈS-MIDI -->
-            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" 
-                 ondragover="event.preventDefault()" 
-                 ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"
-                 class="relative flex-1 bg-white/60 hover:bg-orange-50/40 border border-dashed border-slate-200 hover:border-orange-300 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar cursor-pointer transition group">
-              <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 group-hover:opacity-40 transition">
-                <span class="text-3xl font-light text-slate-400">+</span>
-              </div>
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider z-10">Après-midi</span>
-              <div class="space-y-1 z-10" onclick="event.stopPropagation()">
-                ${renderTaskGroups(apresMidiTasks)}
-              </div>
+            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="relative flex-1 bg-white/70 hover:bg-orange-50/40 border border-dashed border-slate-200 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar cursor-pointer transition">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Après-midi</span>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderTaskGroups(apresMidiTasks, 'APRES_MIDI')}</div>
             </div>
           </div>
         `;
@@ -1135,64 +1016,25 @@
       lucide.createIcons();
     }
 
-    let draggedAgent = null;
-    let draggedSourceDate = null;
-
-    function handleDragStart(e, agent, dateStr) {
-      draggedAgent = agent;
-      draggedSourceDate = dateStr;
-      e.dataTransfer.setData('text/plain', agent);
-    }
-
-    function handleDropOnDay(e, targetDateStr, targetTranche) {
-      e.preventDefault();
-      if (!draggedAgent || !draggedSourceDate) return;
-
-      cachedTournees.forEach(t => {
-        if (t.agent === draggedAgent && t.date === draggedSourceDate) {
-          t.date = targetDateStr;
-          if (targetTranche) t.tranche = targetTranche;
-        }
-      });
-
-      localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
-      renderWallPlanning();
-
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        syncMonitoringData();
-      }
-
-      draggedAgent = null;
-      draggedSourceDate = null;
-    }
-
     function openTourneeDetailsForDay(dateStr, agentName) {
       const tasks = (cachedTournees || []).filter(t => t.date === dateStr && t.agent === agentName);
-      const modalTitle = document.getElementById("modalTourneeTitle");
-      const modalSub = document.getElementById("modalTourneeSubtitle");
-      const contentBox = document.getElementById("modalTourneeContent");
+      document.getElementById("modalTourneeTitle").innerText = `Tournée de ${agentName}`;
+      document.getElementById("modalTourneeSubtitle").innerText = `${formatDateFrench(dateStr)} • ${tasks.length} mission(s)`;
 
-      const formattedFullDate = formatDateFrench(dateStr);
-      modalTitle.innerText = `Tournée de ${agentName}`;
-      modalSub.innerText = `${formattedFullDate} • ${tasks.length} article(s)`;
-
-      contentBox.innerHTML = tasks.map(t => {
-        const isDone = t.statut === 'VALIDE';
-        return `
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div class="min-w-0 pr-2">
-              <div class="flex items-center gap-1.5">
-                <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
-                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
-                <span class="text-[9px] font-mono text-orange-700 bg-orange-50 px-1.5 rounded">${t.tranche || 'MATIN'}</span>
-              </div>
-              <p class="text-[11px] text-slate-700 truncate">${t.designation || 'Sans désignation'}</p>
-              <span class="text-[10px] text-slate-400">${t.contractor} (${t.trade})</span>
+      document.getElementById("modalTourneeContent").innerHTML = tasks.map(t => `
+        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div class="min-w-0 pr-2">
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${t.statut === 'VALIDE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+              <span class="text-[9px] font-mono text-orange-700 bg-orange-50 px-1.5 rounded">${t.tranche || 'MATIN'}</span>
             </div>
-            <button onclick="deleteTourneeAdminItem('${t.id}'); closeTourneeDetailsModal();" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <p class="text-[11px] text-slate-700 truncate">${t.designation || 'Sans libellé'}</p>
+            <span class="text-[10px] text-slate-400">${t.contractor} (${t.trade})</span>
           </div>
-        `;
-      }).join('');
+          <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>
+      `).join('');
 
       document.getElementById("tourneeDetailsModal").classList.remove("hidden");
       lucide.createIcons();
@@ -1201,33 +1043,28 @@
     function renderCompletionMetrics(allTournees, weekDays) {
       const weekDateStrs = weekDays ? weekDays.map(d => d.toISOString().split('T')[0]) : [];
       const periodTournees = allTournees.filter(t => weekDateStrs.length === 0 || weekDateStrs.includes(t.date));
-
       const total = periodTournees.length;
       const done = periodTournees.filter(t => t.statut === 'VALIDE').length;
-      const pending = total - done;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
       document.getElementById("globalCompletionPct").innerText = `${pct}%`;
       document.getElementById("globalCompletionBar").style.width = `${pct}%`;
       document.getElementById("kpiDoneTasks").innerText = done;
-      document.getElementById("kpiPendingTasks").innerText = pending;
+      document.getElementById("kpiPendingTasks").innerText = total - done;
 
       const agentListContainer = document.getElementById("agentCompletionList");
       if (!agentListContainer) return;
 
-      const activeAgentsThisPeriod = availableAgents.filter(agent => {
-        return periodTournees.some(t => t.agent === agent);
-      });
-
+      const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
       if (activeAgentsThisPeriod.length === 0) {
-        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucun agent actif sur cette période.</div>`;
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucun agent planifié.</div>`;
         return;
       }
 
       agentListContainer.innerHTML = activeAgentsThisPeriod.map(agent => {
-        const agentTasks = periodTournees.filter(t => t.agent === agent);
-        const aTotal = agentTasks.length;
-        const aDone = agentTasks.filter(t => t.statut === 'VALIDE').length;
+        const aTasks = periodTournees.filter(t => t.agent === agent);
+        const aTotal = aTasks.length;
+        const aDone = aTasks.filter(t => t.statut === 'VALIDE').length;
         const aPct = aTotal > 0 ? Math.round((aDone / aTotal) * 100) : 0;
 
         return `
@@ -1237,7 +1074,7 @@
               <span class="font-mono text-xs font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-600'}">${aDone}/${aTotal} (${aPct}%)</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
+              <div class="bg-orange-500 h-full rounded-full" style="width: ${aPct}%"></div>
             </div>
           </div>
         `;
@@ -1246,47 +1083,39 @@
 
     async function deleteTourneeAdminItem(id) {
       if (!confirm("Supprimer cette mission ?")) return;
-
       cachedTournees = cachedTournees.filter(t => t.id !== id);
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+      closeTourneeDetailsModal();
       renderWallPlanning();
 
-      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "DELETE_TOURNEE", id: id, user: currentAdmin })
-        });
-      }
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "DELETE_TOURNEE", id: id, user: currentAdmin })
+      }).catch(e => console.warn("Erreur suppression tournée :", e));
     }
 
     function updateActiveAgentsButtonUI() {
       const btnText = document.getElementById("btnFilterActiveText");
       const btn = document.getElementById("btnFilterActiveAgentsOnly");
       if (!btn || !btnText) return;
-
-      if (filterOnlyActiveAgents) {
-        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-xs cursor-pointer";
-        btnText.innerText = "🟢 En cours uniquement";
-      } else {
-        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs cursor-pointer";
-        btnText.innerText = "⚪ Flotte complète";
-      }
+      btn.className = filterOnlyActiveAgents 
+        ? "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-xs cursor-pointer"
+        : "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs cursor-pointer";
+      btnText.innerText = filterOnlyActiveAgents ? "🟢 En cours uniquement" : "⚪ Flotte complète";
     }
 
     function updateMaxQtyThreshold(val) {
       if (val === "" || val === null) {
         customMaxQty = null;
         localStorage.removeItem("mon_cfg_max_qty");
-        const display = document.getElementById("cfgMaxQtyDisplay");
-        if (display) display.innerText = "--";
+        document.getElementById("cfgMaxQtyDisplay").innerText = "--";
       } else {
         const parsed = Number(val);
         if (!isNaN(parsed) && parsed >= 0) {
           customMaxQty = parsed;
           localStorage.setItem("mon_cfg_max_qty", customMaxQty);
-          const display = document.getElementById("cfgMaxQtyDisplay");
-          if (display) display.innerText = customMaxQty;
+          document.getElementById("cfgMaxQtyDisplay").innerText = customMaxQty;
         }
       }
       applyFilters();
@@ -1296,8 +1125,7 @@
       const adminSel = document.getElementById("authAdminSelect");
       if (adminSel) {
         const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
-        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
-          listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
+        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
       }
     }
 
@@ -1313,35 +1141,19 @@
     }
 
     function initMultiSelects() {
-      const cAgents = document.getElementById("checkboxesAgents");
-      if (cAgents) {
-        cAgents.innerHTML = availableAgents.map(a => `
+      const makeCheckboxes = (containerId, list, selectedArr, type) => {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        el.innerHTML = list.map(item => `
           <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            <span class="truncate">${a}</span>
+            <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${selectedArr.includes(item) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${item}</span>
           </label>
         `).join('');
-      }
-
-      const cContractors = document.getElementById("checkboxesContractors");
-      if (cContractors) {
-        cContractors.innerHTML = availableContractors.map(c => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            <span class="truncate">${c}</span>
-          </label>
-        `).join('');
-      }
-
-      const cTrades = document.getElementById("checkboxesTrades");
-      if (cTrades) {
-        cTrades.innerHTML = availableTrades.map(t => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            <span class="truncate">${t}</span>
-          </label>
-        `).join('');
-      }
+      };
+      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
+      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
+      makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
     }
 
     function onCheckboxChange(type) {
@@ -1361,29 +1173,24 @@
 
     function selectAll(type, check) {
       activeKpiFilter = null;
-      let selector = "";
-      if (type === 'agents') selector = "#checkboxesAgents input";
-      else if (type === 'contractors') selector = "#checkboxesContractors input";
-      else if (type === 'trades') selector = "#checkboxesTrades input";
-
-      document.querySelectorAll(selector).forEach(box => box.checked = check);
+      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => b.checked = check);
       onCheckboxChange(type);
     }
 
     function getDistinctArticlesOnPeriod() {
       const periodList = getPeriodFilteredHistory() || [];
-      const map = new Map();
+      const mapArticles = new Map();
       periodList.forEach(item => {
         const ref = String(item.sapRef || "").trim();
-        if (ref && !map.has(ref)) {
-          map.set(ref, {
+        if (ref && !mapArticles.has(ref)) {
+          mapArticles.set(ref, {
             sapRef: ref,
             designation: item.designation || 'Sans désignation',
             count: periodList.filter(i => String(i.sapRef).trim() === ref).length
           });
         }
       });
-      return Array.from(map.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
+      return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
     }
 
     function showArticleSuggestions() {
@@ -1394,50 +1201,35 @@
     function onArticleTagInput(query) {
       const dd = document.getElementById("articleDropdownList");
       if (!dd) return;
-
       const q = String(query || "").trim().toLowerCase();
-      const articles = getDistinctArticlesOnPeriod();
-      const filtered = articles.filter(a => {
-        return a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q);
-      });
+      const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
 
       if (filtered.length === 0) {
-        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article correspondant sur la période.</div>`;
+        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
-      dd.innerHTML = filtered.map(a => {
-        const isSelected = selectedArticleTags.includes(a.sapRef);
-        return `
-          <div onclick="toggleArticleTag('${a.sapRef}')" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
-            <div class="min-w-0 pr-2">
-              <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
-              <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
-              <input type="checkbox" ${isSelected ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 pointer-events-none">
-            </div>
+      dd.innerHTML = filtered.map(a => `
+        <div onclick="toggleArticleTag('${a.sapRef}')" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
+          <div class="min-w-0 pr-2">
+            <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
+            <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
           </div>
-        `;
-      }).join('');
+          <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
+        </div>
+      `).join('');
       dd.classList.remove("hidden");
     }
 
     function toggleArticleTag(sapRef) {
-      if (selectedArticleTags.includes(sapRef)) {
-        selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
-      } else {
-        selectedArticleTags.push(sapRef);
-      }
+      selectedArticleTags = selectedArticleTags.includes(sapRef) 
+        ? selectedArticleTags.filter(r => r !== sapRef) 
+        : [...selectedArticleTags, sapRef];
       renderArticleTagsUI();
       applyFilters();
       const input = document.getElementById("articleTagInput");
-      if (input) {
-        input.value = "";
-        onArticleTagInput("");
-      }
+      if (input) { input.value = ""; onArticleTagInput(""); }
     }
 
     function removeArticleTag(sapRef) {
@@ -1449,17 +1241,12 @@
     function renderArticleTagsUI() {
       const container = document.getElementById("selectedArticleTagsContainer");
       if (!container) return;
-
-      container.innerHTML = selectedArticleTags.map(ref => {
-        const item = (cachedHistory || []).find(i => String(i.sapRef).trim() === ref);
-        const label = item ? `${ref} - ${item.designation}` : ref;
-        return `
-          <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
-            <span class="truncate max-w-[260px]">${label}</span>
-            <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-          </span>
-        `;
-      }).join('');
+      container.innerHTML = selectedArticleTags.map(ref => `
+        <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
+          <span class="truncate max-w-[260px]">${ref}</span>
+          <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+        </span>
+      `).join('');
       lucide.createIcons();
     }
 
@@ -1470,8 +1257,6 @@
       selectAll('trades', false);
       selectedArticleTags = [];
       renderArticleTagsUI();
-      const tagInput = document.getElementById("articleTagInput");
-      if (tagInput) tagInput.value = "";
       applyFilters();
     }
 
@@ -1485,17 +1270,10 @@
       const adminSel = document.getElementById("authAdminSelect");
       const selected = adminSel ? adminSel.value : "";
       const pwd = document.getElementById("authPassword").value;
-
-      if (!selected) {
-        alert("Veuillez choisir un superviseur.");
-        return;
+      if (!selected) { alert("Veuillez choisir un superviseur."); return; }
+      if (adminPasswords[selected] && pwd !== adminPasswords[selected]) {
+        alert("Mot de passe incorrect."); return;
       }
-      const expected = adminPasswords[selected];
-      if (!expected || pwd !== expected) {
-        alert("Mot de passe incorrect ou non configuré.");
-        return;
-      }
-
       currentAdmin = selected;
       sessionStorage.setItem("mon_current_admin", currentAdmin);
       document.getElementById("activeAdminName").innerText = currentAdmin;
@@ -1507,57 +1285,24 @@
       sessionStorage.removeItem("mon_current_admin");
       currentAdmin = "";
       document.getElementById("authPassword").value = "";
-      document.getElementById("authModal").classList.add("hidden");
       document.getElementById("authModal").classList.remove("hidden");
     }
 
     async function syncMonitoringData() {
-      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+      if (!navigator.onLine) return;
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         if (data.status === "success") {
-          if (data.agents) {
-            availableAgents = data.agents;
-            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
-          }
-          if (data.contractors) {
-            availableContractors = data.contractors;
-            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
-          }
-          if (data.trades) {
-            availableTrades = data.trades;
-            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
-          }
-          if (data.admins) {
-            adminAgents = data.admins;
-            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
-          }
-          if (data.adminPasswords) {
-            adminPasswords = data.adminPasswords;
-            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
-          }
-          if (data.history) {
-            cachedHistory = data.history;
-            localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-          }
-          if (data.tournees) {
-            const remoteTournees = data.tournees;
-            const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
-            const localPending = currentLocal.filter(t => t.id && (t.id.startsWith("TRN-LOC") || t.id.startsWith("TRN-EXC")));
-            
-            cachedTournees = [...remoteTournees];
-            localPending.forEach(loc => {
-              if (!cachedTournees.some(rt => rt.id === loc.id || (rt.agent === loc.agent && rt.sapRef === loc.sapRef && rt.date === loc.date))) {
-                cachedTournees.push(loc);
-              }
-            });
-            localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
-          }
-          if (data.catalog) {
-            catalog = data.catalog;
-            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
-          }
+          if (data.agents) localStorage.setItem("offline_agents", JSON.stringify(availableAgents = data.agents));
+          if (data.contractors) localStorage.setItem("offline_contractors", JSON.stringify(availableContractors = data.contractors));
+          if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(availableTrades = data.trades));
+          if (data.admins) localStorage.setItem("offline_admins", JSON.stringify(adminAgents = data.admins));
+          if (data.adminPasswords) localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords = data.adminPasswords));
+          if (data.history) localStorage.setItem("offline_history", JSON.stringify(cachedHistory = data.history));
+          if (data.tournees) localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees = data.tournees));
+          if (data.catalog) localStorage.setItem("offline_catalog", JSON.stringify(catalog = data.catalog));
+
           initMultiSelects();
           populateAdminDropdown();
           populateTourneeAdminDropdowns();
@@ -1565,7 +1310,7 @@
           applyFilters();
         }
       } catch (err) {
-        console.warn("Échec actualisation monitoring :", err);
+        console.warn("Actualisation monitoring en arrière-plan :", err);
       }
     }
 
@@ -1578,42 +1323,30 @@
       if (mode === 'CUSTOM') {
         customBox.classList.remove("hidden");
         return;
-      } else {
-        customBox.classList.add("hidden");
       }
+      customBox.classList.add("hidden");
 
       if (mode === 'ALL') {
-        sInput.value = "";
-        eInput.value = "";
+        sInput.value = ""; eInput.value = "";
       } else if (mode === 'TODAY') {
         const dStr = now.toISOString().split('T')[0];
-        sInput.value = dStr;
-        eInput.value = dStr;
+        sInput.value = dStr; eInput.value = dStr;
       } else if (mode === 'CURRENT_WEEK') {
         const day = now.getDay() || 7;
-        const monday = new Date(now);
-        monday.setDate(now.getDate() - day + 1);
-        const sunday = new Date(monday);
-        sunday.setDate(sunday.getDate() + 6);
-
+        const monday = new Date(now); monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
         sInput.value = monday.toISOString().split('T')[0];
         eInput.value = sunday.toISOString().split('T')[0];
       } else if (mode === 'PREV_WEEK') {
         const day = now.getDay() || 7;
-        const prevMonday = new Date(now);
-        prevMonday.setDate(now.getDate() - day - 6);
-        const prevSunday = new Date(prevMonday);
-        prevSunday.setDate(prevMonday.getDate() + 6);
-
+        const prevMonday = new Date(now); prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday); prevSunday.setDate(prevMonday.getDate() + 6);
         sInput.value = prevMonday.toISOString().split('T')[0];
         eInput.value = prevSunday.toISOString().split('T')[0];
       } else if (mode === 'CURRENT_MONTH') {
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        sInput.value = firstDay.toISOString().split('T')[0];
-        eInput.value = lastDay.toISOString().split('T')[0];
+        sInput.value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        eInput.value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
       }
-
       updateWeekBadge(sInput.value);
       applyFilters();
       renderWallPlanning();
@@ -1622,20 +1355,14 @@
     function toggleActiveAgentsFilter() {
       filterOnlyActiveAgents = !filterOnlyActiveAgents;
       updateActiveAgentsButtonUI();
-      applyFilters();
+      renderAgentsView(getPeriodFilteredHistory());
     }
 
     function toggleMapSelectionFilter() {
       mapFilterOnSelection = !mapFilterOnSelection;
       const btnText = document.getElementById("mapFilterBtnText");
       const btnEl = document.getElementById("btnMapSelectionFilter");
-      if (mapFilterOnSelection) {
-        btnEl.className = "text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer";
-        btnText.innerText = "Afficher uniquement la sélection";
-      } else {
-        btnEl.className = "text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer";
-        btnText.innerText = "Afficher toute la période";
-      }
+      btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
       applyFilters();
     }
 
@@ -1654,23 +1381,13 @@
     }
 
     function getFilteredHistory() {
-      const basePeriodList = getPeriodFilteredHistory();
-
-      return basePeriodList.filter(item => {
+      return getPeriodFilteredHistory().filter(item => {
         if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
         if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
         if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-
-        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) {
-          return false;
-        }
-
-        if (activeKpiFilter === 'ZERO') {
-          if (Number(item.quantity) !== 0) return false;
-        } else if (activeKpiFilter === 'HIGH') {
-          if (customMaxQty === null || Number(item.quantity) <= customMaxQty) return false;
-        }
-
+        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) return false;
+        if (activeKpiFilter === 'ZERO' && Number(item.quantity) !== 0) return false;
+        if (activeKpiFilter === 'HIGH' && (customMaxQty === null || Number(item.quantity) <= customMaxQty)) return false;
         return true;
       });
     }
@@ -1678,29 +1395,22 @@
     function applyFilters() {
       const sDateVal = document.getElementById("filterStartDate").value;
       const eDateVal = document.getElementById("filterEndDate").value;
-      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
-      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
-
-      updateWeekBadge(sDateVal);
-
       let periodLabel = "Tout l'historique";
-      if (sDateVal && eDateVal) {
-        periodLabel = `Du ${formatDateDMY(sDate)} au ${formatDateDMY(eDate)}`;
-      } else if (sDateVal) {
-        periodLabel = `À partir du ${formatDateDMY(sDate)}`;
-      } else if (eDateVal) {
-        periodLabel = `Jusqu'au ${formatDateDMY(eDate)}`;
-      }
+      if (sDateVal && eDateVal) periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
+      else if (sDateVal) periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
+      else if (eDateVal) periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
+
       document.getElementById("periodBadgeGlobal").innerText = periodLabel;
       document.getElementById("periodBadgeAgents").innerText = periodLabel;
 
+      const periodData = getPeriodFilteredHistory();
       const filtered = getFilteredHistory();
 
-      renderKPIs(filtered);
+      renderKPIs(periodData);
       renderTable(filtered);
-      renderAgentsView(getPeriodFilteredHistory());
+      renderAgentsView(periodData);
 
-      const mapSourceList = mapFilterOnSelection ? filtered : cachedHistory;
+      const mapSourceList = mapFilterOnSelection ? filtered : periodData;
       renderMap(mapSourceList);
     }
 
@@ -1722,26 +1432,21 @@
     }
 
     function renderTable(list) {
-      let countText = `${list.length} saisie(s) répertoriée(s)`;
-      if (activeKpiFilter === 'ZERO') countText += " [Filtre : Ruptures uniquement]";
-      if (activeKpiFilter === 'HIGH') countText += " [Filtre : Alertes atypiques uniquement]";
-      document.getElementById("tableCountLabel").innerText = countText;
-
       const tbody = document.getElementById("supervisionTableBody");
       const alertZero = document.getElementById("cfgAlertZero").checked;
+      document.getElementById("tableCountLabel").innerText = `${list.length} saisie(s) répertoriée(s)`;
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée pour cette sélection.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = list.map(item => {
         const q = Number(item.quantity);
         const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
-        const displayDate = formatDateFrench(item.timestamp);
         return `
           <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${displayDate}</td>
+            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
             <td class="p-3 font-bold text-slate-900">${item.user}</td>
             <td class="p-3 text-slate-700">${item.contractor}</td>
             <td class="p-3 text-slate-500">${item.trade}</td>
@@ -1750,7 +1455,7 @@
             <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
             <td class="p-3 text-right whitespace-nowrap">
               <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
             </td>
           </tr>
         `;
@@ -1758,18 +1463,190 @@
       lucide.createIcons();
     }
 
+    function renderAgentsView(periodList) {
+      const container = document.getElementById("agentsAccordionContainer");
+      if (!container) return;
+
+      let agentsToDisplay = availableAgents;
+      if (filterOnlyActiveAgents) {
+        agentsToDisplay = availableAgents.filter(agent => periodList.some(r => r.user === agent));
+      }
+
+      if (agentsToDisplay.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-2xl">Aucun agent actif sur cette période.</div>`;
+        return;
+      }
+
+      container.innerHTML = agentsToDisplay.map(agent => {
+        const agentRecords = periodList.filter(r => r.user === agent);
+        const totalRows = agentRecords.length;
+        const totalPieces = agentRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+        const zeroStock = agentRecords.filter(r => Number(r.quantity) === 0).length;
+        const isOpen = !!openDrawers[agent];
+
+        return `
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+            <div onclick="toggleAgentDrawer('${agent}')" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl ${totalRows > 0 ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-400'} flex items-center justify-center font-bold text-sm">
+                  ${agent.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-900 text-sm">${agent}</h4>
+                  <span class="text-[11px] text-slate-400">${totalRows > 0 ? 'Activité enregistrée' : 'Aucune saisie'}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3 text-xs font-mono">
+                  <span class="text-slate-600"><strong>${totalRows}</strong> lignes</span>
+                  <span class="text-orange-600"><strong>${totalPieces}</strong> pcs</span>
+                  ${zeroStock > 0 ? `<span class="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded">${zeroStock} rupture(s)</span>` : ''}
+                </div>
+                <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>
+              </div>
+            </div>
+
+            <div class="${isOpen ? '' : 'hidden'} border-t border-slate-100 p-3 bg-slate-50/50 space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar text-xs">
+              ${totalRows === 0 ? '<div class="text-slate-400 italic text-center py-2">Aucune ligne disponible.</div>' : agentRecords.map(r => `
+                <div class="p-2 bg-white border border-slate-200 rounded-xl flex justify-between items-center">
+                  <div class="min-w-0 pr-2">
+                    <span class="font-mono font-bold text-amber-700">${r.sapRef}</span>
+                    <span class="text-slate-700 ml-1 truncate">${r.designation}</span>
+                    <span class="text-[10px] text-slate-400 block">${r.contractor} (${r.trade})</span>
+                  </div>
+                  <span class="font-mono font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'}">${r.quantity} pcs</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function toggleAgentDrawer(agent) {
+      openDrawers[agent] = !openDrawers[agent];
+      renderAgentsView(getPeriodFilteredHistory());
+    }
+
+    function renderMap(list) {
+      const mapDiv = document.getElementById("mapContainer");
+      if (!mapDiv) return;
+
+      if (!map) {
+        map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+      }
+
+      markersLayer.clearLayers();
+      const pointsWithGps = list.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng));
+      document.getElementById("mapPointsCountLabel").innerText = `${pointsWithGps.length} point(s) GPS`;
+
+      pointsWithGps.forEach(p => {
+        const marker = L.circleMarker([p.lat, p.lng], {
+          radius: 7,
+          fillColor: Number(p.quantity) === 0 ? "#e11d48" : "#f97316",
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.85
+        });
+
+        marker.bindPopup(`
+          <div class="space-y-1">
+            <span class="font-bold text-slate-900">${p.user}</span>
+            <div class="text-[11px] text-slate-600 font-mono">${p.sapRef} - ${p.designation}</div>
+            <div class="text-[11px] font-bold ${Number(p.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'}">Quantité : ${p.quantity}</div>
+            <div class="text-[10px] text-slate-400">${p.contractor} (${p.trade})</div>
+            <div class="text-[9px] text-slate-400 font-mono">${formatDateDMY(p.timestamp, true)}</div>
+          </div>
+        `);
+        markersLayer.addLayer(marker);
+      });
+    }
+
+    function resetMapToBelgium() {
+      if (map) map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
+    }
+
+    function exportTableToCSV() {
+      const data = getFilteredHistory();
+      if (data.length === 0) { alert("Aucune donnée à exporter."); return; }
+
+      const headers = ["ID", "Horodatage", "Agent", "Entrepreneur", "Metier", "Ref_SAP", "Designation", "Quantite", "Latitude", "Longitude"];
+      const rows = data.map(r => [
+        `"${r.id || ''}"`,
+        `"${formatDateDMY(r.timestamp, true)}"`,
+        `"${(r.user || '').replace(/"/g, '""')}"`,
+        `"${(r.contractor || '').replace(/"/g, '""')}"`,
+        `"${(r.trade || '').replace(/"/g, '""')}"`,
+        `"${(r.sapRef || '').replace(/"/g, '""')}"`,
+        `"${(r.designation || '').replace(/"/g, '""')}"`,
+        r.quantity || 0,
+        r.lat || '',
+        r.lng || ''
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Inventaire_Export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    async function editTableItem(id, currentQty) {
+      const input = prompt("Nouvelle quantité comptée :", currentQty);
+      if (input === null) return;
+      const parsed = parseInt(input, 10);
+      if (isNaN(parsed) || parsed < 0) { alert("Quantité invalide."); return; }
+
+      const item = cachedHistory.find(h => h.id === id);
+      if (item) {
+        item.quantity = parsed;
+        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+        applyFilters();
+      }
+
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin })
+      }).catch(e => console.warn("Erreur mise à jour serveur :", e));
+    }
+
+    async function deleteTableItem(id) {
+      if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
+      cachedHistory = cachedHistory.filter(h => h.id !== id);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      applyFilters();
+
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "DELETE_INVENTORY", id: id, user: currentAdmin })
+      }).catch(e => console.warn("Erreur suppression inventaire :", e));
+    }
+
     function switchView(v) {
       activeView = v;
       localStorage.setItem("mon_active_view", v);
-      document.getElementById("viewGlobal").classList.add("hidden");
-      document.getElementById("viewAgents").classList.add("hidden");
-      document.getElementById("viewMap").classList.add("hidden");
-      document.getElementById("viewTourneesAdmin").classList.add("hidden");
-
-      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
-      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
-      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
-      document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+      ['Global', 'Agents', 'Map', 'TourneesAdmin'].forEach(id => {
+        const el = document.getElementById("view" + id);
+        if (el) el.classList.add("hidden");
+      });
+      ['Global', 'Agents', 'Map', 'Tournees'].forEach(id => {
+        const el = document.getElementById("btnNav" + id);
+        if (el) el.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+      });
 
       if (v === 'global') {
         document.getElementById("viewGlobal").classList.remove("hidden");
@@ -1780,7 +1657,7 @@
       } else if (v === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
         document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
-        setTimeout(() => { 
+        setTimeout(() => {
           if (map) {
             map.invalidateSize();
             resetMapToBelgium();
