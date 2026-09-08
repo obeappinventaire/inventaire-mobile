@@ -1,4 +1,4 @@
-const CACHE_NAME = 'inventaire-cache-v4';
+const CACHE_NAME = 'inventaire-cache-v5';
 
 const CORE_ASSETS = [
   './',
@@ -23,15 +23,30 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   const requestUrl = event.request.url;
 
   if (requestUrl.includes('script.google.com')) {
+    return;
+  }
+
+  // Pour les pages HTML, priorité au réseau pour voir les mises à jour sans délai de cache
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request).then((res) => res || caches.match('./index.html')))
+    );
     return;
   }
 
@@ -55,11 +70,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => {
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-        });
+        .catch(() => caches.match('./index.html'));
     })
   );
 });
