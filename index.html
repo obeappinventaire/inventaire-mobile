@@ -22,10 +22,10 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50 overflow-hidden">
 
-  <!-- ================= BANDEAU DE MISE À JOUR PWA ================= -->
+  <!-- ================= BANDEAU DE MISE À JOUR PWA AUTOMATIQUE ================= -->
   <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
-    <span class="font-bold">🔄 Une nouvelle version de l'app est disponible !</span>
-    <button onclick="window.location.reload()" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Mettre à jour</button>
+    <span class="font-bold">🔄 Mise à jour détectée !</span>
+    <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
   <!-- ================= EN-TÊTE MOBILE ================= -->
@@ -71,27 +71,25 @@
 
       <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Article SAP</h2>
-          <span id="sapStatusBadge" class="text-[10px] font-mono font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">Recherche active</span>
+          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Recherche active</h2>
         </div>
 
         <div class="flex items-center space-x-2">
           <div class="relative flex-1">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
             <input type="text" id="sapSearchInput" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-9 pr-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
-            <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-1"></div>
+            <!-- LISTE DÉROULANTE ÉLARGIE ET AGRANDIE -->
+            <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
           </div>
-          <!-- BOUTON RECONNAISSANCE VOCALE (MICRO - NETTOYAGE 6 CHIFFRES) -->
           <button onclick="toggleVoiceSearch()" id="micBtn" class="p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer" title="Saisie vocale (6 chiffres)">
             <i data-lucide="mic" class="w-5 h-5"></i>
           </button>
-          <!-- BOUTON SCAN CAMÉRA AVEC NOUVEAU LIBELLÉ -->
           <button onclick="openScanModal()" class="p-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white transition shrink-0 cursor-pointer shadow-xs" title="Scanner image du QR code, image EAN, image texte">
             <i data-lucide="camera" class="w-5 h-5"></i>
           </button>
         </div>
 
-        <div id="selectedArticleCard" class="hidden bg-orange-50 border border-orange-200 p-3 rounded-xl space-y-1">
+        <div id="selectedArticleCard" class="hidden bg-orange-50 border border-orange-200 p-3 rounded-2xl space-y-1">
           <div class="flex justify-between items-start">
             <span id="cardSapRef" class="font-mono text-xs font-bold text-orange-800">--</span>
             <span id="cardDesignation" class="text-xs font-semibold text-slate-900 text-right truncate max-w-[200px]">--</span>
@@ -101,10 +99,9 @@
 
       <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quantité Comptée</h2>
-        <div class="flex items-center justify-center space-x-4">
-          <button onclick="adjustQuantity(-1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs cursor-pointer">-</button>
-          <input type="number" id="inputQuantity" value="1" min="0" class="w-24 h-14 text-center font-black text-2xl bg-slate-50 border border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 font-mono">
-          <button onclick="adjustQuantity(1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs cursor-pointer">+</button>
+        <!-- QUANTITÉ SANS BOUTONS - ET + -->
+        <div class="flex items-center justify-center">
+          <input type="number" id="inputQuantity" value="1" min="0" class="w-36 h-14 text-center font-black text-2xl bg-slate-50 border border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 font-mono shadow-xs">
         </div>
 
         <button onclick="submitInventoryEntry()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 font-bold text-white rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs transition cursor-pointer">
@@ -152,7 +149,7 @@
     </button>
   </nav>
 
-  <!-- ================= MODALE SCAN CAMÉRA / OCR (BOUTON DE FERMEXIT DESIGN & TEXTE MIS À JOUR) ================= -->
+  <!-- ================= MODALE SCAN CAMÉRA / OCR ================= -->
   <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="w-full flex justify-between items-center text-white py-2 px-2">
       <h3 class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner image du QR code, image EAN, image texte</h3>
@@ -175,7 +172,7 @@
     </div>
   </div>
 
-  <!-- ================= MODALE CONFIGURATION & DÉCONNEXION AGENT (EXPLICITE POUR CHANGEMENT DE PROFIL) ================= -->
+  <!-- ================= MODALE CONFIGURATION & DÉCONNEXION AGENT ================= -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div>
@@ -311,13 +308,14 @@
           }
           initMobileDropdowns();
           renderTournee();
+          renderHistory();
         }
       } catch (err) {
         console.warn("Échec sync mobile :", err);
       }
     }
 
-    // ================= MODULE SCAN CAMÉRA & OCR (TESSERACT) =================
+    // ================= MODULE SCAN CAMÉRA & OCR =================
     async function openScanModal() {
       document.getElementById("scanModal").classList.remove("hidden");
       document.getElementById("ocrStatus").innerText = "Initialisation caméra...";
@@ -381,19 +379,19 @@
         return;
       }
 
-      const filtered = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 15);
+      const filtered = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 20);
 
       if (filtered.length === 0) {
-        dd.innerHTML = `<div class="p-2 text-xs text-slate-400 italic text-center">Aucun article trouvé</div>`;
+        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
       dd.innerHTML = filtered.map(item => `
-        <div onclick='selectArticleFromSearch(${JSON.stringify(item)})' class="p-2 hover:bg-orange-50 rounded-lg cursor-pointer text-xs flex justify-between items-center">
+        <div onclick='selectArticleFromSearch(${JSON.stringify(item)})' class="p-2.5 hover:bg-orange-50 rounded-xl cursor-pointer text-xs flex justify-between items-center border-b border-slate-100 last:border-0">
           <div>
             <span class="font-mono font-bold text-orange-800">${item.sapRef}</span>
-            <span class="text-slate-700 ml-1.5">${item.designation}</span>
+            <span class="text-slate-700 ml-2 font-medium">${item.designation}</span>
           </div>
         </div>
       `).join('');
@@ -407,13 +405,6 @@
       document.getElementById("cardSapRef").innerText = item.sapRef;
       document.getElementById("cardDesignation").innerText = item.designation;
       document.getElementById("selectedArticleCard").classList.remove("hidden");
-    }
-
-    function adjustQuantity(delta) {
-      const input = document.getElementById("inputQuantity");
-      let val = (parseInt(input.value, 10) || 0) + delta;
-      if (val < 0) val = 0;
-      input.value = val;
     }
 
     async function submitInventoryEntry() {
@@ -478,18 +469,19 @@
     }
 
     function renderHistory() {
+      sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       const container = document.getElementById("historyListContainer");
       const countLbl = document.getElementById("historyCount");
       if (!container) return;
 
       countLbl.innerText = `${sessionHistory.length} ligne(s)`;
       if (sessionHistory.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic text-xs">Aucune saisie pour le moment.</div>`;
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune saisie pour le moment.</div>`;
         return;
       }
 
       container.innerHTML = sessionHistory.map(h => `
-        <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs space-y-1 text-xs">
+        <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs space-y-1 text-xs">
           <div class="flex justify-between items-center">
             <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>
             <span class="font-mono font-black text-emerald-700 text-sm">Qté : ${h.quantity}</span>
@@ -503,7 +495,6 @@
       `).join('');
     }
 
-    // SYNCHRO ET RENDU DE "MA TOURNÉE" DU JOUR
     function renderTournee() {
       cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
       const container = document.getElementById("tourneeListContainer");
@@ -574,7 +565,7 @@
       lucide.createIcons();
     }
 
-    // RECONNAISSANCE VOCALE NETTOYÉE (SUPPRESSION DES ESPACES & FORMAT 6 CHIFFRES)
+    // SAISIE VOCALE NETTOYÉE (SUPPRESSION D'ESPACES ET FORMAT 6 CHIFFRES STRICT)
     function toggleVoiceSearch() {
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         alert("La reconnaissance vocale n'est pas supportée par ce navigateur.");
@@ -590,9 +581,7 @@
 
       recognition.onresult = function(event) {
         let transcript = event.results[0][0].transcript;
-        // Supprimer tous les espaces pour coller les chiffres (ex: "106 626" -> "106626")
         let cleanDigits = transcript.replace(/\s+/g, '');
-        // Extraire les 6 chiffres stricts ou la séquence numérique
         const match = cleanDigits.match(/\d{6}/) || cleanDigits.match(/\d{5,8}/);
         const finalVal = match ? match[0] : cleanDigits;
 
