@@ -29,7 +29,7 @@
       border: 1px solid #e2e8f0;
       background: #ffffff;
       width: auto !important;
-      max-width: 360px !important;
+      max-width: 380px !important;
     }
     .leaflet-popup-content { 
       margin: 10px 14px; 
@@ -803,13 +803,6 @@
         if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
         if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
 
-        if (filterOnlyActiveAgents) {
-          const nowMs = Date.now();
-          const fifteenMinMs = 15 * 60 * 1000;
-          const dt = parseItemDate(item.timestamp);
-          if (!dt || (nowMs - dt.getTime()) >= fifteenMinMs) return false;
-        }
-
         if (term) {
           const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
           if (!matchTarget.includes(term)) return false;
@@ -959,7 +952,7 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    // CARTE CORRIGÉE : REGROUPEMENT 5KM, CUMUL TOTAL LIGNES EXACT, LISTE EXHAUSTIVE DE TOUS LES COMBOS AU SURVOL ET PLAGE MIN/MAX DE DATES
+    // CARTE CORRIGÉE : TEMPS EFFECTIF INTERCALÉ, DATES CHRONOLOGIQUES (DÉBUT -> FIN), ET RATIO HEURE GLOBAL EN HAUT À DROITE
     function renderMap(list) {
       if (!map) {
         map = L.map('mapContainer', {
@@ -1057,22 +1050,52 @@
         const isFinalizedCluster = (status === 'Finalisé');
         const fillColor = isFinalizedCluster ? "#f97316" : "#10b981";
 
-        const comboCounts = {};
-        const comboStatus = {};
+        // Regrouper par combo pour calculer les détails (nombre de lignes et temps effectif par combo)
+        const comboItemsMap = {};
         items.forEach(i => {
           const comboKey = `${i.contractor} (${i.trade})`;
-          comboCounts[comboKey] = (comboCounts[comboKey] || 0) + 1;
-          const liveActive = (now - parseItemDate(i.timestamp).getTime()) < thirtyMinMs;
-          comboStatus[comboKey] = liveActive ? '<span class="text-emerald-600 font-bold">En cours</span>' : '<span class="text-slate-500">Finalisé</span>';
+          if (!comboItemsMap[comboKey]) comboItemsMap[comboKey] = [];
+          comboItemsMap[comboKey].push(parseItemDate(i.timestamp).getTime());
         });
 
-        const comboList = Object.entries(comboCounts).map(([combo, count]) => `<li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-orange-600">${count} ligne(s)</strong> [${comboStatus[combo]}]</li>`).join('');
-        
+        const comboDetails = {};
+        Object.entries(comboItemsMap).forEach(([comboKey, times]) => {
+          const count = times.length;
+          const minT = Math.min(...times);
+          const maxT = Math.max(...times);
+          const diffMinutes = Math.round((maxT - minT) / 60000);
+          const hours = Math.floor(diffMinutes / 60);
+          const mins = diffMinutes % 60;
+          const timeStr = hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
+          comboDetails[comboKey] = { count, timeStr };
+        });
+
+        const comboList = Object.entries(comboDetails).map(([combo, data]) => `
+          <li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-indigo-600">${data.timeStr}</strong> | <strong class="text-orange-600">${data.count} ligne(s)</strong></li>
+        `).join('');
+
         const totalClusterLines = items.length;
+
+        // Calcul du ratio heure global pour le cluster (lignes par heure sur toute la période du cluster)
+        const allClusterTimes = items.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
+        let globalRatioStr = "-- l/h";
+        if (allClusterTimes.length > 1) {
+          const minClusterTime = Math.min(...allClusterTimes);
+          const maxClusterTime = Math.max(...allClusterTimes);
+          const totalHours = (maxClusterTime - minClusterTime) / 3600000;
+          if (totalHours > 0.05) {
+            const ratio = Math.round(totalClusterLines / totalHours);
+            globalRatioStr = `${ratio} l/h`;
+          } else {
+            globalRatioStr = `${totalClusterLines} l/h`;
+          }
+        } else {
+          globalRatioStr = `${totalClusterLines} l/h`;
+        }
 
         const tooltipContent = `
           <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
-            <strong class="text-slate-900 block text-sm">Agent : ${user} (${status})</strong>
+            <strong class="text-slate-900 block text-sm">Agent : ${user} (${status}) • ${globalRatioStr}</strong>
             <div class="text-[11px] text-slate-600 font-semibold">Détail par Entrepreneur & Métier :</div>
             <ul class="list-disc pl-4 text-[10px] text-slate-700 space-y-0.5">${comboList}</ul>
           </div>
@@ -1089,7 +1112,7 @@
 
         marker.bindTooltip(tooltipContent, { direction: 'top', offset: [0, -6] });
 
-        // Calcul exact de la première et dernière date parmi tous les items du cluster
+        // Tri chronologique correct (Du plus ancien au plus récent : Date de début à gauche, Date de fin à droite)
         const sortedDates = items.map(i => parseItemDate(i.timestamp)).filter(d => !isNaN(d.getTime())).sort((a, b) => a - b);
         let dateRangeStr = '--';
         if (sortedDates.length > 0) {
@@ -1103,22 +1126,28 @@
         const safeTrade = (items[0].trade || '').replace(/'/g, "\\'");
 
         marker.bindPopup(`
-          <div class="text-xs font-sans space-y-2.5 py-1 min-w-[280px]">
+          <div class="text-xs font-sans space-y-2.5 py-1 min-w-[300px]">
             <div class="flex justify-between items-start border-b border-slate-100 pb-2">
               <div>
                 <strong class="text-slate-900 text-sm block">${user}</strong>
                 <span class="text-slate-500 text-[10px]">Statut : ${status}</span>
               </div>
-              <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">${totalClusterLines} saisie(s)</span>
+              <div class="text-right">
+                <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold block">${totalClusterLines} saisie(s)</span>
+                <span class="font-mono text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold mt-1 inline-block">${globalRatioStr}</span>
+              </div>
             </div>
 
             <div class="space-y-1">
               <span class="text-[10px] font-bold text-slate-400 uppercase block">Détails par Entrepreneur & Métier :</span>
-              <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1 max-h-36 overflow-y-auto custom-scrollbar">
-                ${Object.entries(comboCounts).map(([combo, count]) => `
-                  <div class="flex justify-between items-center text-[11px] py-0.5 border-b border-slate-100 last:border-0">
-                    <span class="font-semibold text-slate-800 truncate max-w-[180px]" title="${combo}">${combo}</span>
-                    <span class="font-mono text-orange-700 font-bold shrink-0">${count} ligne(s)</span>
+              <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
+                ${Object.entries(comboDetails).map(([combo, data]) => `
+                  <div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-200 last:border-0">
+                    <span class="font-semibold text-slate-800 truncate max-w-[140px]" title="${combo}">${combo}</span>
+                    <div class="flex items-center gap-2 shrink-0 font-mono">
+                      <span class="text-indigo-600 font-bold">${data.timeStr}</span>
+                      <span class="text-orange-700 font-bold">${data.count} ligne(s)</span>
+                    </div>
                   </div>
                 `).join('')}
               </div>
