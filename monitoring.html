@@ -349,7 +349,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS ================= -->
+        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS (AVEC LES 3 CARTES STATS RETROUVÉES) ================= -->
         <section id="viewAgents" class="hidden space-y-6">
           
           <div>
@@ -363,6 +363,8 @@
                 <span id="btnFilterActiveText">En cours uniquement (Cliquer pour voir tous)</span>
               </button>
             </div>
+            
+            <!-- RESTAURATION EXPLICITE DES 4 CARTES STATISTIQUES DE L'ONGLET AGENTS -->
             <div class="grid grid-cols-4 gap-4">
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
                 <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
@@ -432,9 +434,7 @@
 
       <!-- Mention de copyright obligatoire -->
       <div class="text-center pt-8 pb-3 border-t border-slate-200">
-        <span class="text-[11px] font-medium text-slate-400 tracking-wider">
-          &copy; made by CO2H2O srlu
-        </span>
+        <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
       </div>
     </main>
   </div>
@@ -462,9 +462,7 @@
     let filterOnlyActiveAgents = true; 
     let openDrawers = {};
 
-    // GESTION LIBRE DU SEUIL ATYPIQUE (NULL PAR DÉFAUT -> CHAMP VIDE)
     let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
-
     let mapFilterOnSelection = false;
 
     const BELGIUM_CENTER = [50.64, 4.67];
