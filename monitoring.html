@@ -161,11 +161,11 @@
 
           <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-200">
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du (JJ/MM/AAAA) :</label>
+              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du :</label>
               <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
             </div>
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au (JJ/MM/AAAA) :</label>
+              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au :</label>
               <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
             </div>
           </div>
@@ -324,7 +324,7 @@
           <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
               <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
-              <span class="text-slate-400 text-[11px]">Format Date : JJ/MM/AAAA</span>
+              <span class="text-slate-400 text-[11px]">Format Date : Jour Mois Année</span>
             </div>
             <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
               <table class="w-full text-left text-xs">
@@ -422,15 +422,15 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (DOUBLE PANNEAU) ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL & DOUBLE PANNEAU) ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
-                Agenda Prévisionnel & Suivi des Tournées
+                Planning Semaine & Suivi des Tournées
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Planification, affectation manuelle et suivi en temps réel de la complétion des missions</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural hebdomadaire • Affectation optimisée et taux de complétion en direct</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadTourneeTemplateCSV()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
@@ -444,56 +444,38 @@
             </div>
           </div>
 
-          <!-- DOUBLE PANNEAU (70% AGENDA / 30% COMPLETION) -->
+          <!-- DOUBLE PANNEAU (70% AGENDA MURAL / 30% COMPLETION & IMPORT) -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- PANNEAU GAUCHE (7/12 ou 8/12) : AGENDA & FILTRES -->
+            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE -->
             <div class="lg:col-span-8 space-y-4">
               
-              <!-- FILTRES RAPIDES AGENDA -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs font-bold text-slate-500 uppercase">Filtrer Agenda :</span>
-                  <input type="date" id="agendaFilterDate" onchange="renderAgendaTable()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
-                  <button onclick="document.getElementById('agendaFilterDate').value=''; renderAgendaTable();" class="text-xs text-slate-400 hover:text-slate-600 underline">Tous les jours</button>
+                  <span class="text-xs font-bold text-slate-500 uppercase">Semaine du :</span>
+                  <input type="date" id="agendaWeekPicker" onchange="renderWallPlanning()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
                 </div>
-
                 <div class="flex items-center space-x-2">
-                  <select id="agendaFilterAgent" onchange="renderAgendaTable()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
+                  <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
                     <option value="">Tous les agents</option>
                   </select>
                 </div>
               </div>
 
-              <!-- TABLEAU DE L'AGENDA PRÉVISIONNEL -->
-              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-                <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
-                  <span id="agendaCountLabel" class="font-bold text-slate-700">0 mission(s) planifiée(s)</span>
-                  <span class="text-slate-400 text-[11px]">Tranche / Date</span>
+              <!-- GRILLE PLANNING MURAL HEBDOMADAIRE (LUNDI AU DIMANCHE) -->
+              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
+                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Survolez pour info, cliquez pour détails)</span>
+                  <span id="wallPlanningWeekLabel" class="font-mono text-orange-700 font-bold">--</span>
                 </div>
-                <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
-                  <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
-                      <tr>
-                        <th class="p-3">Date / Tranche</th>
-                        <th class="p-3">Agent</th>
-                        <th class="p-3">Chantier</th>
-                        <th class="p-3">Article (Réf SAP)</th>
-                        <th class="p-3 text-center">Ordre</th>
-                        <th class="p-3 text-center">Statut</th>
-                        <th class="p-3 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody id="agendaTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                  </table>
-                </div>
+
+                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2.5 min-h-[420px]"></div>
               </div>
             </div>
 
-            <!-- PANNEAU DROIT (4/12 ou 5/12) : SUIVI & TAUX DE COMPLÉTION -->
+            <!-- PANNEAU DROIT (4/12) : SUIVI & IMPORT -->
             <div class="lg:col-span-4 space-y-4">
               
-              <!-- JAUGE DE COMPLÉTION GLOBALE -->
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
                 <div class="flex justify-between items-center">
                   <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Complétion Globale</span>
@@ -516,13 +498,11 @@
                 </div>
               </div>
 
-              <!-- SUIVI EN DIRECT PAR AGENT -->
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Jour)</span>
-                <div id="agentCompletionList" class="space-y-2 max-h-[340px] overflow-y-auto custom-scrollbar pr-1"></div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Semaine)</span>
+                <div id="agentCompletionList" class="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
 
-              <!-- ZONE IMPORT CSV DISCRÈTE -->
               <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-xs space-y-2 text-center">
                 <span class="text-[11px] font-bold text-slate-600 block">Import rapide par fichier CSV</span>
                 <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileSelect(event)" class="hidden">
@@ -539,16 +519,17 @@
 
       </div>
 
-      <div class="text-center pt-8 pb-3 border-t border-slate-200">
+      <!-- FIN DE PAGE CORRIGÉE SANS DÉBORDEMENT -->
+      <div class="text-center pt-8 pb-6 border-t border-slate-200 shrink-0">
         <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
       </div>
     </main>
   </div>
 
-  <!-- ================= MODALE ASSIGNATION MANUELLE ================= -->
+  <!-- ================= MODALE ASSIGNATION MANUELLE OPTIMISÉE (ESPACE COMPACT) ================= -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
-    <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+    <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
         <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
           <i data-lucide="plus-circle" class="w-4 h-4 text-orange-600"></i>
           Nouvelle Affectation de Tâche
@@ -556,56 +537,76 @@
         <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <div class="grid grid-cols-2 gap-3">
+      <!-- FORMULAIRE COMPACT EN GRILLE MULTI-COLONNES -->
+      <div class="space-y-2.5 text-xs">
+        <div class="grid grid-cols-3 gap-2">
           <div>
-            <label class="block font-bold text-slate-500 uppercase mb-1">Agent :</label>
-            <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
-              <option value="">-- Choisir un agent --</option>
+            <label class="block font-bold text-slate-500 uppercase mb-0.5">Agent :</label>
+            <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
+              <option value="">-- Agent --</option>
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-500 uppercase mb-1">Tranche Horaire :</label>
-            <select id="adminAssignTranche" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
-              <option value="MATIN">Matin (08:00 - 12:00)</option>
-              <option value="APRES_MIDI">Après-midi (13:00 - 17:00)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold text-slate-500 uppercase mb-1">Entrepreneur :</label>
-            <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
+            <label class="block font-bold text-slate-500 uppercase mb-0.5">Entrepreneur :</label>
+            <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Entrepreneur --</option>
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-500 uppercase mb-1">Métier :</label>
-            <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-orange-500">
+            <label class="block font-bold text-slate-500 uppercase mb-0.5">Métier :</label>
+            <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Métier --</option>
             </select>
           </div>
         </div>
 
-        <div>
-          <label class="block font-bold text-slate-500 uppercase mb-1">Date Prévisionnelle :</label>
-          <input type="date" id="adminAssignDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-mono text-slate-800 focus:outline-none focus:border-orange-500">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-500 uppercase mb-0.5">Date :</label>
+            <input type="date" id="adminAssignDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-500 uppercase mb-0.5">Tranche :</label>
+            <select id="adminAssignTranche" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
+              <option value="MATIN">Matin</option>
+              <option value="APRES_MIDI">Après-midi</option>
+            </select>
+          </div>
         </div>
 
-        <div class="space-y-1.5 pt-1">
+        <!-- ZONE CATALOGUE AGRANDIE (GAIN DE PLACE VERTICAL) -->
+        <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
-            <label class="font-bold text-slate-500 uppercase">Articles du catalogue à assigner :</label>
+            <label class="font-bold text-slate-500 uppercase">Articles du catalogue :</label>
             <span id="adminCatalogCount" class="text-[10px] font-mono text-slate-400 font-bold">0 article(s)</span>
           </div>
-          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Filtrer le catalogue..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500">
-          <div id="adminCatalogPickerList" class="max-h-44 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
+          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Filtrer par référence SAP ou désignation..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500">
+          <div id="adminCatalogPickerList" class="max-h-52 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
         </div>
       </div>
 
-      <div class="pt-3 border-t border-slate-100 flex gap-2">
-        <button onclick="closeManualAssignModal()" class="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Annuler</button>
-        <button onclick="submitManualTourneeAssignment()" class="flex-1 h-11 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold rounded-xl text-xs shadow-xs transition">Enregistrer</button>
+      <div class="pt-2 border-t border-slate-100 flex gap-2">
+        <button onclick="closeManualAssignModal()" class="flex-1 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Annuler</button>
+        <button onclick="submitManualTourneeAssignment()" class="flex-1 h-10 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold rounded-xl text-xs shadow-xs transition">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODALE DÉTAILS TOURNÉE CLIC AGENDA ================= -->
+  <div id="tourneeDetailsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <div>
+          <h3 id="modalTourneeTitle" class="text-sm font-bold text-slate-900 uppercase">Détails de la Tournée</h3>
+          <span id="modalTourneeSubtitle" class="text-[11px] text-slate-500 font-mono">--</span>
+        </div>
+        <button onclick="closeTourneeDetailsModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="modalTourneeContent" class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 text-xs"></div>
+
+      <div class="pt-2 border-t border-slate-100 flex justify-end">
+        <button onclick="closeTourneeDetailsModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Fermer</button>
       </div>
     </div>
   </div>
@@ -692,6 +693,16 @@
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
 
+    // FORMAT DATE EN FRANÇAIS : JOUR MOIS ANNÉE (Ex: Mardi 8 Septembre 2026)
+    function formatDateFrench(dateInput) {
+      if (!dateInput) return "--/--/----";
+      const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
+      if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
+      
+      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      return d.toLocaleDateString('fr-FR', options);
+    }
+
     function formatDateDMY(dateInput, includeTime = false) {
       if (!dateInput) return "--/--/----";
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
@@ -722,9 +733,10 @@
       }
 
       const dateInput = document.getElementById("adminAssignDate");
-      if (dateInput) {
-        dateInput.value = new Date().toISOString().split('T')[0];
-      }
+      const weekPicker = document.getElementById("agendaWeekPicker");
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (dateInput) dateInput.value = todayStr;
+      if (weekPicker) weekPicker.value = todayStr;
 
       if (!currentAdmin) {
         document.getElementById("authModal").classList.remove("hidden");
@@ -754,13 +766,17 @@
       document.getElementById("manualAssignModal").classList.add("hidden");
     }
 
+    function closeTourneeDetailsModal() {
+      document.getElementById("tourneeDetailsModal").classList.add("hidden");
+    }
+
     function populateTourneeAdminDropdowns() {
       const agentSel = document.getElementById("adminAssignAgent");
       const contractorSel = document.getElementById("adminAssignContractor");
       const tradeSel = document.getElementById("adminAssignTrade");
       const filterAgentSel = document.getElementById("agendaFilterAgent");
 
-      const agentOptions = '<option value="">-- Choisir un agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      const agentOptions = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
       if (agentSel) agentSel.innerHTML = agentOptions;
       if (filterAgentSel) filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
 
@@ -791,14 +807,14 @@
         return;
       }
 
-      container.innerHTML = filtered.slice(0, 40).map(item => {
+      container.innerHTML = filtered.slice(0, 50).map(item => {
         const isChecked = manualSelectedCatalogSaps.includes(String(item.sapRef).trim());
         return `
           <label class="flex items-center justify-between p-1 rounded hover:bg-white cursor-pointer text-xs text-slate-700">
             <div class="flex items-center space-x-2 min-w-0 pr-2">
               <input type="checkbox" value="${item.sapRef}" onchange="toggleManualCatalogSelection('${item.sapRef}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
               <span class="font-mono font-bold text-amber-700">${item.sapRef}</span>
-              <span class="truncate max-w-[220px]" title="${item.designation}">${item.designation}</span>
+              <span class="truncate max-w-[260px]" title="${item.designation}">${item.designation}</span>
             </div>
           </label>
         `;
@@ -877,7 +893,7 @@
 
         closeManualAssignModal();
         manualSelectedCatalogSaps = [];
-        renderAgendaTable();
+        renderWallPlanning();
       } catch (err) {
         alert("Erreur lors de l'enregistrement de la tournée : " + err);
       }
@@ -976,67 +992,127 @@
         });
         localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
-        alert(`${bulkItems.length} mission(s) importée(s) avec succès dans l'agenda !`);
-        renderAgendaTable();
+        alert(`${bulkItems.length} mission(s) importée(s) avec succès dans le planning !`);
+        renderWallPlanning();
       } catch (err) {
         alert("Erreur lors de l'import CSV : " + err);
       }
     }
 
-    // ================= RENDU AGENDA & COMPLETION =================
-    function renderAgendaTable() {
-      const tbody = document.getElementById("agendaTableBody");
-      const countLabel = document.getElementById("agendaCountLabel");
-      const filterDate = document.getElementById("agendaFilterDate").value;
+    // ================= PLANNING MURAL HEBDOMADAIRE =================
+    function renderWallPlanning() {
+      const gridContainer = document.getElementById("wallPlanningGrid");
+      const weekLabel = document.getElementById("wallPlanningWeekLabel");
+      const pickerVal = document.getElementById("agendaWeekPicker").value;
       const filterAgent = document.getElementById("agendaFilterAgent").value;
-      
-      if (!tbody) return;
 
-      let list = cachedTournees || [];
-      if (filterDate) {
-        list = list.filter(t => t.date === filterDate);
-      }
-      if (filterAgent) {
-        list = list.filter(t => t.agent === filterAgent);
+      if (!gridContainer) return;
+
+      const baseDate = pickerVal ? new Date(pickerVal) : new Date();
+      const dayOfWeek = baseDate.getDay() || 7;
+      const monday = new Date(baseDate);
+      monday.setDate(baseDate.getDate() - dayOfWeek + 1);
+
+      const weekDays = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        weekDays.push(d);
       }
 
-      if (countLabel) countLabel.innerText = `${list.length} mission(s) planifiée(s)`;
+      const firstStr = formatDateFrench(weekDays[0]);
+      const lastStr = formatDateFrench(weekDays[6]);
+      if (weekLabel) weekLabel.innerText = `Semaine du ${firstStr} au ${lastStr}`;
 
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">Aucune mission planifiée pour ces critères.</td></tr>`;
-      } else {
-        tbody.innerHTML = list.map(t => {
-          const isDone = t.statut === 'VALIDE';
-          const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
-          return `
-            <tr class="hover:bg-slate-50 transition">
-              <td class="p-3 font-mono text-[11px] text-slate-700 whitespace-nowrap">
-                <strong class="block text-slate-900">${t.date || '--'}</strong>
-                <span class="text-[10px] text-slate-400">${trancheLabel}</span>
-              </td>
-              <td class="p-3 font-bold text-slate-900">${t.agent}</td>
-              <td class="p-3 text-slate-700">${t.contractor || '--'} <span class="text-slate-400">(${t.trade || '--'})</span></td>
-              <td class="p-3">
-                <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
-                <span class="text-slate-600 truncate block max-w-[180px]" title="${t.designation}">${t.designation || '--'}</span>
-              </td>
-              <td class="p-3 text-center font-mono font-bold">${t.ordre || 1}</td>
-              <td class="p-3 text-center">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-                  ${isDone ? 'VALIDE' : 'À FAIRE'}
-                </span>
-              </td>
-              <td class="p-3 text-right">
-                <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition" title="Supprimer">
-                  <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
+      const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+
+      gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
+        const dateStr = dayObj.toISOString().split('T')[0];
+        let dayTasks = (cachedTournees || []).filter(t => t.date === dateStr);
+        if (filterAgent) {
+          dayTasks = dayTasks.filter(t => t.agent === filterAgent);
+        }
+
+        // Grouper par Agent ou par Tournée
+        const agentGroups = {};
+        dayTasks.forEach(t => {
+          if (!agentGroups[t.agent]) agentGroups[t.agent] = [];
+          agentGroups[t.agent].push(t);
+        });
+
+        const formattedDateTitle = `${dayNames[idx]} ${dayObj.getDate()}/${dayObj.getMonth()+1}`;
+
+        return `
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 flex flex-col space-y-2 min-h-[380px]">
+            <div class="text-center pb-1.5 border-b border-slate-200">
+              <span class="text-xs font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
+              <span class="text-[10px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+            </div>
+
+            <div class="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
+              ${Object.keys(agentGroups).length === 0 ? `
+                <div class="text-[10px] text-slate-400 italic text-center py-10">Aucune tâche</div>
+              ` : Object.entries(agentGroups).map(([agent, tasks]) => {
+                const total = tasks.length;
+                const done = tasks.filter(t => t.statut === 'VALIDE').length;
+                const isAllDone = (done === total);
+                const isPartDone = (done > 0 && done < total);
+
+                let badgeColor = "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200";
+                if (isAllDone) badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200";
+                else if (isPartDone) badgeColor = "bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200";
+
+                const tooltipText = tasks.map(t => `• ${t.sapRef} (${t.contractor})`).join('\n');
+
+                return `
+                  <div onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
+                       title="${agent} :\n${tooltipText}"
+                       class="p-2 rounded-xl border ${badgeColor} cursor-pointer shadow-2xs transition group relative">
+                    <div class="flex justify-between items-center text-[11px] font-bold">
+                      <span class="truncate">${agent}</span>
+                      <span class="font-mono text-[10px]">${done}/${total}</span>
+                    </div>
+                    <div class="text-[9px] text-slate-600 truncate mt-0.5">${tasks[0].contractor || 'Divers'}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
 
       renderCompletionMetrics(cachedTournees || []);
+      lucide.createIcons();
+    }
+
+    function openTourneeDetailsForDay(dateStr, agentName) {
+      const tasks = (cachedTournees || []).filter(t => t.date === dateStr && t.agent === agentName);
+      const modalTitle = document.getElementById("modalTourneeTitle");
+      const modalSub = document.getElementById("modalTourneeSubtitle");
+      const contentBox = document.getElementById("modalTourneeContent");
+
+      const formattedFullDate = formatDateFrench(dateStr);
+      modalTitle.innerText = `Tournée de ${agentName}`;
+      modalSub.innerText = `${formattedFullDate} • ${tasks.length} article(s)`;
+
+      contentBox.innerHTML = tasks.map(t => {
+        const isDone = t.statut === 'VALIDE';
+        return `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div class="min-w-0 pr-2">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+              </div>
+              <p class="text-[11px] text-slate-700 truncate">${t.designation || 'Sans désignation'}</p>
+              <span class="text-[10px] text-slate-400">${t.contractor} (${t.trade})</span>
+            </div>
+            <button onclick="deleteTourneeAdminItem('${t.id}'); closeTourneeDetailsModal();" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById("tourneeDetailsModal").classList.remove("hidden");
       lucide.createIcons();
     }
 
@@ -1080,11 +1156,11 @@
     }
 
     async function deleteTourneeAdminItem(id) {
-      if (!confirm("Supprimer cette mission de l'agenda ?")) return;
+      if (!confirm("Supprimer cette mission ?")) return;
 
       cachedTournees = cachedTournees.filter(t => t.id !== id);
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
-      renderAgendaTable();
+      renderWallPlanning();
 
       if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
         fetch(GOOGLE_SCRIPT_URL, {
@@ -1387,7 +1463,7 @@
           initMultiSelects();
           populateAdminDropdown();
           populateTourneeAdminDropdowns();
-          renderAgendaTable();
+          renderWallPlanning();
           applyFilters();
         }
       } catch (err) {
@@ -1563,7 +1639,7 @@
       tbody.innerHTML = list.map(item => {
         const q = Number(item.quantity);
         const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
-        const displayDate = formatDateDMY(item.timestamp, true);
+        const displayDate = formatDateFrench(item.timestamp);
         return `
           <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
             <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${displayDate}</td>
@@ -1645,7 +1721,7 @@
 
         if (sortedDesc.length > 0) {
           const lastTime = parseItemDate(sortedDesc[0].timestamp).getTime();
-          lastSignalStr = formatDateDMY(sortedDesc[0].timestamp, true);
+          lastSignalStr = formatDateFrench(sortedDesc[0].timestamp);
           const diffMs = now - lastTime;
 
           if (diffMs < tenMinMs) {
@@ -1775,7 +1851,7 @@
                     ${lastFiveEntries.length === 0 ? `<tr><td colspan="5" class="p-2 text-center text-slate-400 italic">Aucune saisie enregistrée sur la période.</td></tr>` : 
                       lastFiveEntries.map(e => `
                         <tr>
-                          <td class="p-1.5 font-mono text-slate-500 whitespace-nowrap">${formatDateDMY(e.timestamp, true)}</td>
+                          <td class="p-1.5 font-mono text-slate-500 whitespace-nowrap">${formatDateFrench(e.timestamp)}</td>
                           <td class="p-1.5 font-semibold text-slate-700 truncate max-w-[120px]">${e.contractor} (${e.trade})</td>
                           <td class="p-1.5 font-mono font-bold text-amber-700">${e.sapRef}</td>
                           <td class="p-1.5 text-slate-800 truncate max-w-[200px]" title="${e.designation}">${e.designation}</td>
@@ -1919,7 +1995,7 @@
           comboDetails[comboKey] = { count, timeStr };
         });
 
-        const comboList = Object.entries(comboDetails).map(([combo, data] ) => `
+        const comboList = Object.entries(comboDetails).map(([combo, data]) => `
           <li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-indigo-600">${data.timeStr}</strong> | <strong class="text-orange-600">${data.count} ligne(s)</strong></li>
         `).join('');
 
@@ -1965,7 +2041,7 @@
         if (sortedDates.length > 0) {
           const minDate = sortedDates[0];
           const maxDate = sortedDates[sortedDates.length - 1];
-          dateRangeStr = sortedDates.length > 1 ? `${formatDateDMY(minDate, true)} au ${formatDateDMY(maxDate, true)}` : formatDateDMY(minDate, true);
+          dateRangeStr = sortedDates.length > 1 ? `${formatDateFrench(minDate)} au ${formatDateFrench(maxDate)}` : formatDateFrench(minDate);
         }
 
         const safeUser = user.replace(/'/g, "\\'");
@@ -2064,7 +2140,7 @@
       } else if (v === 'tournees') {
         document.getElementById("viewTourneesAdmin").classList.remove("hidden");
         document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
-        renderAgendaTable();
+        renderWallPlanning();
       }
       lucide.createIcons();
     }
@@ -2116,9 +2192,9 @@
         return;
       }
 
-      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
+      let csv = "\uFEFFHorodatage;Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
       data.forEach(r => {
-        const dmy = formatDateDMY(r.timestamp, true);
+        const dmy = formatDateFrench(r.timestamp);
         csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
       });
 
