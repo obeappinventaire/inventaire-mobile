@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inventaire Logistique Terrain</title>
 
-  <!-- ICÔNES & PWA -->
+  <!-- PWA & ICÔNES -->
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
-  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -103,7 +103,7 @@
   <!-- ================= EN-TÊTE FIXE ================= -->
   <header id="appHeader" class="bg-slate-950 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md shrink-0 z-10 transition-all duration-200">
     <div class="flex items-center space-x-2">
-      <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800" onerror="this.src='icon.svg'">
+      <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow border border-slate-800">
       <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
       <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">En ligne</span>
       <span id="syncBadge" class="hidden text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded">0 en attente</span>
@@ -357,6 +357,15 @@
   </div>
 
   <script>
+    // Enregistrement du Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => console.log('SW enregistré:', reg.scope))
+          .catch(err => console.warn('Échec enregistrement SW:', err));
+      });
+    }
+
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
@@ -450,13 +459,7 @@
         encouragement = "courage";
       }
 
-      let phrase = "";
-      if (encouragement !== "") {
-        phrase = `${qtyBelgian}, Ok, ${encouragement} ${agentName}`;
-      } else {
-        phrase = `${qtyBelgian}, Ok ${agentName}`;
-      }
-
+      let phrase = encouragement !== "" ? `${qtyBelgian}, Ok, ${encouragement} ${agentName}` : `${qtyBelgian}, Ok ${agentName}`;
       speakFeedback(phrase);
     }
 
@@ -507,7 +510,6 @@
       initContinuousGps();
       updateSyncBadge();
 
-      // FORCER STRICTEMENT L'OUVERTURE SUR LA PAGE DE COMPTAGE AU LANCEMENT
       switchTab('inventory');
 
       if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
@@ -542,12 +544,21 @@
 
     function initContinuousGps() {
       if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            latestCoords.lat = pos.coords.latitude;
+            latestCoords.lng = pos.coords.longitude;
+          },
+          (err) => console.warn("GPS initial warning:", err.message),
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+
         navigator.geolocation.watchPosition(
           (pos) => {
             latestCoords.lat = pos.coords.latitude;
             latestCoords.lng = pos.coords.longitude;
           },
-          (err) => console.warn("GPS tracking:", err.message),
+          (err) => console.warn("GPS tracking warning:", err.message),
           { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
         );
       }
@@ -699,7 +710,7 @@
           localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
           updateSyncBadge();
         } catch (e) {
-          console.warn("Échec synchro queue :", e);
+          console.warn("Échec synchro file d'attente :", e);
           break;
         }
       }
@@ -764,7 +775,7 @@
           if (isAdmin()) renderMobileMonitoring();
         }
       } catch (err) {
-        console.warn("Synchronisation échouée :", err);
+        console.warn("Synchronisation réseau échouée :", err);
       }
     }
 
@@ -932,7 +943,7 @@
         startBackgroundOcr();
 
       } catch (err) {
-        console.warn("Erreur capteur :", err);
+        console.warn("Erreur capteur caméra:", err);
         container.classList.add("hidden");
         container.classList.remove("flex");
         btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
@@ -1188,7 +1199,7 @@
           showToast("Réf non reconnue. Rapprochez le bac.");
         }
       } catch (e) {
-        console.warn("Erreur OCR :", e);
+        console.warn("Erreur reconnaissance OCR:", e);
       } finally {
         isOcrBusy = false;
       }
@@ -1344,8 +1355,7 @@
             entryTime = parseInt(timestampPart, 36);
           }
           if (!entryTime && entry.timestamp) {
-            const parts = entry.timestamp.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);
-            if (parts) entryTime = new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5]).getTime();
+            entryTime = parseItemDate(entry.timestamp).getTime();
           }
           return (nowMs - entryTime) < fiveMinMs;
         }
@@ -1392,7 +1402,7 @@
         payload = {
           action: "CREATE",
           id: "INV-" + Date.now().toString(36).toUpperCase(),
-          timestamp: new Date().toLocaleString("fr-FR"),
+          timestamp: new Date().toISOString(),
           user: currentAgent,
           contractor: contractor,
           trade: trade,
@@ -1599,7 +1609,11 @@
           return;
         }
         if (!isMonitoringUnlocked) {
-          const expected = adminPasswords[currentAgent] || "1234";
+          const expected = adminPasswords[currentAgent];
+          if (!expected) {
+            alert("Aucun mot de passe configuré pour ce compte. Veuillez contacter votre administrateur.");
+            return;
+          }
           const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe :`);
           if (entered === null) return;
           if (entered !== expected) {
