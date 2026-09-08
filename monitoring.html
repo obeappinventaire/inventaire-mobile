@@ -104,10 +104,10 @@
         <span class="text-xs text-slate-500">Admin :</span>
         <span id="activeAdminName" class="text-xs font-black text-orange-700">--</span>
       </div>
-      <button onclick="syncMonitoringData()" title="Actualiser" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
+      <button onclick="syncMonitoringData()" title="Actualiser" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer">
         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
       </button>
-      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition">
+      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition cursor-pointer">
         <i data-lucide="log-out" class="w-4 h-4"></i>
       </button>
     </div>
@@ -123,19 +123,19 @@
         <!-- Navigation Vues Principales -->
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
-          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition">
+          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer">
             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
             <span>Activité Globale</span>
           </button>
-          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>Suivi Terrain & Agents</span>
           </button>
-          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
             <i data-lucide="map" class="w-4 h-4"></i>
             <span>Carte & Géolocalisation</span>
           </button>
-          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
             <i data-lucide="calendar-range" class="w-4 h-4"></i>
             <span>Agenda & Tournées</span>
           </button>
@@ -233,7 +233,7 @@
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
-                  <button onclick="filterByKpi('ZERO')" title="Filtrer ruptures" class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs">
+                  <button onclick="filterByKpi('ZERO')" title="Filtrer ruptures" class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs cursor-pointer">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
@@ -243,7 +243,7 @@
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
-                  <button onclick="filterByKpi('HIGH')" title="Filtrer atypiques" class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs">
+                  <button onclick="filterByKpi('HIGH')" title="Filtrer atypiques" class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs cursor-pointer">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
@@ -262,10 +262,10 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                  <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
+                  <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer">
                     Effacer filtres
                   </button>
-                  <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs">
+                  <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs cursor-pointer">
                     <i data-lucide="download" class="w-4 h-4"></i>
                     <span>Exporter CSV</span>
                   </button>
@@ -278,14 +278,14 @@
             <div class="grid grid-cols-3 gap-3 pt-1 border-t border-slate-100">
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
                   <span id="btnLabelAgents" class="truncate font-semibold">Tous les agents</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
                 <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
                   <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('agents', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('agents', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                    <button type="button" onclick="selectAll('agents', true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
+                    <button type="button" onclick="selectAll('agents', false)" class="text-slate-500 hover:underline cursor-pointer">Tout décocher</button>
                   </div>
                   <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
                 </div>
@@ -293,14 +293,14 @@
 
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
                   <span id="btnLabelContractors" class="truncate font-semibold">Tous les entrepreneurs</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
                 <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
                   <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('contractors', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('contractors', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                    <button type="button" onclick="selectAll('contractors', true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
+                    <button type="button" onclick="selectAll('contractors', false)" class="text-slate-500 hover:underline cursor-pointer">Tout décocher</button>
                   </div>
                   <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
                 </div>
@@ -308,14 +308,14 @@
 
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
                   <span id="btnLabelTrades" class="truncate font-semibold">Tous les métiers</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
                 <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
                   <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
-                    <button type="button" onclick="selectAll('trades', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
-                    <button type="button" onclick="selectAll('trades', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                    <button type="button" onclick="selectAll('trades', true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
+                    <button type="button" onclick="selectAll('trades', false)" class="text-slate-500 hover:underline cursor-pointer">Tout décocher</button>
                   </div>
                   <div id="checkboxesTrades" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
                 </div>
@@ -356,7 +356,7 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
                 <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
               </div>
-              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2">
+              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer">
                 <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
                 <span id="btnFilterActiveText">En cours uniquement</span>
               </button>
@@ -408,11 +408,11 @@
               <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique • Bouton d'affichage ciblé sur la sélection active</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+              <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
                 <span id="mapFilterBtnText">Afficher toute la période</span>
               </button>
-              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
                 <span>Recentrer Belgique</span>
               </button>
@@ -432,50 +432,52 @@
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
                 Planning Semaine & Suivi des Tournées
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural hebdomadaire • Modèle Excel multi-onglets intelligent avec Masterdatas</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural hebdomadaire synchronisée avec la période active • Modèle Excel multi-onglets</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+              <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
-                <span>Télécharger Modèle Excel (.xlsx)</span>
+                <span>Modèle Excel (.xlsx)</span>
               </button>
-              <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+              <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
+              <button type="button" onclick="document.getElementById('excelFileInput').click()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+                <span>Importer Planning</span>
+              </button>
+              <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 <span>Nouvelle Tâche</span>
               </button>
             </div>
           </div>
 
-          <!-- DOUBLE PANNEAU (70% AGENDA MURAL / 30% COMPLETION & IMPORT) -->
+          <!-- DOUBLE PANNEAU (70% AGENDA MURAL / 30% COMPLETION) -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE -->
             <div class="lg:col-span-8 space-y-4">
               
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
+              <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs font-bold text-slate-500 uppercase">Semaine du :</span>
-                  <input type="date" id="agendaWeekPicker" onchange="renderWallPlanning()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
-                </div>
-                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-bold text-slate-500 uppercase">Filtre Agent :</span>
                   <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
                     <option value="">Tous les agents</option>
                   </select>
                 </div>
+                <div class="text-xs font-mono text-orange-700 font-bold" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- GRILLE PLANNING MURAL HEBDOMADAIRE (LUNDI AU DIMANCHE) -->
-              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-4">
+              <!-- GRILLE PLANNING MURAL HEBDOMADAIRE COMPACTE (LUNDI AU DIMANCHE) -->
+              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
-                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Survolez pour info, cliquez pour détails)</span>
-                  <span id="wallPlanningWeekLabel" class="font-mono text-orange-700 font-bold">--</span>
+                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Basée sur la période active gauche)</span>
                 </div>
 
-                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2.5 min-h-[420px]"></div>
+                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[300px]"></div>
               </div>
             </div>
 
-            <!-- PANNEAU DROIT (4/12) : SUIVI & IMPORT EXCEL/CSV -->
+            <!-- PANNEAU DROIT (4/12) : SUIVI & COMPLETION -->
             <div class="lg:col-span-4 space-y-4">
               
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
@@ -501,17 +503,8 @@
               </div>
 
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Semaine)</span>
-                <div id="agentCompletionList" class="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1"></div>
-              </div>
-
-              <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-xs space-y-2 text-center">
-                <span class="text-[11px] font-bold text-slate-600 block">Import intelligent (.xlsx ou .csv)</span>
-                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
-                <button type="button" onclick="document.getElementById('excelFileInput').click()" class="w-full h-10 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition flex items-center justify-center gap-2">
-                  <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                  <span>Glisser ou parcourir un planning Excel</span>
-                </button>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Période)</span>
+                <div id="agentCompletionList" class="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
 
             </div>
@@ -536,7 +529,7 @@
           <i data-lucide="plus-circle" class="w-4 h-4 text-orange-600"></i>
           Nouvelle Affectation de Tâche
         </h3>
-        <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
       <div class="space-y-2.5 text-xs">
@@ -586,8 +579,8 @@
       </div>
 
       <div class="pt-2 border-t border-slate-100 flex gap-2">
-        <button onclick="closeManualAssignModal()" class="flex-1 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Annuler</button>
-        <button onclick="submitManualTourneeAssignment()" class="flex-1 h-10 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold rounded-xl text-xs shadow-xs transition">Enregistrer</button>
+        <button onclick="closeManualAssignModal()" class="flex-1 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Annuler</button>
+        <button onclick="submitManualTourneeAssignment()" class="flex-1 h-10 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -600,13 +593,13 @@
           <h3 id="modalTourneeTitle" class="text-sm font-bold text-slate-900 uppercase">Détails de la Tournée</h3>
           <span id="modalTourneeSubtitle" class="text-[11px] text-slate-500 font-mono">--</span>
         </div>
-        <button onclick="closeTourneeDetailsModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeTourneeDetailsModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
       <div id="modalTourneeContent" class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 text-xs"></div>
 
       <div class="pt-2 border-t border-slate-100 flex justify-end">
-        <button onclick="closeTourneeDetailsModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Fermer</button>
+        <button onclick="closeTourneeDetailsModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Fermer</button>
       </div>
     </div>
   </div>
@@ -732,10 +725,8 @@
       }
 
       const dateInput = document.getElementById("adminAssignDate");
-      const weekPicker = document.getElementById("agendaWeekPicker");
       const todayStr = new Date().toISOString().split('T')[0];
       if (dateInput) dateInput.value = todayStr;
-      if (weekPicker) weekPicker.value = todayStr;
 
       if (!currentAdmin) {
         document.getElementById("authModal").classList.remove("hidden");
@@ -902,7 +893,6 @@
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
 
-      // 1. Onglet Planning_Tournees (Vide avec exemples)
       const planningData = [
         ["date_previsionnelle", "tranche_horaire", "agent", "contractor", "trade", "sapRef", "ordre"],
         ["2026-09-09", "MATIN", availableAgents[0] || "Agent 1", availableContractors[0] || "ENTREPRENEUR A", availableTrades[0] || "Electricite", catalog[0] ? catalog[0].sapRef : "106626", 1],
@@ -911,7 +901,6 @@
       const wsPlanning = XLSX.utils.aoa_to_sheet(planningData);
       XLSX.utils.book_append_sheet(wb, wsPlanning, "Planning_Tournees");
 
-      // 2. Onglet Ref_Agents_Chantiers (Masterdatas)
       const masterAgents = [["Liste_Agents"], ...(availableAgents.map(a => [a]))];
       const masterContractors = [["Liste_Entrepreneurs"], ...(availableContractors.map(c => [c]))];
       const masterTrades = [["Liste_Metiers"], ...(availableTrades.map(t => [t]))];
@@ -928,7 +917,6 @@
       const wsAgents = XLSX.utils.aoa_to_sheet([["Agents", "Entrepreneurs", "Métiers"], ...refAgentsData]);
       XLSX.utils.book_append_sheet(wb, wsAgents, "Ref_Agents_Chantiers");
 
-      // 3. Onglet Ref_Catalogue_SAP (Masterdatas)
       const catalogData = [["sapRef", "designation"], ...(catalog.map(c => [c.sapRef, c.designation]))];
       const wsCatalog = XLSX.utils.aoa_to_sheet(catalogData);
       XLSX.utils.book_append_sheet(wb, wsCatalog, "Ref_Catalogue_SAP");
@@ -1039,16 +1027,16 @@
       }
     }
 
-    // ================= PLANNING MURAL HEBDOMADAIRE =================
+    // ================= PLANNING MURAL HEBDOMADAIRE (SYNCHRO PÉRIODE GAUCHE) =================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const weekLabel = document.getElementById("wallPlanningWeekLabel");
-      const pickerVal = document.getElementById("agendaWeekPicker").value;
       const filterAgent = document.getElementById("agendaFilterAgent").value;
+      const sInputVal = document.getElementById("filterStartDate").value;
 
       if (!gridContainer) return;
 
-      const baseDate = pickerVal ? new Date(pickerVal) : new Date();
+      const baseDate = sInputVal ? new Date(sInputVal) : new Date();
       const dayOfWeek = baseDate.getDay() || 7;
       const monday = new Date(baseDate);
       monday.setDate(baseDate.getDate() - dayOfWeek + 1);
@@ -1080,15 +1068,15 @@
         });
 
         return `
-          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 flex flex-col space-y-2 min-h-[380px]">
-            <div class="text-center pb-1.5 border-b border-slate-200">
-              <span class="text-xs font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
-              <span class="text-[10px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-col space-y-1.5 min-h-[260px]">
+            <div class="text-center pb-1 border-b border-slate-200">
+              <span class="text-[11px] font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
+              <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
             </div>
 
-            <div class="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
+            <div class="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar">
               ${Object.keys(agentGroups).length === 0 ? `
-                <div class="text-[10px] text-slate-400 italic text-center py-10">Aucune tâche</div>
+                <div class="text-[9px] text-slate-400 italic text-center py-6">Aucune tâche</div>
               ` : Object.entries(agentGroups).map(([agent, tasks]) => {
                 const total = tasks.length;
                 const done = tasks.filter(t => t.statut === 'VALIDE').length;
@@ -1104,12 +1092,12 @@
                 return `
                   <div onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
                        title="${agent} :\n${tooltipText}"
-                       class="p-2 rounded-xl border ${badgeColor} cursor-pointer shadow-2xs transition group relative">
-                    <div class="flex justify-between items-center text-[11px] font-bold">
+                       class="p-1.5 rounded-lg border ${badgeColor} cursor-pointer shadow-2xs transition group relative">
+                    <div class="flex justify-between items-center text-[10px] font-bold">
                       <span class="truncate">${agent}</span>
-                      <span class="font-mono text-[10px]">${done}/${total}</span>
+                      <span class="font-mono text-[9px]">${done}/${total}</span>
                     </div>
-                    <div class="text-[9px] text-slate-600 truncate mt-0.5">${tasks[0].contractor || 'Divers'}</div>
+                    <div class="text-[8px] text-slate-600 truncate mt-0.5">${tasks[0].contractor || 'Divers'}</div>
                   </div>
                 `;
               }).join('')}
@@ -1144,7 +1132,7 @@
               <p class="text-[11px] text-slate-700 truncate">${t.designation || 'Sans désignation'}</p>
               <span class="text-[10px] text-slate-400">${t.contractor} (${t.trade})</span>
             </div>
-            <button onclick="deleteTourneeAdminItem('${t.id}'); closeTourneeDetailsModal();" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <button onclick="deleteTourneeAdminItem('${t.id}'); closeTourneeDetailsModal();" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `;
       }).join('');
@@ -1215,10 +1203,10 @@
       if (!btn || !btnText) return;
 
       if (filterOnlyActiveAgents) {
-        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-xs";
+        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-xs cursor-pointer";
         btnText.innerText = "🟢 En cours uniquement";
       } else {
-        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs";
+        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs cursor-pointer";
         btnText.innerText = "⚪ Flotte complète";
       }
     }
@@ -1457,6 +1445,7 @@
       currentAdmin = "";
       document.getElementById("authPassword").value = "";
       document.getElementById("authModal").classList.add("hidden");
+      document.getElementById("authModal").classList.remove("hidden");
     }
 
     async function syncMonitoringData() {
@@ -1555,6 +1544,7 @@
 
       updateWeekBadge(sInput.value);
       applyFilters();
+      renderWallPlanning();
     }
 
     function toggleActiveAgentsFilter() {
@@ -1568,10 +1558,10 @@
       const btnText = document.getElementById("mapFilterBtnText");
       const btnEl = document.getElementById("btnMapSelectionFilter");
       if (mapFilterOnSelection) {
-        btnEl.className = "text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnEl.className = "text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer";
         btnText.innerText = "Afficher uniquement la sélection";
       } else {
-        btnEl.className = "text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnEl.className = "text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer";
         btnText.innerText = "Afficher toute la période";
       }
       applyFilters();
@@ -1687,8 +1677,8 @@
             <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
             <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
             <td class="p-3 text-right whitespace-nowrap">
-              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
             </td>
           </tr>
         `;
@@ -1828,13 +1818,13 @@
 
               <div class="flex items-center space-x-1.5 shrink-0">
                 <button onclick="toggleAgentDrawer('${agent}')" 
-                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center gap-1">
+                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center gap-1 cursor-pointer">
                   <span id="${labelId}">${isDrawerOpen ? 'Masquer détails' : 'Détails & KPI agent'}</span>
                   <i data-lucide="chevron-down" id="${iconId}" class="w-3.5 h-3.5 transition-transform duration-200 ${isDrawerOpen ? 'rotate-180' : ''}"></i>
                 </button>
 
                 <button onclick="filterAndSwitchToGlobal('${agent}', '', '')" title="Voir dans l'Activité Globale"
-                        class="p-1 rounded-lg bg-slate-100 hover:bg-orange-50 text-slate-600 hover:text-orange-700 transition">
+                        class="p-1 rounded-lg bg-slate-100 hover:bg-orange-50 text-slate-600 hover:text-orange-700 transition cursor-pointer">
                   <i data-lucide="list" class="w-4 h-4"></i>
                 </button>
               </div>
@@ -2119,7 +2109,7 @@
             </div>
 
             <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
-                    class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5">
+                    class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
               <i data-lucide="list" class="w-3.5 h-3.5"></i>
               <span>Voir le listing dans l'Activité Globale</span>
             </button>
@@ -2154,20 +2144,20 @@
       document.getElementById("viewMap").classList.add("hidden");
       document.getElementById("viewTourneesAdmin").classList.add("hidden");
 
-      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
-      document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
+      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
+      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
+      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
+      document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
 
       if (v === 'global') {
         document.getElementById("viewGlobal").classList.remove("hidden");
-        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
       } else if (v === 'agents') {
         document.getElementById("viewAgents").classList.remove("hidden");
-        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
       } else if (v === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
         setTimeout(() => { 
           if (map) {
             map.invalidateSize();
@@ -2176,7 +2166,7 @@
         }, 200);
       } else if (v === 'tournees') {
         document.getElementById("viewTourneesAdmin").classList.remove("hidden");
-        document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
         renderWallPlanning();
       }
       lucide.createIcons();
