@@ -11,6 +11,8 @@
   <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SHEETJS (XLSX) POUR GESTION MULTI-ONGLETS EXCEL -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -422,7 +424,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL & DOUBLE PANNEAU) ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL & EXCEL INTELLIGENT) ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -430,12 +432,12 @@
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
                 Planning Semaine & Suivi des Tournées
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural hebdomadaire • Affectation optimisée et taux de complétion en direct</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural hebdomadaire • Modèle Excel multi-onglets intelligent avec Masterdatas</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="downloadTourneeTemplateCSV()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
-                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-600"></i>
-                <span>Modèle CSV</span>
+              <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>Télécharger Modèle Excel (.xlsx)</span>
               </button>
               <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
@@ -473,7 +475,7 @@
               </div>
             </div>
 
-            <!-- PANNEAU DROIT (4/12) : SUIVI & IMPORT -->
+            <!-- PANNEAU DROIT (4/12) : SUIVI & IMPORT EXCEL/CSV -->
             <div class="lg:col-span-4 space-y-4">
               
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
@@ -504,11 +506,11 @@
               </div>
 
               <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-xs space-y-2 text-center">
-                <span class="text-[11px] font-bold text-slate-600 block">Import rapide par fichier CSV</span>
-                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileSelect(event)" class="hidden">
-                <button type="button" onclick="document.getElementById('csvFileInput').click()" class="w-full h-10 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition flex items-center justify-center gap-2">
-                  <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-600"></i>
-                  <span>Glisser ou parcourir un planning CSV</span>
+                <span class="text-[11px] font-bold text-slate-600 block">Import intelligent (.xlsx ou .csv)</span>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
+                <button type="button" onclick="document.getElementById('excelFileInput').click()" class="w-full h-10 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition flex items-center justify-center gap-2">
+                  <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+                  <span>Glisser ou parcourir un planning Excel</span>
                 </button>
               </div>
 
@@ -526,7 +528,7 @@
     </main>
   </div>
 
-  <!-- ================= MODALE ASSIGNATION MANUELLE OPTIMISÉE (ESPACE COMPACT) ================= -->
+  <!-- ================= MODALE ASSIGNATION MANUELLE OPTIMISÉE ================= -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -537,7 +539,6 @@
         <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
-      <!-- FORMULAIRE COMPACT EN GRILLE MULTI-COLONNES -->
       <div class="space-y-2.5 text-xs">
         <div class="grid grid-cols-3 gap-2">
           <div>
@@ -574,7 +575,6 @@
           </div>
         </div>
 
-        <!-- ZONE CATALOGUE AGRANDIE (GAIN DE PLACE VERTICAL) -->
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
             <label class="font-bold text-slate-500 uppercase">Articles du catalogue :</label>
@@ -592,7 +592,7 @@
     </div>
   </div>
 
-  <!-- ================= MODALE DÉTAILS TOURNÉE CLIC AGENDA ================= -->
+  <!-- ================= MODALE DÉTAILS TOURNÉE ================= -->
   <div id="tourneeDetailsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -693,7 +693,6 @@
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
 
-    // FORMAT DATE EN FRANÇAIS : JOUR MOIS ANNÉE (Ex: Mardi 8 Septembre 2026)
     function formatDateFrench(dateInput) {
       if (!dateInput) return "--/--/----";
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
@@ -899,68 +898,109 @@
       }
     }
 
-    // ================= IMPORT FICHIER CSV MODÈLE =================
-    function downloadTourneeTemplateCSV() {
-      const csvContent = "\uFEFFdate_previsionnelle;tranche_horaire;agent;contractor;trade;sapRef;ordre\n" +
-                         "2026-09-09;MATIN;Agent 1;ENTREPRENEUR A;Electricite;106626;1\n" +
-                         "2026-09-09;APRES_MIDI;Agent 1;ENTREPRENEUR A;Electricite;128977;2\n" +
-                         "2026-09-10;MATIN;Agent 2;ENTREPRENEUR B;Sanitaire;105500;1";
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "modele_agenda_tournees.csv";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    // ================= TÉLÉCHARGEMENT MODÈLE EXCEL MULTI-ONGLETS =================
+    function downloadMasterdataExcelTemplate() {
+      const wb = XLSX.utils.book_new();
+
+      // 1. Onglet Planning_Tournees (Vide avec exemples)
+      const planningData = [
+        ["date_previsionnelle", "tranche_horaire", "agent", "contractor", "trade", "sapRef", "ordre"],
+        ["2026-09-09", "MATIN", availableAgents[0] || "Agent 1", availableContractors[0] || "ENTREPRENEUR A", availableTrades[0] || "Electricite", catalog[0] ? catalog[0].sapRef : "106626", 1],
+        ["2026-09-09", "APRES_MIDI", availableAgents[0] || "Agent 1", availableContractors[0] || "ENTREPRENEUR A", availableTrades[0] || "Electricite", catalog[1] ? catalog[1].sapRef : "128977", 2]
+      ];
+      const wsPlanning = XLSX.utils.aoa_to_sheet(planningData);
+      XLSX.utils.book_append_sheet(wb, wsPlanning, "Planning_Tournees");
+
+      // 2. Onglet Ref_Agents_Chantiers (Masterdatas)
+      const masterAgents = [["Liste_Agents"], ...(availableAgents.map(a => [a]))];
+      const masterContractors = [["Liste_Entrepreneurs"], ...(availableContractors.map(c => [c]))];
+      const masterTrades = [["Liste_Metiers"], ...(availableTrades.map(t => [t]))];
+
+      const refAgentsData = [];
+      const maxLen = Math.max(masterAgents.length, masterContractors.length, masterTrades.length);
+      for (let i = 0; i < maxLen; i++) {
+        refAgentsData.push([
+          masterAgents[i] ? masterAgents[i][0] : "",
+          masterContractors[i] ? masterContractors[i][0] : "",
+          masterTrades[i] ? masterTrades[i][0] : ""
+        ]);
+      }
+      const wsAgents = XLSX.utils.aoa_to_sheet([["Agents", "Entrepreneurs", "Métiers"], ...refAgentsData]);
+      XLSX.utils.book_append_sheet(wb, wsAgents, "Ref_Agents_Chantiers");
+
+      // 3. Onglet Ref_Catalogue_SAP (Masterdatas)
+      const catalogData = [["sapRef", "designation"], ...(catalog.map(c => [c.sapRef, c.designation]))];
+      const wsCatalog = XLSX.utils.aoa_to_sheet(catalogData);
+      XLSX.utils.book_append_sheet(wb, wsCatalog, "Ref_Catalogue_SAP");
+
+      XLSX.writeFile(wb, "Modele_Planning_Tournees.xlsx");
     }
 
-    function handleFileSelect(e) {
+    // ================= IMPORT INTELLIGENT EXCEL (.XLSX / .CSV) =================
+    function handleExcelFileSelect(e) {
       const files = e.target.files;
-      if (files.length > 0) processCsvFile(files[0]);
+      if (files.length > 0) processExcelFile(files[0]);
     }
 
-    function processCsvFile(file) {
+    function processExcelFile(file) {
       const reader = new FileReader();
       reader.onload = function(e) {
-        parseCsvText(e.target.result);
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          const sheetName = workbook.SheetNames.includes("Planning_Tournees") ? "Planning_Tournees" : workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (jsonRows.length <= 1) {
+            alert("Le fichier Excel ne contient pas de données exploitables.");
+            return;
+          }
+
+          const headers = jsonRows[0].map(h => String(h).trim().toLowerCase());
+          const dateIdx = headers.findIndex(h => h.includes('date'));
+          const trancheIdx = headers.findIndex(h => h.includes('tranche'));
+          const agentIdx = headers.findIndex(h => h.includes('agent'));
+          const contractorIdx = headers.findIndex(h => h.includes('contractor') || h.includes('entrepreneur'));
+          const tradeIdx = headers.findIndex(h => h.includes('trade') || h.includes('metier'));
+          const sapIdx = headers.findIndex(h => h.includes('sap') || h.includes('ref'));
+          const ordreIdx = headers.findIndex(h => h.includes('ordre') || h.includes('seq'));
+
+          const bulkItems = [];
+          for (let i = 1; i < jsonRows.length; i++) {
+            const row = jsonRows[i];
+            if (!row || row.length === 0) continue;
+
+            const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
+            const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
+
+            bulkItems.push({
+              date: String(row[dateIdx !== -1 ? dateIdx : 0] || new Date().toISOString().split('T')[0]),
+              tranche: String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase(),
+              agent: String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim(),
+              contractor: String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim(),
+              trade: String(row[tradeIdx !== -1 ? tradeIdx : 4] || '').trim(),
+              sapRef: sapRef,
+              designation: catItem ? catItem.designation : 'Article importé',
+              ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
+            });
+          }
+
+          if (bulkItems.length === 0) {
+            alert("Aucune ligne valide trouvée dans le fichier.");
+            return;
+          }
+
+          uploadBulkTournees(bulkItems);
+        } catch (err) {
+          alert("Erreur lors de la lecture du fichier Excel : " + err);
+        }
       };
-      reader.readAsText(file, 'UTF-8');
+      reader.readAsArrayBuffer(file);
     }
 
-    async function parseCsvText(text) {
-      const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== "");
-      if (lines.length <= 1) {
-        alert("Le fichier CSV est vide.");
-        return;
-      }
-
-      const delimiter = lines[0].includes(';') ? ';' : ',';
-      const bulkItems = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(delimiter).map(c => c.replace(/^["']|["']$/g, '').trim());
-        if (cols.length >= 6) {
-          const sapRef = cols[5] || '';
-          const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
-          bulkItems.push({
-            date: cols[0] || new Date().toISOString().split('T')[0],
-            tranche: cols[1] || 'MATIN',
-            agent: cols[2] || '',
-            contractor: cols[3] || '',
-            trade: cols[4] || '',
-            sapRef: sapRef,
-            designation: catItem ? catItem.designation : '',
-            ordre: Number(cols[6] || i)
-          });
-        }
-      }
-
-      if (bulkItems.length === 0) {
-        alert("Aucune ligne valide trouvée dans le CSV.");
-        return;
-      }
-
+    async function uploadBulkTournees(bulkItems) {
       const payload = {
         action: "CREATE_TOURNEES_BULK",
         user: currentAdmin,
@@ -978,7 +1018,7 @@
 
         bulkItems.forEach(it => {
           cachedTournees.push({
-            id: "TRN-CSV-" + Date.now().toString(36) + Math.random(),
+            id: "TRN-EXC-" + Date.now().toString(36) + Math.random(),
             agent: it.agent,
             contractor: it.contractor,
             trade: it.trade,
@@ -995,7 +1035,7 @@
         alert(`${bulkItems.length} mission(s) importée(s) avec succès dans le planning !`);
         renderWallPlanning();
       } catch (err) {
-        alert("Erreur lors de l'import CSV : " + err);
+        alert("Erreur lors de l'enregistrement : " + err);
       }
     }
 
@@ -1033,14 +1073,11 @@
           dayTasks = dayTasks.filter(t => t.agent === filterAgent);
         }
 
-        // Grouper par Agent ou par Tournée
         const agentGroups = {};
         dayTasks.forEach(t => {
           if (!agentGroups[t.agent]) agentGroups[t.agent] = [];
           agentGroups[t.agent].push(t);
         });
-
-        const formattedDateTitle = `${dayNames[idx]} ${dayObj.getDate()}/${dayObj.getMonth()+1}`;
 
         return `
           <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 flex flex-col space-y-2 min-h-[380px]">
