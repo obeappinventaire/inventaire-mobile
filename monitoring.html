@@ -185,9 +185,9 @@
             <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
               <div class="flex items-center justify-between">
                 <span class="text-[11px] text-slate-700 font-medium">Seuil volume atypique</span>
-                <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">50</span> pcs</span>
+                <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
               </div>
-              <input type="number" id="cfgMaxQty" value="50" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
+              <input type="number" id="cfgMaxQty" value="" placeholder="Ex: 50" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
             </div>
           </div>
         </div>
@@ -256,7 +256,7 @@
             <div class="flex items-center justify-between gap-4">
               <div class="flex-1 relative">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Recherche multi-mots (ex: ref1 ref2 désignation)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
+                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Recherche multi-mots/combos multiples (séparés par des virgules ou espaces, ex: 106626, 128977)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
               </div>
               <div class="flex items-center space-x-2">
                 <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
@@ -455,10 +455,11 @@
     let selectedTrades = [];
 
     let activeKpiFilter = null;
-    let filterOnlyActiveAgents = true; // ACTIVÉ PAR DÉFAUT
+    let filterOnlyActiveAgents = true; 
     let openDrawers = {};
 
-    let customMaxQty = Number(localStorage.getItem("mon_cfg_max_qty")) || 50;
+    // GESTION LIBRE DU SEUIL ATYPIQUE (PAR DÉFAUT VIDE / AUCUN CHIFFRE EN DUR SI NON SAISI)
+    let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
 
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
@@ -517,8 +518,8 @@
       const qtyInput = document.getElementById("cfgMaxQty");
       const qtyDisplay = document.getElementById("cfgMaxQtyDisplay");
       if (qtyInput && qtyDisplay) {
-        qtyInput.value = customMaxQty;
-        qtyDisplay.innerText = customMaxQty;
+        qtyInput.value = customMaxQty !== null ? customMaxQty : "";
+        qtyDisplay.innerText = customMaxQty !== null ? customMaxQty : "--";
       }
 
       if (!currentAdmin) {
@@ -556,14 +557,21 @@
     }
 
     function updateMaxQtyThreshold(val) {
-      const parsed = Number(val);
-      if (!isNaN(parsed) && parsed > 0) {
-        customMaxQty = parsed;
-        localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+      if (val === "" || val === null) {
+        customMaxQty = null;
+        localStorage.removeItem("mon_cfg_max_qty");
         const display = document.getElementById("cfgMaxQtyDisplay");
-        if (display) display.innerText = customMaxQty;
-        applyFilters();
+        if (display) display.innerText = "--";
+      } else {
+        const parsed = Number(val);
+        if (!isNaN(parsed) && parsed >= 0) {
+          customMaxQty = parsed;
+          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+          const display = document.getElementById("cfgMaxQtyDisplay");
+          if (display) display.innerText = customMaxQty;
+        }
       }
+      applyFilters();
     }
 
     function populateAdminDropdown() {
@@ -782,15 +790,17 @@
       applyFilters();
     }
 
+    // SOLUTION AMÉLIORÉE POUR LA RECHERCHE MULTI-MOTS/MULTIPLE COMBOS AVEC SÉPARATION PAR VIRGULES OU ESPACES
     function getFilteredHistory() {
       const sDateVal = document.getElementById("filterStartDate").value;
       const eDateVal = document.getElementById("filterEndDate").value;
       const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
       const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
-      const term = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").toLowerCase().trim();
-      const maxQ = customMaxQty;
-      const searchTerms = term.split(/\s+/).filter(Boolean);
+      const rawTerm = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").trim();
+      
+      // Découpage intelligent par virgule ou espace pour permettre de chercher plusieurs blocs/combos simultanément (ex: "106626, 128977" ou "connecteur see")
+      const searchGroups = rawTerm ? rawTerm.split(',').map(g => g.trim()).filter(Boolean) : [];
 
       return cachedHistory.filter(item => {
         const itDate = parseItemDate(item.timestamp);
@@ -801,16 +811,22 @@
         if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
         if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
 
-        if (searchTerms.length > 0) {
-          const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
-          const allMatch = searchTerms.every(t => matchTarget.includes(t));
-          if (!allMatch) return false;
+        if (searchGroups.length > 0) {
+          const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""} ${item.trade || ""}`.toLowerCase();
+          
+          // Chaque groupe séparé par une virgule représente un critère distinct (OU logique entre groupes, ET logique entre mots d'un même groupe)
+          const matchesAnyGroup = searchGroups.some(group => {
+            const subWords = group.split(/\s+/).filter(Boolean);
+            return subWords.every(word => matchTarget.includes(word.toLowerCase()));
+          });
+
+          if (!matchesAnyGroup) return false;
         }
 
         if (activeKpiFilter === 'ZERO') {
           if (Number(item.quantity) !== 0) return false;
         } else if (activeKpiFilter === 'HIGH') {
-          if (Number(item.quantity) <= maxQ) return false;
+          if (customMaxQty === null || Number(item.quantity) <= customMaxQty) return false;
         }
 
         return true;
@@ -848,8 +864,7 @@
       const totalR = list.length;
       const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
       const zeroS = list.filter(r => Number(r.quantity) === 0).length;
-      const maxQ = customMaxQty;
-      const atypS = list.filter(r => Number(r.quantity) > maxQ).length;
+      const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
 
       document.getElementById("kpiTotalRows").innerText = totalR;
       document.getElementById("kpiTotalPieces").innerText = totalP;
@@ -869,7 +884,6 @@
       document.getElementById("tableCountLabel").innerText = countText;
 
       const tbody = document.getElementById("supervisionTableBody");
-      const maxQ = customMaxQty;
       const alertZero = document.getElementById("cfgAlertZero").checked;
 
       if (list.length === 0) {
@@ -879,7 +893,7 @@
 
       tbody.innerHTML = list.map(item => {
         const q = Number(item.quantity);
-        const isAlert = (alertZero && q === 0) || q > maxQ;
+        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
         const displayDate = formatDateDMY(item.timestamp, true);
         return `
           <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
@@ -1272,7 +1286,6 @@
       }
     }
 
-    // FONCTION D'EXPORT CSV BASÉE STRICTEMENT SUR LA SÉLECTION ACTIVE ET FILTRÉE
     function exportTableToCSV() {
       const data = getFilteredHistory();
 
