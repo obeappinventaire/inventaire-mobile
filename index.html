@@ -84,7 +84,6 @@
           <button onclick="toggleVoiceSearch()" id="micBtn" class="h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer">
             <i data-lucide="mic" class="w-4 h-4 text-orange-600"></i> Saisie Vocale
           </button>
-          <!-- BOUTON SCAN AVEC LIBELLÉ "Scanner" -->
           <button onclick="openScanModal()" class="h-10 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-xs">
             <i data-lucide="camera" class="w-4 h-4"></i> Scanner
           </button>
@@ -150,7 +149,7 @@
     </button>
   </nav>
 
-  <!-- ================= MODALE SCAN CAMÉRA / OCR (ICÔNES VISUELLES & CROIX AGRANDIE) ================= -->
+  <!-- ================= MODALE SCAN CAMÉRA / OCR ================= -->
   <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="w-full flex justify-between items-center text-white py-2 px-2">
       <div class="flex items-center space-x-2">
@@ -161,7 +160,6 @@
           <i data-lucide="file-text" class="w-4 h-4 text-orange-400"></i>
         </div>
       </div>
-      <!-- CROIX AGRANDIE ET VISIBLE -->
       <button onclick="closeScanModal()" class="w-10 h-10 rounded-full bg-rose-600 hover:bg-rose-700 flex items-center justify-center text-white cursor-pointer transition shadow-lg">
         <i data-lucide="x" class="w-6 h-6"></i>
       </button>
@@ -479,7 +477,12 @@
 
     function renderHistory() {
       sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
-      const agentHistory = sessionHistory.filter(h => String(h.user || "").trim() === String(currentAgent || "").trim());
+      const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
+      
+      const agentHistory = sessionHistory.filter(h => {
+        const hUserNorm = String(h.user || "").trim().toLowerCase();
+        return !activeAgentNorm || hUserNorm === activeAgentNorm;
+      });
 
       const container = document.getElementById("historyListContainer");
       const countLbl = document.getElementById("historyCount");
@@ -487,7 +490,7 @@
 
       countLbl.innerText = `${agentHistory.length} ligne(s)`;
       if (agentHistory.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune saisie pour le moment.</div>`;
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune saisie enregistrée pour ${currentAgent || 'ce profil'}.</div>`;
         return;
       }
 
