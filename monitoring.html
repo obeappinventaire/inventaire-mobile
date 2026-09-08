@@ -229,7 +229,7 @@
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
-                  <button onclick="filterByKpi('ZERO')" title="Afficher la liste des ruptures dans le tableau" 
+                  <button onclick="filterByKpi('ZERO')" title="Afficher la liste des ruptures dans l'Activité Globale" 
                           class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
                     <i data-lucide="list-filter" class="w-4 h-4"></i>
                   </button>
@@ -241,7 +241,7 @@
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-amber-600 uppercase">Alertes Atypiques</span>
-                  <button onclick="filterByKpi('HIGH')" title="Afficher la liste des volumes atypiques dans le tableau" 
+                  <button onclick="filterByKpi('HIGH')" title="Afficher la liste des volumes atypiques dans l'Activité Globale" 
                           class="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
                     <i data-lucide="list-filter" class="w-4 h-4"></i>
                   </button>
@@ -256,7 +256,7 @@
             <div class="flex items-center justify-between gap-4">
               <div class="flex-1 relative">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Rechercher par désignation, réf SAP..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
+                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Rechercher par désignation, réf SAP (mots-clés multiples)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
               </div>
               <div class="flex items-center space-x-2">
                 <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
@@ -358,9 +358,9 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
                 <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
               </div>
-              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition shadow-xs">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>En cours de comptage uniquement</span>
+              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-md">
+                <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                <span id="btnFilterActiveText">En cours uniquement (Cliquer pour voir tous)</span>
               </button>
             </div>
             <div class="grid grid-cols-4 gap-4">
@@ -455,7 +455,7 @@
     let selectedTrades = [];
 
     let activeKpiFilter = null;
-    let filterOnlyActiveAgents = false;
+    let filterOnlyActiveAgents = true; // ACTIVÉ PAR DÉFAUT À L'OUVERTURE DE L'ONGLET
     let openDrawers = {};
 
     let customMaxQty = Number(localStorage.getItem("mon_cfg_max_qty")) || 50;
@@ -535,10 +535,25 @@
         });
       });
 
+      updateActiveAgentsButtonUI();
       await syncMonitoringData();
       switchView(activeView);
       applyFilters();
     });
+
+    function updateActiveAgentsButtonUI() {
+      const btnText = document.getElementById("btnFilterActiveText");
+      const btn = document.getElementById("btnFilterActiveAgentsOnly");
+      if (!btn || !btnText) return;
+
+      if (filterOnlyActiveAgents) {
+        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-md";
+        btnText.innerText = "En cours uniquement (Cliquer pour voir tous)";
+      } else {
+        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs";
+        btnText.innerText = "Affichage complet de tous les agents (Cliquer pour filtrer en cours)";
+      }
+    }
 
     function updateMaxQtyThreshold(val) {
       const parsed = Number(val);
@@ -763,12 +778,7 @@
 
     function toggleActiveAgentsFilter() {
       filterOnlyActiveAgents = !filterOnlyActiveAgents;
-      const btn = document.getElementById("btnFilterActiveAgentsOnly");
-      if (filterOnlyActiveAgents) {
-        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-[#f97316] text-white border border-orange-600 flex items-center gap-1.5 transition shadow-xs";
-      } else {
-        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition shadow-xs";
-      }
+      updateActiveAgentsButtonUI();
       applyFilters();
     }
 
@@ -794,6 +804,9 @@
       const term = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").toLowerCase().trim();
       const maxQ = customMaxQty;
 
+      // RECHERCHE MULTI-MOTS (DÉSIGNATION & RÉF SAP)
+      const searchTerms = term.split(/\s+/).filter(Boolean);
+
       const filtered = cachedHistory.filter(item => {
         const itDate = parseItemDate(item.timestamp);
         if (sDate && itDate && itDate < sDate) return false;
@@ -803,9 +816,10 @@
         if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
         if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
 
-        if (term) {
+        if (searchTerms.length > 0) {
           const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
-          if (!matchTarget.includes(term)) return false;
+          const allMatch = searchTerms.every(t => matchTarget.includes(t));
+          if (!allMatch) return false;
         }
 
         if (activeKpiFilter === 'ZERO') {
@@ -894,7 +908,7 @@
 
       if (filterOnlyActiveAgents) {
         agentsToRender = agentsToRender.filter(agent => {
-          const agentEntries = list.filter(i => i.user === agent);
+          const agentEntries = cachedHistory.filter(i => i.user === agent);
           if (agentEntries.length === 0) return false;
           const lastOne = agentEntries[0];
           const dt = parseItemDate(lastOne.timestamp);
@@ -908,7 +922,7 @@
       }
 
       container.innerHTML = agentsToRender.map(agent => {
-        const agentEntries = list.filter(i => i.user === agent);
+        const agentEntries = cachedHistory.filter(i => i.user === agent);
         const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
         let isActive = false;
         let activeContractor = "Aucun chantier entamé";
@@ -952,7 +966,7 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    // CARTE CORRIGÉE : TEMPS EFFECTIF INTERCALÉ, DATES CHRONOLOGIQUES (DÉBUT -> FIN), ET RATIO HEURE GLOBAL EN HAUT À DROITE
+    // CARTE CORRIGÉE : TEMPS EFFECTIF INTERCALÉ, ORDRE CHRONOLOGIQUE STRICT (DÉBUT -> FIN), ET RATIO HEURE GLOBAL EN HAUT À DROITE
     function renderMap(list) {
       if (!map) {
         map = L.map('mapContainer', {
@@ -1076,7 +1090,7 @@
 
         const totalClusterLines = items.length;
 
-        // Calcul du ratio heure global pour le cluster (lignes par heure sur toute la période du cluster)
+        // Calcul du ratio heure global pour le cluster
         const allClusterTimes = items.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
         let globalRatioStr = "-- l/h";
         if (allClusterTimes.length > 1) {
@@ -1112,7 +1126,7 @@
 
         marker.bindTooltip(tooltipContent, { direction: 'top', offset: [0, -6] });
 
-        // Tri chronologique correct (Du plus ancien au plus récent : Date de début à gauche, Date de fin à droite)
+        // Tri chronologique strict (Du plus ancien au plus récent : Début à gauche, Fin à droite)
         const sortedDates = items.map(i => parseItemDate(i.timestamp)).filter(d => !isNaN(d.getTime())).sort((a, b) => a - b);
         let dateRangeStr = '--';
         if (sortedDates.length > 0) {
@@ -1214,6 +1228,83 @@
         }, 200);
       }
       lucide.createIcons();
+    }
+
+    async function editTableItem(id, oldQty) {
+      const newQtyStr = prompt("Modifier la quantité :", oldQty);
+      if (newQtyStr === null) return;
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide.");
+        return;
+      }
+
+      const target = cachedHistory.find(i => i.id === id);
+      if (target) target.quantity = newQty;
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      applyFilters();
+
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "UPDATE", id: id, quantity: newQty, user: currentAdmin })
+        });
+      }
+    }
+
+    async function deleteTableItem(id, label) {
+      if (!confirm(`Supprimer définitivement :\n"${label}" ?`)) return;
+
+      cachedHistory = cachedHistory.filter(i => i.id !== id);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      applyFilters();
+
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "DELETE", id: id, user: currentAdmin })
+        });
+      }
+    }
+
+    function exportTableToCSV() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      const data = cachedHistory.filter(item => {
+        const itDate = parseItemDate(item.timestamp);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+
+        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+        return true;
+      });
+
+      if (data.length === 0) {
+        alert("Aucune donnée à exporter sur ce filtre.");
+        return;
+      }
+
+      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
+      data.forEach(r => {
+        const dmy = formatDateDMY(r.timestamp, true);
+        csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Inventaire_Export_${formatDateDMY(new Date()).replace(/\//g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   </script>
 </body>
