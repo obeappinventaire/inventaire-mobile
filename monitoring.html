@@ -322,7 +322,7 @@
           <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
               <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
-              <span class="text-slate-400 text-[11px]">Format Date : Jour Mois Année</span>
+              <span class="text-slate-400 text-[11px]">Format Date : Jour/Mois/Année</span>
             </div>
             <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
               <table class="w-full text-left text-xs">
@@ -1315,6 +1315,11 @@
 
     async function syncMonitoringData() {
       if (!navigator.onLine) return;
+      const dot = document.getElementById("statusDot");
+      const txt = document.getElementById("statusText");
+      if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
+      if (txt) { txt.innerText = "Synchronisation..."; txt.className = "text-xs font-bold text-amber-600"; }
+
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
@@ -1336,6 +1341,9 @@
         }
       } catch (err) {
         console.warn("Actualisation monitoring en arrière-plan :", err);
+      } finally {
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        if (txt) { txt.innerText = "Connecté"; txt.className = "text-xs font-bold text-emerald-600"; }
       }
     }
 
@@ -1386,7 +1394,6 @@
     function toggleMapSelectionFilter() {
       mapFilterOnSelection = !mapFilterOnSelection;
       const btnText = document.getElementById("mapFilterBtnText");
-      const btnEl = document.getElementById("btnMapSelectionFilter");
       btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
       applyFilters();
     }
@@ -1650,15 +1657,26 @@
 
     async function deleteTableItem(id) {
       if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
+
+      // 1. Suppression optimiste immédiate dans le cache PC
       cachedHistory = cachedHistory.filter(h => h.id !== id);
       localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
       applyFilters();
 
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "DELETE_INVENTORY", id: id, user: currentAdmin })
-      }).catch(e => console.warn("Erreur suppression inventaire :", e));
+      // 2. Notification serveur vers Google Apps Script
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "DELETE_INVENTORY", id: id, user: currentAdmin })
+        });
+        const res = await response.json();
+        if (res && res.status !== "success") {
+          console.warn("Avertissement suppression distant :", res.message);
+        }
+      } catch (e) {
+        console.warn("Erreur suppression inventaire :", e);
+      }
     }
 
     function switchView(v) {
