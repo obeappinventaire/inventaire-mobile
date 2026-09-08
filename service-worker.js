@@ -1,4 +1,4 @@
-const CACHE_NAME = 'inventaire-cache-v3';
+const CACHE_NAME = 'inventaire-cache-v4';
 
 const CORE_ASSETS = [
   './',
@@ -31,7 +31,6 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const requestUrl = event.request.url;
 
-  // Exclusion stricte des requêtes Google Apps Script
   if (requestUrl.includes('script.google.com')) {
     return;
   }
