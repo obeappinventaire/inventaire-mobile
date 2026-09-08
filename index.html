@@ -477,7 +477,7 @@
     function renderHistory() {
       sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA'); // Date locale YYYY-MM-DD
 
       const agentHistory = sessionHistory.filter(h => {
         const hUserNorm = String(h.user || "").trim().toLowerCase();
@@ -547,7 +547,7 @@
       const dateBadge = document.getElementById("tourneeDateBadge");
       if (!container) return;
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA');
       if (dateBadge) dateBadge.innerText = "Aujourd'hui & À venir";
 
       const agentTournees = (cachedTournees || []).filter(t => {
