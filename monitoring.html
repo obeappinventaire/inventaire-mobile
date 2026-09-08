@@ -1,628 +1,925 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-950 text-slate-100">
+<html lang="fr" class="h-full bg-slate-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supervision & Cartographie Inventaires</title>
-  
-  <!-- Icône officielle de l'application -->
+  <title>Supervision Inventaire - Monitoring Manager</title>
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
+  <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
+  <meta name="theme-color" content="#ffffff">
 
-  <!-- Tailwind CSS & Lucide Icons -->
+  <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Leaflet CSS & JS pour la cartographie -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
+    body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
+    
     .leaflet-popup-content-wrapper {
-      background: #0f172a;
-      color: #f8fafc;
-      border: 1px solid #334155;
-      border-radius: 0.75rem;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.15), 0 6px 12px -4px rgba(15, 23, 42, 0.08);
+      padding: 6px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      width: auto !important;
+      max-width: 380px !important;
     }
-    .leaflet-popup-tip {
-      background: #0f172a;
+    .leaflet-popup-content { 
+      margin: 10px 14px; 
+      line-height: 1.4;
+      width: auto !important;
+      word-break: break-word;
     }
   </style>
 </head>
-<body class="h-full flex overflow-hidden" onclick="closeAllDropdowns()">
+<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- ================= AUTH MODAL ================= -->
-  <div id="authModal" class="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
-      <div class="flex items-center space-x-3">
-        <div class="p-2.5 bg-indigo-600/20 text-indigo-400 rounded-xl">
-          <i data-lucide="shield-check" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h2 class="text-lg font-bold text-white">Supervision Inventaire</h2>
-          <p class="text-xs text-slate-400">Authentification administrateur requise</p>
-        </div>
+  <!-- ================= MODALE D'AUTHENTIFICATION ADMIN ================= -->
+  <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
+        <img src="app_icon_co2h2o.png" alt="Logo" class="w-10 h-10 object-contain" onerror="this.src='icon.svg'">
       </div>
-      <div class="space-y-3">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900 tracking-wide">Accès Supervision</h2>
+        <p class="text-xs text-slate-500 mt-1">Console d'administration & pilotage</p>
+      </div>
+
+      <div class="space-y-3 text-left">
         <div>
-          <label class="text-xs font-semibold text-slate-400">Administrateur</label>
-          <select id="loginAdminSelect" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-            <option value="">-- Sélectionner un profil --</option>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Superviseur</label>
+          <select id="authAdminSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 font-medium focus:border-orange-500 focus:bg-white focus:outline-none">
+            <option value="">-- Choisir votre profil --</option>
           </select>
         </div>
         <div>
-          <label class="text-xs font-semibold text-slate-400">Code PIN / Mot de passe</label>
-          <input type="password" id="loginPasswordInput" placeholder="••••" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mot de passe / Code PIN</label>
+          <input type="password" id="authPassword" placeholder="••••" onkeydown="if(event.key==='Enter') authenticateAdmin()" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-sm text-slate-800 focus:border-orange-500 focus:bg-white focus:outline-none text-center font-mono text-base">
         </div>
       </div>
-      <button onclick="submitLogin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition">
-        Ouvrir le tableau de bord
+
+      <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition mt-2">
+        <span>Ouvrir la session</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
-      <div class="text-center pt-2 text-[10px] text-slate-500">© made by CO2H2O srlu</div>
+
+      <div class="pt-2">
+        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
+          &copy; made by CO2H2O srlu
+        </span>
+      </div>
     </div>
   </div>
 
-  <!-- ================= MENU LATÉRAL (SIDEBAR) ================= -->
-  <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0 z-20">
-    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md object-cover">
-        <span class="font-black text-sm tracking-wide">MONITORING</span>
+  <!-- ================= EN-TÊTE FIXE ================= -->
+  <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
+        <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 object-contain" onerror="this.src='icon.svg'">
       </div>
-      <span id="currentAdminBadge" class="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded font-mono">ADMIN</span>
-    </div>
-
-    <!-- Période Maître & Filtres Temporels -->
-    <div class="p-4 border-b border-slate-800 space-y-3">
-      <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Période active</label>
-      <select id="periodPreset" onchange="handlePeriodPresetChange(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200">
-        <option value="today">Aujourd'hui</option>
-        <option value="week" selected>Semaine en cours</option>
-        <option value="month">Mois en cours</option>
-        <option value="all">Tout l'historique</option>
-        <option value="custom">Personnalisé...</option>
-      </select>
-
-      <div id="customDateContainer" class="hidden grid grid-cols-2 gap-2 pt-1">
-        <div>
-          <label class="block text-[9px] text-slate-400 font-bold uppercase mb-0.5">Du</label>
-          <input type="date" id="dateStart" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white font-mono">
-        </div>
-        <div>
-          <label class="block text-[9px] text-slate-400 font-bold uppercase mb-0.5">Au</label>
-          <input type="date" id="dateEnd" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white font-mono">
-        </div>
-      </div>
-    </div>
-
-    <!-- Navigation Onglets -->
-    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-      <button onclick="switchView('overview')" id="btnTabOverview" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow">
-        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-        <span>Activité Globale</span>
-      </button>
-
-      <button onclick="switchView('field')" id="btnTabField" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i data-lucide="users" class="w-4 h-4"></i>
-        <span>Suivi Terrain & Agents</span>
-      </button>
-
-      <button onclick="switchView('map')" id="btnTabMap" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i data-lucide="map-pin" class="w-4 h-4"></i>
-        <span>Carte & Géolocalisation</span>
-      </button>
-    </nav>
-
-    <!-- Résumé sidebar & Synchronisation -->
-    <div class="p-4 border-t border-slate-800 space-y-2">
-      <div class="flex items-center justify-between text-[11px] text-slate-400">
-        <span id="syncStatus">Connecté</span>
-        <button onclick="syncData()" class="text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualiser
-        </button>
-      </div>
-      <div class="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
-        <div class="flex justify-between">
-          <span>Saisies période :</span>
-          <strong id="sideTotalCount" class="text-white">0</strong>
-        </div>
-        <div class="flex justify-between">
-          <span>Alertes période :</span>
-          <strong id="sideAlertCount" class="text-amber-400">0</strong>
-        </div>
-      </div>
-      <div class="text-center pt-1 text-[10px] text-slate-500 font-medium">© made by CO2H2O srlu</div>
-    </div>
-  </aside>
-
-  <!-- ================= ZONE DE CONTENU PRINCIPAL ================= -->
-  <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-950">
-
-    <!-- VUE 1 : ACTIVITÉ GLOBALE -->
-    <section id="viewOverview" class="flex-1 overflow-y-auto p-6 space-y-6">
-      
-      <!-- 4 KPI GLOBAUX -->
       <div>
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Activité Entrepôt sur la période sélectionnée</span>
-          <span id="periodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold">--</span>
+        <h1 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          Dashboard Manager
+          <span class="px-2 py-0.5 rounded bg-orange-50 text-orange-700 text-[10px] font-mono font-bold tracking-wide uppercase border border-orange-200">Supervision Centrale</span>
+        </h1>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2">
+        <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+        <span id="statusText" class="text-xs font-bold text-emerald-600">Connecté</span>
+      </div>
+      <div class="h-4 w-px bg-slate-200"></div>
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-slate-500">Admin :</span>
+        <span id="activeAdminName" class="text-xs font-black text-orange-700">--</span>
+      </div>
+      <button onclick="syncMonitoringData()" title="Actualiser" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+      </button>
+      <button onclick="logoutAdmin()" title="Déconnexion" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= STRUCTURE EN DEUX COLONNES ================= -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE) -->
+    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0">
+      <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
+        
+        <!-- Navigation Vues Principales -->
+        <div class="space-y-1">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
+          <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition">
+            <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+            <span>Activité Globale</span>
+          </button>
+          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Suivi Terrain & Agents</span>
+          </button>
+          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+            <i data-lucide="map" class="w-4 h-4"></i>
+            <span>Carte & Géolocalisation</span>
+          </button>
         </div>
-        <div class="grid grid-cols-4 gap-4">
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-            <div class="flex items-center justify-between text-slate-400 mb-1">
-              <span class="text-xs font-bold uppercase tracking-wider">Lignes comptées</span>
-              <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
-            </div>
-            <div id="kpiRows" class="text-2xl font-black text-white">0</div>
-            <span class="text-[11px] text-slate-500">Saisies de la période</span>
+
+        <!-- SÉLECTEUR DE PÉRIODE -->
+        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
+            </span>
+            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-200">--</span>
           </div>
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-            <div class="flex items-center justify-between text-emerald-400 mb-1">
-              <span class="text-xs font-bold uppercase tracking-wider">Quantité Cumulée</span>
-              <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
-            </div>
-            <div id="kpiTotalQty" class="text-2xl font-black text-emerald-400">0</div>
-            <span class="text-[11px] text-slate-500">Pièces sur la période</span>
+
+          <div class="relative">
+            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+              <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
+              <option value="PREV_WEEK">◀ Semaine précédente</option>
+              <option value="TODAY">☀️ Aujourd'hui</option>
+              <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
+              <option value="ALL">🌐 Tout l'historique</option>
+              <option value="CUSTOM">⚙️ Période personnalisée...</option>
+            </select>
           </div>
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-            <div class="flex items-center justify-between text-amber-400 mb-1">
-              <span class="text-xs font-bold uppercase tracking-wider">Stocks à 0</span>
-              <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+
+          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-200">
+            <div>
+              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du (JJ/MM/AAAA) :</label>
+              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
             </div>
-            <div id="kpiZeroStock" class="text-2xl font-black text-amber-400">0</div>
-            <span class="text-[11px] text-slate-500">Ruptures signalées</span>
-          </div>
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow">
-            <div class="flex items-center justify-between text-rose-400 mb-1">
-              <span class="text-xs font-bold uppercase tracking-wider">Volumes > 50 pcs</span>
-              <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400"></i>
+            <div>
+              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au (JJ/MM/AAAA) :</label>
+              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
             </div>
-            <div id="kpiHighStock" class="text-2xl font-black text-rose-400">0</div>
-            <span class="text-[11px] text-slate-500">Quantités atypiques</span>
           </div>
         </div>
+
+        <!-- CRITÈRES D'ANOMALIES & AUDIT -->
+        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i> Critères d'Anomalies
+            </span>
+            <span class="text-[9px] bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
+          </div>
+
+          <div class="space-y-2 text-xs pt-1">
+            <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-slate-300 transition shadow-xs">
+              <span class="text-[11px] text-slate-700 font-medium">Alerter Rupture (Stock = 0)</span>
+              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            </label>
+
+            <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] text-slate-700 font-medium">Seuil volume atypique</span>
+                <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
+              </div>
+              <input type="number" id="cfgMaxQty" value="" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- BARRE DE FILTRES MULTI-CHOIX & EXTRACTION -->
-      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Filtres complémentaires & Extraction</span>
-          <div class="flex items-center space-x-2">
-            <button onclick="exportCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
-              <i data-lucide="download" class="w-3.5 h-3.5"></i>
-              <span>Exporter la sélection (CSV)</span>
-            </button>
-            <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white underline pl-2">Réinitialiser les filtres</button>
-          </div>
-        </div>
+      <!-- Mention de copyright obligatoire -->
+      <div class="p-4 border-t border-slate-200 text-center bg-slate-50/70 shrink-0">
+        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
+          &copy; made by CO2H2O srlu
+        </span>
+      </div>
+    </aside>
 
-        <div class="grid grid-cols-4 gap-3 items-end text-xs">
-          <!-- 1. Recherche mot-clé -->
+    <!-- ZONE PRINCIPALE D'AFFICHAGE -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col justify-between bg-slate-50">
+      
+      <div class="space-y-6">
+        
+        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
+        <section id="viewGlobal" class="space-y-6">
+          
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Recherche mot-clé</label>
-            <div class="relative">
-              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
-              <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="SAP, désignation, ID..." class="w-full bg-slate-950 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-indigo-500">
+            <div class="flex justify-between items-center mb-2 px-1">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
+              <span id="periodBadgeGlobal" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
             </div>
-          </div>
-
-          <!-- 2. Multi-choix Entrepreneurs -->
-          <div class="relative" onclick="event.stopPropagation()">
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneurs</label>
-            <button type="button" onclick="toggleDropdown('dropdownContractors')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
-              <span id="btnLabelContractors" class="truncate font-medium">Tous les entrepreneurs</span>
-              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-            </button>
-            <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-35 space-y-2">
-              <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
-                <button type="button" onclick="selectAll('contractors', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
-                <button type="button" onclick="selectAll('contractors', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+            <div class="grid grid-cols-4 gap-4">
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
+                <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Saisies</span>
+                <span id="kpiTotalRows" class="text-2xl font-black text-slate-900 mt-1 block">0</span>
               </div>
-              <div id="checkboxesContractors" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
-            </div>
-          </div>
-
-          <!-- 3. Multi-choix Métiers -->
-          <div class="relative" onclick="event.stopPropagation()">
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Corps d'état / Métiers</label>
-            <button type="button" onclick="toggleDropdown('dropdownTrades')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
-              <span id="btnLabelTrades" class="truncate font-medium">Tous les métiers</span>
-              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-            </button>
-            <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-35 space-y-2">
-              <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
-                <button type="button" onclick="selectAll('trades', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
-                <button type="button" onclick="selectAll('trades', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
+                <span class="text-xs font-bold text-slate-500 uppercase block">Total Pièces</span>
+                <span id="kpiTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
               </div>
-              <div id="checkboxesTrades" class="max-h-48 overflow-y-auto space-y-1 pr-1"></div>
-            </div>
-          </div>
 
-          <!-- 4. Multi-choix Statuts / Anomalies -->
-          <div class="relative" onclick="event.stopPropagation()">
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Statut / Anomalies</label>
-            <button type="button" onclick="toggleDropdown('dropdownAlerts')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-left text-white flex justify-between items-center focus:outline-none focus:border-indigo-500">
-              <span id="btnLabelAlerts" class="truncate font-medium">Tous les statuts</span>
-              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-            </button>
-            <div id="dropdownAlerts" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2.5 z-35 space-y-2">
-              <div class="flex justify-between items-center pb-1 border-b border-slate-800 text-[10px]">
-                <button type="button" onclick="selectAll('alerts', true)" class="text-indigo-400 hover:underline">Tout cocher</button>
-                <button type="button" onclick="selectAll('alerts', false)" class="text-slate-400 hover:underline">Tout décocher</button>
+              <!-- KPI RUPTURES -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
+                  <button onclick="filterByKpi('ZERO')" title="Afficher la liste des ruptures dans le tableau" 
+                          class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                    <i data-lucide="list-filter" class="w-4 h-4"></i>
+                  </button>
+                </div>
+                <span id="kpiZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
               </div>
-              <div class="space-y-1">
-                <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-                  <input type="checkbox" name="chkAlert" value="OK" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0">
-                  <span class="text-slate-200">Conformes</span>
-                </label>
-                <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-                  <input type="checkbox" name="chkAlert" value="ZERO" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-rose-500 focus:ring-0">
-                  <span class="text-rose-400 font-bold">Stocks à 0</span>
-                </label>
-                <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-                  <input type="checkbox" name="chkAlert" value="HIGH" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-amber-500 focus:ring-0">
-                  <span class="text-amber-400 font-bold">Volumes > 50 pièces</span>
-                </label>
+
+              <!-- KPI ALERTES ATYPIQUES -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-amber-600 uppercase">Alertes Atypiques</span>
+                  <button onclick="filterByKpi('HIGH')" title="Afficher la liste des volumes atypiques dans le tableau" 
+                          class="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                    <i data-lucide="list-filter" class="w-4 h-4"></i>
+                  </button>
+                </div>
+                <span id="kpiAtypicalStock" class="text-2xl font-black text-amber-600 mt-1 block">0</span>
               </div>
             </div>
           </div>
-        </div>
+
+          <!-- FILTRES MULTI-SÉLECTIONS & EXPORT CSV -->
+          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex-1 relative">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
+                <input type="text" id="tableSearchInput" oninput="applyFilters()" placeholder="Recherche multi-mots/combos multiples (séparés par des virgules ou espaces, ex: 106626, 128977)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white">
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
+                  Effacer filtres
+                </button>
+                <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Exporter CSV (Sélection)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- GRILLE DES 3 VOLETS MULTI-CHOIX -->
+            <div class="grid grid-cols-3 gap-3">
+              
+              <!-- Multi-sélection Agents -->
+              <div class="relative" onclick="event.stopPropagation()">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
+                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                  <span id="btnLabelAgents" class="truncate font-semibold">Tous les agents</span>
+                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                </button>
+                <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                    <button type="button" onclick="selectAll('agents', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('agents', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                  </div>
+                  <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                </div>
+              </div>
+
+              <!-- Multi-sélection Entrepreneurs -->
+              <div class="relative" onclick="event.stopPropagation()">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
+                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                  <span id="btnLabelContractors" class="truncate font-semibold">Tous les entrepreneurs</span>
+                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                </button>
+                <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                    <button type="button" onclick="selectAll('contractors', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('contractors', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                  </div>
+                  <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                </div>
+              </div>
+
+              <!-- Multi-sélection Métiers -->
+              <div class="relative" onclick="event.stopPropagation()">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
+                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500">
+                  <span id="btnLabelTrades" class="truncate font-semibold">Tous les métiers</span>
+                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                </button>
+                <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                    <button type="button" onclick="selectAll('trades', true)" class="text-orange-600 font-bold hover:underline">Tout cocher</button>
+                    <button type="button" onclick="selectAll('trades', false)" class="text-slate-500 hover:underline">Tout décocher</button>
+                  </div>
+                  <div id="checkboxesTrades" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- GRAND TABLEAU DE SUPERVISION SUR FOND BLANC -->
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
+              <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
+              <span class="text-slate-400 text-[11px]">Format Date : JJ/MM/AAAA</span>
+            </div>
+            <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
+                  <tr>
+                    <th class="p-3">Horodatage (JJ/MM/AAAA)</th>
+                    <th class="p-3">Agent</th>
+                    <th class="p-3">Entrepreneur</th>
+                    <th class="p-3">Métier</th>
+                    <th class="p-3">Réf SAP</th>
+                    <th class="p-3">Désignation</th>
+                    <th class="p-3 text-center">Quantité</th>
+                    <th class="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="supervisionTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS (AVEC LES 4 KPI DE SYNTHÈSE + CARTES DÉTAILLÉES PAR AGENT) ================= -->
+        <section id="viewAgents" class="hidden space-y-6">
+          
+          <div>
+            <div class="flex justify-between items-center mb-2 px-1">
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
+                <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
+              </div>
+              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-4 py-2 rounded-xl text-xs font-bold transition shadow-md flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                <span id="btnFilterActiveText">En cours uniquement (Cliquer pour voir tous)</span>
+              </button>
+            </div>
+            
+            <!-- BLOC DES 4 CARTES KPI GLOBALES DE LA FLOTTE -->
+            <div class="grid grid-cols-4 gap-4">
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
+                <span class="text-xs font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
+                <span id="kpiAgentsTotalRows" class="text-2xl font-black text-slate-900 mt-1 block">0</span>
+              </div>
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
+                <span class="text-xs font-bold text-slate-500 uppercase block">Pièces Totales</span>
+                <span id="kpiAgentsTotalPieces" class="text-2xl font-black text-orange-600 mt-1 block">0</span>
+              </div>
+
+              <!-- KPI RUPTURES DÉCLARÉES -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
+                  <span class="p-1.5 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                    <i data-lucide="list-filter" class="w-4 h-4"></i>
+                  </span>
+                </div>
+                <span id="kpiAgentsZeroStock" class="text-2xl font-black text-rose-600 mt-1 block">0</span>
+              </div>
+
+              <!-- KPI ALERTES FLOTTE -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-amber-600 uppercase">Alertes Flotte</span>
+                  <span class="p-1.5 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition shadow-2xs flex items-center gap-1 text-[11px] font-bold">
+                    <i data-lucide="list-filter" class="w-4 h-4"></i>
+                  </span>
+                </div>
+                <span id="kpiAgentsAtypicalStock" class="text-2xl font-black text-amber-600 mt-1 block">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTENEUR DES ACCORDÉONS ET CARTES DÉTAILLÉES PAR AGENT (AVEC DÉBIT L/H, ANOMALIES ET PÉRIMÈTRE) -->
+          <div id="agentsAccordionContainer" class="space-y-4"></div>
+        </section>
+
+        <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
+        <section id="viewMap" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
+                Cartographie Interactive du Terrain (Belgique)
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique • Bouton d'affichage ciblé sur la sélection active</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span id="mapFilterBtnText">Afficher toute la période</span>
+              </button>
+              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                <span>Recentrer Belgique</span>
+              </button>
+              <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
+            </div>
+          </div>
+          <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-xs">
+            <div id="mapContainer"></div>
+          </div>
+        </section>
       </div>
 
-      <!-- GRAND TABLEAU DES DONNÉES -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl shadow overflow-hidden flex flex-col">
-        <div class="px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 bg-slate-900/80">
-          <span id="tableCountLabel" class="font-bold text-white">0 ligne(s) affichée(s)</span>
-          <span class="text-[11px] text-slate-500">Données synchronisées avec Google Sheets & Audit_Logs</span>
-        </div>
-        <div class="overflow-x-auto max-h-[520px]">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead class="bg-slate-950 sticky top-0 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider z-10">
-              <tr>
-                <th class="p-3">Horodatage / ID</th>
-                <th class="p-3">Agent</th>
-                <th class="p-3">Entrepreneur & Métier</th>
-                <th class="p-3">Réf SAP</th>
-                <th class="p-3">Désignation Matériel</th>
-                <th class="p-3 text-center">Quantité</th>
-                <th class="p-3 text-center">Statut</th>
-                <th class="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="inventoryTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
-          </table>
-        </div>
+      <!-- Mention de copyright obligatoire -->
+      <div class="text-center pt-8 pb-3 border-t border-slate-200">
+        <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
       </div>
-    </section>
-
-    <!-- VUE 2 : SUIVI TERRAIN & AGENTS -->
-    <section id="viewField" class="hidden flex-1 overflow-y-auto p-6 space-y-4">
-      <div class="flex justify-between items-end">
-        <div>
-          <h2 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
-            Suivi Terrain par Agent & Statut Entrepreneur
-          </h2>
-          <p class="text-xs text-slate-400">Activité bornée sur la période sélectionnée dans le menu latéral</p>
-        </div>
-        <span id="agentsPeriodLabelBadge" class="text-xs text-indigo-400 font-mono font-bold bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">--</span>
-      </div>
-
-      <div id="agentAccordionContainer" class="space-y-3"></div>
-    </section>
-
-    <!-- VUE 3 : CARTE GÉOGRAPHIQUE & STATUTS -->
-    <section id="viewMap" class="hidden flex-1 flex flex-col relative h-full">
-      <div class="absolute top-4 right-4 z-[1000] bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-xl space-y-2 text-xs shadow-xl">
-        <div class="font-bold text-white border-b border-slate-800 pb-1.5">Légende des marqueurs</div>
-        <div class="flex items-center space-x-2">
-          <span class="w-3 h-3 rounded-full bg-blue-500 inline-block border border-white/50"></span>
-          <span>Position Agent (Dernier scan)</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-          <span>Inventaire terminé (Validé)</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-          <span>Inventaire en cours / partiel</span>
-        </div>
-      </div>
-      <!-- Conteneur Carte Leaflet -->
-      <div id="mapContainer" class="w-full h-full"></div>
-    </section>
-
-  </main>
-
-  <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-24 transition-transform duration-300 z-50 pointer-events-none">
-    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
-    <div class="text-sm font-medium" id="toastMessage">Action validée</div>
+    </main>
   </div>
 
   <script>
-    // ⚠️ METTEZ VOTRE VRAIE URL WEB APP ICI :
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby.../exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    let rawData = { agents: [], contractors: [], trades: [], admins: [], adminPasswords: {}, history: [] };
-    let filteredHistory = [];
-    let tableFilteredData = [];
-    let openDrawers = {};
+    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
+    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
+    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
+    let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
+    let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
+    let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
+
+    let currentAdmin = sessionStorage.getItem("mon_current_admin") || "";
+    let activeView = localStorage.getItem("mon_active_view") || 'global';
     let map = null;
-    let mapMarkersLayer = null;
+    let markersLayer = null;
 
-    window.addEventListener("DOMContentLoaded", async () => {
+    let selectedAgents = [];
+    let selectedContractors = [];
+    let selectedTrades = [];
+
+    let activeKpiFilter = null;
+    let filterOnlyActiveAgents = true; 
+    let openDrawers = {};
+
+    let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
+    let mapFilterOnSelection = false;
+
+    const BELGIUM_CENTER = [50.64, 4.67];
+    const BELGIUM_ZOOM = 8;
+    const BELGIUM_BOUNDS = [
+      [49.40, 2.45],
+      [51.55, 6.50]
+    ];
+
+    function getISOWeekNumber(d) {
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+      return { week: weekNo, year: date.getUTCFullYear() };
+    }
+
+    function updateWeekBadge(startDateStr) {
+      const targetDate = startDateStr ? new Date(startDateStr) : new Date();
+      const iso = getISOWeekNumber(targetDate);
+      const weekStr = String(iso.week).padStart(2, '0');
+      const badge = document.getElementById("weekBadgeLabel");
+      if (badge) badge.innerText = `S${weekStr} ${iso.year}`;
+    }
+
+    function parseItemDate(str) {
+      if (!str) return new Date(0);
+      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (parts) {
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
+      }
+      const iso = new Date(str);
+      return isNaN(iso.getTime()) ? new Date(0) : iso;
+    }
+
+    function formatDateDMY(dateInput, includeTime = false) {
+      if (!dateInput) return "--/--/----";
+      const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
+      if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
+      
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      
+      if (!includeTime) return `${day}/${month}/${year}`;
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
-      initDefaultPeriod();
-      await syncData();
-      populateLoginAdmins();
+      initMultiSelects();
+      populateAdminDropdown();
+      onSmartPeriodChange('CURRENT_WEEK');
+
+      const qtyInput = document.getElementById("cfgMaxQty");
+      const qtyDisplay = document.getElementById("cfgMaxQtyDisplay");
+      if (qtyInput && qtyDisplay) {
+        qtyInput.value = customMaxQty !== null ? customMaxQty : "";
+        qtyDisplay.innerText = customMaxQty !== null ? customMaxQty : "--";
+      }
+
+      if (!currentAdmin) {
+        document.getElementById("authModal").classList.remove("hidden");
+      } else {
+        document.getElementById("activeAdminName").innerText = currentAdmin;
+        document.getElementById("authModal").classList.add("hidden");
+      }
+
+      document.addEventListener("click", () => {
+        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add("hidden");
+        });
+      });
+
+      updateActiveAgentsButtonUI();
+      await syncMonitoringData();
+      switchView(activeView);
+      applyFilters();
     });
 
-    // --- SYNCHRONISATION ---
-    async function syncData() {
-      if (GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        showToast("URL Google Apps Script non configurée !", true);
-        return;
-      }
-      document.getElementById("syncStatus").innerText = "Chargement...";
-      try {
-        const res = await fetch(GOOGLE_SCRIPT_URL);
-        rawData = await res.json();
-        document.getElementById("syncStatus").innerText = "Synchronisé";
-        buildMultiSelectCheckboxes();
-        applyFilters();
-      } catch (e) {
-        document.getElementById("syncStatus").innerText = "Hors ligne";
-        console.error(e);
-      }
-    }
+    function updateActiveAgentsButtonUI() {
+      const btnText = document.getElementById("btnFilterActiveText");
+      const btn = document.getElementById("btnFilterActiveAgentsOnly");
+      if (!btn || !btnText) return;
 
-    function populateLoginAdmins() {
-      const select = document.getElementById("loginAdminSelect");
-      select.innerHTML = '<option value="">-- Sélectionner un profil --</option>';
-      (rawData.admins || []).forEach(adm => {
-        select.innerHTML += `<option value="${adm}">${adm}</option>`;
-      });
-    }
-
-    function submitLogin() {
-      const user = document.getElementById("loginAdminSelect").value;
-      const pwd = document.getElementById("loginPasswordInput").value;
-      const expected = rawData.adminPasswords[user] || "1234";
-
-      if (user && pwd === expected) {
-        document.getElementById("authModal").classList.add("hidden");
-        document.getElementById("currentAdminBadge").innerText = user;
-        localStorage.setItem("inv_current_admin", user);
+      if (filterOnlyActiveAgents) {
+        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-md";
+        btnText.innerText = "🟢 En cours uniquement (Cliquer pour voir tous)";
       } else {
-        alert("Profil ou mot de passe incorrect.");
+        btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs";
+        btnText.innerText = "⚪ Affichage complet (Cliquer pour filtrer en cours)";
       }
     }
 
-    // --- GESTION DU FILTRE DE PÉRIODE MAÎTRE ---
-    function initDefaultPeriod() {
-      handlePeriodPresetChange("week");
-    }
-
-    function handlePeriodPresetChange(preset) {
-      const customDiv = document.getElementById("customDateContainer");
-      const now = new Date();
-      let start = new Date();
-      let end = new Date();
-
-      if (preset === "today") {
-        customDiv.classList.add("hidden");
-        start.setHours(0,0,0,0);
-        end.setHours(23,59,59,999);
-      } else if (preset === "week") {
-        customDiv.classList.add("hidden");
-        const day = now.getDay();
-        const diff = (day === 0 ? -6 : 1) - day;
-        start.setDate(now.getDate() + diff);
-        start.setHours(0,0,0,0);
-        end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        end.setHours(23,59,59,999);
-      } else if (preset === "month") {
-        customDiv.classList.add("hidden");
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        end.setHours(23,59,59,999);
-      } else if (preset === "all") {
-        customDiv.classList.add("hidden");
-        start = new Date(2020, 0, 1);
-        end = new Date(2035, 11, 31);
-      } else if (preset === "custom") {
-        customDiv.classList.remove("hidden");
-        return; // Attente saisie manuelle
+    function updateMaxQtyThreshold(val) {
+      if (val === "" || val === null) {
+        customMaxQty = null;
+        localStorage.removeItem("mon_cfg_max_qty");
+        const display = document.getElementById("cfgMaxQtyDisplay");
+        if (display) display.innerText = "--";
+      } else {
+        const parsed = Number(val);
+        if (!isNaN(parsed) && parsed >= 0) {
+          customMaxQty = parsed;
+          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+          const display = document.getElementById("cfgMaxQtyDisplay");
+          if (display) display.innerText = customMaxQty;
+        }
       }
-
-      document.getElementById("dateStart").value = start.toISOString().slice(0, 10);
-      document.getElementById("dateEnd").value = end.toISOString().slice(0, 10);
       applyFilters();
     }
 
-    function parseItemDate(timestampStr) {
-      if (!timestampStr) return new Date(0);
-      if (timestampStr.includes('/')) {
-        const parts = timestampStr.split(' ');
-        const dateParts = parts[0].split('/');
-        const timeParts = parts[1] ? parts[1].split(':') : [0, 0, 0];
-        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+    function populateAdminDropdown() {
+      const adminSel = document.getElementById("authAdminSelect");
+      if (adminSel) {
+        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
+        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + 
+          listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
       }
-      return new Date(timestampStr);
     }
 
-    // --- CHECKBOXES MULTI-CHOIX ---
-    function buildMultiSelectCheckboxes() {
-      // Entrepreneurs
-      const boxC = document.getElementById("checkboxesContractors");
-      boxC.innerHTML = (rawData.contractors || []).map(c => `
-        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-          <input type="checkbox" name="chkContractor" value="${c}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-500 focus:ring-0">
-          <span class="text-slate-200">${c}</span>
-        </label>
-      `).join('');
-
-      // Métiers
-      const boxT = document.getElementById("checkboxesTrades");
-      boxT.innerHTML = (rawData.trades || []).map(t => `
-        <label class="flex items-center space-x-2 p-1 rounded hover:bg-slate-800 cursor-pointer">
-          <input type="checkbox" name="chkTrade" value="${t}" onchange="onCheckboxChange()" class="rounded bg-slate-950 border-slate-700 text-indigo-500 focus:ring-0">
-          <span class="text-slate-200">${t}</span>
-        </label>
-      `).join('');
-    }
-
-    function toggleDropdown(id) {
-      const el = document.getElementById(id);
-      const isHidden = el.classList.contains("hidden");
-      closeAllDropdowns();
-      if (isHidden) el.classList.remove("hidden");
-    }
-
-    function closeAllDropdowns() {
-      ["dropdownContractors", "dropdownTrades", "dropdownAlerts"].forEach(id => {
-        const d = document.getElementById(id);
-        if (d) d.classList.add("hidden");
+    function toggleFilterDropdown(id) {
+      ['dropdownAgents', 'dropdownContractors', 'dropdownTrades'].forEach(otherId => {
+        if (otherId !== id) {
+          const el = document.getElementById(otherId);
+          if (el) el.classList.add("hidden");
+        }
       });
+      const target = document.getElementById(id);
+      if (target) target.classList.toggle("hidden");
+    }
+
+    function initMultiSelects() {
+      const cAgents = document.getElementById("checkboxesAgents");
+      if (cAgents) {
+        cAgents.innerHTML = availableAgents.map(a => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${a}" onchange="onCheckboxChange('agents')" ${selectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${a}</span>
+          </label>
+        `).join('');
+      }
+
+      const cContractors = document.getElementById("checkboxesContractors");
+      if (cContractors) {
+        cContractors.innerHTML = availableContractors.map(c => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${c}" onchange="onCheckboxChange('contractors')" ${selectedContractors.includes(c) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${c}</span>
+          </label>
+        `).join('');
+      }
+
+      const cTrades = document.getElementById("checkboxesTrades");
+      if (cTrades) {
+        cTrades.innerHTML = availableTrades.map(t => `
+          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+            <input type="checkbox" value="${t}" onchange="onCheckboxChange('trades')" ${selectedTrades.includes(t) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <span class="truncate">${t}</span>
+          </label>
+        `).join('');
+      }
+    }
+
+    function onCheckboxChange(type) {
+      activeKpiFilter = null;
+      if (type === 'agents') {
+        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
+        document.getElementById("btnLabelAgents").innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
+      } else if (type === 'contractors') {
+        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
+        document.getElementById("btnLabelContractors").innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
+      } else if (type === 'trades') {
+        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
+        document.getElementById("btnLabelTrades").innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
+      }
+      applyFilters();
     }
 
     function selectAll(type, check) {
+      activeKpiFilter = null;
       let selector = "";
-      if (type === 'contractors') selector = 'input[name="chkContractor"]';
-      if (type === 'trades') selector = 'input[name="chkTrade"]';
-      if (type === 'alerts') selector = 'input[name="chkAlert"]';
-      document.querySelectorAll(selector).forEach(chk => chk.checked = check);
-      onCheckboxChange();
+      if (type === 'agents') selector = "#checkboxesAgents input";
+      else if (type === 'contractors') selector = "#checkboxesContractors input";
+      else if (type === 'trades') selector = "#checkboxesTrades input";
+
+      document.querySelectorAll(selector).forEach(box => box.checked = check);
+      onCheckboxChange(type);
     }
 
-    function onCheckboxChange() {
-      updateDropdownButtonLabels();
+    function resetFiltersToAll() {
+      activeKpiFilter = null;
+      selectAll('agents', false);
+      selectAll('contractors', false);
+      selectAll('trades', false);
+      document.getElementById("tableSearchInput").value = "";
       applyFilters();
     }
 
-    function updateDropdownButtonLabels() {
-      const checkedC = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked'));
-      const lblC = document.getElementById("btnLabelContractors");
-      lblC.innerText = checkedC.length === 0 || checkedC.length === (rawData.contractors || []).length ? "Tous les entrepreneurs" : `${checkedC.length} entrepreneur(s)`;
-
-      const checkedT = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked'));
-      const lblT = document.getElementById("btnLabelTrades");
-      lblT.innerText = checkedT.length === 0 || checkedT.length === (rawData.trades || []).length ? "Tous les métiers" : `${checkedT.length} métier(s)`;
-
-      const checkedA = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked'));
-      const lblA = document.getElementById("btnLabelAlerts");
-      lblA.innerText = checkedA.length === 0 || checkedA.length === 3 ? "Tous les statuts" : `${checkedA.length} statut(s)`;
-    }
-
-    function resetFilters() {
-      document.getElementById("filterSearch").value = "";
-      document.querySelectorAll('input[name="chkContractor"]').forEach(c => c.checked = false);
-      document.querySelectorAll('input[name="chkTrade"]').forEach(c => c.checked = false);
-      document.querySelectorAll('input[name="chkAlert"]').forEach(c => c.checked = false);
-      updateDropdownButtonLabels();
+    function filterByKpi(type) {
+      activeKpiFilter = type;
+      switchView('global');
       applyFilters();
     }
 
-    // --- APPLICATION DES FILTRES ---
-    function applyFilters() {
-      const dStartStr = document.getElementById("dateStart").value;
-      const dEndStr = document.getElementById("dateEnd").value;
-      const dStart = dStartStr ? new Date(dStartStr + "T00:00:00") : null;
-      const dEnd = dEndStr ? new Date(dEndStr + "T23:59:59") : null;
+    function authenticateAdmin() {
+      const adminSel = document.getElementById("authAdminSelect");
+      const selected = adminSel ? adminSel.value : "";
+      const pwd = document.getElementById("authPassword").value;
 
-      // 1. Filtrage sur la période maître
-      filteredHistory = (rawData.history || []).filter(item => {
-        const itemDate = parseItemDate(item.timestamp);
-        if (dStart && itemDate < dStart) return false;
-        if (dEnd && itemDate > dEnd) return false;
-        return true;
-      });
-
-      let labelP = "Période personnalisée";
-      if (dStartStr && dEndStr) {
-        labelP = `Du ${new Date(dStartStr).toLocaleDateString("fr-FR")} au ${new Date(dEndStr).toLocaleDateString("fr-FR")}`;
+      if (!selected) {
+        alert("Veuillez choisir un superviseur.");
+        return;
       }
-      document.getElementById("periodLabelBadge").innerText = labelP;
-      document.getElementById("agentsPeriodLabelBadge").innerText = labelP;
-
-      // KPI Globaux
-      const totalRows = filteredHistory.length;
-      const totalQty = filteredHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
-      const zeroStockCount = filteredHistory.filter(i => Number(i.quantity) === 0).length;
-      const highStockCount = filteredHistory.filter(i => Number(i.quantity) > 50).length;
-
-      document.getElementById("kpiRows").innerText = totalRows;
-      document.getElementById("kpiTotalQty").innerText = totalQty;
-      document.getElementById("kpiZeroStock").innerText = zeroStockCount;
-      document.getElementById("kpiHighStock").innerText = highStockCount;
-
-      document.getElementById("sideTotalCount").innerText = totalRows;
-      document.getElementById("sideAlertCount").innerText = (zeroStockCount + highStockCount);
-
-      // 2. Filtres multi-critères du tableau
-      const search = document.getElementById("filterSearch").value.trim().toLowerCase();
-      const selectedContractors = Array.from(document.querySelectorAll('input[name="chkContractor"]:checked')).map(c => c.value);
-      const selectedTrades = Array.from(document.querySelectorAll('input[name="chkTrade"]:checked')).map(c => c.value);
-      const selectedAlerts = Array.from(document.querySelectorAll('input[name="chkAlert"]:checked')).map(c => c.value);
-
-      tableFilteredData = filteredHistory.filter(item => {
-        const q = Number(item.quantity) || 0;
-        if (search) {
-          const matchSearch = (item.sapRef && item.sapRef.toLowerCase().includes(search)) ||
-                              (item.designation && item.designation.toLowerCase().includes(search)) ||
-                              (item.id && item.id.toLowerCase().includes(search));
-          if (!matchSearch) return false;
-        }
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-        if (selectedAlerts.length > 0) {
-          let stat = "OK";
-          if (q === 0) stat = "ZERO";
-          else if (q > 50) stat = "HIGH";
-          if (!selectedAlerts.includes(stat)) return false;
-        }
-        return true;
-      });
-
-      renderOverviewTable();
-      renderAgentAccordions();
-      if (!document.getElementById("viewMap").classList.contains("hidden")) {
-        renderMap();
-      }
-    }
-
-    // --- RENDU TABLEAU (ONGLET 1) ---
-    function renderOverviewTable() {
-      const tbody = document.getElementById("inventoryTableBody");
-      document.getElementById("tableCountLabel").innerText = `${tableFilteredData.length} ligne(s) affichée(s)`;
-
-      if (tableFilteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 text-xs">Aucune saisie ne correspond aux filtres de période.</td></tr>`;
+      const expected = adminPasswords[selected] || "1234";
+      if (pwd !== expected && adminPasswords[selected]) {
+        alert("Mot de passe incorrect.");
         return;
       }
 
-      tbody.innerHTML = tableFilteredData.map(item => {
-        const q = Number(item.quantity) || 0;
-        let badge = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">CONFORME</span>`;
-        if (q === 0) badge = `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">STOCK 0</span>`;
-        else if (q > 50) badge = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">> 50 PCS</span>`;
+      currentAdmin = selected;
+      sessionStorage.setItem("mon_current_admin", currentAdmin);
+      document.getElementById("activeAdminName").innerText = currentAdmin;
+      document.getElementById("authModal").classList.add("hidden");
+      applyFilters();
+    }
 
+    function logoutAdmin() {
+      sessionStorage.removeItem("mon_current_admin");
+      currentAdmin = "";
+      document.getElementById("authPassword").value = "";
+      document.getElementById("authModal").classList.add("hidden");
+    }
+
+    async function syncMonitoringData() {
+      if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
+      try {
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
+        const data = await res.json();
+        if (data.status === "success") {
+          if (data.agents) {
+            availableAgents = data.agents;
+            localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
+          }
+          if (data.contractors) {
+            availableContractors = data.contractors;
+            localStorage.setItem("offline_contractors", JSON.stringify(availableContractors));
+          }
+          if (data.trades) {
+            availableTrades = data.trades;
+            localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
+          }
+          if (data.admins) {
+            adminAgents = data.admins;
+            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
+          }
+          if (data.adminPasswords) {
+            adminPasswords = data.adminPasswords;
+            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
+          }
+          if (data.history) {
+            cachedHistory = data.history;
+            localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+          }
+          initMultiSelects();
+          populateAdminDropdown();
+          applyFilters();
+        }
+      } catch (err) {
+        console.warn("Échec actualisation :", err);
+      }
+    }
+
+    function onSmartPeriodChange(mode) {
+      const now = new Date();
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const customBox = document.getElementById("customDateRangeBox");
+
+      if (mode === 'CUSTOM') {
+        customBox.classList.remove("hidden");
+        return;
+      } else {
+        customBox.classList.add("hidden");
+      }
+
+      if (mode === 'ALL') {
+        sInput.value = "";
+        eInput.value = "";
+      } else if (mode === 'TODAY') {
+        const dStr = now.toISOString().split('T')[0];
+        sInput.value = dStr;
+        eInput.value = dStr;
+      } else if (mode === 'CURRENT_WEEK') {
+        const day = now.getDay() || 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(sunday.getDate() + 6);
+
+        sInput.value = monday.toISOString().split('T')[0];
+        eInput.value = sunday.toISOString().split('T')[0];
+      } else if (mode === 'PREV_WEEK') {
+        const day = now.getDay() || 7;
+        const prevMonday = new Date(now);
+        prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday);
+        prevSunday.setDate(prevMonday.getDate() + 6);
+
+        sInput.value = prevMonday.toISOString().split('T')[0];
+        eInput.value = prevSunday.toISOString().split('T')[0];
+      } else if (mode === 'CURRENT_MONTH') {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        sInput.value = firstDay.toISOString().split('T')[0];
+        eInput.value = lastDay.toISOString().split('T')[0];
+      }
+
+      updateWeekBadge(sInput.value);
+      applyFilters();
+    }
+
+    function toggleActiveAgentsFilter() {
+      filterOnlyActiveAgents = !filterOnlyActiveAgents;
+      updateActiveAgentsButtonUI();
+      applyFilters();
+    }
+
+    function toggleMapSelectionFilter() {
+      mapFilterOnSelection = !mapFilterOnSelection;
+      const btnText = document.getElementById("mapFilterBtnText");
+      const btnEl = document.getElementById("btnMapSelectionFilter");
+      if (mapFilterOnSelection) {
+        btnEl.className = "text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnText.innerText = "Afficher uniquement la sélection";
+      } else {
+        btnEl.className = "text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnText.innerText = "Afficher toute la période";
+      }
+      applyFilters();
+    }
+
+    function getFilteredHistory() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      const rawTerm = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").trim();
+      const searchGroups = rawTerm ? rawTerm.split(',').map(g => g.trim()).filter(Boolean) : [];
+
+      return cachedHistory.filter(item => {
+        const itDate = parseItemDate(item.timestamp);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+
+        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+
+        if (searchGroups.length > 0) {
+          const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""} ${item.trade || ""}`.toLowerCase();
+          const matchesAnyGroup = searchGroups.some(group => {
+            const subWords = group.split(/\s+/).filter(Boolean);
+            return subWords.every(word => matchTarget.includes(word.toLowerCase()));
+          });
+          if (!matchesAnyGroup) return false;
+        }
+
+        if (activeKpiFilter === 'ZERO') {
+          if (Number(item.quantity) !== 0) return false;
+        } else if (activeKpiFilter === 'HIGH') {
+          if (customMaxQty === null || Number(item.quantity) <= customMaxQty) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function applyFilters() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      updateWeekBadge(sDateVal);
+
+      let periodLabel = "Tout l'historique";
+      if (sDateVal && eDateVal) {
+        periodLabel = `Du ${formatDateDMY(sDate)} au ${formatDateDMY(eDate)}`;
+      } else if (sDateVal) {
+        periodLabel = `À partir du ${formatDateDMY(sDate)}`;
+      } else if (eDateVal) {
+        periodLabel = `Jusqu'au ${formatDateDMY(eDate)}`;
+      }
+      document.getElementById("periodBadgeGlobal").innerText = periodLabel;
+      document.getElementById("periodBadgeAgents").innerText = periodLabel;
+
+      const filtered = getFilteredHistory();
+
+      renderKPIs(filtered);
+      renderTable(filtered);
+      renderAgentsView(filtered);
+
+      const mapSourceList = mapFilterOnSelection ? filtered : cachedHistory;
+      renderMap(mapSourceList);
+    }
+
+    function renderKPIs(list) {
+      const totalR = list.length;
+      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
+      const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
+
+      document.getElementById("kpiTotalRows").innerText = totalR;
+      document.getElementById("kpiTotalPieces").innerText = totalP;
+      document.getElementById("kpiZeroStock").innerText = zeroS;
+      document.getElementById("kpiAtypicalStock").innerText = atypS;
+
+      document.getElementById("kpiAgentsTotalRows").innerText = totalR;
+      document.getElementById("kpiAgentsTotalPieces").innerText = totalP;
+      document.getElementById("kpiAgentsZeroStock").innerText = zeroS;
+      document.getElementById("kpiAgentsAtypicalStock").innerText = atypS;
+    }
+
+    function renderTable(list) {
+      let countText = `${list.length} saisie(s) répertoriée(s)`;
+      if (activeKpiFilter === 'ZERO') countText += " [Filtre : Ruptures uniquement]";
+      if (activeKpiFilter === 'HIGH') countText += " [Filtre : Alertes atypiques uniquement]";
+      document.getElementById("tableCountLabel").innerText = countText;
+
+      const tbody = document.getElementById("supervisionTableBody");
+      const alertZero = document.getElementById("cfgAlertZero").checked;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée pour cette sélection.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(item => {
+        const q = Number(item.quantity);
+        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
+        const displayDate = formatDateDMY(item.timestamp, true);
         return `
-          <tr class="hover:bg-slate-800/40">
-            <td class="p-3 text-slate-400 font-mono text-[11px]">${item.timestamp}<br><span class="text-[9px] text-slate-500">${item.id || ''}</span></td>
-            <td class="p-3 font-bold text-white">${item.user}</td>
-            <td class="p-3">
-              <div class="font-semibold text-slate-200">${item.contractor}</div>
-              <div class="text-[10px] text-slate-400">${item.trade}</div>
-            </td>
-            <td class="p-3 font-mono text-indigo-400">${item.sapRef || '--'}</td>
-            <td class="p-3 text-slate-300 max-w-[220px] truncate" title="${item.designation}">${item.designation || '--'}</td>
-            <td class="p-3 text-center font-black ${q === 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${item.quantity}</td>
-            <td class="p-3 text-center">${badge}</td>
-            <td class="p-3 text-right space-x-1">
-              <button onclick="editItem('${item.id}', ${item.quantity})" class="p-1.5 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300 transition" title="Corriger la quantité"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-              <button onclick="deleteItem('${item.id}', '${(item.designation || '').replace(/'/g, "\\'")}')" class="p-1.5 rounded bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white transition" title="Supprimer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
+            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${displayDate}</td>
+            <td class="p-3 font-bold text-slate-900">${item.user}</td>
+            <td class="p-3 text-slate-700">${item.contractor}</td>
+            <td class="p-3 text-slate-500">${item.trade}</td>
+            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
+            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
+            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
+            <td class="p-3 text-right whitespace-nowrap">
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}', '${item.designation.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
             </td>
           </tr>
         `;
@@ -630,326 +927,448 @@
       lucide.createIcons();
     }
 
-    // --- ACCORDÉONS TERRAIN (ONGLET 2) ---
-    function getAgentLiveStatus(agentName, agentEntries) {
-      if (!agentEntries || agentEntries.length === 0) {
-        return { label: "En attente", contractor: "Aucun chantier débuté", detail: "0 scan", badgeClass: "bg-amber-500/20 text-amber-400 border-amber-500/30", dotClass: "bg-amber-400" };
-      }
-      const sorted = [...agentEntries].sort((a, b) => parseItemDate(b.timestamp) - parseItemDate(a.timestamp));
-      const last = sorted[0];
-      const timeStr = last.timestamp ? (last.timestamp.split(' ')[1] || last.timestamp) : '--';
-      return { label: "En cours", contractor: last.contractor || "Inconnu", detail: timeStr, badgeClass: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dotClass: "bg-emerald-400 animate-pulse" };
-    }
+    // FONCTION DE RENDU DE CHAQUE AGENT AVEC SES 3 KPIS DÉTAILLÉS (L/H, ANOMALIES, PÉRIMÈTRE)
+    function renderAgentsView(list) {
+      const container = document.getElementById("agentsAccordionContainer");
+      if (!container) return;
 
-    function toggleAgentDrawer(agentName, type) {
-      openDrawers[agentName] = openDrawers[agentName] === type ? null : type;
-      renderAgentAccordions();
-    }
-
-    function renderAgentAccordions() {
-      const container = document.getElementById("agentAccordionContainer");
-      if (!rawData.agents || rawData.agents.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Aucun agent configuré.</div>`;
+      if (availableAgents.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic">Aucun agent configuré.</div>`;
         return;
       }
 
-      container.innerHTML = rawData.agents.map(agent => {
-        const agentEntries = filteredHistory.filter(i => i.user === agent);
-        const totalQty = agentEntries.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
-        const status = getAgentLiveStatus(agent, agentEntries);
-        const activeDrawer = openDrawers[agent];
+      const now = new Date().getTime();
+      const fifteenMinMs = 15 * 60 * 1000;
+      let agentsToRender = selectedAgents.length > 0 ? availableAgents.filter(a => selectedAgents.includes(a)) : [...availableAgents];
 
-        let cadence = agentEntries.length;
-        let firstScan = "--", lastScan = "--", hours = 0;
-        if (agentEntries.length > 1) {
-          const tArr = agentEntries.map(i => parseItemDate(i.timestamp).getTime());
-          const minT = Math.min(...tArr), maxT = Math.max(...tArr);
-          hours = (maxT - minT) / (1000 * 60 * 60);
-          cadence = hours > 0.05 ? Math.round(agentEntries.length / hours) : agentEntries.length;
-          firstScan = new Date(minT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
-          lastScan = new Date(maxT).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
-        } else if (agentEntries.length === 1) {
-          firstScan = lastScan = agentEntries[0].timestamp.split(' ')[1] || agentEntries[0].timestamp;
+      if (filterOnlyActiveAgents) {
+        agentsToRender = agentsToRender.filter(agent => {
+          const agentEntries = cachedHistory.filter(i => i.user === agent);
+          if (agentEntries.length === 0) return false;
+          const lastOne = agentEntries[0];
+          const dt = parseItemDate(lastOne.timestamp);
+          return dt && (now - dt.getTime()) < fifteenMinMs;
+        });
+      }
+
+      if (agentsToRender.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-xs">Aucun agent ne correspond au filtre actif.</div>`;
+        return;
+      }
+
+      container.innerHTML = agentsToRender.map(agent => {
+        const agentEntries = cachedHistory.filter(i => i.user === agent);
+        const totalPieces = agentEntries.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
+        
+        // 1. Calcul du Débit L/h de l'agent
+        const times = agentEntries.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
+        let agentRateStr = "0 l/h";
+        if (times.length > 1) {
+          const minT = Math.min(...times);
+          const maxT = Math.max(...times);
+          const hours = (maxT - minT) / 3600000;
+          if (hours > 0.05) {
+            agentRateStr = `${Math.round(agentEntries.length / hours)} l/h`;
+          } else {
+            agentRateStr = `${agentEntries.length} l/h`;
+          }
+        } else {
+          agentRateStr = `${agentEntries.length} l/h`;
         }
 
-        const susp = agentEntries.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50);
-        const anomRate = agentEntries.length > 0 ? Math.round((susp.length / agentEntries.length) * 100) : 0;
+        // 2. Calcul des Anomalies de l'agent (Ruptures + Atypiques)
+        const agentRuptures = agentEntries.filter(i => Number(i.quantity) === 0).length;
+        const agentAtyp = customMaxQty !== null ? agentEntries.filter(i => Number(i.quantity) > customMaxQty).length : 0;
+        const totalAnomalies = agentRuptures + agentAtyp;
 
-        // Périmètre STRICTEMENT démarré/traité sur la période
-        const treatedC = {}, treatedT = {};
-        agentEntries.forEach(item => {
-          const c = item.contractor, t = item.trade, d = parseItemDate(item.timestamp);
-          if (c) {
-            if (!treatedC[c] || d > treatedC[c].lastDate) {
-              treatedC[c] = { lastDate: d, timeStr: item.timestamp, lines: (treatedC[c]?.lines || 0) + 1, qty: (treatedC[c]?.qty || 0) + (Number(item.quantity) || 0) };
-            } else {
-              treatedC[c].lines++; treatedC[c].qty += (Number(item.quantity) || 0);
-            }
-          }
-          if (t) {
-            if (!treatedT[t] || d > treatedT[t].lastDate) {
-              treatedT[t] = { lastDate: d, timeStr: item.timestamp, lines: (treatedT[t]?.lines || 0) + 1, qty: (treatedT[t]?.qty || 0) + (Number(item.quantity) || 0) };
-            } else {
-              treatedT[t].lines++; treatedT[t].qty += (Number(item.quantity) || 0);
-            }
-          }
-        });
+        // 3. Calcul du Périmètre de l'agent
+        const contractorsSet = [...new Set(agentEntries.map(i => i.contractor).filter(Boolean))];
+        const tradesSet = [...new Set(agentEntries.map(i => i.trade).filter(Boolean))];
+        const perimetreStr = contractorsSet.length > 0 ? `${contractorsSet.join(', ')} (${tradesSet.join(', ')})` : "Aucun périmètre actif";
 
-        let drawerHtml = "";
-        if (activeDrawer === 'cadence') {
-          drawerHtml = `
-            <div class="mt-3 p-3 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-2">
-              <div class="font-bold text-indigo-400 flex justify-between border-b border-slate-800 pb-1">
-                <span>⚡ Rythme & Amplitude (${agent})</span>
-                <span>Vitesse : <strong>${cadence} lignes / h</strong></span>
-              </div>
-              <div class="grid grid-cols-3 gap-2 text-slate-300 pt-1">
-                <div><span class="text-slate-500 block text-[9px] uppercase">Premier scan</span><strong class="text-emerald-400">${firstScan}</strong></div>
-                <div><span class="text-slate-500 block text-[9px] uppercase">Dernier scan</span><strong class="text-emerald-400">${lastScan}</strong></div>
-                <div><span class="text-slate-500 block text-[9px] uppercase">Durée active</span><strong>${hours > 0 ? hours.toFixed(1) + ' h' : 'En cours'}</strong></div>
-              </div>
-            </div>`;
-        } else if (activeDrawer === 'anomalies') {
-          const list = susp.length === 0 ? `<div class="text-emerald-400 text-xs py-2 text-center">✅ Aucune anomalie sur la période.</div>` :
-            susp.map(i => `
-              <div class="flex items-center justify-between py-1.5 border-b border-slate-850 last:border-0 text-xs">
-                <div>
-                  <span class="font-mono font-bold text-indigo-400">${i.sapRef}</span> • <span class="text-slate-400">${i.timestamp}</span>
-                  <div class="text-slate-200 truncate">${i.designation} (${i.contractor})</div>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="font-black ${Number(i.quantity) === 0 ? 'text-rose-400' : 'text-amber-400'}">${i.quantity}</span>
-                  <button onclick="editItem('${i.id}', ${i.quantity})" class="p-1 rounded bg-slate-800 hover:bg-indigo-600"><i data-lucide="pencil" class="w-3 h-3"></i></button>
-                  <button onclick="deleteItem('${i.id}', '${(i.designation||'').replace(/'/g, "\\'")}')" class="p-1 rounded bg-slate-800 hover:bg-rose-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                </div>
-              </div>`).join('');
-          drawerHtml = `<div class="mt-3 p-3 bg-slate-950/80 rounded-xl border border-rose-500/30 text-xs space-y-2"><div class="font-bold text-rose-400 border-b border-slate-800 pb-1">⚠️ Saisies suspectes</div><div class="max-h-48 overflow-y-auto">${list}</div></div>`;
-        } else if (activeDrawer === 'perimetre') {
-          const cKeys = Object.keys(treatedC), tKeys = Object.keys(treatedT);
-          const cHtml = cKeys.length === 0 ? `<div class="text-slate-500 text-xs">Aucun entrepreneur démarré.</div>` :
-            cKeys.map(c => `<div class="p-2 rounded bg-indigo-950/40 border border-indigo-500/40 space-y-0.5"><div class="flex justify-between font-bold text-indigo-300"><span>${c}</span><span class="font-mono text-[10px]">${treatedC[c].lines} lig. (${treatedC[c].qty} pcs)</span></div><div class="text-[10px] text-slate-400">Dernier passage : <strong>${treatedC[c].timeStr}</strong></div></div>`).join('');
-          const tHtml = tKeys.length === 0 ? `<div class="text-slate-500 text-xs">Aucun métier démarré.</div>` :
-            tKeys.map(t => `<div class="p-2 rounded bg-emerald-950/40 border border-emerald-500/40 space-y-0.5"><div class="flex justify-between font-bold text-emerald-300"><span>${t}</span><span class="font-mono text-[10px]">${treatedT[t].lines} lig.</span></div><div class="text-[10px] text-slate-400">Dernier passage : <strong>${treatedT[t].timeStr}</strong></div></div>`).join('');
-          
-          drawerHtml = `
-            <div class="mt-3 p-3 bg-slate-950/80 rounded-xl border border-indigo-500/30 text-xs space-y-3">
-              <div class="font-bold text-indigo-300 border-b border-slate-800 pb-1">🌐 Périmètre traité par ${agent} (Dates et heures de passage)</div>
-              <div><span class="text-slate-400 uppercase text-[10px] font-bold block mb-1">Entrepreneurs traités (${cKeys.length}) :</span><div class="grid grid-cols-2 gap-2">${cHtml}</div></div>
-              <div><span class="text-slate-400 uppercase text-[10px] font-bold block mb-1">Métiers traités (${tKeys.length}) :</span><div class="grid grid-cols-2 gap-2">${tHtml}</div></div>
-            </div>`;
+        let isActive = false;
+        let lastTimeStr = "--";
+
+        if (agentEntries.length > 0) {
+          const lastOne = agentEntries[0];
+          lastTimeStr = formatDateDMY(lastOne.timestamp, true);
+          const dt = parseItemDate(lastOne.timestamp);
+          if (dt && (now - dt.getTime()) < fifteenMinMs) {
+            isActive = true;
+          }
         }
 
         return `
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow transition">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div class="flex items-center space-x-3">
-                <span class="text-sm font-bold text-white flex items-center gap-1.5"><i data-lucide="user" class="w-4 h-4 text-indigo-400"></i> ${agent}</span>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${status.badgeClass}">
-                  <span class="w-1.5 h-1.5 rounded-full ${status.dotClass}"></span>
-                  <span>${status.label}</span> • <span class="text-slate-100 font-extrabold truncate max-w-[150px]" title="${status.contractor}">${status.contractor}</span> (${status.detail})
+                <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}"></div>
+                <span class="font-bold text-slate-900 text-sm">${agent}</span>
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+                  ${isActive ? '🟢 En cours' : '⚪ Déconnecté'} • Dernier signal : ${lastTimeStr}
                 </span>
               </div>
-              <span class="text-xs font-bold text-slate-400">${agentEntries.length} ligne(s) • <span class="text-emerald-400 font-black">${totalQty} pc(s)</span></span>
+              <span class="text-xs font-mono text-orange-700 font-bold bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100">${agentEntries.length} lignes • ${totalPieces} pcs</span>
+            </div>
+            
+            <!-- LES 3 CARTES KPI INDIVIDUELLES DE L'AGENT -->
+            <div class="grid grid-cols-3 gap-3 pt-1">
+              <div class="bg-indigo-50/60 border border-indigo-100 p-2.5 rounded-xl text-center">
+                <span class="text-[10px] font-bold text-indigo-600 uppercase block">1. Débit / Vitesse</span>
+                <span class="text-base font-black text-indigo-700 font-mono mt-0.5 block">${agentRateStr}</span>
+              </div>
+              <div class="bg-rose-50/60 border border-rose-100 p-2.5 rounded-xl text-center">
+                <span class="text-[10px] font-bold text-rose-600 uppercase block">2. Anomalies Signalées</span>
+                <span class="text-base font-black text-rose-700 font-mono mt-0.5 block">${totalAnomalies} <span class="text-[10px] font-normal text-rose-500">(0: ${agentRuptures}, >${customMaxQty || '--'}: ${agentAtyp})</span></span>
+              </div>
+              <div class="bg-amber-50/60 border border-amber-100 p-2.5 rounded-xl text-center flex flex-col justify-between">
+                <span class="text-[10px] font-bold text-amber-700 uppercase block">3. Périmètre d'action</span>
+                <span class="text-xs font-bold text-slate-800 truncate px-1" title="${perimetreStr}">${perimetreStr}</span>
+              </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 pt-3">
-              <button onclick="toggleAgentDrawer('${agent}', 'cadence')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'cadence' ? 'bg-indigo-950/60 border-indigo-500' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
-                <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5"><span>⚡ Cadence</span><span>${activeDrawer === 'cadence' ? '▲' : '▼'}</span></div>
-                <div class="text-sm font-black text-emerald-400">${cadence} <span class="text-[10px] font-normal text-slate-400">l/h</span></div>
-              </button>
-              <button onclick="toggleAgentDrawer('${agent}', 'anomalies')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'anomalies' ? 'bg-rose-950/60 border-rose-500' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
-                <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5"><span>🛡️ Anomalies</span><span>${activeDrawer === 'anomalies' ? '▲' : '▼'}</span></div>
-                <div class="text-sm font-black ${anomRate > 10 ? 'text-rose-400' : 'text-amber-400'}">${anomRate}% <span class="text-[10px] font-normal text-slate-400">(${susp.length})</span></div>
-              </button>
-              <button onclick="toggleAgentDrawer('${agent}', 'perimetre')" class="text-left p-2.5 rounded-xl border transition ${activeDrawer === 'perimetre' ? 'bg-indigo-950/60 border-indigo-500' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
-                <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-0.5"><span>🌐 Périmètre (Démarré)</span><span>${activeDrawer === 'perimetre' ? '▲' : '▼'}</span></div>
-                <div class="text-sm font-black text-slate-200">${Object.keys(treatedC).length} <span class="text-[10px] font-normal text-slate-400">ent. traités</span></div>
+            <div class="pt-1 flex justify-end">
+              <button onclick="filterAndSwitchToGlobal('${agent}', '', '')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-orange-700 transition flex items-center gap-1">
+                <span>Filtrer ses lignes dans l'Activité Globale</span>
               </button>
             </div>
-            ${drawerHtml}
           </div>
         `;
       }).join('');
       lucide.createIcons();
     }
 
-    // --- CARTE LEAFLET (ONGLET 3) ---
-    function renderMap() {
+    function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2); 
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function renderMap(list) {
       if (!map) {
-        map = L.map('mapContainer').setView([50.85, 4.35], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
-        mapMarkersLayer = L.layerGroup().addTo(map);
+        map = L.map('mapContainer', {
+          center: BELGIUM_CENTER,
+          zoom: BELGIUM_ZOOM,
+          minZoom: 7,
+          maxZoom: 18,
+          maxBounds: BELGIUM_BOUNDS,
+          maxBoundsViscosity: 0.85
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        markersLayer = L.layerGroup().addTo(map);
       }
 
-      mapMarkersLayer.clearLayers();
-      const bounds = [];
+      markersLayer.clearLayers();
+      const points = [];
+      const now = new Date().getTime();
+      const thirtyMinMs = 30 * 60 * 1000;
 
-      // 1. POINTS GPS AGENTS AVEC TOOLTIP AU SURVOL (Nom de l'agent)
-      (rawData.agents || []).forEach(agent => {
-        const agEntries = filteredHistory.filter(i => i.user === agent && i.lat && i.lng);
-        if (agEntries.length > 0) {
-          const last = agEntries[agEntries.length - 1]; // Dernier scan
-          const latLng = [Number(last.lat), Number(last.lng)];
-          bounds.push(latLng);
+      const agentFinalizedGroups = {};
+      const agentActiveGroups = {};
 
-          const icon = L.divIcon({
-            className: 'custom-agent-icon',
-            html: `<div class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-lg text-xs font-bold">👤</div>`,
-            iconSize: [28, 28]
-          });
-
-          const marker = L.marker(latLng, { icon }).addTo(mapMarkersLayer);
+      list.forEach(item => {
+        const lat = Number(item.lat || item.latitude);
+        const lng = Number(item.lng || item.longitude);
+        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+          const isFinalized = (now - parseItemDate(item.timestamp).getTime()) >= thirtyMinMs;
+          const agentKey = item.user || 'Inconnu';
           
-          // Tooltip au survol : Nom de l'agent
-          marker.bindTooltip(`<b>Agent : ${agent}</b>`, { direction: 'top', offset: [0, -10] });
-
-          // Popup au clic
-          marker.bindPopup(`
-            <div class="text-xs p-1 space-y-1">
-              <div class="font-bold text-blue-400">${agent}</div>
-              <div>Dernier chantier : <strong>${last.contractor}</strong></div>
-              <div class="text-slate-400">Heure : ${last.timestamp}</div>
-            </div>
-          `);
-        }
-      });
-
-      // 2. POINTS CHANTIERS / ENTREPRENEURS
-      const siteMap = {};
-      filteredHistory.forEach(item => {
-        if (item.lat && item.lng && item.contractor) {
-          if (!siteMap[item.contractor]) {
-            siteMap[item.contractor] = { contractor: item.contractor, lat: item.lat, lng: item.lng, lines: 0, trades: new Set(), lastTime: item.timestamp };
+          if (isFinalized) {
+            if (!agentFinalizedGroups[agentKey]) agentFinalizedGroups[agentKey] = [];
+            agentFinalizedGroups[agentKey].push({ ...item, lat, lng, status: 'Finalisé' });
+          } else {
+            if (!agentActiveGroups[agentKey]) agentActiveGroups[agentKey] = [];
+            agentActiveGroups[agentKey].push({ ...item, lat, lng, status: 'En cours' });
           }
-          siteMap[item.contractor].lines++;
-          if (item.trade) siteMap[item.contractor].trades.add(item.trade);
         }
       });
 
-      Object.values(siteMap).forEach(site => {
-        const latLng = [Number(site.lat), Number(site.lng)];
-        bounds.push(latLng);
-        const isDone = site.lines >= 5;
-        const color = isDone ? 'bg-emerald-500' : 'bg-amber-500';
-        const statusLbl = isDone ? 'Terminé (Validé)' : 'En cours';
+      const processedClusters = [];
 
-        const icon = L.divIcon({
-          className: 'custom-site-icon',
-          html: `<div class="${color} text-white w-6 h-6 rounded-md flex items-center justify-center border border-slate-900 shadow text-[10px] font-black">📦</div>`,
-          iconSize: [24, 24]
+      Object.entries(agentFinalizedGroups).forEach(([agent, items]) => {
+        const agentClusters = [];
+        items.forEach(item => {
+          let placed = false;
+          for (let cl of agentClusters) {
+            if (getDistanceFromLatLonInMeters(cl.lat, cl.lng, item.lat, item.lng) <= 5000) {
+              cl.items.push(item);
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            agentClusters.push({ lat: item.lat, lng: item.lng, user: agent, status: 'Finalisé', items: [item] });
+          }
+        });
+        processedClusters.push(...agentClusters);
+      });
+
+      Object.entries(agentActiveGroups).forEach(([agent, items]) => {
+        const agentClusters = [];
+        items.forEach(item => {
+          let placed = false;
+          for (let cl of agentClusters) {
+            if (getDistanceFromLatLonInMeters(cl.lat, cl.lng, item.lat, item.lng) <= 5000) {
+              cl.items.push(item);
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            agentClusters.push({ lat: item.lat, lng: item.lng, user: agent, status: 'En cours', items: [item] });
+          }
+        });
+        processedClusters.push(...agentClusters);
+      });
+
+      processedClusters.forEach(cluster => {
+        let { lat, lng, user, status, items } = cluster;
+        
+        processedClusters.forEach(other => {
+          if (other !== cluster && other.user === user && getDistanceFromLatLonInMeters(lat, lng, other.lat, other.lng) < 100) {
+            lat += 0.0015;
+            lng += 0.0015;
+          }
         });
 
-        const marker = L.marker(latLng, { icon }).addTo(mapMarkersLayer);
+        points.push([lat, lng]);
 
-        // Tooltip au survol : Nom de l'entrepreneur ou agent associé si besoin
-        marker.bindTooltip(`<b>Chantier : ${site.contractor}</b>`, { direction: 'top', offset: [0, -10] });
+        const isFinalizedCluster = (status === 'Finalisé');
+        const fillColor = isFinalizedCluster ? "#f97316" : "#10b981";
 
-        // Popup au clic
-        marker.bindPopup(`
-          <div class="text-xs p-1 space-y-1">
-            <div class="font-bold text-white">${site.contractor}</div>
-            <div class="font-semibold ${isDone ? 'text-emerald-400' : 'text-amber-400'}">Statut : ${statusLbl}</div>
-            <div>Métiers : ${Array.from(site.trades).join(', ') || 'N/C'}</div>
-            <div class="text-slate-400">${site.lines} ligne(s) validée(s)</div>
-            <div class="text-slate-500 text-[10px]">Dernier scan : ${site.lastTime}</div>
+        const comboItemsMap = {};
+        items.forEach(i => {
+          const comboKey = `${i.contractor} (${i.trade})`;
+          if (!comboItemsMap[comboKey]) comboItemsMap[comboKey] = [];
+          comboItemsMap[comboKey].push(parseItemDate(i.timestamp).getTime());
+        });
+
+        const comboDetails = {};
+        Object.entries(comboItemsMap).forEach(([comboKey, times]) => {
+          const count = times.length;
+          const minT = Math.min(...times);
+          const maxT = Math.max(...times);
+          const diffMinutes = Math.round((maxT - minT) / 60000);
+          const hours = Math.floor(diffMinutes / 60);
+          const mins = diffMinutes % 60;
+          const timeStr = hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
+          comboDetails[comboKey] = { count, timeStr };
+        });
+
+        const comboList = Object.entries(comboDetails).map(([combo, data]) => `
+          <li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-indigo-600">${data.timeStr}</strong> | <strong class="text-orange-600">${data.count} ligne(s)</strong></li>
+        `).join('');
+
+        const totalClusterLines = items.length;
+
+        const allClusterTimes = items.map(i => parseItemDate(i.timestamp).getTime()).filter(t => !isNaN(t));
+        let globalRatioStr = "-- l/h";
+        if (allClusterTimes.length > 1) {
+          const minClusterTime = Math.min(...allClusterTimes);
+          const maxClusterTime = Math.max(...allClusterTimes);
+          const totalHours = (maxClusterTime - minClusterTime) / 3600000;
+          if (totalHours > 0.05) {
+            const ratio = Math.round(totalClusterLines / totalHours);
+            globalRatioStr = `${ratio} l/h`;
+          } else {
+            globalRatioStr = `${totalClusterLines} l/h`;
+          }
+        } else {
+          globalRatioStr = `${totalClusterLines} l/h`;
+        }
+
+        const tooltipContent = `
+          <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
+            <strong class="text-slate-900 block text-sm">Agent : ${user} (${status}) • ${globalRatioStr}</strong>
+            <div class="text-[11px] text-slate-600 font-semibold">Détail par Entrepreneur & Métier :</div>
+            <ul class="list-disc pl-4 text-[10px] text-slate-700 space-y-0.5">${comboList}</ul>
           </div>
-        `);
+        `;
+
+        const marker = L.circleMarker([lat, lng], {
+          radius: items.length > 1 ? 10 : 7,
+          fillColor: fillColor,
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        });
+
+        marker.bindTooltip(tooltipContent, { direction: 'top', offset: [0, -6] });
+
+        const sortedDates = items.map(i => parseItemDate(i.timestamp)).filter(d => !isNaN(d.getTime())).sort((a, b) => a - b);
+        let dateRangeStr = '--';
+        if (sortedDates.length > 0) {
+          const minDate = sortedDates[0];
+          const maxDate = sortedDates[sortedDates.length - 1];
+          dateRangeStr = sortedDates.length > 1 ? `${formatDateDMY(minDate, true)} au ${formatDateDMY(maxDate, true)}` : formatDateDMY(minDate, true);
+        }
+
+        const safeUser = user.replace(/'/g, "\\'");
+        const safeContractor = (items[0].contractor || '').replace(/'/g, "\\'");
+        const safeTrade = (items[0].trade || '').replace(/'/g, "\\'");
+
+        marker.bindPopup(`
+          <div class="text-xs font-sans space-y-2.5 py-1 min-w-[300px]">
+            <div class="flex justify-between items-start border-b border-slate-100 pb-2">
+              <div>
+                <strong class="text-slate-900 text-sm block">${user}</strong>
+                <span class="text-slate-500 text-[10px]">Statut : ${status}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold block">${totalClusterLines} saisie(s)</span>
+                <span class="font-mono text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold mt-1 inline-block">${globalRatioStr}</span>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <span class="text-[10px] font-bold text-slate-400 uppercase block">Détails par Entrepreneur & Métier :</span>
+              <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
+                ${Object.entries(comboDetails).map(([combo, data]) => `
+                  <div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-200 last:border-0">
+                    <span class="font-semibold text-slate-800 truncate max-w-[140px]" title="${combo}">${combo}</span>
+                    <div class="flex items-center gap-2 shrink-0 font-mono">
+                      <span class="text-indigo-600 font-bold">${data.timeStr}</span>
+                      <span class="text-orange-700 font-bold">${data.count} ligne(s)</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="text-[11px] text-slate-600">
+              <span>Date(s) : </span>
+              <strong class="font-mono text-slate-800">${dateRangeStr}</strong>
+            </div>
+
+            <button onclick="filterAndSwitchToGlobal('${safeUser}', '${safeContractor}', '${safeTrade}')" 
+                    class="w-full mt-2 py-2 px-3 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[11px] font-bold shadow-xs transition flex items-center justify-center gap-1.5">
+              <i data-lucide="list" class="w-3.5 h-3.5"></i>
+              <span>Voir le listing dans l'Activité Globale</span>
+            </button>
+          </div>
+        `, { autoPan: true, autoPanPadding: [80, 80] });
+
+        markersLayer.addLayer(marker);
       });
 
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [40, 40] });
-      }
+      document.getElementById("mapPointsCountLabel").innerText = `${points.length} point(s) GPS`;
+      lucide.createIcons();
     }
 
-    // --- ACTIONS D'ÉDITION & SUPPRESSION ---
-    async function editItem(id, currentQty) {
-      const newQtyStr = prompt("Corriger la quantité pour cette ligne :", currentQty);
-      if (newQtyStr === null) return;
-      const newQty = Number(newQtyStr);
-      if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide.");
-        return;
-      }
-      try {
-        showToast("Mise à jour en cours...", false);
-        const res = await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "edit", id: id, quantity: newQty, admin: localStorage.getItem("inv_current_admin") || "Admin" })
-        });
-        const r = await res.json();
-        if (r.status === "success") {
-          showToast("Quantité mise à jour avec succès !");
-          await syncData();
-        } else {
-          alert("Erreur : " + r.message);
-        }
-      } catch (err) {
-        alert("Erreur de connexion.");
-      }
+    function resetMapToBelgium() {
+      if (map) map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
     }
 
-    async function deleteItem(id, designation) {
-      if (!confirm(`Confirmez-vous la suppression de la saisie :\n\n- ${designation} (ID: ${id}) ?`)) return;
-      try {
-        showToast("Suppression en cours...", false);
-        const res = await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "delete", id: id, admin: localStorage.getItem("inv_current_admin") || "Admin" })
-        });
-        const r = await res.json();
-        if (r.status === "success") {
-          showToast("Ligne supprimée et tracée dans Audit_Logs.");
-          await syncData();
-        } else {
-          alert("Erreur : " + r.message);
-        }
-      } catch (err) {
-        alert("Erreur de connexion.");
-      }
+    function filterAndSwitchToGlobal(agent, contractor, trade) {
+      activeKpiFilter = null;
+      selectedAgents = agent ? [agent] : [];
+      selectedContractors = contractor ? [contractor] : [];
+      selectedTrades = trade ? [trade] : [];
+      switchView('global');
+      applyFilters();
     }
 
-    // --- GESTION DES ONGLETS & EXPORT ---
-    function switchView(view) {
-      document.getElementById("viewOverview").classList.add("hidden");
-      document.getElementById("viewField").classList.add("hidden");
+    function switchView(v) {
+      activeView = v;
+      localStorage.setItem("mon_active_view", v);
+      document.getElementById("viewGlobal").classList.add("hidden");
+      document.getElementById("viewAgents").classList.add("hidden");
       document.getElementById("viewMap").classList.add("hidden");
 
-      document.getElementById("btnTabOverview").className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:bg-slate-800 hover:text-white";
-      document.getElementById("btnTabField").className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:bg-slate-800 hover:text-white";
-      document.getElementById("btnTabMap").className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:bg-slate-800 hover:text-white";
+      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
+      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
+      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
 
-      if (view === 'overview') {
-        document.getElementById("viewOverview").classList.remove("hidden");
-        document.getElementById("btnTabOverview").className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow";
-      } else if (view === 'field') {
-        document.getElementById("viewField").classList.remove("hidden");
-        document.getElementById("btnTabField").className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow";
-      } else if (view === 'map') {
+      if (v === 'global') {
+        document.getElementById("viewGlobal").classList.remove("hidden");
+        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+      } else if (v === 'agents') {
+        document.getElementById("viewAgents").classList.remove("hidden");
+        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+      } else if (v === 'map') {
         document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnTabMap").className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow";
-        setTimeout(renderMap, 150);
+        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition";
+        setTimeout(() => { 
+          if (map) {
+            map.invalidateSize();
+            resetMapToBelgium();
+          }
+        }, 200);
       }
       lucide.createIcons();
     }
 
-    function exportCSV() {
-      let csv = "ID;Date;Magasinier;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
-      tableFilteredData.forEach(r => {
-        csv += `"${r.id || ''}";"${r.timestamp}";"${r.user}";"${r.contractor}";"${r.trade}";"${r.sapRef}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || ''}";"${r.lng || ''}"\n`;
+    async function editTableItem(id, oldQty) {
+      const newQtyStr = prompt("Modifier la quantité :", oldQty);
+      if (newQtyStr === null) return;
+      const newQty = parseInt(newQtyStr, 10);
+      if (isNaN(newQty) || newQty < 0) {
+        alert("Quantité invalide.");
+        return;
+      }
+
+      const target = cachedHistory.find(i => i.id === id);
+      if (target) target.quantity = newQty;
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      applyFilters();
+
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "UPDATE", id: id, quantity: newQty, user: currentAdmin })
+        });
+      }
+    }
+
+    async function deleteTableItem(id, label) {
+      if (!confirm(`Supprimer définitivement :\n"${label}" ?`)) return;
+
+      cachedHistory = cachedHistory.filter(i => i.id !== id);
+      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+      applyFilters();
+
+      if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "DELETE", id: id, user: currentAdmin })
+        });
+      }
+    }
+
+    function exportTableToCSV() {
+      const data = getFilteredHistory();
+
+      if (data.length === 0) {
+        alert("Aucune donnée à exporter sur cette sélection.");
+        return;
+      }
+
+      let csv = "\uFEFFHorodatage (JJ/MM/AAAA);Agent;Entrepreneur;Metier;Ref SAP;Designation;Quantite;Latitude;Longitude\n";
+      data.forEach(r => {
+        const dmy = formatDateDMY(r.timestamp, true);
+        csv += `"${dmy}";"${r.user || ''}";"${r.contractor || ''}";"${r.trade || ''}";"${r.sapRef || ''}";"${(r.designation || '').replace(/"/g, '""')}";${r.quantity};"${r.lat || r.latitude || ''}";"${r.lng || r.longitude || ''}"\n`;
       });
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `inventaire_supervision_${Date.now()}.csv`;
+      a.download = `Inventaire_Export_Selection_${formatDateDMY(new Date()).replace(/\//g, '-')}.csv`;
+      document.body.appendChild(a);
       a.click();
-    }
-
-    function showToast(msg, isSuccess = true) {
-      const t = document.getElementById("toast");
-      document.getElementById("toastMessage").innerText = msg;
-      t.classList.remove("translate-y-24");
-      setTimeout(() => t.classList.add("translate-y-24"), 3500);
+      document.body.removeChild(a);
     }
   </script>
 </body>
