@@ -22,6 +22,12 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50 overflow-hidden">
 
+  <!-- ================= BANDEAU DE MISE À JOUR PWA ================= -->
+  <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
+    <span class="font-bold">🔄 Une nouvelle version de l'app est disponible !</span>
+    <button onclick="window.location.reload()" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs">Mettre à jour</button>
+  </div>
+
   <!-- ================= EN-TÊTE MOBILE ================= -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
     <div class="flex items-center space-x-2.5">
@@ -35,13 +41,16 @@
     </div>
     <div class="flex items-center space-x-2">
       <div id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-      <button onclick="openConfigModal()" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+      <button onclick="syncMobileData()" title="Actualiser" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+      </button>
+      <button onclick="openConfigModal()" title="Paramètres & Profil" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer">
         <i data-lucide="settings" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
 
-  <!-- ================= CONTENU PRINCIPAL (ONGS PWA) ================= -->
+  <!-- ================= CONTENU PRINCIPAL (ONGLETS PWA) ================= -->
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24">
     
     <!-- ONGLET 1 : COMPTAGE -->
@@ -72,7 +81,7 @@
             <input type="text" id="sapSearchInput" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-9 pr-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
             <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-1"></div>
           </div>
-          <button onclick="toggleVoiceSearch()" id="micBtn" class="p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0">
+          <button onclick="toggleVoiceSearch()" id="micBtn" class="p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer">
             <i data-lucide="mic" class="w-5 h-5"></i>
           </button>
         </div>
@@ -88,12 +97,12 @@
       <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quantité Comptée</h2>
         <div class="flex items-center justify-center space-x-4">
-          <button onclick="adjustQuantity(-1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs">-</button>
+          <button onclick="adjustQuantity(-1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs cursor-pointer">-</button>
           <input type="number" id="inputQuantity" value="1" min="0" class="w-24 h-14 text-center font-black text-2xl bg-slate-50 border border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 font-mono">
-          <button onclick="adjustQuantity(1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs">+</button>
+          <button onclick="adjustQuantity(1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs cursor-pointer">+</button>
         </div>
 
-        <button onclick="submitInventoryEntry()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 font-bold text-white rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs transition">
+        <button onclick="submitInventoryEntry()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 font-bold text-white rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs transition cursor-pointer">
           <i data-lucide="check-circle" class="w-4 h-4"></i>
           <span>Enregistrer la saisie</span>
         </button>
@@ -109,7 +118,7 @@
       <div id="historyListContainer" class="space-y-2"></div>
     </section>
 
-    <!-- ONGLET 3 : MA TOURNÉE (SYNCHRONISÉE AVEC L'AGENDA) -->
+    <!-- ONGLET 3 : MA TOURNÉE -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
         <div class="flex justify-between items-center">
@@ -124,36 +133,50 @@
 
   <!-- ================= BARRE DE NAVIGATION INFÉRIEURE MOBILE ================= -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
-    <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition">
+    <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
       <span>Comptage</span>
     </button>
-    <button onclick="switchMobileTab('historique')" id="navHistorique" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition">
+    <button onclick="switchMobileTab('historique')" id="navHistorique" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="history" class="w-5 h-5"></i>
       <span>Historique</span>
     </button>
-    <button onclick="switchMobileTab('tournee')" id="navTournee" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition">
+    <button onclick="switchMobileTab('tournee')" id="navTournee" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="route" class="w-5 h-5"></i>
       <span>Ma Tournée</span>
     </button>
   </nav>
 
-  <!-- ================= MODALE CONFIGURATION AGENT ================= -->
+  <!-- ================= MODALE CONFIGURATION & DÉCONNEXION AGENT ================= -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
-      <h2 class="text-lg font-bold text-slate-900">Configuration Agent</h2>
+      <h2 class="text-lg font-bold text-slate-900">Profil Agent</h2>
       <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1 text-left">Votre Nom / Profil</label>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1 text-left">Sélectionnez votre nom</label>
         <select id="configAgentSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
       </div>
-      <button onclick="saveAgentConfig()" class="w-full h-11 bg-orange-600 font-bold text-white rounded-xl text-xs shadow-md transition">Valider & Démarrer</button>
+      <div class="space-y-2 pt-2">
+        <button onclick="saveAgentConfig()" class="w-full h-11 bg-orange-600 hover:bg-orange-700 font-bold text-white rounded-xl text-xs shadow-md transition cursor-pointer">Valider & Enregistrer</button>
+        <button onclick="logoutMobileAgent()" class="w-full h-10 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold rounded-xl text-xs transition cursor-pointer">Déconnexion / Changer de profil</button>
+      </div>
     </div>
   </div>
 
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').catch(err => console.warn('SW error:', err));
+        navigator.serviceWorker.register('./service-worker.js').then(reg => {
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  document.getElementById("pwaUpdateBanner").classList.remove("hidden");
+                }
+              }
+            };
+          };
+        }).catch(err => console.warn('SW error:', err));
       });
     }
 
@@ -218,6 +241,14 @@
       document.getElementById("headerAgentName").innerText = currentAgent;
       document.getElementById("configModal").classList.add("hidden");
       renderTournee();
+    }
+
+    function logoutMobileAgent() {
+      localStorage.removeItem("mob_current_agent");
+      currentAgent = "";
+      document.getElementById("headerAgentName").innerText = "--";
+      document.getElementById("configModal").classList.add("hidden");
+      openConfigModal();
     }
 
     async function syncMobileData() {
@@ -299,7 +330,7 @@
 
     async function submitInventoryEntry() {
       if (!currentAgent) {
-        alert("Veuillez configurer votre nom d'agent (icône engrenage).");
+        alert("Veuillez configurer votre nom d'agent.");
         openConfigModal();
         return;
       }
@@ -328,7 +359,6 @@
       sessionHistory.unshift(record);
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
 
-      // Validation automatique de la tâche dans la tournée locale si elle existe
       cachedTournees.forEach(t => {
         if (t.agent === currentAgent && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim()) {
           t.statut = 'VALIDE';
@@ -339,7 +369,6 @@
       renderHistory();
       renderTournee();
 
-      // Reset formulaire
       selectedArticle = null;
       document.getElementById("sapSearchInput").value = "";
       document.getElementById("selectedArticleCard").classList.add("hidden");
@@ -386,7 +415,6 @@
       `).join('');
     }
 
-    // RENDU DE "MA TOURNÉE" FILTRÉE STRICTEMENT SUR LA DATE DU JOUR POUR L'AGENT CONNECTÉ
     function renderTournee() {
       const container = document.getElementById("tourneeListContainer");
       const dateBadge = document.getElementById("tourneeDateBadge");
@@ -437,20 +465,20 @@
       document.getElementById("tabHistorique").classList.add("hidden");
       document.getElementById("tabTournee").classList.add("hidden");
 
-      document.getElementById("navComptage").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition";
-      document.getElementById("navHistorique").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition";
-      document.getElementById("navTournee").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition";
+      document.getElementById("navComptage").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer";
+      document.getElementById("navHistorique").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer";
+      document.getElementById("navTournee").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer";
 
       if (tab === 'comptage') {
         document.getElementById("tabComptage").classList.remove("hidden");
-        document.getElementById("navComptage").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition";
+        document.getElementById("navComptage").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition cursor-pointer";
       } else if (tab === 'historique') {
         document.getElementById("tabHistorique").classList.remove("hidden");
-        document.getElementById("navHistorique").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition";
+        document.getElementById("navHistorique").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition cursor-pointer";
         renderHistory();
       } else if (tab === 'tournee') {
         document.getElementById("tabTournee").classList.remove("hidden");
-        document.getElementById("navTournee").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition";
+        document.getElementById("navTournee").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition cursor-pointer";
         renderTournee();
       }
       lucide.createIcons();
@@ -467,21 +495,21 @@
       recognition.interimResults = false;
 
       const btn = document.getElementById("micBtn");
-      btn.className = "p-2.5 rounded-xl bg-rose-600 text-white transition shrink-0 animate-pulse";
+      btn.className = "p-2.5 rounded-xl bg-rose-600 text-white transition shrink-0 animate-pulse cursor-pointer";
 
       recognition.onresult = function(event) {
         const text = event.results[0][0].transcript;
         document.getElementById("sapSearchInput").value = text;
         onSapSearchInput(text);
-        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0";
+        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer";
       };
 
       recognition.onerror = function() {
-        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0";
+        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer";
       };
 
       recognition.onend = function() {
-        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0";
+        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0 cursor-pointer";
       };
 
       recognition.start();
