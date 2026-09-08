@@ -187,7 +187,7 @@
                 <span class="text-[11px] text-slate-700 font-medium">Seuil volume atypique</span>
                 <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">50</span> pcs</span>
               </div>
-              <input type="number" id="cfgMaxQty" value="50" min="1" oninput="document.getElementById('cfgMaxQtyDisplay').innerText=this.value; applyFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
+              <input type="number" id="cfgMaxQty" value="50" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
             </div>
           </div>
         </div>
@@ -458,6 +458,8 @@
     let filterOnlyActiveAgents = false;
     let openDrawers = {};
 
+    let customMaxQty = Number(localStorage.getItem("mon_cfg_max_qty")) || 50;
+
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
     const BELGIUM_BOUNDS = [
@@ -512,6 +514,13 @@
       populateAdminDropdown();
       onSmartPeriodChange('CURRENT_WEEK');
 
+      const qtyInput = document.getElementById("cfgMaxQty");
+      const qtyDisplay = document.getElementById("cfgMaxQtyDisplay");
+      if (qtyInput && qtyDisplay) {
+        qtyInput.value = customMaxQty;
+        qtyDisplay.innerText = customMaxQty;
+      }
+
       if (!currentAdmin) {
         document.getElementById("authModal").classList.remove("hidden");
       } else {
@@ -530,6 +539,17 @@
       switchView(activeView);
       applyFilters();
     });
+
+    function updateMaxQtyThreshold(val) {
+      const parsed = Number(val);
+      if (!isNaN(parsed) && parsed > 0) {
+        customMaxQty = parsed;
+        localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+        const display = document.getElementById("cfgMaxQtyDisplay");
+        if (display) display.innerText = customMaxQty;
+        applyFilters();
+      }
+    }
 
     function populateAdminDropdown() {
       const adminSel = document.getElementById("authAdminSelect");
@@ -772,7 +792,7 @@
       document.getElementById("periodBadgeAgents").innerText = periodLabel;
 
       const term = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").toLowerCase().trim();
-      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
+      const maxQ = customMaxQty;
 
       const filtered = cachedHistory.filter(item => {
         const itDate = parseItemDate(item.timestamp);
@@ -782,6 +802,13 @@
         if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
         if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
         if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+
+        if (filterOnlyActiveAgents) {
+          const nowMs = Date.now();
+          const fifteenMinMs = 15 * 60 * 1000;
+          const dt = parseItemDate(item.timestamp);
+          if (!dt || (nowMs - dt.getTime()) >= fifteenMinMs) return false;
+        }
 
         if (term) {
           const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
@@ -807,7 +834,7 @@
       const totalR = list.length;
       const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
       const zeroS = list.filter(r => Number(r.quantity) === 0).length;
-      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
+      const maxQ = customMaxQty;
       const atypS = list.filter(r => Number(r.quantity) > maxQ).length;
 
       document.getElementById("kpiTotalRows").innerText = totalR;
@@ -828,7 +855,7 @@
       document.getElementById("tableCountLabel").innerText = countText;
 
       const tbody = document.getElementById("supervisionTableBody");
-      const maxQ = Number(document.getElementById("cfgMaxQty").value) || 50;
+      const maxQ = customMaxQty;
       const alertZero = document.getElementById("cfgAlertZero").checked;
 
       if (list.length === 0) {
@@ -932,7 +959,7 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    // CARTE CORRIGÉE : REGROUPEMENT 5KM, CUMUL TOTAL LIGNES EN HAUT À DROITE, TOUS LES COMBOS REPRIS, ET PLAGE DE DATES CORRECTE (MIN ET MAX)
+    // CARTE CORRIGÉE : REGROUPEMENT 5KM, CUMUL TOTAL LIGNES EXACT, LISTE EXHAUSTIVE DE TOUS LES COMBOS AU SURVOL ET PLAGE MIN/MAX DE DATES
     function renderMap(list) {
       if (!map) {
         map = L.map('mapContainer', {
@@ -1030,7 +1057,6 @@
         const isFinalizedCluster = (status === 'Finalisé');
         const fillColor = isFinalizedCluster ? "#f97316" : "#10b981";
 
-        // Collecter TOUS les combos (entrepreneur + métier) présents dans le cluster
         const comboCounts = {};
         const comboStatus = {};
         items.forEach(i => {
@@ -1042,8 +1068,7 @@
 
         const comboList = Object.entries(comboCounts).map(([combo, count]) => `<li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-orange-600">${count} ligne(s)</strong> [${comboStatus[combo]}]</li>`).join('');
         
-        // Total cumulé de toutes les lignes du cluster (affiché en haut à droite de la popup)
-        const totalClusterLines = items.reduce((acc, curr) => acc + 1, 0);
+        const totalClusterLines = items.length;
 
         const tooltipContent = `
           <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
@@ -1064,7 +1089,7 @@
 
         marker.bindTooltip(tooltipContent, { direction: 'top', offset: [0, -6] });
 
-        // Calcul correct de la première date (début) et dernière date (fin) comprises dans les items
+        // Calcul exact de la première et dernière date parmi tous les items du cluster
         const sortedDates = items.map(i => parseItemDate(i.timestamp)).filter(d => !isNaN(d.getTime())).sort((a, b) => a - b);
         let dateRangeStr = '--';
         if (sortedDates.length > 0) {
