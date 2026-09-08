@@ -835,7 +835,6 @@
       }
     }
 
-    // ENREGISTREMENT INSTANTANÉ DE LA TÂCHE (CORRECTION DE LA LENTEUR & DISPARITION)
     async function submitManualTourneeAssignment() {
       const agent = document.getElementById("adminAssignAgent").value;
       const tranche = document.getElementById("adminAssignTranche").value;
@@ -868,16 +867,13 @@
         };
       });
 
-      // 1. Ajout instantané dans le cache local pour affichage immédiat sans latence
       items.forEach(it => cachedTournees.push(it));
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
-      // 2. Fermeture immédiate de la modale et rafraîchissement du mur
       closeManualAssignModal();
       manualSelectedCatalogSaps = [];
       renderWallPlanning();
 
-      // 3. Envoi asynchrone en arrière-plan sans bloquer l'UI
       const payload = {
         action: "CREATE_TOURNEES_BULK",
         user: currentAdmin,
@@ -893,7 +889,6 @@
       }
     }
 
-    // ================= TÉLÉCHARGEMENT MODÈLE EXCEL MULTI-ONGLETS =================
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
 
@@ -928,7 +923,6 @@
       XLSX.writeFile(wb, "Modele_Planning_Tournees.xlsx");
     }
 
-    // ================= IMPORT INTELLIGENT EXCEL (.XLSX / .CSV) =================
     function handleExcelFileSelect(e) {
       const files = e.target.files;
       if (files.length > 0) processExcelFile(files[0]);
@@ -1031,7 +1025,6 @@
       }
     }
 
-    // ================= PLANNING MURAL HEBDOMADAIRE =================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const filterAgent = document.getElementById("agendaFilterAgent").value;
@@ -1549,14 +1542,13 @@
             localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
           }
           if (data.tournees) {
-            // Fusion intelligente sans perdre les tâches créées localement à l'instant
             const remoteTournees = data.tournees;
-            const localTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
-            const localOnly = localTournees.filter(lt => lt.id && lt.id.startsWith("TRN-LOC"));
+            const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
+            const localPending = currentLocal.filter(t => t.id && (t.id.startsWith("TRN-LOC") || t.id.startsWith("TRN-EXC")));
             
             cachedTournees = [...remoteTournees];
-            localOnly.forEach(loc => {
-              if (!cachedTournees.some(rt => rt.id === loc.id)) {
+            localPending.forEach(loc => {
+              if (!cachedTournees.some(rt => rt.id === loc.id || (rt.agent === loc.agent && rt.sapRef === loc.sapRef && rt.date === loc.date))) {
                 cachedTournees.push(loc);
               }
             });
