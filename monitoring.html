@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition mt-2">
+      <button onclick="authenticateAdmin()" class="w-full h-12 bg-[#f97316] hover:bg-orange-600 active:bg-orange-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition mt-2 cursor-pointer">
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
@@ -116,8 +116,8 @@
   <!-- ================= STRUCTURE EN DEUX COLONNES ================= -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE) -->
-    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0">
+    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE - PLUS FONCÉE & CONTRASTÉE) -->
+    <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 text-slate-100">
       <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
         
         <!-- Navigation Vues Principales -->
@@ -127,31 +127,31 @@
             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
             <span>Activité Globale</span>
           </button>
-          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>Suivi Terrain & Agents</span>
           </button>
-          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer">
             <i data-lucide="map" class="w-4 h-4"></i>
             <span>Carte & Géolocalisation</span>
           </button>
-          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer">
             <i data-lucide="calendar-range" class="w-4 h-4"></i>
             <span>Agenda & Tournées</span>
           </button>
         </div>
 
         <!-- SÉLECTEUR DE PÉRIODE -->
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
+        <div class="bg-slate-800/80 border border-slate-700 p-3.5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
             </span>
-            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-200">--</span>
+            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-950 text-orange-300 px-2 py-0.5 rounded border border-orange-800">--</span>
           </div>
 
           <div class="relative">
-            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
               <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
               <option value="PREV_WEEK">◀ Semaine précédente</option>
               <option value="TODAY">☀️ Aujourd'hui</option>
@@ -161,47 +161,47 @@
             </select>
           </div>
 
-          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-200">
+          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-700">
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Du :</label>
-              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Du :</label>
+              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-orange-500">
             </div>
             <div>
-              <label class="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Au :</label>
-              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-orange-500">
+              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Au :</label>
+              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-orange-500">
             </div>
           </div>
         </div>
 
         <!-- CRITÈRES D'ANOMALIES & AUDIT -->
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2.5">
+        <div class="bg-slate-800/80 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i> Critères d'Anomalies
+            <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères d'Anomalies
             </span>
-            <span class="text-[9px] bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
+            <span class="text-[9px] bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
           </div>
 
           <div class="space-y-2 text-xs pt-1">
-            <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-slate-300 transition shadow-xs">
-              <span class="text-[11px] text-slate-700 font-medium">Alerter Rupture (Stock = 0)</span>
-              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+            <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer hover:border-slate-600 transition shadow-xs">
+              <span class="text-[11px] text-slate-300 font-medium">Alerter Rupture (Stock = 0)</span>
+              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-600 border-slate-700 bg-slate-900 focus:ring-0">
             </label>
 
-            <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700 space-y-1.5 shadow-xs">
               <div class="flex items-center justify-between">
-                <span class="text-[11px] text-slate-700 font-medium">Seuil volume atypique</span>
-                <span class="text-[11px] font-mono text-amber-700 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
+                <span class="text-[11px] text-slate-300 font-medium">Seuil volume atypique</span>
+                <span class="text-[11px] font-mono text-amber-400 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
               </div>
-              <input type="number" id="cfgMaxQty" value="" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 font-mono text-center">
+              <input type="number" id="cfgMaxQty" value="" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-200 font-mono text-center">
             </div>
           </div>
         </div>
 
       </div>
 
-      <div class="p-4 border-t border-slate-200 text-center bg-slate-50/70 shrink-0">
-        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
+      <div class="p-4 border-t border-slate-800 text-center bg-slate-950 shrink-0">
+        <span class="text-[10px] font-medium text-slate-500 tracking-wider">
           &copy; made by CO2H2O srlu
         </span>
       </div>
@@ -444,17 +444,13 @@
                 <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
                 <span>Importer Planning</span>
               </button>
-              <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Nouvelle Tâche</span>
-              </button>
             </div>
           </div>
 
           <!-- DOUBLE PANNEAU (70% AGENDA MURAL / 30% COMPLETION) -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE -->
+            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE (HAUTEUR INITIALE RESTAURÉE) -->
             <div class="lg:col-span-8 space-y-4">
               
               <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
@@ -467,17 +463,17 @@
                 <div class="text-xs font-mono text-orange-700 font-bold" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- GRILLE PLANNING MURAL HEBDOMADAIRE COMPACTE (LUNDI AU DIMANCHE) -->
+              <!-- GRILLE PLANNING MURAL (HAUTEUR ORIGINALE & COMPACTE) -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Basée sur la période active gauche)</span>
                 </div>
 
-                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[300px]"></div>
+                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[220px]"></div>
               </div>
             </div>
 
-            <!-- PANNEAU DROIT (4/12) : SUIVI & COMPLETION -->
+            <!-- PANNEAU DROIT (4/12) : SUIVI & COMPLETION (AGENTS ACTIFS UNIQUEMENT) -->
             <div class="lg:col-span-4 space-y-4">
               
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
@@ -503,8 +499,8 @@
               </div>
 
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Période)</span>
-                <div id="agentCompletionList" class="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1"></div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Actifs uniquement)</span>
+                <div id="agentCompletionList" class="space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
 
             </div>
@@ -514,14 +510,14 @@
 
       </div>
 
-      <!-- FIN DE PAGE CORRIGÉE SANS DÉBORDEMENT -->
+      <!-- FIN DE PAGE SANS DÉBORDEMENT -->
       <div class="text-center pt-8 pb-6 border-t border-slate-200 shrink-0">
         <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
       </div>
     </main>
   </div>
 
-  <!-- ================= MODALE ASSIGNATION MANUELLE OPTIMISÉE (100% CATALOGUE GLOBAL) ================= -->
+  <!-- ================= MODALE ASSIGNATION MANUELLE (BOUTON DE CRÉATION AU-DESSUS DE LA DATE) ================= -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -554,13 +550,19 @@
           </div>
         </div>
 
+        <!-- BOUTON DE CRÉATION RAPIDE JUSTE AU-DESSUS DE LA DATE -->
+        <div class="flex items-center justify-between pt-1">
+          <label class="font-bold text-slate-700 uppercase tracking-wide">Date & Tranche de planification :</label>
+          <button onclick="submitManualTourneeAssignment()" class="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg text-xs shadow-2xs transition cursor-pointer flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Enregistrer la tâche
+          </button>
+        </div>
+
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold text-slate-500 uppercase mb-0.5">Date :</label>
             <input type="date" id="adminAssignDate" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
           </div>
           <div>
-            <label class="block font-bold text-slate-500 uppercase mb-0.5">Tranche :</label>
             <select id="adminAssignTranche" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="MATIN">Matin</option>
               <option value="APRES_MIDI">Après-midi</option>
@@ -568,20 +570,18 @@
           </div>
         </div>
 
-        <!-- RECHERCHE MULTICRITÈRES SUR 100% DU CATALOGUE GLOBAL -->
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
             <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
             <span id="adminCatalogCount" class="text-[10px] font-mono text-orange-700 font-bold">0 article(s)</span>
           </div>
           <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Recherche multicritères (ex: vis bois, 106626)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 font-medium">
-          <div id="adminCatalogPickerList" class="max-h-52 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
+          <div id="adminCatalogPickerList" class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
         </div>
       </div>
 
       <div class="pt-2 border-t border-slate-100 flex gap-2">
-        <button onclick="closeManualAssignModal()" class="flex-1 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Annuler</button>
-        <button onclick="submitManualTourneeAssignment()" class="flex-1 h-10 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer">Enregistrer</button>
+        <button onclick="closeManualAssignModal()" class="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Fermer</button>
       </div>
     </div>
   </div>
@@ -679,20 +679,21 @@
 
     function parseItemDate(str) {
       if (!str) return new Date(0);
-      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})?(:(\d{1,2}))?)?/);
       if (parts) {
-        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[7] || 0);
       }
       const iso = new Date(str);
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
 
+    // FORMAT DATE VISUEL ET ÉPURÉ EN FRANÇAIS
     function formatDateFrench(dateInput) {
       if (!dateInput) return "--/--/----";
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
       if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
       
-      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      const options = { weekday: 'short', day: 'numeric', month: 'short' };
       return d.toLocaleDateString('fr-FR', options);
     }
 
@@ -780,7 +781,6 @@
       }
     }
 
-    // RECHERCHE MULTICRITÈRES SUR 100% DU CATALOGUE GLOBAL
     function renderAdminCatalogPicker(filterText) {
       const container = document.getElementById("adminCatalogPickerList");
       const countLabel = document.getElementById("adminCatalogCount");
@@ -801,7 +801,7 @@
         return;
       }
 
-      container.innerHTML = filtered.slice(0, 100).map(item => {
+      container.innerHTML = filtered.slice(0, 80).map(item => {
         const isChecked = manualSelectedCatalogSaps.includes(String(item.sapRef).trim());
         return `
           <label class="flex items-center justify-between p-1 rounded hover:bg-white cursor-pointer text-xs text-slate-700">
@@ -1031,7 +1031,7 @@
       }
     }
 
-    // ================= PLANNING MURAL HEBDOMADAIRE (SYNCHRO PÉRIODE GAUCHE) =================
+    // ================= PLANNING MURAL HEBDOMADAIRE =================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const weekLabel = document.getElementById("wallPlanningWeekLabel");
@@ -1072,7 +1072,7 @@
         });
 
         return `
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-col space-y-1.5 min-h-[260px]">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-col space-y-1.5 min-h-[180px]">
             <div class="text-center pb-1 border-b border-slate-200">
               <span class="text-[11px] font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
               <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
@@ -1110,7 +1110,7 @@
         `;
       }).join('');
 
-      renderCompletionMetrics(cachedTournees || []);
+      renderCompletionMetrics(cachedTournees || [], weekDays);
       lucide.createIcons();
     }
 
@@ -1145,9 +1145,13 @@
       lucide.createIcons();
     }
 
-    function renderCompletionMetrics(allTournees) {
-      const total = allTournees.length;
-      const done = allTournees.filter(t => t.statut === 'VALIDE').length;
+    // N'AFFICHER QUE LES AGENTS QUI ONT DES AFFECTATIONS DANS LA SEMAINE/PÉRIODE
+    function renderCompletionMetrics(allTournees, weekDays) {
+      const weekDateStrs = weekDays ? weekDays.map(d => d.toISOString().split('T')[0]) : [];
+      const periodTournees = allTournees.filter(t => weekDateStrs.length === 0 || weekDateStrs.includes(t.date));
+
+      const total = periodTournees.length;
+      const done = periodTournees.filter(t => t.statut === 'VALIDE').length;
       const pending = total - done;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
@@ -1159,13 +1163,18 @@
       const agentListContainer = document.getElementById("agentCompletionList");
       if (!agentListContainer) return;
 
-      if (availableAgents.length === 0) {
-        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic">Aucun agent configuré.</div>`;
+      // Filtrer uniquement les agents ayant des tâches sur cette période
+      const activeAgentsThisPeriod = availableAgents.filter(agent => {
+        return periodTournees.some(t => t.agent === agent);
+      });
+
+      if (activeAgentsThisPeriod.length === 0) {
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucun agent actif sur cette période.</div>`;
         return;
       }
 
-      agentListContainer.innerHTML = availableAgents.map(agent => {
-        const agentTasks = allTournees.filter(t => t.agent === agent);
+      agentListContainer.innerHTML = activeAgentsThisPeriod.map(agent => {
+        const agentTasks = periodTournees.filter(t => t.agent === agent);
         const aTotal = agentTasks.length;
         const aDone = agentTasks.filter(t => t.statut === 'VALIDE').length;
         const aPct = aTotal > 0 ? Math.round((aDone / aTotal) * 100) : 0;
@@ -2148,10 +2157,10 @@
       document.getElementById("viewMap").classList.add("hidden");
       document.getElementById("viewTourneesAdmin").classList.add("hidden");
 
-      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
-      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
-      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
-      document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer";
+      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
+      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
+      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
+      document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
 
       if (v === 'global') {
         document.getElementById("viewGlobal").classList.remove("hidden");
