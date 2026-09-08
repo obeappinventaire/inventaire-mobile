@@ -116,8 +116,8 @@
   <!-- ================= STRUCTURE EN DEUX COLONNES ================= -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE - PLUS FONCÉE) -->
-    <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 text-slate-100">
+    <!-- BARRE LATÉRALE (SIDEBAR GAUCHE - ÉCLAIRCIE EN SLATE-800) -->
+    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100">
       <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
         
         <!-- Navigation Vues Principales -->
@@ -127,22 +127,22 @@
             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
             <span>Activité Globale</span>
           </button>
-          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer">
+          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>Suivi Terrain & Agents</span>
           </button>
-          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer">
+          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer">
             <i data-lucide="map" class="w-4 h-4"></i>
             <span>Carte & Géolocalisation</span>
           </button>
-          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer">
+          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer">
             <i data-lucide="calendar-range" class="w-4 h-4"></i>
             <span>Agenda & Tournées</span>
           </button>
         </div>
 
         <!-- SÉLECTEUR DE PÉRIODE -->
-        <div class="bg-slate-800/80 border border-slate-700 p-3.5 rounded-2xl space-y-3">
+        <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
@@ -174,7 +174,7 @@
         </div>
 
         <!-- CRITÈRES D'ANOMALIES & AUDIT -->
-        <div class="bg-slate-800/80 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
+        <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères d'Anomalies
@@ -200,8 +200,8 @@
 
       </div>
 
-      <div class="p-4 border-t border-slate-800 text-center bg-slate-950 shrink-0">
-        <span class="text-[10px] font-medium text-slate-500 tracking-wider">
+      <div class="p-4 border-t border-slate-700 text-center bg-slate-900 shrink-0">
+        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
           &copy; made by CO2H2O srlu
         </span>
       </div>
@@ -424,7 +424,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL RESTAURÉ & BOUTON NOUVELLE TÂCHE) ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (PLANNING MURAL DIVISÉ MATIN / APRES-MIDI AVEC FOND "+") ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -432,7 +432,7 @@
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
                 Planning Semaine & Suivi des Tournées
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural interactif (glissez les tâches d'un jour à l'autre) • Modèle Excel multi-onglets</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural interactif (cliquez sur les zones Matin/Après-midi pour ajouter une tâche, glissez pour déplacer)</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
@@ -444,7 +444,6 @@
                 <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
                 <span>Importer Planning</span>
               </button>
-              <!-- BOUTON NOUVELLE TÂCHE RÉINTÉGRÉ DANS L'EN-TÊTE -->
               <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 <span>Nouvelle Tâche</span>
@@ -455,7 +454,7 @@
           <!-- DOUBLE PANNEAU (70% AGENDA MURAL / 30% COMPLETION) -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE (HAUTEUR INITIALE + DRAG & DROP + [+MATIN/APRES-MIDI]) -->
+            <!-- PANNEAU GAUCHE (8/12) : PLANNING MURAL HEBDOMADAIRE -->
             <div class="lg:col-span-8 space-y-4">
               
               <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
@@ -465,20 +464,21 @@
                     <option value="">Tous les agents</option>
                   </select>
                 </div>
-                <div class="text-xs font-mono text-orange-700 font-bold" id="wallPlanningWeekLabel">--</div>
+                <!-- AFFICHAGE HARMONISÉ AU FORMAT SXX 2026 -->
+                <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- GRILLE PLANNING MURAL (HAUTEUR ORIGINALE & DRAG AND DROP ACTIF) -->
+              <!-- GRILLE PLANNING MURAL (HAUTEUR ALLONGÉE À 380PX & ZONES DIVISÉES MATIN / APRES-MIDI AVEC FOND "+") -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
-                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Glissez une tâche sur un autre jour)</span>
+                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Partie haute: Matin | Partie basse: Après-midi)</span>
                 </div>
 
-                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[220px]"></div>
+                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[380px]"></div>
               </div>
             </div>
 
-            <!-- PANNEAU DROIT (4/12) : SUIVI & COMPLETION (AGENTS ACTIFS UNIQUEMENT) -->
+            <!-- PANNEAU DROIT (4/12) : SUIVI & COMPLETION -->
             <div class="lg:col-span-4 space-y-4">
               
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
@@ -505,7 +505,7 @@
 
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Actifs uniquement)</span>
-                <div id="agentCompletionList" class="space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar pr-1"></div>
+                <div id="agentCompletionList" class="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
 
             </div>
@@ -678,7 +678,10 @@
       const iso = getISOWeekNumber(targetDate);
       const weekStr = String(iso.week).padStart(2, '0');
       const badge = document.getElementById("weekBadgeLabel");
-      if (badge) badge.innerText = `S${weekStr} ${iso.year}`;
+      const wallBadge = document.getElementById("wallPlanningWeekLabel");
+      const badgeText = `S${weekStr} ${iso.year}`;
+      if (badge) badge.innerText = badgeText;
+      if (wallBadge) wallBadge.innerText = badgeText;
     }
 
     function parseItemDate(str) {
@@ -1040,10 +1043,9 @@
       }
     }
 
-    // ================= PLANNING MURAL HEBDOMADAIRE (AVEC DRAG & DROP & CLIC RAPIDE MATIN/APRES-MIDI) =================
+    // ================= PLANNING MURAL HEBDOMADAIRE (ZONES MATIN/APRES-MIDI AVEC FOND "+") =================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
-      const weekLabel = document.getElementById("wallPlanningWeekLabel");
       const filterAgent = document.getElementById("agendaFilterAgent").value;
       const sInputVal = document.getElementById("filterStartDate").value;
 
@@ -1061,10 +1063,6 @@
         weekDays.push(d);
       }
 
-      const firstStr = formatDateFrench(weekDays[0]);
-      const lastStr = formatDateFrench(weekDays[6]);
-      if (weekLabel) weekLabel.innerText = `Semaine du ${firstStr} au ${lastStr}`;
-
       const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
       gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
@@ -1074,57 +1072,79 @@
           dayTasks = dayTasks.filter(t => t.agent === filterAgent);
         }
 
-        const agentGroups = {};
-        dayTasks.forEach(t => {
-          if (!agentGroups[t.agent]) agentGroups[t.agent] = [];
-          agentGroups[t.agent].push(t);
-        });
+        const matinTasks = dayTasks.filter(t => !t.tranche || t.tranche === 'MATIN');
+        const apresMidiTasks = dayTasks.filter(t => t.tranche === 'APRES_MIDI');
+
+        const renderTaskGroups = (tasks) => {
+          const agentGroups = {};
+          tasks.forEach(t => {
+            if (!agentGroups[t.agent]) agentGroups[t.agent] = [];
+            agentGroups[t.agent].push(t);
+          });
+
+          if (Object.keys(agentGroups).length === 0) return '';
+
+          return Object.entries(agentGroups).map(([agent, tList]) => {
+            const total = tList.length;
+            const done = tList.filter(t => t.statut === 'VALIDE').length;
+            const isAllDone = (done === total);
+            const isPartDone = (done > 0 && done < total);
+
+            let badgeColor = "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200";
+            if (isAllDone) badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200";
+            else if (isPartDone) badgeColor = "bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200";
+
+            const tooltipText = tList.map(t => `• ${t.sapRef} (${t.contractor})`).join('\n');
+
+            return `
+              <div draggable="true" 
+                   ondragstart="handleDragStart(event, '${agent}', '${dateStr}')"
+                   onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
+                   title="${agent} :\n${tooltipText}"
+                   class="p-1 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition group relative text-[10px]">
+                <div class="flex justify-between items-center font-bold">
+                  <span class="truncate">${agent}</span>
+                  <span class="font-mono text-[9px]">${done}/${total}</span>
+                </div>
+                <div class="text-[8px] text-slate-600 truncate">${tList[0].contractor || 'Divers'}</div>
+              </div>
+            `;
+          }).join('');
+        };
 
         return `
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-col space-y-1.5 min-h-[220px]"
-               ondragover="event.preventDefault()" 
-               ondrop="handleDropOnDay(event, '${dateStr}')">
-            <div class="text-center pb-1 border-b border-slate-200 flex justify-between items-center px-1">
-              <div>
-                <span class="text-[11px] font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
-                <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[380px]">
+            <div class="text-center pb-1 border-b border-slate-200">
+              <span class="text-[11px] font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
+              <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+            </div>
+
+            <!-- PARTIE HAUTE : MATIN (AVEC FOND "+") -->
+            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" 
+                 ondragover="event.preventDefault()" 
+                 ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')"
+                 class="relative flex-1 bg-white/60 hover:bg-orange-50/40 border border-dashed border-slate-200 hover:border-orange-300 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar cursor-pointer transition group">
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 group-hover:opacity-40 transition">
+                <span class="text-3xl font-light text-slate-400">+</span>
               </div>
-              <div class="flex flex-col gap-0.5">
-                <button onclick="openManualAssignModal('${dateStr}', 'MATIN')" title="Ajouter Matin" class="text-[8px] bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold px-1.5 rounded cursor-pointer">+ Matin</button>
-                <button onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" title="Ajouter Après-midi" class="text-[8px] bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold px-1.5 rounded cursor-pointer">+ AP</button>
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider z-10">Matin</span>
+              <div class="space-y-1 z-10" onclick="event.stopPropagation()">
+                ${renderTaskGroups(matinTasks)}
               </div>
             </div>
 
-            <div class="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar">
-              ${Object.keys(agentGroups).length === 0 ? `
-                <div class="text-[9px] text-slate-400 italic text-center py-6">Aucune tâche</div>
-              ` : Object.entries(agentGroups).map(([agent, tasks]) => {
-                const total = tasks.length;
-                const done = tasks.filter(t => t.statut === 'VALIDE').length;
-                const isAllDone = (done === total);
-                const isPartDone = (done > 0 && done < total);
-
-                let badgeColor = "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200";
-                if (isAllDone) badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200";
-                else if (isPartDone) badgeColor = "bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200";
-
-                const tooltipText = tasks.map(t => `• ${t.sapRef} (${t.contractor})`).join('\n');
-                const firstId = tasks[0].id;
-
-                return `
-                  <div draggable="true" 
-                       ondragstart="handleDragStart(event, '${agent}', '${dateStr}')"
-                       onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
-                       title="${agent} :\n${tooltipText}\n(Glissez pour déplacer)"
-                       class="p-1.5 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition group relative">
-                    <div class="flex justify-between items-center text-[10px] font-bold">
-                      <span class="truncate">${agent}</span>
-                      <span class="font-mono text-[9px]">${done}/${total}</span>
-                    </div>
-                    <div class="text-[8px] text-slate-600 truncate mt-0.5">${tasks[0].contractor || 'Divers'}</div>
-                  </div>
-                `;
-              }).join('')}
+            <!-- PARTIE BASSE : APRÈS-MIDI (AVEC FOND "+") -->
+            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" 
+                 ondragover="event.preventDefault()" 
+                 ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"
+                 class="relative flex-1 bg-white/60 hover:bg-orange-50/40 border border-dashed border-slate-200 hover:border-orange-300 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar cursor-pointer transition group">
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 group-hover:opacity-40 transition">
+                <span class="text-3xl font-light text-slate-400">+</span>
+              </div>
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider z-10">Après-midi</span>
+              <div class="space-y-1 z-10" onclick="event.stopPropagation()">
+                ${renderTaskGroups(apresMidiTasks)}
+              </div>
             </div>
           </div>
         `;
@@ -1134,7 +1154,6 @@
       lucide.createIcons();
     }
 
-    // GESTION DU GLISSER-DÉPOSER (DRAG & DROP ENTRE LES JOURS)
     let draggedAgent = null;
     let draggedSourceDate = null;
 
@@ -1144,24 +1163,21 @@
       e.dataTransfer.setData('text/plain', agent);
     }
 
-    function handleDropOnDay(e, targetDateStr) {
+    function handleDropOnDay(e, targetDateStr, targetTranche) {
       e.preventDefault();
       if (!draggedAgent || !draggedSourceDate) return;
-      if (draggedSourceDate === targetDateStr) return;
 
-      // Déplacer toutes les tâches de cet agent de la source vers la cible pour cette date
       cachedTournees.forEach(t => {
         if (t.agent === draggedAgent && t.date === draggedSourceDate) {
           t.date = targetDateStr;
+          if (targetTranche) t.tranche = targetTranche;
         }
       });
 
       localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
       renderWallPlanning();
 
-      // Synchro silencieuse si en ligne
       if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-        // Envoi simplifié ou recharge
         syncMonitoringData();
       }
 
@@ -1187,6 +1203,7 @@
               <div class="flex items-center gap-1.5">
                 <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
                 <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                <span class="text-[9px] font-mono text-orange-700 bg-orange-50 px-1.5 rounded">${t.tranche || 'MATIN'}</span>
               </div>
               <p class="text-[11px] text-slate-700 truncate">${t.designation || 'Sans désignation'}</p>
               <span class="text-[10px] text-slate-400">${t.contractor} (${t.trade})</span>
@@ -1262,7 +1279,6 @@
       }
     }
 
-    // Fonctions standard de synchronisation et filtres
     function updateActiveAgentsButtonUI() {
       const btnText = document.getElementById("btnFilterActiveText");
       const btn = document.getElementById("btnFilterActiveAgentsOnly");
@@ -2210,10 +2226,10 @@
       document.getElementById("viewMap").classList.add("hidden");
       document.getElementById("viewTourneesAdmin").classList.add("hidden");
 
-      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
-      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
-      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
-      document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer";
+      document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+      document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+      document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+      document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
 
       if (v === 'global') {
         document.getElementById("viewGlobal").classList.remove("hidden");
