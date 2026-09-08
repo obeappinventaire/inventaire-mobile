@@ -111,7 +111,7 @@
     </div>
   </div>
 
-  <!-- ================= EN-TÊTE FIXE (STYLE INDUSTRIEL CLAIR) ================= -->
+  <!-- ================= EN-TÊTE FIXE ================= -->
   <header id="appHeader" class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-xs shrink-0 z-10 transition-all duration-200">
     <div class="flex items-center space-x-2">
       <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow-xs border border-slate-200">
@@ -121,8 +121,6 @@
     </div>
 
     <div class="flex items-center space-x-2">
-      <span id="adminBadge" class="hidden px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-black tracking-wider border border-amber-300">ADMIN</span>
-      
       <button onclick="manualSync()" title="Actualiser les données" class="flex items-center space-x-1 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-indigo-600 transition shadow-2xs font-semibold">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
         <span class="hidden sm:inline">Actualiser</span>
@@ -231,7 +229,6 @@
                      class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3.5 pl-11 pr-24 text-base text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white shadow-2xs transition">
               
               <div class="absolute right-2 flex items-center space-x-1">
-                <!-- BOUTON RECONNAISSANCE VOCALE -->
                 <button type="button" id="btnVoiceSap" onclick="toggleVoiceSapRecognition()" title="Dicter la référence SAP"
                         class="w-9 h-9 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 transition shadow-2xs">
                   <i data-lucide="mic" id="voiceSapIcon" class="w-4 h-4"></i>
@@ -270,7 +267,7 @@
           </div>
         </div>
 
-        <!-- SAISIE DE QUANTITÉ (ZONE DÉTACHÉE EN GRIS INDUSTRIEL) -->
+        <!-- SAISIE DE QUANTITÉ -->
         <div class="bg-slate-200/80 p-4 rounded-2xl border border-slate-300 shadow-xs">
           <label class="block text-[11px] font-bold text-slate-600 uppercase text-center mb-2">Quantité inventoriée (&gt;= 0)</label>
           <div class="flex items-center justify-center space-x-3">
@@ -304,35 +301,21 @@
         <div id="historyList" class="space-y-3"></div>
       </section>
 
-      <!-- ========== VUE 3 : MONITORING MOBILE ========== -->
-      <section id="view-monitoring" class="hidden space-y-4">
+      <!-- ========== VUE 3 : MA TOURNÉE & MISSION ========== -->
+      <section id="view-tournee" class="hidden space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="activity" class="w-4 h-4 text-indigo-600"></i>
-            Supervision Entrepôt
-          </h3>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="route" class="w-4 h-4 text-orange-600"></i>
+              Ma Tournée & Objectifs
+            </h3>
+            <p class="text-[11px] text-slate-500" id="tourneeSubTitle">Tournée assignée ou session libre</p>
+          </div>
           <button onclick="manualSync()" class="text-xs bg-white px-2.5 py-1 rounded-lg text-indigo-600 border border-slate-200 font-semibold shadow-2xs">Actualiser</button>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs">
-            <span class="text-[10px] text-slate-500 block font-bold uppercase">Lignes</span>
-            <span id="mobKpiRows" class="text-xl font-black text-slate-900">0</span>
-          </div>
-          <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs">
-            <span class="text-[10px] text-slate-500 block font-bold uppercase">Pièces</span>
-            <span id="mobKpiQty" class="text-xl font-black text-emerald-600">0</span>
-          </div>
-          <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-xs">
-            <span class="text-[10px] text-amber-700 block font-bold uppercase">Alertes</span>
-            <span id="mobKpiAlerts" class="text-xl font-black text-amber-600">0</span>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide px-1 block">Chantiers & Tournées en cours</span>
-          <div id="mobMonitoringList" class="space-y-3"></div>
-        </div>
+        <!-- ZONE DYNAMIQUE TOURNEE OU TACHYMETRE -->
+        <div id="tourneeDynamicContainer" class="space-y-4"></div>
       </section>
     </div>
 
@@ -344,8 +327,8 @@
     </div>
   </main>
 
-  <!-- NAVIGATION INFÉRIEURE (STYLE CLAIR) -->
-  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 h-16 max-w-md mx-auto transition-all z-20 shadow-lg">
+  <!-- NAVIGATION INFÉRIEURE -->
+  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-3 h-16 max-w-md mx-auto transition-all z-20 shadow-lg">
     <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-600">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <g stroke="currentColor" stroke-width="4">
@@ -362,13 +345,15 @@
       </svg>
       <span class="text-xs font-bold mt-1">Comptage</span>
     </button>
+    
     <button id="tabNavHistory" onclick="switchTab('history')" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600">
       <i data-lucide="history" class="w-5 h-5"></i>
       <span class="text-xs font-semibold mt-1">Historique</span>
     </button>
-    <button id="tabNavMonitoring" onclick="switchTab('monitoring')" class="hidden flex-col items-center justify-center text-slate-400 hover:text-slate-600">
-      <i data-lucide="activity" class="w-5 h-5"></i>
-      <span class="text-xs font-semibold mt-1">Monitoring</span>
+
+    <button id="tabNavTournee" onclick="switchTab('tournee')" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600">
+      <i data-lucide="route" class="w-5 h-5"></i>
+      <span class="text-xs font-semibold mt-1">Ma Tournée</span>
     </button>
   </nav>
 
@@ -397,9 +382,9 @@
     let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
     let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
     let syncQueue = JSON.parse(localStorage.getItem("offline_sync_queue") || "[]");
+    let cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
 
     let currentAgent = localStorage.getItem("inv_current_agent") || "";
-    let isMonitoringUnlocked = false;
     let activeItem = null;
     let html5QrCode = null;
     let isScanning = false;
@@ -413,6 +398,7 @@
 
     let speechRecognizer = null;
     let isSpeechListening = false;
+    let filterPendingOnlyTournee = false;
 
     let sessionValidationCount = parseInt(sessionStorage.getItem("inv_session_validations") || "0", 10);
 
@@ -507,14 +493,13 @@
 
       recognizer.onresult = (event) => {
         const transcript = event.results[0][0].transcript || "";
-        console.log("Vocal reçu:", transcript);
         processSpokenSap(transcript);
       };
 
       recognizer.onerror = (event) => {
         console.warn("Erreur reconnaissance vocale:", event.error);
         if (event.error === 'not-allowed') {
-          alert("Accès au microphone refusé. Veuillez autoriser le micro dans les paramètres du navigateur.");
+          alert("Accès microphone refusé. Activez-le dans les réglages.");
         } else if (event.error !== 'no-speech') {
           showToast("Erreur audio. Réessayez.");
         }
@@ -531,7 +516,7 @@
     function toggleVoiceSapRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("La reconnaissance vocale n'est pas supportée par votre navigateur mobile.");
+        alert("La reconnaissance vocale n'est pas supportée par votre navigateur.");
         return;
       }
 
@@ -547,7 +532,6 @@
         try {
           speechRecognizer.start();
         } catch (e) {
-          console.warn("Erreur démarrage micro:", e);
           speechRecognizer = initSpeechRecognizer();
           try { speechRecognizer.start(); } catch(err){}
         }
@@ -598,10 +582,9 @@
 
     function processSpokenSap(transcript) {
       const parsedDigits = parseSpokenWordsToDigits(transcript);
-      console.log("Chiffres extraits du vocal:", parsedDigits);
 
       if (!parsedDigits || parsedDigits.length < 4) {
-        showToast("Réf non reconnue (trop court). Réessayez.");
+        showToast("Réf trop courte. Réessayez.");
         return;
       }
 
@@ -811,27 +794,8 @@
       if (navigator.vibrate) navigator.vibrate(30);
     }
 
-    function isAdmin() {
-      return adminAgents.includes(currentAgent);
-    }
-
     function updateAgentUI() {
       document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
-      const adminBadge = document.getElementById("adminBadge");
-      const monNavBtn = document.getElementById("tabNavMonitoring");
-      const navContainer = document.getElementById("bottomNav");
-
-      if (isAdmin()) {
-        adminBadge.classList.remove("hidden");
-        monNavBtn.classList.remove("hidden");
-        monNavBtn.classList.add("flex");
-        navContainer.className = "fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-3 h-16 max-w-md mx-auto z-20 shadow-lg";
-      } else {
-        adminBadge.classList.add("hidden");
-        monNavBtn.classList.add("hidden");
-        monNavBtn.classList.remove("flex");
-        navContainer.className = "fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-2 h-16 max-w-md mx-auto z-20 shadow-lg";
-      }
     }
 
     function openAgentModal() {
@@ -853,10 +817,10 @@
       }
       currentAgent = val;
       localStorage.setItem("inv_current_agent", currentAgent);
-      isMonitoringUnlocked = false;
       updateAgentUI();
       document.getElementById("userModal").classList.add("hidden");
       renderHistory();
+      renderTourneeView();
       showToast(`Session : ${currentAgent}`);
     }
 
@@ -947,6 +911,10 @@
             catalog = data.catalog;
             localStorage.setItem("offline_catalog", JSON.stringify(catalog));
           }
+          if (data.tournees) {
+            cachedTournees = data.tournees;
+            localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+          }
           
           if (data.history) {
             const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
@@ -969,7 +937,7 @@
           }
 
           renderHistory();
-          if (isAdmin()) renderMobileMonitoring();
+          renderTourneeView();
         }
       } catch (err) {
         console.warn("Synchronisation réseau échouée :", err);
@@ -1423,7 +1391,7 @@
         document.getElementById("badgeIdentified").classList.add("hidden");
         
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        alert(`Article inconnu (${clean}) :\nAucune correspondance trouvée dans le catalogue Google Sheets.`);
+        alert(`Article inconnu (${clean}) :\nAucune correspondance trouvée.`);
       }
     }
 
@@ -1433,7 +1401,7 @@
 
       const newQty = parseInt(newQtyStr, 10);
       if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide (>= 0 attendue).");
+        alert("Quantité invalide.");
         return;
       }
 
@@ -1467,7 +1435,7 @@
         showToast("Modifié en attente de synchronisation.");
       } finally {
         renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
+        renderTourneeView();
       }
     }
 
@@ -1500,7 +1468,7 @@
         showToast("Supprimé en attente de synchronisation.");
       } finally {
         renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
+        renderTourneeView();
       }
     }
 
@@ -1514,25 +1482,25 @@
       const trade = document.getElementById("tradeSelect").value;
 
       if (!contractor || contractor.trim() === "") {
-        alert("Action impossible :\nVeuillez impérativement sélectionner un Entrepreneur avant de valider.");
+        alert("Action impossible : Choisissez un Entrepreneur.");
         document.getElementById("contractorSelect").focus();
         return;
       }
       if (!trade || trade.trim() === "") {
-        alert("Action impossible :\nVeuillez impérativement sélectionner un Métier avant de valider.");
+        alert("Action impossible : Choisissez un Métier.");
         document.getElementById("tradeSelect").focus();
         return;
       }
 
       if (!activeItem || !catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim())) {
-        alert("Action impossible :\nAucun article valide du catalogue n'est sélectionné.");
+        alert("Action impossible : Aucun article valide sélectionné.");
         return;
       }
 
       const qtyInput = document.getElementById("qtyInput");
       const qty = parseInt(qtyInput.value, 10);
       if (isNaN(qty) || qty < 0) {
-        alert("Veuillez renseigner une quantité valide (>= 0).");
+        alert("Renseignez une quantité valide (>= 0).");
         qtyInput.focus();
         return;
       }
@@ -1564,9 +1532,9 @@
 
       if (recentDuplicate) {
         const confirmChoice = confirm(
-          `⚠️ Doublon détecté :\nVous avez déjà compté cet article il y a moins de 5 minutes (${recentDuplicate.quantity} pcs pour ${contractor} - ${trade}).\n\n` +
-          `• Cliquez sur [OK] pour CUMULER (+${qty} pcs, total = ${recentDuplicate.quantity + qty})\n` +
-          `• Cliquez sur [Annuler] pour ÉCRASER / REMPLACER (nouvelle valeur = ${qty})`
+          `⚠️ Doublon détecté :\nVous avez déjà compté cet article il y a moins de 5 minutes (${recentDuplicate.quantity} pcs).\n\n` +
+          `• [OK] pour CUMULER (+${qty} pcs, total = ${recentDuplicate.quantity + qty})\n` +
+          `• [Annuler] pour ÉCRASER / REMPLACER (nouvelle valeur = ${qty})`
         );
 
         if (confirmChoice) {
@@ -1616,6 +1584,18 @@
         };
       }
 
+      // Marquer localement la tâche de tournée comme VALIDE si applicable
+      const matchedTourneeIdx = cachedTournees.findIndex(t => 
+        t.agent === currentAgent &&
+        String(t.sapRef).trim() === String(activeItem.sapRef).trim() &&
+        (!t.contractor || t.contractor === contractor) &&
+        (!t.trade || t.trade === trade)
+      );
+      if (matchedTourneeIdx !== -1) {
+        cachedTournees[matchedTourneeIdx].statut = 'VALIDE';
+        localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+      }
+
       try {
         if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
           await fetch(GOOGLE_SCRIPT_URL, {
@@ -1652,14 +1632,14 @@
         icon.className = "w-6 h-6";
         lucide.createIcons();
         renderHistory();
-        if (isAdmin()) renderMobileMonitoring();
+        renderTourneeView();
       }
     }
 
     function renderHistory() {
       const c = document.getElementById("historyList");
-      const list = isAdmin() ? cachedHistory : cachedHistory.filter(i => i.user === currentAgent);
-      document.getElementById("historyHeaderLabel").innerText = isAdmin() ? `Toutes les saisies (${list.length})` : `Mes saisies (${list.length})`;
+      const list = cachedHistory.filter(i => i.user === currentAgent);
+      document.getElementById("historyHeaderLabel").innerText = `Mes saisies (${list.length})`;
 
       if (list.length === 0) {
         c.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">Aucune saisie enregistrée.</div>';
@@ -1714,120 +1694,232 @@
       lucide.createIcons();
     }
 
-    function renderMobileMonitoring() {
-      if (!isAdmin()) return;
-      document.getElementById("mobKpiRows").innerText = cachedHistory.length;
-      document.getElementById("mobKpiQty").innerText = cachedHistory.reduce((acc, c) => acc + (Number(c.quantity) || 0), 0);
-      document.getElementById("mobKpiAlerts").innerText = cachedHistory.filter(i => Number(i.quantity) === 0 || Number(i.quantity) > 50).length;
+    // ================= VUE 3 : MA TOURNÉE & MISSION (POINT 2 ET 3 AMÉLIORÉS) =================
+    function toggleTourneeFilter() {
+      filterPendingOnlyTournee = !filterPendingOnlyTournee;
+      renderTourneeView();
+    }
 
-      const now = new Date().getTime();
-      const thirtyMinMs = 30 * 60 * 1000;
-      const container = document.getElementById("mobMonitoringList");
-
-      const groups = {};
-      cachedHistory.forEach(item => {
-        const key = `${item.user}__${item.contractor}__${item.trade}`;
-        if (!groups[key]) {
-          groups[key] = {
-            user: item.user,
-            contractor: item.contractor,
-            trade: item.trade,
-            entries: []
-          };
+    function selectTourneeTask(sapRef, contractor, trade) {
+      if (contractor) {
+        const cSel = document.getElementById("contractorSelect");
+        if (cSel) {
+          cSel.value = contractor;
+          persistSelection('contractor', contractor);
         }
-        groups[key].entries.push(item);
-      });
+      }
+      if (trade) {
+        const tSel = document.getElementById("tradeSelect");
+        if (tSel) {
+          tSel.value = trade;
+          persistSelection('trade', trade);
+        }
+      }
 
-      const groupList = Object.values(groups);
+      switchTab('inventory');
+      selectArticleBySap(sapRef);
 
-      if (groupList.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs italic">Aucune activité enregistrée.</div>`;
+      const qtyInput = document.getElementById("qtyInput");
+      if (qtyInput) {
+        setTimeout(() => {
+          qtyInput.focus();
+          qtyInput.select();
+        }, 150);
+      }
+      showToast(`Article ${sapRef} chargé ! Renseignez la quantité.`);
+    }
+
+    function renderTourneeView() {
+      const container = document.getElementById("tourneeDynamicContainer");
+      const subTitle = document.getElementById("tourneeSubTitle");
+      if (!container) return;
+
+      if (!currentAgent) {
+        container.innerHTML = `<div class="p-8 bg-white border border-slate-200 rounded-2xl text-center text-slate-500 text-xs font-medium">Veuillez d'abord sélectionner votre profil agent.</div>`;
         return;
       }
 
-      container.innerHTML = groupList.map(grp => {
-        const sorted = [...grp.entries].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
-        const firstEntry = sorted[0];
-        const lastEntry = sorted[sorted.length - 1];
+      // 1. Filtrer les tâches assignées à l'agent
+      const agentTournees = (cachedTournees || []).filter(t => String(t.agent).trim().toLowerCase() === currentAgent.trim().toLowerCase());
 
-        const firstDateStr = formatDateDMY(firstEntry.timestamp, true);
-        const lastDateStr = formatDateDMY(lastEntry.timestamp, true);
+      // Comparer avec l'historique des saisies de l'agent pour vérifier les articles comptés
+      const agentHistory = cachedHistory.filter(h => h.user === currentAgent);
+      const agentHistorySaps = new Set(agentHistory.map(h => String(h.sapRef).trim()));
 
-        const lastDt = parseItemDate(lastEntry.timestamp);
-        const isActive = (now - lastDt.getTime()) < thirtyMinMs;
+      // -------------------------------------------------------------
+      // CAS A : L'AGENT A UNE TOURNÉE ASSIGNÉE (Comptage dirigé)
+      // -------------------------------------------------------------
+      if (agentTournees.length > 0) {
+        subTitle.innerText = `Mission assignée • ${agentTournees.length} référence(s)`;
 
-        return `
-          <div class="bg-white p-3.5 rounded-2xl border ${isActive ? 'border-indigo-300' : 'border-slate-200'} text-xs space-y-2 shadow-xs">
-            <div class="flex justify-between items-start border-b border-slate-100 pb-2">
+        // Enrichir le statut en direct
+        const enriched = agentTournees.map(t => {
+          const isCounted = t.statut === 'VALIDE' || agentHistorySaps.has(String(t.sapRef).trim());
+          return { ...t, isDone: isCounted };
+        }).sort((a, b) => (Number(a.ordre) || 0) - (Number(b.ordre) || 0));
+
+        const totalTasks = enriched.length;
+        const doneTasks = enriched.filter(t => t.isDone).length;
+        const pendingTasks = totalTasks - doneTasks;
+        const progressPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+        const displayedTasks = filterPendingOnlyTournee ? enriched.filter(t => !t.isDone) : enriched;
+
+        container.innerHTML = `
+          <!-- BARRE DE PROGRESSION & COMPTEURS -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
               <div>
-                <strong class="text-slate-900 text-sm block">${grp.contractor}</strong>
-                <span class="text-indigo-600 font-bold">${grp.trade}</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Avancement Mission</span>
+                <div class="flex items-baseline gap-1.5 mt-0.5">
+                  <span class="text-2xl font-black text-slate-900 font-mono">${doneTasks}</span>
+                  <span class="text-xs text-slate-400 font-bold">/ ${totalTasks} validés</span>
+                </div>
               </div>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}">
-                ${isActive ? '🟢 En cours' : '🔵 Finalisé'}
-              </span>
+              <div class="text-right">
+                <span class="text-xl font-black text-orange-600 font-mono">${progressPct}%</span>
+                <span class="block text-[10px] text-slate-400 font-bold uppercase">${pendingTasks} restant(s)</span>
+              </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-500 pt-1">
-              <div>
-                <span>Agent :</span>
-                <strong class="text-slate-800 block">${grp.user}</strong>
+            <!-- JAUGE LINÉAIRE -->
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+              <div class="bg-emerald-500 h-full transition-all duration-300 rounded-full" style="width: ${progressPct}%"></div>
+            </div>
+
+            <div class="flex justify-between items-center pt-1 border-t border-slate-100 text-xs">
+              <button onclick="toggleTourneeFilter()" class="font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5">
+                <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                <span>${filterPendingOnlyTournee ? 'Afficher toute la liste' : 'Masquer les articles validés'}</span>
+              </button>
+              <span class="text-[10px] font-mono text-slate-400 font-bold">${displayedTasks.length} affiché(s)</span>
+            </div>
+          </div>
+
+          <!-- LISTE DES ARTICLES DE LA TOURNÉE -->
+          <div class="space-y-2.5">
+            ${displayedTasks.length === 0 ? `
+              <div class="p-6 bg-white border border-slate-200 rounded-2xl text-center text-slate-400 text-xs italic font-medium">
+                ${filterPendingOnlyTournee ? 'Tous les articles de votre tournée ont été validés ! Bravo.' : 'Aucun article répertorié.'}
               </div>
-              <div>
-                <span>Lignes traitées :</span>
-                <strong class="text-emerald-600 font-mono text-xs block">${grp.entries.length} ligne(s)</strong>
+            ` : displayedTasks.map(task => {
+              return `
+                <div onclick="selectTourneeTask('${task.sapRef}', '${task.contractor}', '${task.trade}')" 
+                     class="bg-white border ${task.isDone ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs flex items-center justify-between cursor-pointer active:bg-slate-50 transition">
+                  
+                  <div class="flex items-center space-x-3 min-w-0 pr-2">
+                    <div class="w-7 h-7 rounded-xl flex items-center justify-center font-mono font-black text-xs shrink-0 ${task.isDone ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
+                      ${task.ordre || '•'}
+                    </div>
+
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono font-black text-amber-700 text-sm">${task.sapRef}</span>
+                        ${task.isDone ? `<span class="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">Validé</span>` : `<span class="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.2 rounded border border-amber-200">À compter</span>`}
+                      </div>
+                      <p class="text-xs font-bold text-slate-800 truncate mt-0.5" title="${task.designation}">${task.designation || 'Article sans désignation'}</p>
+                      <span class="text-[10px] text-slate-400 block truncate">${task.contractor || 'Tous'} • ${task.trade || 'Tous métiers'}</span>
+                    </div>
+                  </div>
+
+                  <button class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200 shadow-2xs hover:bg-orange-50 hover:text-orange-700 transition">
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+
+      // -------------------------------------------------------------
+      // CAS B : MODE LIBRE / PAS DE TOURNÉE ASSIGNÉE (Tachymètre & Cadence)
+      // -------------------------------------------------------------
+      } else {
+        subTitle.innerText = "Mode libre • Cadence opérationnelle";
+
+        const totalLines = agentHistory.length;
+        const totalPieces = agentHistory.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
+        const sorted = [...agentHistory].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
+
+        // Calcul du débit net (hors pauses > 15 min)
+        let netActiveMs = 0;
+        const maxPauseGapMs = 15 * 60 * 1000;
+        for (let i = 1; i < sorted.length; i++) {
+          const gap = parseItemDate(sorted[i].timestamp).getTime() - parseItemDate(sorted[i - 1].timestamp).getTime();
+          if (gap > 0 && gap <= maxPauseGapMs) netActiveMs += gap;
+        }
+
+        let rateLinesH = totalLines;
+        let ratePiecesH = totalPieces;
+        if (netActiveMs > 180000) {
+          const hours = netActiveMs / 3600000;
+          rateLinesH = Math.round(totalLines / hours);
+          ratePiecesH = Math.round(totalPieces / hours);
+        }
+
+        const contractorsCount = new Set(agentHistory.map(h => h.contractor)).size;
+        const tradesCount = new Set(agentHistory.map(h => h.trade)).size;
+
+        container.innerHTML = `
+          <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-amber-800 text-xs space-y-1">
+            <span class="font-bold flex items-center gap-1.5"><i data-lucide="info" class="w-4 h-4 text-amber-600"></i> Comptage libre en cours</span>
+            <p class="text-[11px] text-amber-700 leading-snug">Aucune liste d'articles spécifique ne vous est assignée aujourd'hui. Vos indicateurs de vitesse et de volume sont calculés ci-dessous :</p>
+          </div>
+
+          <!-- TACHYMÈTRE DE CADENCE NETTE -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs text-center">
+              <span class="text-[10px] font-bold text-indigo-600 uppercase block">Cadence Saisies</span>
+              <span class="text-2xl font-black text-indigo-700 font-mono mt-1 block">${rateLinesH}</span>
+              <span class="text-[10px] text-slate-400 font-semibold">lignes / heure</span>
+            </div>
+            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs text-center">
+              <span class="text-[10px] font-bold text-orange-600 uppercase block">Débit Volume</span>
+              <span class="text-2xl font-black text-orange-600 font-mono mt-1 block">${ratePiecesH}</span>
+              <span class="text-[10px] text-slate-400 font-semibold">pièces / heure</span>
+            </div>
+          </div>
+
+          <!-- CUMUL SÉLECTION -->
+          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">Bilan de votre session</span>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-slate-400 text-[10px] block">Lignes</span>
+                <strong class="text-base font-black text-slate-800 font-mono">${totalLines}</strong>
               </div>
-              <div>
-                <span>1ère saisie :</span>
-                <span class="font-mono text-slate-700 block">${firstDateStr}</span>
+              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-slate-400 text-[10px] block">Pièces</span>
+                <strong class="text-base font-black text-emerald-600 font-mono">${totalPieces}</strong>
               </div>
-              <div>
-                <span>Dernière saisie :</span>
-                <span class="font-mono text-slate-700 block">${lastDateStr}</span>
+              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-slate-400 text-[10px] block">Chantiers</span>
+                <strong class="text-base font-black text-indigo-600 font-mono">${contractorsCount}</strong>
               </div>
             </div>
           </div>
         `;
-      }).join('');
+      }
+
       lucide.createIcons();
     }
 
     function switchTab(tab) {
       const inv = document.getElementById("view-inventory");
       const hist = document.getElementById("view-history");
-      const mon = document.getElementById("view-monitoring");
+      const trn = document.getElementById("view-tournee");
+      
       const tInv = document.getElementById("tabNavInventory");
       const tHist = document.getElementById("tabNavHistory");
-      const tMon = document.getElementById("tabNavMonitoring");
-
-      if (tab === 'monitoring') {
-        if (!isAdmin()) {
-          alert("Accès réservé aux administrateurs.");
-          return;
-        }
-        if (!isMonitoringUnlocked) {
-          const expected = adminPasswords[currentAgent];
-          if (!expected) {
-            alert("Aucun mot de passe configuré pour ce compte. Veuillez contacter votre administrateur.");
-            return;
-          }
-          const entered = prompt(`Supervision (${currentAgent})\nEntrez votre mot de passe :`);
-          if (entered === null) return;
-          if (entered !== expected) {
-            alert("Mot de passe incorrect.");
-            return;
-          }
-          isMonitoringUnlocked = true;
-        }
-      }
+      const tTrn = document.getElementById("tabNavTournee");
 
       if (inv) inv.classList.add("hidden");
       if (hist) hist.classList.add("hidden");
-      if (mon) mon.classList.add("hidden");
+      if (trn) trn.classList.add("hidden");
 
       if (tInv) tInv.classList.replace("text-blue-600", "text-slate-400");
       if (tHist) tHist.classList.replace("text-blue-600", "text-slate-400");
-      if (tMon) tMon.classList.replace("text-blue-600", "text-slate-400");
+      if (tTrn) tTrn.classList.replace("text-blue-600", "text-slate-400");
 
       if (tab === 'inventory') {
         if (inv) inv.classList.remove("hidden");
@@ -1837,11 +1929,11 @@
         if (hist) hist.classList.remove("hidden");
         if (tHist) tHist.classList.replace("text-slate-400", "text-blue-600");
         renderHistory();
-      } else if (tab === 'monitoring') {
+      } else if (tab === 'tournee') {
         if (isScanning) stopScanner();
-        if (mon) mon.classList.remove("hidden");
-        if (tMon) tMon.classList.replace("text-slate-400", "text-blue-600");
-        renderMobileMonitoring();
+        if (trn) trn.classList.remove("hidden");
+        if (tTrn) tTrn.classList.replace("text-slate-400", "text-blue-600");
+        renderTourneeView();
       }
 
       syncData();
