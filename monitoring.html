@@ -410,7 +410,7 @@
                 <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
                 Cartographie Interactive du Terrain (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Survolez un spot pour voir le nombre d'agents • Cliquez pour éclater ou voir les détails</p>
+              <p class="text-xs text-slate-500 mt-0.5">Survolez un spot pour voir les agents • Cliquez pour voir les détails</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs transition flex items-center gap-1">
@@ -483,7 +483,7 @@
 
     function parseItemDate(str) {
       if (!str) return new Date(0);
-      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})?(:(\d{1,2}))?)?/);
+      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
       if (parts) {
         return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
       }
@@ -783,6 +783,13 @@
         if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
         if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
 
+        if (filterOnlyActiveAgents) {
+          const nowMs = Date.now();
+          const fifteenMinMs = 15 * 60 * 1000;
+          const dt = parseItemDate(item.timestamp);
+          if (!dt || (nowMs - dt.getTime()) >= fifteenMinMs) return false;
+        }
+
         if (term) {
           const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""}`.toLowerCase();
           if (!matchTarget.includes(term)) return false;
@@ -895,7 +902,7 @@
               <div class="flex items-center space-x-3">
                 <div class="w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}"></div>
                 <span class="font-bold text-slate-900 text-sm">${agent}</span>
-                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
                   ${isActive ? '🟢 En cours' : '⚪ Déconnecté'} • ${activeContractor} (${lastTimeStr})
                 </span>
               </div>
@@ -917,6 +924,7 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
+    // CARTE AVEC CLUSTERS SÉPARÉS (FINALISÉ VS EN COURS) DANS UN RAYON DE 5KM
     function renderMap(list) {
       if (!map) {
         map = L.map('mapContainer', {
@@ -942,25 +950,28 @@
       const thirtyMinMs = 30 * 60 * 1000;
 
       const agentFinalizedGroups = {};
-      const activeOrOtherItems = [];
+      const agentActiveGroups = {};
 
       list.forEach(item => {
         const lat = Number(item.lat || item.latitude);
         const lng = Number(item.lng || item.longitude);
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
           const isFinalized = (now - parseItemDate(item.timestamp).getTime()) >= thirtyMinMs;
+          const agentKey = item.user || 'Inconnu';
+          
           if (isFinalized) {
-            const agentKey = item.user || 'Inconnu';
             if (!agentFinalizedGroups[agentKey]) agentFinalizedGroups[agentKey] = [];
-            agentFinalizedGroups[agentKey].push({ ...item, lat, lng });
+            agentFinalizedGroups[agentKey].push({ ...item, lat, lng, status: 'Finalisé' });
           } else {
-            activeOrOtherItems.push({ ...item, lat, lng, isFinalized: false });
+            if (!agentActiveGroups[agentKey]) agentActiveGroups[agentKey] = [];
+            agentActiveGroups[agentKey].push({ ...item, lat, lng, status: 'En cours' });
           }
         }
       });
 
       const processedClusters = [];
 
+      // Regroupement finalisé par agent (5km)
       Object.entries(agentFinalizedGroups).forEach(([agent, items]) => {
         const agentClusters = [];
         items.forEach(item => {
@@ -973,70 +984,69 @@
             }
           }
           if (!placed) {
-            agentClusters.push({
-              lat: item.lat,
-              lng: item.lng,
-              user: agent,
-              isFinalized: true,
-              items: [item]
-            });
+            agentClusters.push({ lat: item.lat, lng: item.lng, user: agent, status: 'Finalisé', items: [item] });
           }
         });
         processedClusters.push(...agentClusters);
       });
 
-      activeOrOtherItems.forEach(item => {
-        processedClusters.push({
-          lat: item.lat,
-          lng: item.lng,
-          user: item.user,
-          isFinalized: false,
-          items: [item]
+      // Regroupement en cours par agent (5km)
+      Object.entries(agentActiveGroups).forEach(([agent, items]) => {
+        const agentClusters = [];
+        items.forEach(item => {
+          let placed = false;
+          for (let cl of agentClusters) {
+            if (getDistanceFromLatLonInMeters(cl.lat, cl.lng, item.lat, item.lng) <= 5000) {
+              cl.items.push(item);
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            agentClusters.push({ lat: item.lat, lng: item.lng, user: agent, status: 'En cours', items: [item] });
+          }
         });
+        processedClusters.push(...agentClusters);
       });
 
       processedClusters.forEach(cluster => {
-        const { lat, lng, isFinalized, items } = cluster;
-        const agentName = items[0].user;
+        let { lat, lng, user, status, items } = cluster;
+        
+        // Si un agent a un cluster Finalisé ET un cluster En cours au même endroit, on décale légèrement l'un d'eux
+        processedClusters.forEach(other => {
+          if (other !== cluster && other.user === user && getDistanceFromLatLonInMeters(lat, lng, other.lat, other.lng) < 100) {
+            lat += 0.0015;
+            lng += 0.0015;
+          }
+        });
 
         points.push([lat, lng]);
 
-        let tooltipContent = "";
-        if (isFinalized && items.length > 1) {
-          const comboCounts = {};
-          const comboStatus = {};
-          items.forEach(i => {
-            const comboKey = `${i.contractor} (${i.trade})`;
-            comboCounts[comboKey] = (comboCounts[comboKey] || 0) + 1;
-            const activeLive = (now - parseItemDate(i.timestamp).getTime()) < thirtyMinMs;
-            comboStatus[comboKey] = activeLive ? '<span class="text-emerald-600 font-bold">En cours</span>' : '<span class="text-slate-500">Finalisé</span>';
-          });
-          const comboList = Object.entries(comboCounts).map(([combo, count]) => `<li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-orange-600">${count} ligne(s)</strong> [${comboStatus[combo]}]</li>`).join('');
-          
-          tooltipContent = `
-            <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
-              <strong class="text-slate-900 block text-sm">Agent : ${agentName}</strong>
-              <div class="text-[11px] text-slate-600 font-semibold">Détail par Entrepreneur & Métier :</div>
-              <ul class="list-disc pl-4 text-[10px] text-slate-700 space-y-0.5">${comboList}</ul>
-            </div>
-          `;
-        } else {
-          const single = items[0];
-          const liveActive = (now - parseItemDate(single.timestamp).getTime()) < thirtyMinMs;
-          const statusColored = liveActive ? '<span class="text-emerald-600 font-bold">En cours</span>' : '<span class="text-slate-500">Finalisé</span>';
-          tooltipContent = `
-            <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
-              <strong class="text-slate-900 block text-sm">Agent : ${agentName}</strong>
-              <div class="text-[11px] text-slate-700"><span class="font-bold">${single.contractor} (${single.trade})</span> : <strong class="text-orange-600">${items.length} ligne(s)</strong></div>
-              <div class="text-[10px]">Statut : ${statusColored}</div>
-              <div class="text-[10px] text-slate-500">Date : ${formatDateDMY(single.timestamp, true)}</div>
-            </div>
-          `;
-        }
+        const isFinalizedCluster = (status === 'Finalisé');
+        const fillColor = isFinalizedCluster ? "#f97316" : "#10b981"; // Orange pour finalisé, Vert pour en cours
+
+        const comboCounts = {};
+        const comboStatus = {};
+        items.forEach(i => {
+          const comboKey = `${i.contractor} (${i.trade})`;
+          comboCounts[comboKey] = (comboCounts[comboKey] || 0) + 1;
+          const liveActive = (now - parseItemDate(i.timestamp).getTime()) < thirtyMinMs;
+          comboStatus[comboKey] = liveActive ? '<span class="text-emerald-600 font-bold">En cours</span>' : '<span class="text-slate-500">Finalisé</span>';
+        });
+
+        const comboList = Object.entries(comboCounts).map(([combo, count]) => `<li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-orange-600">${count} ligne(s)</strong> [${comboStatus[combo]}]</li>`).join('');
+        
+        const tooltipContent = `
+          <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
+            <strong class="text-slate-900 block text-sm">Agent : ${user} (${status})</strong>
+            <div class="text-[11px] text-slate-600 font-semibold">Détail par Entrepreneur & Métier :</div>
+            <ul class="list-disc pl-4 text-[10px] text-slate-700 space-y-0.5">${comboList}</ul>
+          </div>
+        `;
 
         const marker = L.circleMarker([lat, lng], {
-          radius: isFinalized && items.length > 1 ? 10 : 7,
-          fillColor: isFinalized ? "#f97316" : "#10b981",
+          radius: items.length > 1 ? 10 : 7,
+          fillColor: fillColor,
           color: "#ffffff",
           weight: 2,
           opacity: 1,
@@ -1063,7 +1073,7 @@
         const datesArray = Array.from(datesSet);
         const dateRangeStr = datesArray.length > 1 ? `${datesArray[0]} au ${datesArray[datesArray.length - 1]}` : (datesArray[0] || '--');
 
-        const safeUser = agentName.replace(/'/g, "\\'");
+        const safeUser = user.replace(/'/g, "\\'");
         const safeContractor = (items[0].contractor || '').replace(/'/g, "\\'");
         const safeTrade = (items[0].trade || '').replace(/'/g, "\\'");
 
@@ -1071,8 +1081,8 @@
           <div class="text-xs font-sans space-y-2.5 py-1 min-w-[280px]">
             <div class="flex justify-between items-start border-b border-slate-100 pb-2">
               <div>
-                <strong class="text-slate-900 text-sm block">${agentName}</strong>
-                <span class="text-slate-500 text-[10px]">${isFinalized ? 'Statut : Finalisé' : 'Statut : En cours'}</span>
+                <strong class="text-slate-900 text-sm block">${user}</strong>
+                <span class="text-slate-500 text-[10px]">Statut : ${status}</span>
               </div>
               <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">${items.length} saisie(s)</span>
             </div>
