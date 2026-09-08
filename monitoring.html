@@ -852,10 +852,10 @@
         });
         const result = await response.json();
         if (result.status !== "success") {
-          alert("Erreur retournée par Google Sheets : " + (result.message || "Échec d'enregistrement distant"));
+          alert("Erreur retournée par Google Sheets : " + (result.message || "Échec d'enregistrement"));
         }
       } catch (err) {
-        alert("Avertissement : La tâche est enregistrée localement mais la synchronisation distante a échoué (" + err.message + ")");
+        alert("Avertissement : Enregistré localement, mais échec de synchronisation distante (" + err.message + ")");
       }
     }
 
@@ -998,7 +998,7 @@
 
           return Object.entries(agentGroups).map(([agent, tList]) => {
             const total = tList.length;
-            const done = tList.filter(t => t.statut === 'VALIDE').length;
+            const done = tList.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
             let badgeColor = done === total ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-orange-100 text-orange-800 border-orange-300";
 
             return `
@@ -1045,20 +1045,23 @@
       document.getElementById("modalTourneeTitle").innerText = `Tournée de ${agentName}`;
       document.getElementById("modalTourneeSubtitle").innerText = `${formatDateFrench(dateStr)} • ${tasks.length} mission(s)`;
 
-      document.getElementById("modalTourneeContent").innerHTML = tasks.map(t => `
-        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div class="min-w-0 pr-2">
-            <div class="flex items-center gap-1.5">
-              <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
-              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${t.statut === 'VALIDE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
-              <span class="text-[9px] font-mono text-orange-700 bg-orange-50 px-1.5 rounded">${t.tranche || 'MATIN'}</span>
+      document.getElementById("modalTourneeContent").innerHTML = tasks.map(t => {
+        const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+        return `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div class="min-w-0 pr-2">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-amber-700">${t.sapRef}</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                <span class="text-[9px] font-mono text-orange-700 bg-orange-50 px-1.5 rounded">${t.tranche || 'MATIN'}</span>
+              </div>
+              <p class="text-[11px] text-slate-700 truncate">${t.designation || 'Sans libellé'}</p>
+              <span class="text-[10px] text-slate-400">${t.contractor} (${t.trade})</span>
             </div>
-            <p class="text-[11px] text-slate-700 truncate">${t.designation || 'Sans libellé'}</p>
-            <span class="text-[10px] text-slate-400">${t.contractor} (${t.trade})</span>
+            <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
-          <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       document.getElementById("tourneeDetailsModal").classList.remove("hidden");
       lucide.createIcons();
@@ -1069,7 +1072,7 @@
       const periodTournees = (allTournees || []).filter(t => weekDateStrs.length === 0 || weekDateStrs.includes(normalizeDateYMD(t.date)));
       
       const total = periodTournees.length;
-      const done = periodTournees.filter(t => t.statut === 'VALIDE').length;
+      const done = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
       document.getElementById("globalCompletionPct").innerText = `${pct}%`;
@@ -1089,7 +1092,7 @@
       agentListContainer.innerHTML = activeAgentsThisPeriod.map(agent => {
         const aTasks = periodTournees.filter(t => t.agent === agent);
         const aTotal = aTasks.length;
-        const aDone = aTasks.filter(t => t.statut === 'VALIDE').length;
+        const aDone = aTasks.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
         const aPct = aTotal > 0 ? Math.round((aDone / aTotal) * 100) : 0;
 
         return `
@@ -1658,12 +1661,10 @@
     async function deleteTableItem(id) {
       if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
 
-      // 1. Suppression optimiste immédiate dans le cache PC
       cachedHistory = cachedHistory.filter(h => h.id !== id);
       localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
       applyFilters();
 
-      // 2. Notification serveur vers Google Apps Script
       try {
         const response = await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
