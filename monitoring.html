@@ -410,14 +410,19 @@
                 <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
                 Cartographie Interactive du Terrain (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Survolez un spot pour voir les agents • Cliquez pour voir les détails</p>
+              <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique • Bouton d'affichage ciblé sur la sélection active</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs transition flex items-center gap-1">
+              <!-- BOUTON DÉDIÉ POUR AFFICHER UNIQUEMENT LA SÉLECTION SUR LA CARTE -->
+              <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
+                <span id="mapFilterBtnText">Afficher toute la période</span>
+              </button>
+              <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
                 <span>Recentrer Belgique</span>
               </button>
-              <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
+              <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
             </div>
           </div>
           <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-xs">
@@ -458,8 +463,11 @@
     let filterOnlyActiveAgents = true; 
     let openDrawers = {};
 
-    // GESTION LIBRE DU SEUIL ATYPIQUE (PAR DÉFAUT VIDE / AUCUN CHIFFRE EN DUR SI NON SAISI)
+    // SEUIL ATYPIQUE LIBRE (VIDE PAR DÉFAUT SI NON ENTRÉ)
     let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
+
+    // BOOLEEN POUR GÉRER L'AFFICHAGE DE LA CARTE SUR LA SÉLECTION OU SUR TOUT L'HISTORIQUE
+    let mapFilterOnSelection = false;
 
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
@@ -790,7 +798,21 @@
       applyFilters();
     }
 
-    // SOLUTION AMÉLIORÉE POUR LA RECHERCHE MULTI-MOTS/MULTIPLE COMBOS AVEC SÉPARATION PAR VIRGULES OU ESPACES
+    // BOUTON DE BASCULE POUR FILTRER LA CARTE SUR LA SELECTION ACTIVE OU TOUT L'HISTORIQUE
+    function toggleMapSelectionFilter() {
+      mapFilterOnSelection = !mapFilterOnSelection;
+      const btnText = document.getElementById("mapFilterBtnText");
+      const btnEl = document.getElementById("btnMapSelectionFilter");
+      if (mapFilterOnSelection) {
+        btnEl.className = "text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 border border-orange-700 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnText.innerText = "Afficher uniquement la sélection";
+      } else {
+        btnEl.className = "text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5";
+        btnText.innerText = "Afficher toute la période";
+      }
+      applyFilters();
+    }
+
     function getFilteredHistory() {
       const sDateVal = document.getElementById("filterStartDate").value;
       const eDateVal = document.getElementById("filterEndDate").value;
@@ -798,8 +820,6 @@
       const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
       const rawTerm = (document.getElementById("tableSearchInput") ? document.getElementById("tableSearchInput").value : "").trim();
-      
-      // Découpage intelligent par virgule ou espace pour permettre de chercher plusieurs blocs/combos simultanément (ex: "106626, 128977" ou "connecteur see")
       const searchGroups = rawTerm ? rawTerm.split(',').map(g => g.trim()).filter(Boolean) : [];
 
       return cachedHistory.filter(item => {
@@ -813,13 +833,10 @@
 
         if (searchGroups.length > 0) {
           const matchTarget = `${item.designation || ""} ${item.sapRef || ""} ${item.contractor || ""} ${item.user || ""} ${item.trade || ""}`.toLowerCase();
-          
-          // Chaque groupe séparé par une virgule représente un critère distinct (OU logique entre groupes, ET logique entre mots d'un même groupe)
           const matchesAnyGroup = searchGroups.some(group => {
             const subWords = group.split(/\s+/).filter(Boolean);
             return subWords.every(word => matchTarget.includes(word.toLowerCase()));
           });
-
           if (!matchesAnyGroup) return false;
         }
 
@@ -857,7 +874,10 @@
       renderKPIs(filtered);
       renderTable(filtered);
       renderAgentsView(filtered);
-      renderMap(filtered);
+
+      // LA CARTE S'APPUIE SOIT SUR LA SÉLECTION STRICTE SI ACTIVÉ, SOIT SUR TOUT L'HISTORIQUE DE BASE POUR ÉVITER LE DÉCOUPLAGE
+      const mapSourceList = mapFilterOnSelection ? filtered : cachedHistory;
+      renderMap(mapSourceList);
     }
 
     function renderKPIs(list) {
