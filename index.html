@@ -1,892 +1,235 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-100 overflow-hidden">
+<html lang="fr" class="h-full bg-slate-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Inventaire Logistique Terrain</title>
-
-  <!-- PWA & ICÔNES -->
-  <link rel="manifest" href="manifest.json">
+  <title>Inventaire Chantier PWA</title>
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.json">
 
-  <!-- SCRIPTS & LIBRAIRIES EXTERNES -->
+  <!-- SCRIPTS & CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
 
   <style>
-    html, body {
-      overscroll-behavior: none !important;
-      overscroll-behavior-y: none !important;
-      -webkit-overscroll-behavior: none !important;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: pan-x pan-y;
-    }
-    
-    #mainContent {
-      overscroll-behavior-y: contain !important;
-    }
-
-    #reader {
-      height: 330px !important;
-      max-height: 330px !important;
-      width: 100% !important;
-      overflow: hidden !important;
-      position: relative !important;
-      background: #000;
-    }
-    #reader video {
-      height: 330px !important;
-      max-height: 330px !important;
-      width: 100% !important;
-      object-fit: cover !important;
-    }
-
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-    }
-    input[type=number] { -moz-appearance: textfield; }
-
-    .ocr-reticle {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 82%;
-      height: 44%;
-      border: 2.5px solid #10b981;
-      border-radius: 12px;
-      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
-      pointer-events: none;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding-bottom: 4px;
-      z-index: 5;
-    }
-
-    @keyframes mic-pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.15); opacity: 0.75; }
-    }
-    .mic-listening {
-      animation: mic-pulse 1.2s infinite ease-in-out;
-      background-color: #ef4444 !important;
-      border-color: #f87171 !important;
-      color: #ffffff !important;
-    }
+    body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100">
+<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50 overflow-hidden">
 
-  <!-- ================= MODALE D'IDENTIFICATION ================= -->
-  <div id="userModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
-    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-5 text-center">
-      <div class="w-14 h-14 rounded-full bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-sm">
-        <i data-lucide="user-check" class="w-7 h-7"></i>
+  <!-- ================= EN-TÊTE MOBILE ================= -->
+  <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
+        <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 object-contain">
       </div>
       <div>
-        <h2 class="text-xl font-bold text-slate-900 tracking-wide">Identification</h2>
-        <p class="text-xs text-slate-500 mt-1">Sélectionnez votre profil pour débuter</p>
+        <h1 class="text-xs font-bold text-slate-900 tracking-tight">Inventaire Chantier</h1>
+        <p class="text-[10px] text-orange-600 font-bold" id="headerAgentName">--</p>
       </div>
-
-      <div class="text-left">
-        <select id="modalAgentSelect" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 font-medium focus:border-amber-500 focus:bg-white focus:outline-none transition">
-          <option value="">Chargement depuis Google Sheets...</option>
-        </select>
-      </div>
-
-      <button id="btnConfirmAgent" onclick="confirmAgentSelection()" class="w-full h-12 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 font-bold rounded-xl text-white shadow-md flex items-center justify-center space-x-2 text-sm transition">
-        <span>Commencer la session</span>
-        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-      </button>
     </div>
-  </div>
-
-  <!-- ================= EN-TÊTE FIXE ================= -->
-  <header id="appHeader" class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-xs shrink-0 z-10 transition-all duration-200">
     <div class="flex items-center space-x-2">
-      <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 rounded-md shadow-xs border border-slate-200">
-      <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-      <span id="statusText" class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">En ligne</span>
-      <span id="syncBadge" class="hidden text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded">0 en attente</span>
-    </div>
-
-    <div class="flex items-center space-x-2">
-      <button onclick="manualSync()" title="Actualiser les données" class="flex items-center space-x-1 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-indigo-600 transition shadow-2xs font-semibold">
-        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-        <span class="hidden sm:inline">Actualiser</span>
-      </button>
-
-      <button onclick="openAgentModal()" class="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-800 transition shadow-2xs">
-        <i data-lucide="user" class="w-3.5 h-3.5 text-amber-600"></i>
-        <span id="currentAgentName" class="font-bold truncate max-w-[90px]">Chargement...</span>
-        <i data-lucide="chevron-down" class="w-3 h-3 text-slate-500 ml-0.5"></i>
+      <div id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+      <button onclick="openConfigModal()" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+        <i data-lucide="settings" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
 
-  <!-- ================= CONTENU PRINCIPAL ================= -->
-  <main id="mainContent" class="flex-1 overflow-y-auto bg-slate-100 border-x border-slate-200 max-w-md mx-auto w-full p-4 pb-20 flex flex-col justify-between">
-
-    <div class="space-y-4">
-      <!-- ========== VUE 1 : COMPTAGE ========== -->
-      <section id="view-inventory" class="space-y-4">
-        
-        <!-- BLOC ENTREPRENEUR & MÉTIER -->
-        <div id="selectorsBox" class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-xs">
+  <!-- ================= CONTENU PRINCIPAL (ONGS PWA) ================= -->
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24">
+    
+    <!-- ONGLET 1 : COMPTAGE -->
+    <section id="tabComptage" class="space-y-4">
+      <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Paramètres de Saisie</h2>
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-              Entrepreneur <span class="text-rose-500 font-bold">*</span>
-            </label>
-            <select id="contractorSelect" onchange="persistSelection('contractor', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition">
-              <option value="">-- Sélectionner l'entrepreneur (Obligatoire) --</option>
-            </select>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
+            <select id="selectContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-              Métier <span class="text-rose-500 font-bold">*</span>
-            </label>
-            <select id="tradeSelect" onchange="persistSelection('trade', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition">
-              <option value="">-- Sélectionner le métier (Obligatoire) --</option>
-            </select>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Métier</label>
+            <select id="selectTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
           </div>
         </div>
+      </div>
 
-        <!-- BLOC SCANNER & RECHERCHE CATALOGUE -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-xs">
-          <button id="btnScan" onclick="toggleScanner()" class="w-full h-14 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 font-bold rounded-xl flex items-center justify-center space-x-2 text-white shadow-sm text-sm transition">
-            <i data-lucide="scan-barcode" class="w-5 h-5"></i>
-            <span id="btnScanText">SCANNER CODE-BARRES / QR / RÉF SAP</span>
+      <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Article SAP</h2>
+          <span id="sapStatusBadge" class="text-[10px] font-mono font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">Recherche active</span>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+            <input type="text" id="sapSearchInput" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-9 pr-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
+            <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-1"></div>
+          </div>
+          <button onclick="toggleVoiceSearch()" id="micBtn" class="p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0">
+            <i data-lucide="mic" class="w-5 h-5"></i>
           </button>
-
-          <!-- MODALE CAMÉRA CENTRÉE -->
-          <div id="scannerContainer" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
-            <div class="relative w-full max-w-sm bg-slate-950 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-2xl">
-              
-              <div class="absolute top-2.5 inset-x-0 flex justify-center z-10 pointer-events-none">
-                <span class="text-xs font-mono font-black text-indigo-200 bg-slate-950/90 px-3 py-1 rounded border border-indigo-500/50 tracking-wider shadow">
-                  ZONE POUR QR / EAN
-                </span>
-              </div>
-
-              <div id="reader" class="w-full relative"></div>
-              
-              <div class="ocr-reticle">
-                <span class="text-xs font-mono font-black text-emerald-300 bg-slate-950/90 px-2.5 py-1 rounded border border-emerald-500/50 tracking-wider shadow mb-0.5">
-                  ZONE POUR RÉF SAP 6 CHIFFRES
-                </span>
-              </div>
-              <canvas id="ocrCanvas" class="hidden"></canvas>
-              
-              <div class="p-3 bg-slate-900/95 flex items-center justify-between gap-3 border-t border-slate-800 z-10 relative">
-                <button id="btnTorch" onclick="toggleTorch()" title="Lampe" 
-                        class="w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow">
-                  <i data-lucide="flashlight" id="torchIcon" class="w-6 h-6 text-slate-300"></i>
-                </button>
-
-                <button onclick="triggerManualOcrCapture()" 
-                        class="h-[52px] flex-1 max-w-[185px] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1.5 transition">
-                  <i data-lucide="scan-line" class="w-5 h-5 shrink-0"></i>
-                  <span class="truncate">Scan Réf SAP</span>
-                </button>
-
-                <button onclick="stopScanner()" title="Fermer" 
-                        class="w-[52px] h-[52px] shrink-0 bg-rose-500/20 hover:bg-rose-500/30 active:bg-rose-600 text-rose-300 hover:text-rose-100 rounded-xl border border-rose-500/40 flex items-center justify-center shadow transition">
-                  <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- RECHERCHE CATALOGUE AVEC RECONNAISSANCE VOCALE -->
-          <div class="relative" id="searchCatalogueWrapper">
-            <div class="flex justify-between items-center mb-1.5">
-              <label class="block text-xs font-bold text-slate-500 uppercase">Recherche Catalogue</label>
-              <button id="btnDismissKeyboard" type="button" onclick="blurSearchInput()" class="hidden h-9 px-4 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 border border-slate-200 font-bold rounded-xl text-xs flex items-center gap-1 shadow-2xs transition">
-                <span>Fermer clavier</span>
-                <i data-lucide="x" class="w-4 h-4"></i>
-              </button>
-            </div>
-
-            <div class="relative flex items-center">
-              <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-slate-400 pointer-events-none"></i>
-              <input type="text" id="articleSearchInput" 
-                     oninput="onSearchInput(this.value)" 
-                     onfocus="onSearchFocus()"
-                     onkeydown="if(event.key==='Enter') blurSearchInput()"
-                     placeholder="Tapez un mot-clé ou dictez la réf..." 
-                     autocomplete="off"
-                     enterkeyhint="search"
-                     class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl py-3.5 pl-11 pr-24 text-base text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:bg-white shadow-2xs transition">
-              
-              <div class="absolute right-2 flex items-center space-x-1">
-                <button type="button" id="btnVoiceSap" onclick="toggleVoiceSapRecognition()" title="Dicter la référence SAP"
-                        class="w-9 h-9 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 transition shadow-2xs">
-                  <i data-lucide="mic" id="voiceSapIcon" class="w-4 h-4"></i>
-                </button>
-
-                <button id="clearSearchBtn" onclick="clearSearch()" class="hidden w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
-                  <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-              </div>
-            </div>
-            
-            <div id="suggestionsDropdown" 
-                 ontouchstart="blurSearchInput()" 
-                 class="hidden absolute left-0 right-0 top-full mt-2 bg-white border-2 border-slate-300 rounded-2xl shadow-xl max-h-[60vh] overflow-y-auto z-40 divide-y divide-slate-100"></div>
-          </div>
-
-          <!-- FICHE MATÉRIEL IDENTIFIÉ -->
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <div class="flex items-start justify-between">
-              <div class="min-w-0 pr-2">
-                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wide">Fiche Matériel</span>
-                <h4 id="dispDesignation" class="text-sm font-bold text-slate-900 truncate">Scannez ou choisissez un article</h4>
-              </div>
-              <div id="badgeIdentified" class="hidden px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold shrink-0">Prêt</div>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-xs pt-2 mt-2 border-t border-slate-200">
-              <div>
-                <span class="text-slate-400 block text-[10px] font-semibold">Réf SAP :</span>
-                <span id="dispSap" class="font-mono font-black text-amber-700 text-sm">--</span>
-              </div>
-              <div>
-                <span class="text-slate-400 block text-[10px] font-semibold">Réf Fournisseur :</span>
-                <span id="dispSupplier" class="font-mono font-semibold text-blue-600 truncate block">--</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <!-- SAISIE DE QUANTITÉ -->
-        <div class="bg-slate-200/80 p-4 rounded-2xl border border-slate-300 shadow-xs">
-          <label class="block text-[11px] font-bold text-slate-600 uppercase text-center mb-2">Quantité inventoriée (&gt;= 0)</label>
-          <div class="flex items-center justify-center space-x-3">
-            <input type="number" id="qtyInput" placeholder="0" min="0" value="0" 
-                   onfocus="if(this.value==='0') this.value='';" 
-                   onblur="if(this.value==='') this.value='0';"
-                   class="flex-1 max-w-[200px] h-16 bg-white border-2 border-slate-300 rounded-2xl text-center text-3xl font-black text-slate-900 focus:border-indigo-500 focus:outline-none font-mono shadow-xs">
-            <button type="button" onclick="resetQuantity()" title="Remettre à 0" 
-                    class="h-16 px-5 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 font-bold rounded-2xl shadow-xs flex items-center justify-center space-x-2 transition">
-              <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
-              <span class="text-xs uppercase tracking-wider font-extrabold">Reset</span>
-            </button>
+        <div id="selectedArticleCard" class="hidden bg-orange-50 border border-orange-200 p-3 rounded-xl space-y-1">
+          <div class="flex justify-between items-start">
+            <span id="cardSapRef" class="font-mono text-xs font-bold text-orange-800">--</span>
+            <span id="cardDesignation" class="text-xs font-semibold text-slate-900 text-right truncate max-w-[200px]">--</span>
           </div>
         </div>
+      </div>
 
-        <button id="btnSubmit" onclick="submitInventory()" class="w-full h-16 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-base rounded-2xl shadow-sm flex items-center justify-center space-x-2 transition">
-          <i data-lucide="check-circle" id="submitIcon" class="w-6 h-6"></i>
-          <span id="submitLabel">VALIDER ET ARCHIVER</span>
+      <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quantité Comptée</h2>
+        <div class="flex items-center justify-center space-x-4">
+          <button onclick="adjustQuantity(-1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs">-</button>
+          <input type="number" id="inputQuantity" value="1" min="0" class="w-24 h-14 text-center font-black text-2xl bg-slate-50 border border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 font-mono">
+          <button onclick="adjustQuantity(1)" class="w-14 h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-black text-xl rounded-2xl flex items-center justify-center transition shadow-xs">+</button>
+        </div>
+
+        <button onclick="submitInventoryEntry()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 font-bold text-white rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs transition">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Enregistrer la saisie</span>
         </button>
-      </section>
+      </div>
+    </section>
 
-      <!-- ========== VUE 2 : HISTORIQUE ========== -->
-      <section id="view-history" class="hidden space-y-4">
-        <div class="flex justify-between items-center text-xs text-slate-500 px-1 font-semibold">
-          <span id="historyHeaderLabel">Mes saisies</span>
-          <button onclick="manualSync()" class="flex items-center space-x-1 text-indigo-600 hover:underline">
-            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-            <span>Actualiser</span>
-          </button>
+    <!-- ONGLET 2 : HISTORIQUE -->
+    <section id="tabHistorique" class="hidden space-y-3">
+      <div class="flex justify-between items-center px-1">
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
+        <span id="historyCount" class="text-xs font-mono font-bold text-orange-700">0 ligne(s)</span>
+      </div>
+      <div id="historyListContainer" class="space-y-2"></div>
+    </section>
+
+    <!-- ONGLET 3 : MA TOURNÉE (SYNCHRONISÉE AVEC L'AGENDA) -->
+    <section id="tabTournee" class="hidden space-y-4">
+      <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Feuille de route du jour</h2>
+          <span id="tourneeDateBadge" class="text-[10px] font-mono font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">--</span>
         </div>
-        <div id="historyList" class="space-y-3"></div>
-      </section>
+        <div id="tourneeListContainer" class="space-y-2"></div>
+      </div>
+    </section>
 
-      <!-- ========== VUE 3 : MA TOURNÉE & MISSION ========== -->
-      <section id="view-tournee" class="hidden space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="route" class="w-4 h-4 text-orange-600"></i>
-              Ma Tournée & Objectifs
-            </h3>
-            <p class="text-[11px] text-slate-500" id="tourneeSubTitle">Tournée assignée ou session libre</p>
-          </div>
-          <button onclick="manualSync()" class="text-xs bg-white px-2.5 py-1 rounded-lg text-indigo-600 border border-slate-200 font-semibold shadow-2xs">Actualiser</button>
-        </div>
-
-        <!-- ZONE DYNAMIQUE TOURNEE OU TACHYMETRE -->
-        <div id="tourneeDynamicContainer" class="space-y-4"></div>
-      </section>
-    </div>
-
-    <!-- MENTION LÉGALE -->
-    <div class="text-center pt-6 pb-2 mb-1">
-      <span class="text-[10px] font-medium text-slate-400 tracking-wider">
-        &copy; made by CO2H2O srlu
-      </span>
-    </div>
   </main>
 
-  <!-- NAVIGATION INFÉRIEURE -->
-  <nav id="bottomNav" class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-3 h-16 max-w-md mx-auto transition-all z-20 shadow-lg">
-    <button id="tabNavInventory" onclick="switchTab('inventory')" class="flex flex-col items-center justify-center text-blue-600">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <g stroke="currentColor" stroke-width="4">
-          <path d="M 12 28 V 20 A 8 8 0 0 1 20 12 H 28"/>
-          <path d="M 72 12 H 80 A 8 8 0 0 1 88 20 V 28"/>
-          <path d="M 88 72 V 80 A 8 8 0 0 1 80 88 H 72"/>
-          <path d="M 28 88 H 20 A 8 8 0 0 1 12 80 V 72"/>
-        </g>
-        <g stroke="#f97316" stroke-width="8">
-          <line x1="33" y1="28" x2="33" y2="72"/>
-          <line x1="50" y1="28" x2="50" y2="72"/>
-          <line x1="67" y1="28" x2="67" y2="72"/>
-        </g>
-      </svg>
-      <span class="text-xs font-bold mt-1">Comptage</span>
+  <!-- ================= BARRE DE NAVIGATION INFÉRIEURE MOBILE ================= -->
+  <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
+    <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition">
+      <i data-lucide="calculator" class="w-5 h-5"></i>
+      <span>Comptage</span>
     </button>
-    
-    <button id="tabNavHistory" onclick="switchTab('history')" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600">
+    <button onclick="switchMobileTab('historique')" id="navHistorique" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition">
       <i data-lucide="history" class="w-5 h-5"></i>
-      <span class="text-xs font-semibold mt-1">Historique</span>
+      <span>Historique</span>
     </button>
-
-    <button id="tabNavTournee" onclick="switchTab('tournee')" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600">
+    <button onclick="switchMobileTab('tournee')" id="navTournee" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition">
       <i data-lucide="route" class="w-5 h-5"></i>
-      <span class="text-xs font-semibold mt-1">Ma Tournée</span>
+      <span>Ma Tournée</span>
     </button>
   </nav>
 
-  <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-white border border-emerald-500 text-slate-800 px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 transform -translate-y-28 transition-transform duration-300 pointer-events-none z-50">
-    <div id="toastIcon" class="text-emerald-600"><i data-lucide="check" class="w-5 h-5"></i></div>
-    <div class="flex-1 text-sm font-semibold" id="toastMessage">Action validée</div>
+  <!-- ================= MODALE CONFIGURATION AGENT ================= -->
+  <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
+      <h2 class="text-lg font-bold text-slate-900">Configuration Agent</h2>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1 text-left">Votre Nom / Profil</label>
+        <select id="configAgentSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl h-11 px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-orange-500"></select>
+      </div>
+      <button onclick="saveAgentConfig()" class="w-full h-11 bg-orange-600 font-bold text-white rounded-xl text-xs shadow-md transition">Valider & Démarrer</button>
+    </div>
   </div>
 
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('SW enregistré:', reg.scope))
-          .catch(err => console.warn('Échec enregistrement SW:', err));
+        navigator.serviceWorker.register('./service-worker.js').catch(err => console.warn('SW error:', err));
       });
     }
 
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
+    let currentAgent = localStorage.getItem("mob_current_agent") || "";
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
     let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
     let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
-    let adminAgents = JSON.parse(localStorage.getItem("offline_admins") || "[]");
-    let adminPasswords = JSON.parse(localStorage.getItem("offline_admin_pwds") || "{}");
-    let cachedHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
-    let syncQueue = JSON.parse(localStorage.getItem("offline_sync_queue") || "[]");
     let cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
-
-    let currentAgent = localStorage.getItem("inv_current_agent") || "";
-    let activeItem = null;
-    let html5QrCode = null;
-    let isScanning = false;
-    let ocrInterval = null;
-    let isOcrBusy = false;
-    let isTorchOn = false;
-    let isStartingScanner = false;
-
-    let ocrWorker = null;
-    let latestCoords = { lat: null, lng: null };
-
-    let speechRecognizer = null;
-    let isSpeechListening = false;
-    let filterPendingOnlyTournee = false;
-
-    let sessionValidationCount = parseInt(sessionStorage.getItem("inv_session_validations") || "0", 10);
-
-    function formatNumberToBelgianFrench(n) {
-      const num = parseInt(n, 10);
-      if (isNaN(num)) return String(num);
-      
-      const units = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
-                     "onze", "douze", "treize", "quatorze", "quinze", "seize"];
-      if (num <= 16) return units[num];
-
-      if (num < 70) return String(num);
-      if (num >= 70 && num < 80) {
-        const rem = num - 70;
-        if (rem === 0) return "septante";
-        if (rem === 1) return "septante et un";
-        return "septante-" + units[rem];
-      }
-      if (num >= 80 && num < 90) {
-        const rem = num - 80;
-        if (rem === 0) return "quatre-vingts";
-        return "quatre-vingt-" + units[rem];
-      }
-      if (num >= 90 && num < 100) {
-        const rem = num - 90;
-        if (rem === 0) return "nonante";
-        if (rem === 1) return "nonante et un";
-        return "nonante-" + units[rem];
-      }
-      return String(num);
-    }
-
-    function formatDigitsSpaced(str) {
-      return String(str || "").replace(/\D/g, "").split("").join(" ");
-    }
-
-    function speakFeedback(text) {
-      if (!('speechSynthesis' in window)) return;
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'fr-BE';
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        window.speechSynthesis.speak(utterance);
-      } catch(e) {}
-    }
-
-    function speakRefSelection(sapRef) {
-      const digits = formatDigitsSpaced(sapRef);
-      speakFeedback(`Réf ${digits} sélectionnée`);
-    }
-
-    function speakValidationWithEncouragement(qty, agentName) {
-      sessionValidationCount++;
-      sessionStorage.setItem("inv_session_validations", sessionValidationCount);
-
-      const qtyBelgian = formatNumberToBelgianFrench(qty);
-      let encouragement = "";
-
-      if (sessionValidationCount >= 90) {
-        encouragement = "ne pense pas à l'apéro de ce soir reste focus";
-      } else if (sessionValidationCount >= 51) {
-        encouragement = "continue sur ta lancée félicitations";
-      } else if (sessionValidationCount >= 30) {
-        encouragement = "tu tiens le bon rythme";
-      } else if (sessionValidationCount >= 15) {
-        encouragement = "courage";
-      }
-
-      let phrase = encouragement !== "" ? `${qtyBelgian}, Ok, ${encouragement} ${agentName}` : `${qtyBelgian}, Ok ${agentName}`;
-      speakFeedback(phrase);
-    }
-
-    function initSpeechRecognizer() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        console.warn("SpeechRecognition non supporté sur ce navigateur.");
-        return null;
-      }
-
-      const recognizer = new SpeechRecognition();
-      recognizer.continuous = false;
-      recognizer.interimResults = false;
-      recognizer.lang = 'fr-BE';
-
-      recognizer.onstart = () => {
-        isSpeechListening = true;
-        updateVoiceButtonUI(true);
-        showToast("Écoute en cours... Dictez la référence SAP");
-      };
-
-      recognizer.onresult = (event) => {
-        const transcript = event.results[0][0].transcript || "";
-        processSpokenSap(transcript);
-      };
-
-      recognizer.onerror = (event) => {
-        console.warn("Erreur reconnaissance vocale:", event.error);
-        if (event.error === 'not-allowed') {
-          alert("Accès microphone refusé. Activez-le dans les réglages.");
-        } else if (event.error !== 'no-speech') {
-          showToast("Erreur audio. Réessayez.");
-        }
-      };
-
-      recognizer.onend = () => {
-        isSpeechListening = false;
-        updateVoiceButtonUI(false);
-      };
-
-      return recognizer;
-    }
-
-    function toggleVoiceSapRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("La reconnaissance vocale n'est pas supportée par votre navigateur.");
-        return;
-      }
-
-      if (!speechRecognizer) {
-        speechRecognizer = initSpeechRecognizer();
-      }
-
-      if (isSpeechListening) {
-        try { speechRecognizer.stop(); } catch(e){}
-        isSpeechListening = false;
-        updateVoiceButtonUI(false);
-      } else {
-        try {
-          speechRecognizer.start();
-        } catch (e) {
-          speechRecognizer = initSpeechRecognizer();
-          try { speechRecognizer.start(); } catch(err){}
-        }
-      }
-    }
-
-    function updateVoiceButtonUI(listening) {
-      const btn = document.getElementById("btnVoiceSap");
-      const icon = document.getElementById("voiceSapIcon");
-      if (!btn || !icon) return;
-
-      if (listening) {
-        btn.classList.add("mic-listening");
-        icon.className = "w-4 h-4 text-white animate-pulse";
-      } else {
-        btn.classList.remove("mic-listening");
-        icon.className = "w-4 h-4 text-amber-700";
-      }
-      lucide.createIcons();
-    }
-
-    function parseSpokenWordsToDigits(str) {
-      let text = String(str || "").toLowerCase().trim();
-
-      const numMap = {
-        "zéro": "0", "zero": "0", "un": "1", "une": "1", "deux": "2", "de": "2", "trois": "3", "troi": "3",
-        "quatre": "4", "cinq": "5", "six": "6", "sept": "7", "huit": "8", "neuf": "9",
-        "dix": "10", "onze": "11", "douze": "12", "treize": "13", "quatorze": "14", "quinze": "15", "seize": "16",
-        "dix-sept": "17", "dix-huit": "18", "dix-neuf": "19",
-        "vingt": "20", "trente": "30", "quarante": "40", "cinquante": "50", "soixante": "60",
-        "septante": "70", "quatre-vingt": "80", "quatre-vingts": "80", "quatre vingt": "80", "quatre vingts": "80", "huitante": "80", "octante": "80",
-        "nonante": "90", "cent": "100", "mille": "1000"
-      };
-
-      text = text.replace(/quatre[\s\-]vingt[\s\-]dix/g, "90")
-                 .replace(/quatre[\s\-]vingt/g, "80")
-                 .replace(/dix[\s\-]sept/g, "17")
-                 .replace(/dix[\s\-]huit/g, "18")
-                 .replace(/dix[\s\-]neuf/g, "19");
-
-      for (const [word, digit] of Object.entries(numMap)) {
-        const regex = new RegExp(`\\b${word}\\b`, 'g');
-        text = text.replace(regex, digit);
-      }
-
-      return text.replace(/\D/g, "");
-    }
-
-    function processSpokenSap(transcript) {
-      const parsedDigits = parseSpokenWordsToDigits(transcript);
-
-      if (!parsedDigits || parsedDigits.length < 4) {
-        showToast("Réf trop courte. Réessayez.");
-        return;
-      }
-
-      const validCatalogSaps = catalog
-        .map(i => String(i.sapRef).trim())
-        .filter(ref => ref.length === 6);
-
-      let matchedSap = null;
-
-      const directMatches = parsedDigits.match(/\d{6}/g) || [];
-      for (const cand of directMatches) {
-        if (validCatalogSaps.includes(cand)) {
-          matchedSap = cand;
-          break;
-        }
-      }
-
-      if (!matchedSap && parsedDigits.length >= 6) {
-        for (let i = 0; i <= parsedDigits.length - 6; i++) {
-          const slice = parsedDigits.substring(i, i + 6);
-          if (validCatalogSaps.includes(slice)) {
-            matchedSap = slice;
-            break;
-          }
-        }
-      }
-
-      if (!matchedSap && validCatalogSaps.length > 0) {
-        const candidates = parsedDigits.match(/\d{5,7}/g) || [parsedDigits];
-        for (const cand of candidates) {
-          let minDistance = 999;
-          let bestCandidate = null;
-
-          for (const sap of validCatalogSaps) {
-            const dist = getLevenshteinDistance(cand, sap);
-            if (dist < minDistance) {
-              minDistance = dist;
-              bestCandidate = sap;
-            }
-          }
-
-          if (minDistance <= 1 && bestCandidate) {
-            matchedSap = bestCandidate;
-            break;
-          }
-        }
-      }
-
-      if (matchedSap) {
-        selectArticleBySap(matchedSap);
-        showToast(`Réf vocale validée : ${matchedSap}`);
-      } else {
-        document.getElementById("articleSearchInput").value = parsedDigits;
-        onSearchInput(parsedDigits);
-        showToast(`Réf ${parsedDigits} non trouvée directement`);
-      }
-    }
-
-    function parseItemDate(str) {
-      if (!str) return new Date(0);
-      const parts = String(str).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
-      if (parts) {
-        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
-      }
-      const iso = new Date(str);
-      return isNaN(iso.getTime()) ? new Date(0) : iso;
-    }
-
-    function formatDateDMY(dateInput, includeTime = false) {
-      if (!dateInput) return "--/--/----";
-      const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
-      if (isNaN(d.getTime()) || d.getTime() === 0) return String(dateInput);
-      
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      
-      if (!includeTime) return `${day}/${month}/${year}`;
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    }
-
-    function persistSelection(field, val) {
-      if (field === 'contractor') localStorage.setItem("inv_saved_contractor", val);
-      else if (field === 'trade') localStorage.setItem("inv_saved_trade", val);
-    }
-
-    function restoreSavedSelections() {
-      const savedContractor = localStorage.getItem("inv_saved_contractor");
-      const savedTrade = localStorage.getItem("inv_saved_trade");
-      const cSelect = document.getElementById("contractorSelect");
-      const tSelect = document.getElementById("tradeSelect");
-
-      if (savedContractor && cSelect) cSelect.value = savedContractor;
-      if (savedTrade && tSelect) tSelect.value = savedTrade;
-    }
+    let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
+    let selectedArticle = null;
+    let currentGpsCoords = { lat: null, lng: null };
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
-      updateAgentUI();
-      populateDropdowns();
-      initContinuousGps();
-      updateSyncBadge();
+      initMobileDropdowns();
 
-      switchTab('inventory');
-
-      if (!currentAgent || (availableAgents.length > 0 && !availableAgents.includes(currentAgent))) {
-        openAgentModal();
+      if (!currentAgent) {
+        document.getElementById("configModal").classList.remove("hidden");
+      } else {
+        document.getElementById("headerAgentName").innerText = currentAgent;
       }
 
-      document.addEventListener("click", (e) => {
-        const wrapper = document.getElementById("searchCatalogueWrapper");
-        const dd = document.getElementById("suggestionsDropdown");
-        const searchInput = document.getElementById("articleSearchInput");
-        const clearBtn = document.getElementById("clearSearchBtn");
-        const dismissBtn = document.getElementById("btnDismissKeyboard");
-        
-        if (wrapper && !wrapper.contains(e.target) && (!clearBtn || !clearBtn.contains(e.target)) && (!dismissBtn || !dismissBtn.contains(e.target))) {
-          if (dd) dd.classList.add("hidden");
-          blurSearchInput();
-          if (!activeItem && searchInput && searchInput.value.trim() !== "") {
-            clearSearch();
-          }
-        }
-      });
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(pos => {
+          currentGpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        }, err => console.warn("GPS warning:", err), { enableHighAccuracy: true });
+      }
 
-      window.addEventListener("online", () => {
-        updateNetworkStatus(true);
-        processSyncQueue();
-      });
-      window.addEventListener("offline", () => updateNetworkStatus(false));
-
-      initOcrWorker();
-      await syncData();
+      await syncMobileData();
+      renderHistory();
+      renderTournee();
     });
 
-    function initContinuousGps() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            latestCoords.lat = pos.coords.latitude;
-            latestCoords.lng = pos.coords.longitude;
-          },
-          (err) => console.warn("GPS initial warning:", err.message),
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-
-        navigator.geolocation.watchPosition(
-          (pos) => {
-            latestCoords.lat = pos.coords.latitude;
-            latestCoords.lng = pos.coords.longitude;
-          },
-          (err) => console.warn("GPS tracking warning:", err.message),
-          { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
-        );
+    function initMobileDropdowns() {
+      const agentSel = document.getElementById("configAgentSelect");
+      if (agentSel) {
+        agentSel.innerHTML = '<option value="">-- Choisir votre profil --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+        if (currentAgent) agentSel.value = currentAgent;
       }
+
+      const cSel = document.getElementById("selectContractor");
+      const tSel = document.getElementById("selectTrade");
+      if (cSel) cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (tSel) tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
-    function updateNetworkStatus(isOnline) {
-      const dot = document.getElementById("statusDot");
-      const txt = document.getElementById("statusText");
-      if (isOnline) {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-        txt.className = "text-[11px] font-bold uppercase tracking-wider text-emerald-600";
-        txt.innerText = "En ligne";
-      } else {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-        txt.className = "text-[11px] font-bold uppercase tracking-wider text-rose-600";
-        txt.innerText = "Hors-ligne";
-      }
+    function openConfigModal() {
+      document.getElementById("configModal").classList.remove("hidden");
     }
 
-    async function initOcrWorker() {
-      try {
-        ocrWorker = await Tesseract.createWorker('eng');
-        await ocrWorker.setParameters({
-          tessedit_char_whitelist: '0123456789',
-          tessedit_pageseg_mode: '7'
-        });
-      } catch (err) {
-        console.warn("Worker OCR warning:", err);
-      }
-    }
-
-    function onSearchFocus() {
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-      if (dismissBtn) dismissBtn.classList.remove("hidden");
-
-      const main = document.getElementById("mainContent");
-      if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function blurSearchInput() {
-      const input = document.getElementById("articleSearchInput");
-      if (input && document.activeElement === input) {
-        input.blur();
-      }
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-      if (dismissBtn) dismissBtn.classList.add("hidden");
-    }
-
-    function resetQuantity() {
-      const input = document.getElementById("qtyInput");
-      input.value = 0;
-      if (navigator.vibrate) navigator.vibrate(30);
-    }
-
-    function updateAgentUI() {
-      document.getElementById("currentAgentName").innerText = currentAgent || "Non défini";
-    }
-
-    function openAgentModal() {
-      const select = document.getElementById("modalAgentSelect");
-      if (availableAgents.length === 0) {
-        select.innerHTML = '<option value="">En attente de connexion Google Sheets...</option>';
-      } else {
-        select.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
-          availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
-      }
-      document.getElementById("userModal").classList.remove("hidden");
-    }
-
-    function confirmAgentSelection() {
-      const val = document.getElementById("modalAgentSelect").value;
-      if (!val) {
-        alert("Veuillez sélectionner votre profil.");
+    function saveAgentConfig() {
+      const sel = document.getElementById("configAgentSelect").value;
+      if (!sel) {
+        alert("Veuillez sélectionner un profil agent.");
         return;
       }
-      currentAgent = val;
-      localStorage.setItem("inv_current_agent", currentAgent);
-      updateAgentUI();
-      document.getElementById("userModal").classList.add("hidden");
-      renderHistory();
-      renderTourneeView();
-      showToast(`Session : ${currentAgent}`);
+      currentAgent = sel;
+      localStorage.setItem("mob_current_agent", currentAgent);
+      document.getElementById("headerAgentName").innerText = currentAgent;
+      document.getElementById("configModal").classList.add("hidden");
+      renderTournee();
     }
 
-    function populateDropdowns() {
-      const cSelect = document.getElementById("contractorSelect");
-      const tSelect = document.getElementById("tradeSelect");
-
-      if (availableContractors.length > 0) {
-        cSelect.innerHTML = '<option value="">-- Sélectionner l\'entrepreneur (Obligatoire) --</option>' + 
-          availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      } else {
-        cSelect.innerHTML = '<option value="">Chargement des entrepreneurs...</option>';
-      }
-
-      if (availableTrades.length > 0) {
-        tSelect.innerHTML = '<option value="">-- Sélectionner le métier (Obligatoire) --</option>' + 
-          availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
-      } else {
-        tSelect.innerHTML = '<option value="">Chargement des métiers...</option>';
-      }
-
-      restoreSavedSelections();
-    }
-
-    function updateSyncBadge() {
-      const badge = document.getElementById("syncBadge");
-      if (!badge) return;
-      if (syncQueue.length > 0) {
-        badge.innerText = `${syncQueue.length} en attente`;
-        badge.classList.remove("hidden");
-      } else {
-        badge.classList.add("hidden");
-      }
-    }
-
-    async function processSyncQueue() {
-      if (!navigator.onLine || syncQueue.length === 0 || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
-
-      const queueCopy = [...syncQueue];
-      for (const item of queueCopy) {
-        try {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(item)
-          });
-          syncQueue = syncQueue.filter(q => !(q.id === item.id && q.action === item.action));
-          localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-          updateSyncBadge();
-        } catch (e) {
-          console.warn("Échec synchro file d'attente :", e);
-          break;
-        }
-      }
-    }
-
-    async function syncData() {
+    async function syncMobileData() {
       if (!navigator.onLine || GOOGLE_SCRIPT_URL.includes("placeholder")) return;
-
-      await processSyncQueue();
-
       try {
-        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
-        
         if (data.status === "success") {
+          if (data.catalog) {
+            catalog = data.catalog;
+            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
+          }
           if (data.agents) {
             availableAgents = data.agents;
             localStorage.setItem("offline_agents", JSON.stringify(availableAgents));
@@ -899,1056 +242,249 @@
             availableTrades = data.trades;
             localStorage.setItem("offline_trades", JSON.stringify(availableTrades));
           }
-          if (data.admins) {
-            adminAgents = data.admins;
-            localStorage.setItem("offline_admins", JSON.stringify(adminAgents));
-          }
-          if (data.adminPasswords) {
-            adminPasswords = data.adminPasswords;
-            localStorage.setItem("offline_admin_pwds", JSON.stringify(adminPasswords));
-          }
-          if (data.catalog) {
-            catalog = data.catalog;
-            localStorage.setItem("offline_catalog", JSON.stringify(catalog));
-          }
           if (data.tournees) {
             cachedTournees = data.tournees;
             localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
           }
-          
-          if (data.history) {
-            const pendingCreateIds = new Set(syncQueue.filter(q => q.action === "CREATE").map(q => q.id));
-            const pendingDeletedIds = new Set(syncQueue.filter(q => q.action === "DELETE").map(q => q.id));
-            
-            const localCreatedItems = cachedHistory.filter(i => pendingCreateIds.has(i.id));
-            const cleanRemote = data.history.filter(r => !pendingDeletedIds.has(r.id) && !pendingCreateIds.has(r.id));
-            
-            cachedHistory = [...localCreatedItems, ...cleanRemote];
-            localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-          }
-
-          populateDropdowns();
-          updateAgentUI();
-
-          const modalSelect = document.getElementById("modalAgentSelect");
-          if (modalSelect && availableAgents.length > 0) {
-            modalSelect.innerHTML = '<option value="">-- Choisir votre profil --</option>' + 
-              availableAgents.map(a => `<option value="${a}" ${a === currentAgent ? 'selected' : ''}>${a}</option>`).join('');
-          }
-
-          renderHistory();
-          renderTourneeView();
+          initMobileDropdowns();
+          renderTournee();
         }
       } catch (err) {
-        console.warn("Synchronisation réseau échouée :", err);
+        console.warn("Échec sync mobile :", err);
       }
     }
 
-    function manualSync() {
-      showToast("Actualisation...");
-      syncData().then(() => showToast("Données synchronisées"));
-    }
-
-    function normalizeStr(str) {
-      return String(str || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-    }
-
-    function onSearchInput(rawVal) {
-      const val = String(rawVal || "").trim();
-      const dd = document.getElementById("suggestionsDropdown");
-      const clearBtn = document.getElementById("clearSearchBtn");
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-
-      activeItem = null;
-      document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
-      document.getElementById("dispSupplier").innerText = "--";
-      document.getElementById("dispSap").innerText = "--";
-      document.getElementById("badgeIdentified").classList.add("hidden");
-
-      if (val.length > 0) {
-        if (clearBtn) clearBtn.classList.remove("hidden");
-        if (dismissBtn) dismissBtn.classList.remove("hidden");
-      } else {
-        if (clearBtn) clearBtn.classList.add("hidden");
-        if (dismissBtn) dismissBtn.classList.add("hidden");
-        if (dd) dd.classList.add("hidden");
+    function onSapSearchInput(val) {
+      const q = String(val || "").trim().toLowerCase();
+      const dd = document.getElementById("sapSuggestions");
+      if (!q) {
+        dd.classList.add("hidden");
         return;
       }
 
-      const searchTerms = normalizeStr(val).split(/\s+/).filter(Boolean);
-      const filtered = catalog.filter(item => {
-        const textTarget = normalizeStr(`${item.designation || ""} ${item.supplierRef || ""} ${item.sapRef || ""} ${item.ean || ""} ${item.qr || ""}`);
-        return searchTerms.every(term => textTarget.includes(term));
-      });
+      const filtered = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 15);
 
-      const sortedResults = filtered.sort((a, b) => {
-        return (a.designation || "").localeCompare(b.designation || "", 'fr', { sensitivity: 'base' });
-      });
-
-      renderSuggestions(sortedResults);
-    }
-
-    function renderSuggestions(results) {
-      const dd = document.getElementById("suggestionsDropdown");
-      if (!dd) return;
-
-      if (!results || results.length === 0) {
-        dd.innerHTML = `<div class="p-4 text-sm text-slate-500 text-center font-medium">Aucun article correspondant dans le catalogue.</div>`;
+      if (filtered.length === 0) {
+        dd.innerHTML = `<div class="p-2 text-xs text-slate-400 italic text-center">Aucun article trouvé</div>`;
         dd.classList.remove("hidden");
         return;
       }
 
-      let html = `
-        <div class="px-4 py-2.5 bg-slate-50 text-xs font-bold text-slate-500 flex justify-between items-center border-b border-slate-200 sticky top-0 z-10">
-          <span>${results.length} article(s) trouvé(s)</span>
-        </div>
-      `;
-
-      html += results.map(item => `
-        <div onclick="selectArticleBySap('${item.sapRef}')" class="p-4 bg-white hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition">
-          <p class="text-base font-bold text-slate-900 leading-snug">${item.designation || 'Sans désignation'}</p>
-          <div class="flex justify-between items-center text-xs mt-2 pt-1.5 border-t border-slate-100">
-            <div class="flex items-center space-x-1.5">
-              <span class="text-[11px] text-slate-400 uppercase font-bold">RÉF :</span>
-              <span class="font-mono font-black text-amber-700 text-base tracking-wider bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200">${item.sapRef}</span>
-            </div>
-            <div class="text-right truncate max-w-[170px]">
-              <span class="text-slate-400">Fourn : </span>
-              <strong class="font-mono text-blue-600 text-sm">${item.supplierRef || 'N/A'}</strong>
-            </div>
+      dd.innerHTML = filtered.map(item => `
+        <div onclick='selectArticleFromSearch(${JSON.stringify(item)})' class="p-2 hover:bg-orange-50 rounded-lg cursor-pointer text-xs flex justify-between items-center">
+          <div>
+            <span class="font-mono font-bold text-orange-800">${item.sapRef}</span>
+            <span class="text-slate-700 ml-1.5">${item.designation}</span>
           </div>
         </div>
       `).join('');
-
-      dd.innerHTML = html;
       dd.classList.remove("hidden");
     }
 
-    function selectArticleBySap(sapRef) {
-      const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
-      if (!item) return;
-      activeItem = { ...item };
-
-      document.getElementById("dispDesignation").innerText = activeItem.designation || "--";
-      document.getElementById("dispSupplier").innerText = activeItem.supplierRef || "--";
-      document.getElementById("dispSap").innerText = activeItem.sapRef || "--";
-      document.getElementById("articleSearchInput").value = `${activeItem.sapRef} - ${activeItem.designation}`;
-      document.getElementById("badgeIdentified").classList.remove("hidden");
-      document.getElementById("suggestionsDropdown").classList.add("hidden");
-      document.getElementById("clearSearchBtn").classList.remove("hidden");
-      blurSearchInput();
-      
-      if (navigator.vibrate) navigator.vibrate(50);
-      speakRefSelection(activeItem.sapRef);
+    function selectArticleFromSearch(item) {
+      selectedArticle = item;
+      document.getElementById("sapSearchInput").value = item.sapRef;
+      document.getElementById("sapSuggestions").classList.add("hidden");
+      document.getElementById("cardSapRef").innerText = item.sapRef;
+      document.getElementById("cardDesignation").innerText = item.designation;
+      document.getElementById("selectedArticleCard").classList.remove("hidden");
     }
 
-    function clearSearch() {
-      document.getElementById("articleSearchInput").value = "";
-      document.getElementById("clearSearchBtn").classList.add("hidden");
-      document.getElementById("suggestionsDropdown").classList.add("hidden");
-      const dismissBtn = document.getElementById("btnDismissKeyboard");
-      if (dismissBtn) dismissBtn.classList.add("hidden");
-      activeItem = null;
-      document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
-      document.getElementById("dispSupplier").innerText = "--";
-      document.getElementById("dispSap").innerText = "--";
-      document.getElementById("badgeIdentified").classList.add("hidden");
-      blurSearchInput();
+    function adjustQuantity(delta) {
+      const input = document.getElementById("inputQuantity");
+      let val = (parseInt(input.value, 10) || 0) + delta;
+      if (val < 0) val = 0;
+      input.value = val;
     }
 
-    async function toggleScanner() {
-      const container = document.getElementById("scannerContainer");
-      const btnText = document.getElementById("btnScanText");
-
-      if (isScanning || isStartingScanner) {
-        await stopScanner();
-        return;
-      }
-
-      isStartingScanner = true;
-      container.classList.remove("hidden");
-      container.classList.add("flex");
-      btnText.innerText = "FERMER CAMERA";
-
-      if (html5QrCode) {
-        try { await html5QrCode.clear(); } catch(e){}
-      }
-      html5QrCode = new Html5Qrcode("reader");
-
-      const qrConfig = {
-        fps: 15,
-        qrbox: { width: 270, height: 210 },
-        aspectRatio: 1.333333
-      };
-
-      try {
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length > 0) {
-          const backCam = devices[devices.length - 1];
-          await html5QrCode.start(
-            backCam.id,
-            qrConfig,
-            (decodedText) => handleExactCodeMatch(decodedText),
-            () => {}
-          );
-        } else {
-          await html5QrCode.start(
-            { facingMode: "environment" },
-            qrConfig,
-            (decodedText) => handleExactCodeMatch(decodedText),
-            () => {}
-          );
-        }
-        
-        isScanning = true;
-        resetTorchUI();
-        startBackgroundOcr();
-
-      } catch (err) {
-        console.warn("Erreur capteur caméra:", err);
-        container.classList.add("hidden");
-        container.classList.remove("flex");
-        btnText.innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-        alert("Accès caméra impossible : Vérifiez les autorisations HTTPS.");
-      } finally {
-        isStartingScanner = false;
-        lucide.createIcons();
-      }
-    }
-
-    async function stopScanner() {
-      if (ocrInterval) {
-        clearInterval(ocrInterval);
-        ocrInterval = null;
-      }
-
-      if (isTorchOn) {
-        await setTorch(false);
-      }
-
-      if (html5QrCode && isScanning) {
-        try {
-          await html5QrCode.stop();
-          html5QrCode.clear();
-        } catch(e){}
-      }
-
-      const video = document.querySelector("#reader video");
-      if (video && video.srcObject) {
-        try {
-          video.srcObject.getTracks().forEach(track => track.stop());
-        } catch (e) {}
-      }
-
-      isScanning = false;
-      resetTorchUI();
-      
-      const container = document.getElementById("scannerContainer");
-      container.classList.add("hidden");
-      container.classList.remove("flex");
-      
-      document.getElementById("btnScanText").innerText = "SCANNER CODE-BARRES / QR / RÉF SAP";
-      lucide.createIcons();
-    }
-
-    async function toggleTorch() {
-      if (!isScanning || !html5QrCode) return;
-      const targetState = !isTorchOn;
-      const success = await setTorch(targetState);
-      if (success) {
-        isTorchOn = targetState;
-        updateTorchUI();
-        showToast(isTorchOn ? "Lumière allumée" : "Lumière éteinte");
-      } else {
-        alert("La torche n'est pas supportée par ce capteur.");
-      }
-    }
-
-    async function setTorch(enable) {
-      try {
-        await html5QrCode.applyVideoConstraints({ advanced: [{ torch: enable }] });
-        return true;
-      } catch (e) {
-        const video = document.querySelector("#reader video");
-        if (video && video.srcObject) {
-          const track = video.srcObject.getVideoTracks()[0];
-          if (track && typeof track.applyConstraints === "function") {
-            try {
-              await track.applyConstraints({ advanced: [{ torch: enable }] });
-              return true;
-            } catch (err2) {
-              return false;
-            }
-          }
-        }
-        return false;
-      }
-    }
-
-    function updateTorchUI() {
-      const btn = document.getElementById("btnTorch");
-      const icon = document.getElementById("torchIcon");
-      if (!btn || !icon) return;
-
-      if (isTorchOn) {
-        btn.className = "w-[52px] h-[52px] shrink-0 bg-amber-400 active:bg-amber-500 text-slate-950 rounded-xl flex items-center justify-center border border-amber-300 transition shadow";
-        icon.className = "w-6 h-6 text-slate-950 fill-slate-950";
-      } else {
-        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
-        icon.className = "w-6 h-6 text-slate-300";
-      }
-      lucide.createIcons();
-    }
-
-    function resetTorchUI() {
-      isTorchOn = false;
-      const btn = document.getElementById("btnTorch");
-      const icon = document.getElementById("torchIcon");
-      if (btn && icon) {
-        btn.className = "w-[52px] h-[52px] shrink-0 bg-slate-800 active:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center border border-slate-700 transition shadow";
-        icon.className = "w-6 h-6 text-slate-300";
-      }
-      lucide.createIcons();
-    }
-
-    function startBackgroundOcr() {
-      ocrInterval = setInterval(async () => {
-        if (!isScanning || isOcrBusy) return;
-        await processVideoOcr(false);
-      }, 1600);
-    }
-
-    async function triggerManualOcrCapture() {
-      if (!isScanning) return;
-      showToast("Lecture Réf SAP...");
-      await processVideoOcr(true);
-    }
-
-    function getLevenshteinDistance(a, b) {
-      if (a.length === 0) return b.length;
-      if (b.length === 0) return a.length;
-      const matrix = [];
-      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-
-      for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-          if (b.charAt(i - 1) === a.charAt(j - 1)) {
-            matrix[i][j] = matrix[i - 1][j - 1];
-          } else {
-            matrix[i][j] = Math.min(
-              matrix[i - 1][j - 1] + 1,
-              matrix[i][j - 1] + 1,
-              matrix[i - 1][j] + 1
-            );
-          }
-        }
-      }
-      return matrix[b.length][a.length];
-    }
-
-    async function processVideoOcr(forceToast = false) {
-      const video = document.querySelector("#reader video");
-      if (!video || video.readyState < 2 || !video.videoWidth) return;
-
-      const canvas = document.getElementById("ocrCanvas");
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-      const cropW = Math.floor(video.videoWidth * 0.82);
-      const cropH = Math.floor(video.videoHeight * 0.44);
-      const startX = Math.floor((video.videoWidth - cropW) / 2);
-      const startY = Math.max(0, Math.floor((video.videoHeight - cropH) / 2));
-
-      canvas.width = cropW * 2;
-      canvas.height = cropH * 2;
-
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
-
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const d = imgData.data;
-      let minLum = 255;
-      let maxLum = 0;
-
-      for (let i = 0; i < d.length; i += 4) {
-        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-        if (lum < minLum) minLum = lum;
-        if (lum > maxLum) maxLum = lum;
-      }
-
-      const range = (maxLum - minLum) || 1;
-      for (let i = 0; i < d.length; i += 4) {
-        const lum = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-        let stretched = ((lum - minLum) / range) * 255;
-        const finalVal = stretched > 135 ? 255 : (stretched < 70 ? 0 : stretched);
-        d[i] = finalVal;
-        d[i + 1] = finalVal;
-        d[i + 2] = finalVal;
-      }
-      ctx.putImageData(imgData, 0, 0);
-
-      isOcrBusy = true;
-      try {
-        let textResult = "";
-        if (ocrWorker) {
-          const ret = await ocrWorker.recognize(canvas);
-          textResult = ret.data.text || "";
-        } else {
-          const ret = await Tesseract.recognize(canvas, 'eng', {
-            tessedit_char_whitelist: '0123456789',
-            tessedit_pageseg_mode: '7'
-          });
-          textResult = ret.data.text || "";
-        }
-
-        if (!isScanning) return;
-
-        const rawDigits = textResult.replace(/\D/g, "");
-        const validCatalogSaps = catalog
-          .map(i => String(i.sapRef).trim())
-          .filter(ref => ref.length === 6);
-
-        let bestSapMatch = null;
-
-        const direct6Matches = rawDigits.match(/\d{6}/g) || [];
-        for (const candidate of direct6Matches) {
-          if (validCatalogSaps.includes(candidate)) {
-            bestSapMatch = candidate;
-            break;
-          }
-        }
-
-        if (!bestSapMatch && rawDigits.length >= 6) {
-          for (let i = 0; i <= rawDigits.length - 6; i++) {
-            const slice = rawDigits.substring(i, i + 6);
-            if (validCatalogSaps.includes(slice)) {
-              bestSapMatch = slice;
-              break;
-            }
-          }
-        }
-
-        if (!bestSapMatch && validCatalogSaps.length > 0) {
-          const candidates = rawDigits.match(/\d{5,7}/g) || [parsedDigits];
-          for (const cand of candidates) {
-            let minDistance = 999;
-            let candidateSap = null;
-
-            for (const sap of validCatalogSaps) {
-              const dist = getLevenshteinDistance(cand, sap);
-              if (dist < minDistance) {
-                minDistance = dist;
-                candidateSap = sap;
-              }
-            }
-
-            if (minDistance <= 1 && candidateSap) {
-              bestSapMatch = candidateSap;
-              break;
-            }
-          }
-        }
-
-        if (bestSapMatch) {
-          stopScanner();
-          selectArticleBySap(bestSapMatch);
-          showToast(`Réf validée : ${bestSapMatch}`);
-          return;
-        }
-
-        if (forceToast) {
-          showToast("Réf non reconnue. Rapprochez le bac.");
-        }
-      } catch (e) {
-        console.warn("Erreur reconnaissance OCR:", e);
-      } finally {
-        isOcrBusy = false;
-      }
-    }
-
-    function handleExactCodeMatch(code) {
-      const clean = String(code).trim();
-      const match = catalog.find(item => 
-        String(item.sapRef).toUpperCase() === clean.toUpperCase() ||
-        String(item.ean).toUpperCase() === clean.toUpperCase() ||
-        String(item.qr).toUpperCase() === clean.toUpperCase() ||
-        String(item.supplierRef).toUpperCase() === clean.toUpperCase()
-      );
-
-      if (match) {
-        stopScanner();
-        selectArticleBySap(match.sapRef);
-        showToast("Identifié : " + match.designation);
-      } else {
-        activeItem = null;
-        document.getElementById("dispDesignation").innerText = "Scannez ou choisissez un article";
-        document.getElementById("dispSap").innerText = "--";
-        document.getElementById("dispSupplier").innerText = "--";
-        document.getElementById("badgeIdentified").classList.add("hidden");
-        
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        alert(`Article inconnu (${clean}) :\nAucune correspondance trouvée.`);
-      }
-    }
-
-    async function editHistoryItem(id, oldQty) {
-      const newQtyStr = prompt("Modifier la quantité saisie (>= 0) :", oldQty);
-      if (newQtyStr === null) return;
-
-      const newQty = parseInt(newQtyStr, 10);
-      if (isNaN(newQty) || newQty < 0) {
-        alert("Quantité invalide.");
-        return;
-      }
-
-      showToast("Mise à jour...");
-      const payload = { 
-        action: "UPDATE", 
-        id: id, 
-        quantity: newQty,
-        user: currentAgent 
-      };
-
-      const target = cachedHistory.find(item => item.id === id);
-      if (target) {
-        target.quantity = newQty;
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      }
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        showToast("Quantité modifiée !");
-      } catch (err) {
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Modifié en attente de synchronisation.");
-      } finally {
-        renderHistory();
-        renderTourneeView();
-      }
-    }
-
-    async function deleteHistoryItem(id, designation) {
-      if (!confirm(`Supprimer définitivement la saisie :\n"${designation}" ?`)) return;
-
-      showToast("Suppression...");
-      const payload = { 
-        action: "DELETE", 
-        id: id, 
-        user: currentAgent 
-      };
-
-      cachedHistory = cachedHistory.filter(item => item.id !== id);
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-        }
-        showToast("Saisie supprimée !");
-      } catch (err) {
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Supprimé en attente de synchronisation.");
-      } finally {
-        renderHistory();
-        renderTourneeView();
-      }
-    }
-
-    async function submitInventory() {
+    async function submitInventoryEntry() {
       if (!currentAgent) {
-        openAgentModal();
+        alert("Veuillez configurer votre nom d'agent (icône engrenage).");
+        openConfigModal();
+        return;
+      }
+      if (!selectedArticle) {
+        alert("Veuillez sélectionner un article SAP.");
         return;
       }
 
-      const contractor = document.getElementById("contractorSelect").value;
-      const trade = document.getElementById("tradeSelect").value;
+      const qty = parseInt(document.getElementById("inputQuantity").value, 10) || 0;
+      const contractor = document.getElementById("selectContractor").value;
+      const trade = document.getElementById("selectTrade").value;
 
-      if (!contractor || contractor.trim() === "") {
-        alert("Action impossible : Choisissez un Entrepreneur.");
-        document.getElementById("contractorSelect").focus();
-        return;
-      }
-      if (!trade || trade.trim() === "") {
-        alert("Action impossible : Choisissez un Métier.");
-        document.getElementById("tradeSelect").focus();
-        return;
-      }
+      const record = {
+        id: "INV-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
+        timestamp: new Date().toISOString(),
+        user: currentAgent,
+        contractor: contractor,
+        trade: trade,
+        sapRef: selectedArticle.sapRef,
+        designation: selectedArticle.designation,
+        quantity: qty,
+        lat: currentGpsCoords.lat,
+        lng: currentGpsCoords.lng
+      };
 
-      if (!activeItem || !catalog.some(i => String(i.sapRef).trim() === String(activeItem.sapRef).trim())) {
-        alert("Action impossible : Aucun article valide sélectionné.");
-        return;
-      }
+      sessionHistory.unshift(record);
+      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
 
-      const qtyInput = document.getElementById("qtyInput");
-      const qty = parseInt(qtyInput.value, 10);
-      if (isNaN(qty) || qty < 0) {
-        alert("Renseignez une quantité valide (>= 0).");
-        qtyInput.focus();
-        return;
-      }
-
-      const nowMs = Date.now();
-      const fiveMinMs = 5 * 60 * 1000;
-
-      const recentDuplicate = cachedHistory.find(entry => {
-        if (
-          String(entry.sapRef) === String(activeItem.sapRef) &&
-          entry.contractor === contractor &&
-          entry.trade === trade
-        ) {
-          let entryTime = 0;
-          if (entry.id && entry.id.startsWith("INV-")) {
-            const timestampPart = entry.id.replace("INV-", "");
-            entryTime = parseInt(timestampPart, 36);
-          }
-          if (!entryTime && entry.timestamp) {
-            entryTime = parseItemDate(entry.timestamp).getTime();
-          }
-          return (nowMs - entryTime) < fiveMinMs;
+      // Validation automatique de la tâche dans la tournée locale si elle existe
+      cachedTournees.forEach(t => {
+        if (t.agent === currentAgent && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim()) {
+          t.statut = 'VALIDE';
         }
-        return false;
       });
+      localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
 
-      let finalQty = qty;
-      let targetUpdateId = null;
+      renderHistory();
+      renderTournee();
 
-      if (recentDuplicate) {
-        const confirmChoice = confirm(
-          `⚠️ Doublon détecté :\nVous avez déjà compté cet article il y a moins de 5 minutes (${recentDuplicate.quantity} pcs).\n\n` +
-          `• [OK] pour CUMULER (+${qty} pcs, total = ${recentDuplicate.quantity + qty})\n` +
-          `• [Annuler] pour ÉCRASER / REMPLACER (nouvelle valeur = ${qty})`
-        );
+      // Reset formulaire
+      selectedArticle = null;
+      document.getElementById("sapSearchInput").value = "";
+      document.getElementById("selectedArticleCard").classList.add("hidden");
+      document.getElementById("inputQuantity").value = "1";
 
-        if (confirmChoice) {
-          finalQty = Number(recentDuplicate.quantity) + qty;
-          targetUpdateId = recentDuplicate.id;
-        } else {
-          targetUpdateId = recentDuplicate.id;
-        }
-      }
+      alert("Saisie enregistrée avec succès !");
 
-      const btn = document.getElementById("btnSubmit");
-      const label = document.getElementById("submitLabel");
-      const icon = document.getElementById("submitIcon");
-
-      btn.disabled = true;
-      label.innerText = "ENREGISTREMENT...";
-      icon.className = "w-6 h-6 animate-spin";
-
-      speakValidationWithEncouragement(finalQty, currentAgent);
-
-      let payload;
-      if (targetUpdateId) {
-        payload = {
-          action: "UPDATE",
-          id: targetUpdateId,
-          quantity: finalQty,
-          user: currentAgent
-        };
-      } else {
-        payload = {
-          action: "CREATE",
-          id: "INV-" + Date.now().toString(36).toUpperCase(),
-          timestamp: new Date().toISOString(),
-          user: currentAgent,
-          contractor: contractor,
-          trade: trade,
-          sapRef: activeItem.sapRef,
-          designation: activeItem.designation,
-          supplierRef: activeItem.supplierRef || "",
-          ean: activeItem.ean || "",
-          qr: activeItem.qr || "",
-          quantity: finalQty,
-          lat: latestCoords.lat,
-          lng: latestCoords.lng,
-          latitude: latestCoords.lat,
-          longitude: latestCoords.lng
-        };
-      }
-
-      // Marquer localement la tâche de tournée comme VALIDE si applicable
-      const matchedTourneeIdx = cachedTournees.findIndex(t => 
-        t.agent === currentAgent &&
-        String(t.sapRef).trim() === String(activeItem.sapRef).trim() &&
-        (!t.contractor || t.contractor === contractor) &&
-        (!t.trade || t.trade === trade)
-      );
-      if (matchedTourneeIdx !== -1) {
-        cachedTournees[matchedTourneeIdx].statut = 'VALIDE';
-        localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
-      }
-
-      try {
-        if (!GOOGLE_SCRIPT_URL.includes("placeholder")) {
+      if (navigator.onLine && !GOOGLE_SCRIPT_URL.includes("placeholder")) {
+        try {
           await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ action: "CREATE", ...record })
           });
+        } catch (e) {
+          console.warn("Échec envoi distant immédiat :", e);
         }
-        if (targetUpdateId) {
-          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
-          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
-        } else {
-          cachedHistory.unshift(payload);
-        }
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        showToast("Inventaire synchronisé !");
-      } catch (e) {
-        if (targetUpdateId) {
-          const idx = cachedHistory.findIndex(i => i.id === targetUpdateId);
-          if (idx !== -1) cachedHistory[idx].quantity = finalQty;
-        } else {
-          cachedHistory.unshift(payload);
-        }
-        localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-        syncQueue.push(payload);
-        localStorage.setItem("offline_sync_queue", JSON.stringify(syncQueue));
-        updateSyncBadge();
-        showToast("Enregistré localement (en attente réseau).");
-      } finally {
-        qtyInput.value = 0;
-        clearSearch();
-        btn.disabled = false;
-        label.innerText = "VALIDER ET ARCHIVER";
-        icon.className = "w-6 h-6";
-        lucide.createIcons();
-        renderHistory();
-        renderTourneeView();
       }
     }
 
     function renderHistory() {
-      const c = document.getElementById("historyList");
-      const list = cachedHistory.filter(i => i.user === currentAgent);
-      document.getElementById("historyHeaderLabel").innerText = `Mes saisies (${list.length})`;
+      const container = document.getElementById("historyListContainer");
+      const countLbl = document.getElementById("historyCount");
+      if (!container) return;
 
-      if (list.length === 0) {
-        c.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">Aucune saisie enregistrée.</div>';
+      countLbl.innerText = `${sessionHistory.length} ligne(s)`;
+      if (sessionHistory.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic text-xs">Aucune saisie pour le moment.</div>`;
         return;
       }
 
-      const pendingIds = new Set(syncQueue.map(q => q.id));
+      container.innerHTML = sessionHistory.map(h => `
+        <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs space-y-1 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>
+            <span class="font-mono font-black text-emerald-700 text-sm">Qté : ${h.quantity}</span>
+          </div>
+          <p class="font-semibold text-slate-900 truncate">${h.designation}</p>
+          <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+            <span>${h.contractor} (${h.trade})</span>
+            <span class="font-mono">${new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+          </div>
+        </div>
+      `).join('');
+    }
 
-      c.innerHTML = list.map(it => {
-        const isPending = pendingIds.has(it.id);
-        const displayDate = formatDateDMY(it.timestamp, true);
+    // RENDU DE "MA TOURNÉE" FILTRÉE STRICTEMENT SUR LA DATE DU JOUR POUR L'AGENT CONNECTÉ
+    function renderTournee() {
+      const container = document.getElementById("tourneeListContainer");
+      const dateBadge = document.getElementById("tourneeDateBadge");
+      if (!container) return;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (dateBadge) dateBadge.innerText = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+      const agentTournees = (cachedTournees || []).filter(t => t.agent === currentAgent && t.date === todayStr);
+
+      if (agentTournees.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune tournée assignée pour vous aujourd'hui. Bon travail en mode libre !</div>`;
+        return;
+      }
+
+      container.innerHTML = agentTournees.map(t => {
+        const isDone = t.statut === 'VALIDE';
+        const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
+
         return `
-          <div class="bg-white border ${isPending ? 'border-amber-300' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs space-y-2.5">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
-              <div class="min-w-0 pr-2">
-                <span class="font-bold text-slate-900">${it.user}</span>
-                <span class="text-slate-500">• <strong class="text-slate-700 font-semibold">${it.contractor}</strong> (${it.trade})</span>
-              </div>
-              <div class="flex items-center space-x-1.5 shrink-0 text-[11px] font-mono text-slate-500">
-                <span>${displayDate}</span>
-                ${(it.lat || it.latitude) ? `<span class="text-emerald-600">📍</span>` : ''}
-                ${isPending ? `<span class="text-[9px] bg-amber-100 text-amber-800 border border-amber-300 px-1 py-0.2 rounded font-bold">Attente</span>` : ''}
-              </div>
+          <div onclick="selectArticleFromTournee('${t.sapRef}')" class="bg-white border ${isDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs cursor-pointer transition hover:border-orange-300 space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-mono font-bold text-orange-800">${t.sapRef}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? 'VALIDE' : 'À FAIRE'}</span>
             </div>
-
-            <div class="flex items-center justify-between gap-2">
-              <div class="min-w-0 flex-1 pr-2">
-                <span class="font-mono font-black text-amber-700 text-base tracking-wider block">${it.sapRef}</span>
-                <p class="text-xs text-slate-600 truncate mt-0.5" title="${it.designation}">${it.designation}</p>
-              </div>
-
-              <div class="flex items-center space-x-2 shrink-0">
-                <div class="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 min-w-[50px]">
-                  <span class="text-[9px] font-bold text-slate-500 uppercase">Qté</span>
-                  <span class="text-lg font-black text-emerald-600 font-mono leading-none">${it.quantity}</span>
-                </div>
-
-                <button onclick="editHistoryItem('${it.id}', ${it.quantity})" title="Modifier" 
-                        class="w-10 h-10 rounded-xl bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-700 flex items-center justify-center border border-emerald-200 transition shadow-2xs">
-                  <i data-lucide="edit-3" class="w-4 h-4"></i>
-                </button>
-
-                <button onclick="deleteHistoryItem('${it.id}', '${it.designation.replace(/'/g, "\\'")}')" title="Supprimer" 
-                        class="w-10 h-10 rounded-xl bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 flex items-center justify-center border border-rose-200 transition shadow-2xs">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-              </div>
+            <p class="text-xs font-bold text-slate-900 truncate">${t.designation || 'Sans désignation'}</p>
+            <div class="flex justify-between items-center text-[10px] text-slate-500 pt-1 border-t border-slate-100">
+              <span>${t.contractor} (${t.trade})</span>
+              <span class="font-mono text-orange-700 font-semibold">${trancheLabel}</span>
             </div>
           </div>
         `;
       }).join('');
-      lucide.createIcons();
     }
 
-    // ================= VUE 3 : MA TOURNÉE & MISSION (POINT 2 ET 3 AMÉLIORÉS) =================
-    function toggleTourneeFilter() {
-      filterPendingOnlyTournee = !filterPendingOnlyTournee;
-      renderTourneeView();
-    }
-
-    function selectTourneeTask(sapRef, contractor, trade) {
-      if (contractor) {
-        const cSel = document.getElementById("contractorSelect");
-        if (cSel) {
-          cSel.value = contractor;
-          persistSelection('contractor', contractor);
-        }
-      }
-      if (trade) {
-        const tSel = document.getElementById("tradeSelect");
-        if (tSel) {
-          tSel.value = trade;
-          persistSelection('trade', trade);
-        }
-      }
-
-      switchTab('inventory');
-      selectArticleBySap(sapRef);
-
-      const qtyInput = document.getElementById("qtyInput");
-      if (qtyInput) {
-        setTimeout(() => {
-          qtyInput.focus();
-          qtyInput.select();
-        }, 150);
-      }
-      showToast(`Article ${sapRef} chargé ! Renseignez la quantité.`);
-    }
-
-    function renderTourneeView() {
-      const container = document.getElementById("tourneeDynamicContainer");
-      const subTitle = document.getElementById("tourneeSubTitle");
-      if (!container) return;
-
-      if (!currentAgent) {
-        container.innerHTML = `<div class="p-8 bg-white border border-slate-200 rounded-2xl text-center text-slate-500 text-xs font-medium">Veuillez d'abord sélectionner votre profil agent.</div>`;
-        return;
-      }
-
-      // 1. Filtrer les tâches assignées à l'agent
-      const agentTournees = (cachedTournees || []).filter(t => String(t.agent).trim().toLowerCase() === currentAgent.trim().toLowerCase());
-
-      // Comparer avec l'historique des saisies de l'agent pour vérifier les articles comptés
-      const agentHistory = cachedHistory.filter(h => h.user === currentAgent);
-      const agentHistorySaps = new Set(agentHistory.map(h => String(h.sapRef).trim()));
-
-      // -------------------------------------------------------------
-      // CAS A : L'AGENT A UNE TOURNÉE ASSIGNÉE (Comptage dirigé)
-      // -------------------------------------------------------------
-      if (agentTournees.length > 0) {
-        subTitle.innerText = `Mission assignée • ${agentTournees.length} référence(s)`;
-
-        // Enrichir le statut en direct
-        const enriched = agentTournees.map(t => {
-          const isCounted = t.statut === 'VALIDE' || agentHistorySaps.has(String(t.sapRef).trim());
-          return { ...t, isDone: isCounted };
-        }).sort((a, b) => (Number(a.ordre) || 0) - (Number(b.ordre) || 0));
-
-        const totalTasks = enriched.length;
-        const doneTasks = enriched.filter(t => t.isDone).length;
-        const pendingTasks = totalTasks - doneTasks;
-        const progressPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-
-        const displayedTasks = filterPendingOnlyTournee ? enriched.filter(t => !t.isDone) : enriched;
-
-        container.innerHTML = `
-          <!-- BARRE DE PROGRESSION & COMPTEURS -->
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Avancement Mission</span>
-                <div class="flex items-baseline gap-1.5 mt-0.5">
-                  <span class="text-2xl font-black text-slate-900 font-mono">${doneTasks}</span>
-                  <span class="text-xs text-slate-400 font-bold">/ ${totalTasks} validés</span>
-                </div>
-              </div>
-              <div class="text-right">
-                <span class="text-xl font-black text-orange-600 font-mono">${progressPct}%</span>
-                <span class="block text-[10px] text-slate-400 font-bold uppercase">${pendingTasks} restant(s)</span>
-              </div>
-            </div>
-
-            <!-- JAUGE LINÉAIRE -->
-            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
-              <div class="bg-emerald-500 h-full transition-all duration-300 rounded-full" style="width: ${progressPct}%"></div>
-            </div>
-
-            <div class="flex justify-between items-center pt-1 border-t border-slate-100 text-xs">
-              <button onclick="toggleTourneeFilter()" class="font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5">
-                <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-                <span>${filterPendingOnlyTournee ? 'Afficher toute la liste' : 'Masquer les articles validés'}</span>
-              </button>
-              <span class="text-[10px] font-mono text-slate-400 font-bold">${displayedTasks.length} affiché(s)</span>
-            </div>
-          </div>
-
-          <!-- LISTE DES ARTICLES DE LA TOURNÉE -->
-          <div class="space-y-2.5">
-            ${displayedTasks.length === 0 ? `
-              <div class="p-6 bg-white border border-slate-200 rounded-2xl text-center text-slate-400 text-xs italic font-medium">
-                ${filterPendingOnlyTournee ? 'Tous les articles de votre tournée ont été validés ! Bravo.' : 'Aucun article répertorié.'}
-              </div>
-            ` : displayedTasks.map(task => {
-              return `
-                <div onclick="selectTourneeTask('${task.sapRef}', '${task.contractor}', '${task.trade}')" 
-                     class="bg-white border ${task.isDone ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs flex items-center justify-between cursor-pointer active:bg-slate-50 transition">
-                  
-                  <div class="flex items-center space-x-3 min-w-0 pr-2">
-                    <div class="w-7 h-7 rounded-xl flex items-center justify-center font-mono font-black text-xs shrink-0 ${task.isDone ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
-                      ${task.ordre || '•'}
-                    </div>
-
-                    <div class="min-w-0">
-                      <div class="flex items-center gap-2">
-                        <span class="font-mono font-black text-amber-700 text-sm">${task.sapRef}</span>
-                        ${task.isDone ? `<span class="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">Validé</span>` : `<span class="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.2 rounded border border-amber-200">À compter</span>`}
-                      </div>
-                      <p class="text-xs font-bold text-slate-800 truncate mt-0.5" title="${task.designation}">${task.designation || 'Article sans désignation'}</p>
-                      <span class="text-[10px] text-slate-400 block truncate">${task.contractor || 'Tous'} • ${task.trade || 'Tous métiers'}</span>
-                    </div>
-                  </div>
-
-                  <button class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200 shadow-2xs hover:bg-orange-50 hover:text-orange-700 transition">
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                  </button>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        `;
-
-      // -------------------------------------------------------------
-      // CAS B : MODE LIBRE / PAS DE TOURNÉE ASSIGNÉE (Tachymètre & Cadence)
-      // -------------------------------------------------------------
+    function selectArticleFromTournee(sapRef) {
+      const item = catalog.find(i => String(i.sapRef).trim() === String(sapRef).trim());
+      if (item) {
+        selectArticleFromSearch(item);
+        switchMobileTab('comptage');
       } else {
-        subTitle.innerText = "Mode libre • Cadence opérationnelle";
-
-        const totalLines = agentHistory.length;
-        const totalPieces = agentHistory.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
-        const sorted = [...agentHistory].sort((a, b) => parseItemDate(a.timestamp) - parseItemDate(b.timestamp));
-
-        // Calcul du débit net (hors pauses > 15 min)
-        let netActiveMs = 0;
-        const maxPauseGapMs = 15 * 60 * 1000;
-        for (let i = 1; i < sorted.length; i++) {
-          const gap = parseItemDate(sorted[i].timestamp).getTime() - parseItemDate(sorted[i - 1].timestamp).getTime();
-          if (gap > 0 && gap <= maxPauseGapMs) netActiveMs += gap;
-        }
-
-        let rateLinesH = totalLines;
-        let ratePiecesH = totalPieces;
-        if (netActiveMs > 180000) {
-          const hours = netActiveMs / 3600000;
-          rateLinesH = Math.round(totalLines / hours);
-          ratePiecesH = Math.round(totalPieces / hours);
-        }
-
-        const contractorsCount = new Set(agentHistory.map(h => h.contractor)).size;
-        const tradesCount = new Set(agentHistory.map(h => h.trade)).size;
-
-        container.innerHTML = `
-          <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-amber-800 text-xs space-y-1">
-            <span class="font-bold flex items-center gap-1.5"><i data-lucide="info" class="w-4 h-4 text-amber-600"></i> Comptage libre en cours</span>
-            <p class="text-[11px] text-amber-700 leading-snug">Aucune liste d'articles spécifique ne vous est assignée aujourd'hui. Vos indicateurs de vitesse et de volume sont calculés ci-dessous :</p>
-          </div>
-
-          <!-- TACHYMÈTRE DE CADENCE NETTE -->
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs text-center">
-              <span class="text-[10px] font-bold text-indigo-600 uppercase block">Cadence Saisies</span>
-              <span class="text-2xl font-black text-indigo-700 font-mono mt-1 block">${rateLinesH}</span>
-              <span class="text-[10px] text-slate-400 font-semibold">lignes / heure</span>
-            </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs text-center">
-              <span class="text-[10px] font-bold text-orange-600 uppercase block">Débit Volume</span>
-              <span class="text-2xl font-black text-orange-600 font-mono mt-1 block">${ratePiecesH}</span>
-              <span class="text-[10px] text-slate-400 font-semibold">pièces / heure</span>
-            </div>
-          </div>
-
-          <!-- CUMUL SÉLECTION -->
-          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide block">Bilan de votre session</span>
-            <div class="grid grid-cols-3 gap-2 text-center text-xs">
-              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-slate-400 text-[10px] block">Lignes</span>
-                <strong class="text-base font-black text-slate-800 font-mono">${totalLines}</strong>
-              </div>
-              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-slate-400 text-[10px] block">Pièces</span>
-                <strong class="text-base font-black text-emerald-600 font-mono">${totalPieces}</strong>
-              </div>
-              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-slate-400 text-[10px] block">Chantiers</span>
-                <strong class="text-base font-black text-indigo-600 font-mono">${contractorsCount}</strong>
-              </div>
-            </div>
-          </div>
-        `;
+        alert("Article introuvable dans le catalogue.");
       }
-
-      lucide.createIcons();
     }
 
-    function switchTab(tab) {
-      const inv = document.getElementById("view-inventory");
-      const hist = document.getElementById("view-history");
-      const trn = document.getElementById("view-tournee");
-      
-      const tInv = document.getElementById("tabNavInventory");
-      const tHist = document.getElementById("tabNavHistory");
-      const tTrn = document.getElementById("tabNavTournee");
+    function switchMobileTab(tab) {
+      document.getElementById("tabComptage").classList.add("hidden");
+      document.getElementById("tabHistorique").classList.add("hidden");
+      document.getElementById("tabTournee").classList.add("hidden");
 
-      if (inv) inv.classList.add("hidden");
-      if (hist) hist.classList.add("hidden");
-      if (trn) trn.classList.add("hidden");
+      document.getElementById("navComptage").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition";
+      document.getElementById("navHistorique").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition";
+      document.getElementById("navTournee").className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition";
 
-      if (tInv) tInv.classList.replace("text-blue-600", "text-slate-400");
-      if (tHist) tHist.classList.replace("text-blue-600", "text-slate-400");
-      if (tTrn) tTrn.classList.replace("text-blue-600", "text-slate-400");
-
-      if (tab === 'inventory') {
-        if (inv) inv.classList.remove("hidden");
-        if (tInv) tInv.classList.replace("text-slate-400", "text-blue-600");
-      } else if (tab === 'history') {
-        if (isScanning) stopScanner();
-        if (hist) hist.classList.remove("hidden");
-        if (tHist) tHist.classList.replace("text-slate-400", "text-blue-600");
+      if (tab === 'comptage') {
+        document.getElementById("tabComptage").classList.remove("hidden");
+        document.getElementById("navComptage").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition";
+      } else if (tab === 'historique') {
+        document.getElementById("tabHistorique").classList.remove("hidden");
+        document.getElementById("navHistorique").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition";
         renderHistory();
       } else if (tab === 'tournee') {
-        if (isScanning) stopScanner();
-        if (trn) trn.classList.remove("hidden");
-        if (tTrn) tTrn.classList.replace("text-slate-400", "text-blue-600");
-        renderTourneeView();
+        document.getElementById("tabTournee").classList.remove("hidden");
+        document.getElementById("navTournee").className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition";
+        renderTournee();
       }
-
-      syncData();
       lucide.createIcons();
     }
 
-    function showToast(msg) {
-      const t = document.getElementById("toast");
-      document.getElementById("toastMessage").innerText = msg;
-      t.classList.remove("-translate-y-28");
-      t.classList.add("translate-y-0");
-      setTimeout(() => {
-        t.classList.remove("translate-y-0");
-        t.classList.add("-translate-y-28");
-      }, 2200);
+    function toggleVoiceSearch() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert("La reconnaissance vocale n'est pas supportée par ce navigateur.");
+        return;
+      }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'fr-FR';
+      recognition.interimResults = false;
+
+      const btn = document.getElementById("micBtn");
+      btn.className = "p-2.5 rounded-xl bg-rose-600 text-white transition shrink-0 animate-pulse";
+
+      recognition.onresult = function(event) {
+        const text = event.results[0][0].transcript;
+        document.getElementById("sapSearchInput").value = text;
+        onSapSearchInput(text);
+        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0";
+      };
+
+      recognition.onerror = function() {
+        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0";
+      };
+
+      recognition.onend = function() {
+        btn.className = "p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition shrink-0";
+      };
+
+      recognition.start();
     }
   </script>
 </body>
