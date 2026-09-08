@@ -1,6 +1,5 @@
-const CACHE_NAME = 'inventaire-cache-v6';
+const CACHE_NAME = 'inventaire-cache-v7';
 
-// Ressources fondamentales indispensables pour le fonctionnement hors-ligne
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -31,12 +30,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const requestUrl = event.request.url;
 
-  // Exclusion stricte des flux dynamiques Google Apps Script (pas de mise en cache)
   if (requestUrl.includes('script.google.com')) {
     return;
   }
 
-  // Pour les documents HTML (navigation), priorité au réseau avec secours sur le cache
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -52,7 +49,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Pour les autres assets (scripts, styles, icônes) : stratégie Cache-First avec mise à jour dynamique
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
