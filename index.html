@@ -41,7 +41,7 @@
     </div>
     <div class="flex items-center space-x-2">
       <div id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" title="Statut réseau"></div>
-      <button onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer relative">
+      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer relative">
         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
         <span id="pendingBadge" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white font-mono font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
       </button>
@@ -276,6 +276,19 @@
       localStorage.setItem("mob_current_agent", currentAgent);
       document.getElementById("headerAgentName").innerText = currentAgent;
       document.getElementById("configModal").classList.add("hidden");
+
+      // Rechargement immédiat de l'historique propre au nouvel agent depuis la copie serveur
+      const allHistory = JSON.parse(localStorage.getItem("offline_history") || "[]");
+      const activeAgentNorm = String(currentAgent).trim().toLowerCase();
+      const serverAgentHistory = allHistory.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
+      
+      const pendingIds = new Set(pendingSyncQueue.filter(p => p.action === 'CREATE').map(p => p.id));
+      const currentLocals = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
+      const pendingLocals = currentLocals.filter(h => pendingIds.has(h.id) && String(h.user || "").trim().toLowerCase() === activeAgentNorm);
+
+      sessionHistory = [...pendingLocals, ...serverAgentHistory.filter(h => !pendingIds.has(h.id))];
+      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+
       renderTournee();
       renderHistory();
     }
@@ -317,9 +330,11 @@
     async function syncMobileData() {
       if (!navigator.onLine) return;
       const dot = document.getElementById("syncDot");
-      dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
+      const syncBtn = document.getElementById("syncBtn");
+      if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
+      if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
-      // 1. Déstockage et envoi de la file d'attente hors ligne
+      // 1. Dépilement de la file d'attente hors ligne (sync montante)
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
@@ -339,7 +354,7 @@
         updatePendingBadge();
       }
 
-      // 2. Récupération des données distantes avec fusion protectrice
+      // 2. Récupération des données distantes (sync descendante)
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
@@ -348,7 +363,8 @@
           if (data.agents) localStorage.setItem("offline_agents", JSON.stringify(availableAgents = data.agents));
           if (data.contractors) localStorage.setItem("offline_contractors", JSON.stringify(availableContractors = data.contractors));
           if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(availableTrades = data.trades));
-          
+
+          // Tournées : conservation des validations locales récentes
           if (data.tournees) {
             const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
             const localValides = new Set(
@@ -366,6 +382,25 @@
             localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
           }
 
+          // STABILISATION HISTORIQUE : RÉCONCILIATION STRICTE AVEC GOOGLE SHEETS
+          if (data.history) {
+            localStorage.setItem("offline_history", JSON.stringify(data.history));
+
+            const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
+            const serverAgentItems = data.history.filter(h => 
+              String(h.user || "").trim().toLowerCase() === activeAgentNorm
+            );
+            const serverIds = new Set(serverAgentItems.map(h => String(h.id)));
+
+            // Garde les saisies créées hors-ligne qui n'ont pas encore été reçues par le serveur
+            const pendingCreates = pendingSyncQueue
+              .filter(p => p.action === 'CREATE' && String(p.user || '').trim().toLowerCase() === activeAgentNorm && !serverIds.has(String(p.id)))
+              .map(p => ({ ...p, isPending: true }));
+
+            sessionHistory = [...pendingCreates, ...serverAgentItems];
+            localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+          }
+
           initMobileDropdowns();
           renderTournee();
           renderHistory();
@@ -373,7 +408,8 @@
       } catch (err) {
         console.warn("Sync fetch error :", err);
       } finally {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
     }
 
@@ -511,7 +547,8 @@
         lng: currentGpsCoords.lng
       };
 
-      sessionHistory.unshift(record);
+      // Ajout optimiste immédiat
+      sessionHistory.unshift({ ...record, isPending: !navigator.onLine });
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
 
       // Validation locale et mise en file de la tournée correspondante
@@ -539,7 +576,6 @@
       document.getElementById("selectedArticleCard").classList.add("hidden");
       document.getElementById("inputQuantity").value = "0";
 
-      alert("Saisie enregistrée avec succès !");
       switchMobileTab('historique');
       if (navigator.onLine) syncMobileData();
     }
@@ -549,6 +585,7 @@
       const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
       const todayStr = normalizeDateYMD(new Date());
 
+      // Affichage des inventaires de l'agent actif pour aujourd'hui
       const agentHistory = sessionHistory.filter(h => {
         const matchUser = !activeAgentNorm || String(h.user || "").trim().toLowerCase() === activeAgentNorm;
         const matchDay = normalizeDateYMD(h.timestamp) === todayStr;
@@ -560,27 +597,40 @@
       document.getElementById("historyCount").innerText = `${agentHistory.length} ligne(s)`;
 
       if (agentHistory.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune saisie aujourd'hui.</div>`;
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl space-y-1">
+            <p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p>
+            <p class="text-[10px]">Toutes les saisies supprimées dans Google Sheets disparaissent automatiquement.</p>
+          </div>
+        `;
         return;
       }
 
-      container.innerHTML = agentHistory.map(h => `
-        <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-xs space-y-1 text-xs">
-          <div class="flex justify-between items-center">
-            <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>
-            <div class="flex items-center space-x-2">
-              <span class="font-mono font-black text-emerald-700 text-sm">Qté : ${h.quantity}</span>
-              <button onclick="editHistoryItem('${h.id}')" class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-              <button onclick="deleteHistoryItem('${h.id}')" class="p-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+      container.innerHTML = agentHistory.map(h => {
+        const isPending = !!h.isPending;
+        return `
+          <div class="bg-white border ${isPending ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200'} p-3.5 rounded-2xl shadow-xs space-y-1 text-xs transition">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>${isPending 
+                  ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">⏳ EN ATTENTE</span>' 
+                  : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">✓ SYNCHRONISÉ</span>'
+                }
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="font-mono font-black text-emerald-700 text-sm">Qté : ${h.quantity}</span>
+                <button onclick="editHistoryItem('${h.id}')" class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                <button onclick="deleteHistoryItem('${h.id}')" class="p-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </div>
+            <p class="font-semibold text-slate-900 truncate">${h.designation}</p>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+              <span>${h.contractor} (${h.trade})</span>
+              <span class="font-mono">${new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
           </div>
-          <p class="font-semibold text-slate-900 truncate">${h.designation}</p>
-          <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100">
-            <span>${h.contractor} (${h.trade})</span>
-            <span class="font-mono">${new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       lucide.createIcons();
     }
 
@@ -594,7 +644,14 @@
 
       item.quantity = parsed;
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
-      pendingSyncQueue.push({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAgent });
+
+      const pendingCreate = pendingSyncQueue.find(p => p.id === id && p.action === 'CREATE');
+      if (pendingCreate) {
+        pendingCreate.quantity = parsed;
+      } else {
+        pendingSyncQueue.push({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAgent });
+      }
+
       localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
       updatePendingBadge();
       renderHistory();
@@ -605,7 +662,14 @@
       if (!confirm("Supprimer cette saisie ?")) return;
       sessionHistory = sessionHistory.filter(h => h.id !== id);
       localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
-      pendingSyncQueue.push({ action: "DELETE_INVENTORY", id: id, user: currentAgent });
+
+      const pendingIdx = pendingSyncQueue.findIndex(p => p.id === id && p.action === 'CREATE');
+      if (pendingIdx !== -1) {
+        pendingSyncQueue.splice(pendingIdx, 1);
+      } else {
+        pendingSyncQueue.push({ action: "DELETE_INVENTORY", id: id, user: currentAgent });
+      }
+
       localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
       updatePendingBadge();
       renderHistory();
