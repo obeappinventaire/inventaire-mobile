@@ -19,7 +19,6 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- EN-TÊTE -->
   <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
     <div class="flex items-center space-x-3">
       <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
@@ -40,7 +39,6 @@
   </header>
 
   <div class="flex-1 flex overflow-hidden">
-    <!-- SIDEBAR -->
     <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100 p-4 space-y-4">
       <div class="space-y-2">
         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Navigation</span>
@@ -51,10 +49,8 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-slate-50">
       
-      <!-- VUE 1 : GLOBAL -->
       <section id="viewGlobal" class="space-y-6">
         <div class="grid grid-cols-4 gap-3">
           <div class="bg-white border p-4 rounded-xl shadow-xs"><span class="text-xs text-slate-500 block">Lignes</span><span id="kpiTotalRows" class="text-xl font-black">0</span></div>
@@ -72,7 +68,14 @@
         </div>
       </section>
 
-      <!-- VUE 4 : AGENDA & TOURNÉES -->
+      <section id="viewAgents" class="hidden space-y-6">
+        <div id="agentsAccordionContainer" class="space-y-3"></div>
+      </section>
+
+      <section id="viewMap" class="hidden space-y-4">
+        <div class="bg-white border p-2 rounded-2xl shadow-xs"><div id="mapContainer"></div></div>
+      </section>
+
       <section id="viewTourneesAdmin" class="hidden space-y-6">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-bold uppercase tracking-wider">Planning Semaine & Tournées</h3>
@@ -93,7 +96,6 @@
     </main>
   </div>
 
-  <!-- MODALE ASSIGNATION -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <h3 class="text-sm font-bold uppercase">Nouvelle Affectation de Tâche</h3>
@@ -119,7 +121,10 @@
     let cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
     let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
     let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
+    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
+    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
     let manualSelectedCatalogSaps = [];
+    let map = null, markersLayer = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
@@ -140,6 +145,14 @@
       return str.split('T')[0];
     }
 
+    function parseItemDate(str) {
+      if (!str) return new Date(0);
+      const parts = String(str).match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (parts) return new Date(parts[3], parts[2] - 1, parts[1]);
+      const iso = new Date(str);
+      return isNaN(iso.getTime()) ? new Date(0) : iso;
+    }
+
     async function syncMonitoringData() {
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
@@ -149,8 +162,11 @@
           if (data.tournees) localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees = data.tournees));
           if (data.catalog) localStorage.setItem("offline_catalog", JSON.stringify(catalog = data.catalog));
           if (data.agents) localStorage.setItem("offline_agents", JSON.stringify(availableAgents = data.agents));
+          if (data.contractors) localStorage.setItem("offline_contractors", JSON.stringify(availableContractors = data.contractors));
+          if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(availableTrades = data.trades));
           applyFilters();
           renderWallPlanning();
+          renderAgentsView(cachedHistory);
         }
       } catch (err) { console.warn(err); }
     }
@@ -179,10 +195,71 @@
           <td class="p-3 font-mono text-amber-700">${item.sapRef}</td>
           <td class="p-3 truncate max-w-[200px]">${item.designation}</td>
           <td class="p-3 text-center font-mono font-black">${item.quantity}</td>
-          <td class="p-3 text-right"><button onclick="deleteTableItem('${item.id}')" class="text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+          <td class="p-3 text-right">
+            <button onclick="editTableItem('${item.id}', ${item.quantity})" class="text-slate-600 mr-2"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+            <button onclick="deleteTableItem('${item.id}')" class="text-rose-600"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+          </td>
         </tr>
       `).join('');
       lucide.createIcons();
+    }
+
+    function renderAgentsView(list) {
+      const container = document.getElementById("agentsAccordionContainer");
+      if (!container) return;
+      container.innerHTML = availableAgents.map(agent => {
+        const records = list.filter(r => r.user === agent);
+        return `
+          <div class="bg-white border rounded-xl p-3 shadow-xs">
+            <div class="flex justify-between font-bold text-xs"><span>${agent}</span><span>${records.length} saisie(s)</span></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderMap(list) {
+      const mapDiv = document.getElementById("mapContainer");
+      if (!mapDiv) return;
+      if (!map) {
+        map = L.map('mapContainer').setView([50.64, 4.67], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+      }
+      markersLayer.clearLayers();
+      list.filter(p => p.lat && p.lng).forEach(p => {
+        L.circleMarker([p.lat, p.lng], { radius: 6, fillColor: "#f97316", color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(markersLayer);
+      });
+    }
+
+    function resetMapToBelgium() { if (map) map.setView([50.64, 4.67], 8); }
+
+    function exportTableToCSV() {
+      if (cachedHistory.length === 0) { alert("Aucune donnée."); return; }
+      const headers = ["ID", "Date", "Agent", "Entrepreneur", "Métier", "SAP", "Désignation", "Quantité"];
+      const rows = cachedHistory.map(r => [r.id, r.timestamp, r.user, r.contractor, r.trade, r.sapRef, `"${r.designation}"`, r.quantity]);
+      const csv = "\uFEFF" + [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "export_inventaire.csv";
+      link.click();
+    }
+
+    async function editTableItem(id, cur) {
+      const val = prompt("Nouvelle quantité :", cur);
+      if (val === null) return;
+      const q = parseInt(val, 10);
+      if (isNaN(q)) return;
+      cachedHistory.forEach(h => { if (h.id === id) h.quantity = q; });
+      applyFilters();
+      await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "UPDATE_INVENTORY", id, quantity: q }) });
+    }
+
+    async function deleteTableItem(id) {
+      if (!confirm("Supprimer ?")) return;
+      cachedHistory = cachedHistory.filter(h => h.id !== id);
+      applyFilters();
+      await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "DELETE_INVENTORY", id }) });
     }
 
     function renderWallPlanning() {
@@ -212,27 +289,33 @@
       const pct = total > 0 ? Math.round((doneTotal / total) * 100) : 0;
       document.getElementById("globalCompletionPct").innerText = `${pct}%`;
       document.getElementById("globalCompletionBar").style.width = `${pct}%`;
+
+      const agentList = document.getElementById("agentCompletionList");
+      if (agentList) {
+        agentList.innerHTML = availableAgents.map(agent => {
+          const aTasks = cachedTournees.filter(t => t.agent === agent);
+          const aDone = aTasks.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
+          return `<div class="text-xs flex justify-between"><span>${agent}</span><span class="font-bold">${aDone}/${aTasks.length}</span></div>`;
+        }).join('');
+      }
     }
 
     function switchView(v) {
-      ['Global', 'TourneesAdmin'].forEach(id => document.getElementById("view" + id).classList.add("hidden"));
+      ['Global', 'Agents', 'Map', 'TourneesAdmin'].forEach(id => {
+        const el = document.getElementById("view" + id);
+        if (el) el.classList.add("hidden");
+      });
       if (v === 'global') document.getElementById("viewGlobal").classList.remove("hidden");
+      if (v === 'agents') { document.getElementById("viewAgents").classList.remove("hidden"); renderAgentsView(cachedHistory); }
+      if (v === 'map') { document.getElementById("viewMap").classList.remove("hidden"); setTimeout(() => { if (map) { map.invalidateSize(); resetMapToBelgium(); } renderMap(cachedHistory); }, 100); }
       if (v === 'tournees') { document.getElementById("viewTourneesAdmin").classList.remove("hidden"); renderWallPlanning(); }
-    }
-
-    async function deleteTableItem(id) {
-      if (!confirm("Supprimer ?")) return;
-      cachedHistory = cachedHistory.filter(h => h.id !== id);
-      localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
-      applyFilters();
-      await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "DELETE_INVENTORY", id }) });
     }
 
     function openManualAssignModal() {
       document.getElementById("manualAssignModal").classList.remove("hidden");
       document.getElementById("adminAssignAgent").innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      document.getElementById("adminAssignContractor").innerHTML = '<option value="">-- Entrepreneur --</option>' + JSON.parse(localStorage.getItem("offline_contractors")||"[]").map(c => `<option value="${c}">${c}</option>`).join('');
-      document.getElementById("adminAssignTrade").innerHTML = '<option value="">-- Métier --</option>' + JSON.parse(localStorage.getItem("offline_trades")||"[]").map(t => `<option value="${t}">${t}</option>`).join('');
+      document.getElementById("adminAssignContractor").innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById("adminAssignTrade").innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
       document.getElementById("adminAssignDate").value = new Date().toISOString().split('T')[0];
     }
     function closeManualAssignModal() { document.getElementById("manualAssignModal").classList.add("hidden"); }
@@ -263,10 +346,15 @@
         ordre: idx+1, statut: 'A_FAIRE', date, tranche
       }));
 
-      await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", items }) });
-      closeManualAssignModal();
-      manualSelectedCatalogSaps = [];
-      syncMonitoringData();
+      const res = await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", items }) });
+      const data = await res.json();
+      if (data.status === "success") {
+        closeManualAssignModal();
+        manualSelectedCatalogSaps = [];
+        syncMonitoringData();
+      } else {
+        alert("Erreur : " + (data.message || "Échec"));
+      }
     }
   </script>
 </body>
