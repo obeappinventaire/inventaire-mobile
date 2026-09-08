@@ -932,7 +932,7 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    // CARTE AVEC CLUSTERS SÉPARÉS (FINALISÉ VS EN COURS) DANS UN RAYON DE 5KM
+    // CARTE CORRIGÉE : REGROUPEMENT 5KM, CUMUL TOTAL LIGNES EN HAUT À DROITE, TOUS LES COMBOS REPRIS, ET PLAGE DE DATES CORRECTE (MIN ET MAX)
     function renderMap(list) {
       if (!map) {
         map = L.map('mapContainer', {
@@ -979,7 +979,6 @@
 
       const processedClusters = [];
 
-      // Regroupement finalisé par agent (5km)
       Object.entries(agentFinalizedGroups).forEach(([agent, items]) => {
         const agentClusters = [];
         items.forEach(item => {
@@ -998,7 +997,6 @@
         processedClusters.push(...agentClusters);
       });
 
-      // Regroupement en cours par agent (5km)
       Object.entries(agentActiveGroups).forEach(([agent, items]) => {
         const agentClusters = [];
         items.forEach(item => {
@@ -1032,6 +1030,7 @@
         const isFinalizedCluster = (status === 'Finalisé');
         const fillColor = isFinalizedCluster ? "#f97316" : "#10b981";
 
+        // Collecter TOUS les combos (entrepreneur + métier) présents dans le cluster
         const comboCounts = {};
         const comboStatus = {};
         items.forEach(i => {
@@ -1043,6 +1042,9 @@
 
         const comboList = Object.entries(comboCounts).map(([combo, count]) => `<li><span class="font-medium text-slate-800">${combo}</span> : <strong class="text-orange-600">${count} ligne(s)</strong> [${comboStatus[combo]}]</li>`).join('');
         
+        // Total cumulé de toutes les lignes du cluster (affiché en haut à droite de la popup)
+        const totalClusterLines = items.reduce((acc, curr) => acc + 1, 0);
+
         const tooltipContent = `
           <div class="text-xs font-sans px-1.5 py-1 space-y-1 leading-snug">
             <strong class="text-slate-900 block text-sm">Agent : ${user} (${status})</strong>
@@ -1062,23 +1064,14 @@
 
         marker.bindTooltip(tooltipContent, { direction: 'top', offset: [0, -6] });
 
-        const popupCombos = {};
-        const datesSet = new Set();
-        items.forEach(i => {
-          const combo = `${i.contractor} (${i.trade})`;
-          popupCombos[combo] = (popupCombos[combo] || 0) + 1;
-          datesSet.add(formatDateDMY(i.timestamp, true));
-        });
-
-        const popupComboList = Object.entries(popupCombos).map(([combo, count]) => `
-          <div class="flex justify-between items-center text-[11px] py-0.5 border-b border-slate-100 last:border-0">
-            <span class="font-semibold text-slate-800">${combo}</span>
-            <span class="font-mono text-orange-700 font-bold">${count} ligne(s)</span>
-          </div>
-        `).join('');
-
-        const datesArray = Array.from(datesSet);
-        const dateRangeStr = datesArray.length > 1 ? `${datesArray[0]} au ${datesArray[datesArray.length - 1]}` : (datesArray[0] || '--');
+        // Calcul correct de la première date (début) et dernière date (fin) comprises dans les items
+        const sortedDates = items.map(i => parseItemDate(i.timestamp)).filter(d => !isNaN(d.getTime())).sort((a, b) => a - b);
+        let dateRangeStr = '--';
+        if (sortedDates.length > 0) {
+          const minDate = sortedDates[0];
+          const maxDate = sortedDates[sortedDates.length - 1];
+          dateRangeStr = sortedDates.length > 1 ? `${formatDateDMY(minDate, true)} au ${formatDateDMY(maxDate, true)}` : formatDateDMY(minDate, true);
+        }
 
         const safeUser = user.replace(/'/g, "\\'");
         const safeContractor = (items[0].contractor || '').replace(/'/g, "\\'");
@@ -1091,13 +1084,18 @@
                 <strong class="text-slate-900 text-sm block">${user}</strong>
                 <span class="text-slate-500 text-[10px]">Statut : ${status}</span>
               </div>
-              <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">${items.length} saisie(s)</span>
+              <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">${totalClusterLines} saisie(s)</span>
             </div>
 
             <div class="space-y-1">
               <span class="text-[10px] font-bold text-slate-400 uppercase block">Détails par Entrepreneur & Métier :</span>
-              <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1">
-                ${popupComboList}
+              <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1 max-h-36 overflow-y-auto custom-scrollbar">
+                ${Object.entries(comboCounts).map(([combo, count]) => `
+                  <div class="flex justify-between items-center text-[11px] py-0.5 border-b border-slate-100 last:border-0">
+                    <span class="font-semibold text-slate-800 truncate max-w-[180px]" title="${combo}">${combo}</span>
+                    <span class="font-mono text-orange-700 font-bold shrink-0">${count} ligne(s)</span>
+                  </div>
+                `).join('')}
               </div>
             </div>
 
