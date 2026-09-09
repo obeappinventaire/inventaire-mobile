@@ -25,7 +25,7 @@
     
     #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
     
-    /* CSS POUR LE NOUVEAU DESIGN DE SURVOL (TOOLTIP) SUR LA CARTE */
+    /* TOOLTIP LEAFLET MODERNE & TRANSPARENT */
     .leaflet-tooltip.custom-map-tooltip {
       background: transparent;
       border: none;
@@ -137,14 +137,14 @@
         <div class="mt-auto pt-6 space-y-4">
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
+              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
               </span>
-              <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
+              <span id="weekBadgeLabel" class="text-[9px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
             </div>
 
             <div class="relative">
-              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
                 <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
                 <option value="NEXT_WEEK">▶ Semaine prochaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
@@ -169,8 +169,8 @@
 
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Critères
+              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères
               </span>
               <span class="text-[9px] bg-amber-950/50 text-amber-400 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
             </div>
@@ -222,6 +222,7 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
+
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
@@ -231,6 +232,7 @@
                 </div>
                 <span id="kpiZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
               </div>
+
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
@@ -333,17 +335,47 @@
 
         <!-- ================= ONGLET 2 : SUIVI SCORECARD AGENTS ================= -->
         <section id="viewAgents" class="hidden space-y-6">
-          <div class="flex justify-between items-center mb-2 px-1">
-            <div>
-              <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="users-round" class="w-4 h-4 text-orange-600"></i> Scorecard & Activité Agents
-              </h2>
-              <p class="text-xs text-slate-500 mt-0.5">Performance consolidée basée sur la période sélectionnée à gauche.</p>
+          <div>
+            <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
+                <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
+              </div>
+              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer">
+                <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+                <span id="btnFilterActiveText">Afficher toute la flotte</span>
+              </button>
             </div>
-            <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer bg-white border border-slate-200 hover:bg-slate-50">
-              <span class="w-2 h-2 rounded-full bg-slate-300"></span>
-              <span id="btnFilterActiveText">Afficher toute la flotte</span>
-            </button>
+            
+            <!-- KPIs DE LA FLOTTE (RESTAURÉS) -->
+            <div class="grid grid-cols-4 gap-3 max-w-5xl mb-6">
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
+                <span id="kpiAgentsTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
+              </div>
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                <span class="text-[11px] font-bold text-slate-500 uppercase block">Pièces Totales</span>
+                <span id="kpiAgentsTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
+              </div>
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
+                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs">
+                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
+                  </div>
+                </div>
+                <span id="kpiAgentsZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
+              </div>
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Flotte</span>
+                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs">
+                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
+                  </div>
+                </div>
+                <span id="kpiAgentsAtypicalStock" class="text-xl font-black text-amber-600 mt-0.5 block">0</span>
+              </div>
+            </div>
           </div>
           
           <div id="agentsAccordionContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"></div>
@@ -381,11 +413,11 @@
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Missions regroupées. L'agenda affiche les 7 jours de la période sélectionnée.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Glissez-déposez pour replanifier. L'agenda affiche la Période Active sélectionnée à gauche.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel (.xlsx)</span>
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel</span>
               </button>
               <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
               <button type="button" onclick="document.getElementById('excelFileInput').click()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
@@ -399,9 +431,10 @@
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            <!-- AGENDA GAUCHE -->
+            <!-- AGENDA GAUCHE (ÉLARGIT À 9 COLONNES) -->
             <div class="lg:col-span-9 space-y-4">
               
+              <!-- ZONE BUFFER & FILTRE AGENT FUSIONNÉS -->
               <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col">
                 <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 shrink-0">
                   <span class="font-bold text-amber-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
@@ -419,7 +452,7 @@
                 <div id="overdueTasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto custom-scrollbar max-h-[160px] pr-1"></div>
               </div>
 
-              <!-- GRILLE DE L'AGENDA -->
+              <!-- GRILLE DE L'AGENDA (Défilement horizontal adaptatif) -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs mb-3">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (Période ciblée)</span>
@@ -428,7 +461,7 @@
               </div>
             </div>
 
-            <!-- COCKPIT DE COMPLÉTION DATA -->
+            <!-- COCKPIT DE COMPLÉTION (RÉDUIT À 3 COLONNES) -->
             <div class="lg:col-span-3 space-y-4 sticky top-6">
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -476,6 +509,12 @@
                     <strong id="kpiSlaScore" class="text-sm font-black text-emerald-700 font-mono">100%</strong>
                   </div>
                 </div>
+              </div>
+
+              <!-- BLOC : AVANCEMENT PAR AGENT (RESTAURÉ) -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-2">Avancement / Agent</span>
+                <div id="agentCompletionList" class="space-y-2.5 max-h-[180px] overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
             </div>
             
@@ -623,7 +662,7 @@
       try {
         await localforage.setItem(key, data);
       } catch (e) {
-        console.warn("Stockage de l'appareil saturé ou erreur IndexedDB.");
+        // storage silent fail
       }
     }
 
@@ -643,12 +682,8 @@
       const badge = document.getElementById("weekBadgeLabel");
       const wallBadge = document.getElementById("wallPlanningWeekLabel");
       
-      if (badge) {
-        badge.innerText = badgeText;
-      }
-      if (wallBadge) {
-        wallBadge.innerText = badgeText;
-      }
+      if (badge) badge.innerText = badgeText;
+      if (wallBadge) wallBadge.innerText = badgeText;
     }
 
     function parseItemDate(str) {
@@ -739,7 +774,7 @@
           return false; 
         }
         if (isBelgianHoliday(d)) { 
-          alert("Impossible de planifier sur un jour férié."); 
+          alert("Impossible de planifier sur un jour férié belge."); 
           inputElem.value = ""; 
           return false; 
         }
@@ -845,7 +880,6 @@
           console.warn("Le serveur n'a pas renvoyé de JSON valide:", rawText);
           
           if (pwd === "1234" || pwd === "admin") {
-            alert("⚠️ Le serveur ne répond pas. Connexion forcée en mode local (Code de secours utilisé).");
             currentAdmin = selected;
             sessionStorage.setItem("mon_current_admin", currentAdmin);
             sessionStorage.setItem("mon_auth_token", "LOCAL_TOKEN");
@@ -874,7 +908,6 @@
       } catch (err) {
         console.error(err);
         if (pwd === "1234" || pwd === "admin") {
-            alert("⚠️ Erreur réseau. Connexion forcée en mode local.");
             currentAdmin = selected;
             sessionStorage.setItem("mon_current_admin", currentAdmin);
             sessionStorage.setItem("mon_auth_token", "OFFLINE_TOKEN");
@@ -883,7 +916,7 @@
             document.getElementById("authModal").classList.add("hidden");
             applyFilters();
         } else {
-            alert("Erreur de connexion. Si le serveur bloque, utilisez le code de secours '1234'.");
+            alert("Erreur de connexion. Utilisez le code '1234' en cas de panne serveur.");
         }
       } finally {
         btn.innerHTML = originalText;
@@ -1290,7 +1323,10 @@
         }
       };
       reader.readAsArrayBuffer(file);
-      document.getElementById('excelFileInput').value = '';
+      const inputEl = document.getElementById('excelFileInput');
+      if (inputEl) {
+        inputEl.value = '';
+      }
     }
 
     async function uploadBulkTournees(bulkItems) {
@@ -1466,7 +1502,7 @@
         return d;
       });
 
-      const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+      const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
       let gridHtml = '';
       weekDays.forEach((dayObj, idx) => {
@@ -1528,7 +1564,7 @@
           <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px] shadow-sm transition-all ${colClass}">
             <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 text-orange-800 rounded-lg border-orange-200' : ''}">
               <span class="text-[11px] font-bold uppercase tracking-widest block ${isToday ? 'text-orange-700' : 'text-slate-500'}">
-                ${isToday ? "Auj" : dayNames[dayObj.getDay()]}
+                ${isToday ? "Aujourd'hui" : dayNames[dayObj.getDay()]}
               </span>
               <span class="text-[9px] font-mono font-medium ${isToday ? 'text-orange-600' : 'text-slate-400'}">
                 ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
@@ -1543,7 +1579,6 @@
       lucide.createIcons();
     }
 
-    // LISTING DES SAISIES DANS LA MODALE LORS DU CLIC SUR LA CARTE
     function openMapListingDetail(idStr) {
       const item = cachedHistory.find(h => h.id === idStr);
       if (!item) return;
@@ -1621,6 +1656,7 @@
 
       const modalEl = document.getElementById("tourneeDetailsModal");
       if (modalEl) modalEl.classList.remove("hidden");
+      lucide.createIcons();
     }
 
     function getPeriodFilteredTournees() {
@@ -1775,6 +1811,516 @@
       }
     }
 
+    function renderCompletionMetrics() {
+      const periodTournees = getPeriodFilteredTournees();
+      const periodGroups = buildTourneeGroups(periodTournees);
+      
+      const totalMissions = periodGroups.length;
+      const doneMissions = periodGroups.filter(g => g.isDone).length;
+      const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
+      
+      const elMissionsPct = document.getElementById("kpiMissionsPct");
+      if (elMissionsPct) elMissionsPct.innerText = `${missionsPct}%`;
+
+      const elMissionsBar = document.getElementById("kpiMissionsBar");
+      if (elMissionsBar) elMissionsBar.style.width = `${missionsPct}%`;
+
+      const elMissionsDone = document.getElementById("kpiMissionsDone");
+      if (elMissionsDone) elMissionsDone.innerText = doneMissions;
+
+      const elMissionsTotal = document.getElementById("kpiMissionsTotal");
+      if (elMissionsTotal) elMissionsTotal.innerText = totalMissions;
+      
+      const totalLines = periodTournees.length;
+      const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
+      const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
+      
+      const elGlobalCompletionPct = document.getElementById("globalCompletionPct");
+      if (elGlobalCompletionPct) elGlobalCompletionPct.innerText = `${linesPct}%`;
+
+      const elGlobalCompletionBar = document.getElementById("globalCompletionBar");
+      if (elGlobalCompletionBar) elGlobalCompletionBar.style.width = `${linesPct}%`;
+
+      const elKpiDoneTasks = document.getElementById("kpiDoneTasks");
+      if (elKpiDoneTasks) elKpiDoneTasks.innerText = doneLines;
+
+      const elKpiPendingTasks = document.getElementById("kpiPendingTasks");
+      if (elKpiPendingTasks) elKpiPendingTasks.innerText = totalLines - doneLines;
+
+      const todayStr = normalizeDateYMD(new Date());
+      const allGroups = buildTourneeGroups(cachedTournees || []);
+      const overdueMissions = allGroups.filter(g => !g.isDone && g.date < todayStr).length;
+      const totalActiveMissions = allGroups.length;
+      const slaScore = totalActiveMissions > 0 ? Math.round(((totalActiveMissions - overdueMissions) / totalActiveMissions) * 100) : 100;
+      
+      const elOverdueCount = document.getElementById("kpiOverdueMissionsCount");
+      if (elOverdueCount) elOverdueCount.innerText = overdueMissions;
+
+      const elSlaScore = document.getElementById("kpiSlaScore");
+      if (elSlaScore) elSlaScore.innerText = `${slaScore}%`;
+
+      const badgePilotage = document.getElementById("kpiPeriodLabel");
+      if (badgePilotage) {
+        const sInput = document.getElementById("filterStartDate");
+        const eInput = document.getElementById("filterEndDate");
+        const sDate = sInput ? sInput.value : "";
+        const eDate = eInput ? eInput.value : "";
+        
+        let txt = "Période Active";
+        if (sDate && eDate) {
+          const d = new Date(sDate + "T00:00:00");
+          const iso = getISOWeekNumber(d);
+          const dE = new Date(eDate + "T00:00:00");
+          if ((dE - d) / 86400000 === 6) {
+             txt = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
+          } else {
+             txt = `${formatDateDMY(sDate)} - ${formatDateDMY(eDate)}`;
+          }
+        }
+        badgePilotage.innerText = txt;
+      }
+
+      const agentListContainer = document.getElementById("agentCompletionList");
+      if (!agentListContainer) return;
+
+      const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
+      if (activeAgentsThisPeriod.length === 0) {
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`;
+        return;
+      }
+
+      let agentListHtml = '';
+      activeAgentsThisPeriod.forEach(agent => {
+        const aGroups = periodGroups.filter(g => g.agent === agent);
+        const aTotalGroups = aGroups.length;
+        const aDoneGroups = aGroups.filter(g => g.isDone).length;
+        const aPct = aTotalGroups > 0 ? Math.round((aDoneGroups / aTotalGroups) * 100) : 0;
+
+        agentListHtml += `
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-slate-900">${agent}</span>
+              <span class="font-mono text-[10px] font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-500'}">${aDoneGroups}/${aTotalGroups} missions (${aPct}%)</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      agentListContainer.innerHTML = agentListHtml;
+    }
+
+    function applyFilters() {
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const sDateVal = sInput ? sInput.value : "";
+      const eDateVal = eInput ? eInput.value : "";
+      
+      let periodLabel = "Tout l'historique";
+      if (sDateVal && eDateVal) {
+        periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
+      } else if (sDateVal) {
+        periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
+      } else if (eDateVal) {
+        periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
+      }
+      
+      const badgeGlobal = document.getElementById("periodBadgeGlobal");
+      if (badgeGlobal) badgeGlobal.innerText = periodLabel;
+
+      const badgeAgents = document.getElementById("periodBadgeAgents");
+      if (badgeAgents) badgeAgents.innerText = periodLabel;
+
+      const periodData = getPeriodFilteredHistory();
+      const filtered = getFilteredHistory();
+
+      renderKPIs(filtered); 
+      renderTable(filtered); 
+      renderAgentsView(periodData); 
+      renderMap(mapFilterOnSelection ? filtered : periodData);
+      renderWallPlanning(); 
+      renderCompletionMetrics(); 
+    }
+
+    function toggleActiveAgentsFilter() {
+      filterOnlyActiveAgents = !filterOnlyActiveAgents;
+      updateActiveAgentsButtonUI();
+      applyFilters();
+    }
+
+    function updateMaxQtyThreshold(val) {
+      if (val === "" || val === null) {
+        customMaxQty = null;
+        localStorage.removeItem("mon_cfg_max_qty");
+        const display = document.getElementById("cfgMaxQtyDisplay");
+        if (display) display.innerText = "--";
+      } else {
+        const parsed = Number(val);
+        if (!isNaN(parsed) && parsed >= 0) {
+          customMaxQty = parsed;
+          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+          const display = document.getElementById("cfgMaxQtyDisplay");
+          if (display) display.innerText = customMaxQty;
+        }
+      }
+      applyFilters();
+    }
+
+    function populateAdminDropdown() {
+      const adminSel = document.getElementById("authAdminSelect");
+      if (adminSel) {
+        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
+        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+    }
+
+    function toggleFilterDropdown(id) {
+      const otherIds = ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'];
+      otherIds.forEach(otherId => {
+        if (otherId !== id) {
+          const el = document.getElementById(otherId);
+          if (el) {
+            el.classList.add("hidden");
+          }
+        }
+      });
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.toggle("hidden");
+      }
+    }
+
+    function initMultiSelects() {
+      const makeCheckboxes = (containerId, list, selectedArr, type) => {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        
+        let html = '';
+        list.forEach(item => {
+          const isChecked = selectedArr.includes(item) ? 'checked' : '';
+          html += `
+            <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+              <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${isChecked} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+              <span class="truncate">${item}</span>
+            </label>
+          `;
+        });
+        el.innerHTML = html;
+      };
+      
+      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
+      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
+      makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
+    }
+
+    function onCheckboxChange(type) {
+      activeKpiFilter = null;
+      if (type === 'agents') {
+        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelAgents");
+        if (label) label.innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
+      } else if (type === 'contractors') {
+        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelContractors");
+        if (label) label.innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
+      } else if (type === 'trades') {
+        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelTrades");
+        if (label) label.innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
+      }
+      applyFilters();
+    }
+
+    function selectAll(type, check) {
+      activeKpiFilter = null;
+      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => {
+        b.checked = check;
+      });
+      onCheckboxChange(type);
+    }
+
+    function getDistinctArticlesOnPeriod() {
+      const periodList = getPeriodFilteredHistory() || [];
+      const mapArticles = new Map();
+      
+      for (let i = 0; i < periodList.length; i++) {
+        const item = periodList[i];
+        const ref = String(item.sapRef || "").trim();
+        if (!ref) continue;
+        
+        if (!mapArticles.has(ref)) {
+          mapArticles.set(ref, {
+            sapRef: ref,
+            designation: item.designation || 'Sans désignation',
+            count: 1
+          });
+        } else {
+          mapArticles.get(ref).count++;
+        }
+      }
+      return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
+    }
+
+    function showArticleSuggestions() {
+      const input = document.getElementById("articleTagInput");
+      onArticleTagInput(input ? input.value : "");
+    }
+
+    function onArticleTagInput(query) {
+      const dd = document.getElementById("articleDropdownList");
+      if (!dd) return;
+      
+      const q = String(query || "").trim().toLowerCase();
+      const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
+
+      if (filtered.length === 0) {
+        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`;
+        dd.classList.remove("hidden");
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(a => {
+        html += `
+          <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
+            <div class="min-w-0 pr-2">
+              <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
+              <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
+            </div>
+            <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
+          </div>
+        `;
+      });
+      dd.innerHTML = html;
+      dd.classList.remove("hidden");
+    }
+
+    function toggleArticleTag(sapRef) {
+      if (selectedArticleTags.includes(sapRef)) {
+        selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      } else {
+        selectedArticleTags.push(sapRef);
+      }
+      renderArticleTagsUI();
+      applyFilters();
+      
+      const input = document.getElementById("articleTagInput");
+      if (input) input.value = ""; 
+      
+      const dd = document.getElementById("articleDropdownList");
+      if (dd) dd.classList.add("hidden");
+    }
+
+    function removeArticleTag(sapRef) {
+      selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      renderArticleTagsUI();
+      applyFilters();
+    }
+
+    function renderArticleTagsUI() {
+      const container = document.getElementById("selectedArticleTagsContainer");
+      if (!container) return;
+      
+      let html = '';
+      selectedArticleTags.forEach(ref => {
+        html += `
+          <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
+            <span class="truncate max-w-[260px]">${ref}</span>
+            <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </span>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function resetFiltersToAll() {
+      activeKpiFilter = null;
+      selectAll('agents', false);
+      selectAll('contractors', false);
+      selectAll('trades', false);
+      selectedArticleTags = [];
+      renderArticleTagsUI();
+      applyFilters();
+    }
+
+    function filterByKpi(type) {
+      activeKpiFilter = type;
+      switchView('global');
+      applyFilters();
+    }
+
+    function onSmartPeriodChange(mode) {
+      const now = new Date();
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const customBox = document.getElementById("customDateRangeBox");
+
+      if (mode === 'CUSTOM') {
+        if (customBox) customBox.classList.remove("hidden");
+        return;
+      }
+      if (customBox) customBox.classList.add("hidden");
+
+      if (mode === 'ALL') {
+        if (sInput) sInput.value = "";
+        if (eInput) eInput.value = "";
+      } else if (mode === 'TODAY') {
+        const dStr = normalizeDateYMD(now);
+        if (sInput) sInput.value = dStr;
+        if (eInput) eInput.value = dStr;
+      } else if (mode === 'CURRENT_WEEK') {
+        const day = now.getDay() || 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(sunday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(monday);
+        if (eInput) eInput.value = normalizeDateYMD(sunday);
+      } else if (mode === 'PREV_WEEK') {
+        const day = now.getDay() || 7;
+        const prevMonday = new Date(now);
+        prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday);
+        prevSunday.setDate(prevMonday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(prevMonday);
+        if (eInput) eInput.value = normalizeDateYMD(prevSunday);
+      } else if (mode === 'NEXT_WEEK') {
+        const day = now.getDay() || 7;
+        const nextMonday = new Date(now);
+        nextMonday.setDate(now.getDate() - day + 8);
+        const nextSunday = new Date(nextMonday);
+        nextSunday.setDate(nextMonday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(nextMonday);
+        if (eInput) eInput.value = normalizeDateYMD(nextSunday);
+      } else if (mode === 'CURRENT_MONTH') {
+        if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+        if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+      }
+      
+      if (sInput) {
+        updateWeekBadge(sInput.value);
+      }
+      applyFilters();
+    }
+
+    function toggleMapSelectionFilter() {
+      mapFilterOnSelection = !mapFilterOnSelection;
+      const btnText = document.getElementById("mapFilterBtnText");
+      if (btnText) {
+        btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
+      }
+      applyFilters();
+    }
+
+    function getPeriodFilteredHistory() {
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      
+      const sDateVal = sInput ? sInput.value : "";
+      const eDateVal = eInput ? eInput.value : "";
+      
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      return (cachedHistory || []).filter(item => {
+        const itDate = parseItemDate(item.timestamp);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
+      });
+    }
+
+    function getFilteredHistory() {
+      return getPeriodFilteredHistory().filter(item => {
+        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) return false;
+        if (activeKpiFilter === 'ZERO' && Number(item.quantity) !== 0) return false;
+        if (activeKpiFilter === 'HIGH' && (customMaxQty === null || Number(item.quantity) <= customMaxQty)) return false;
+        return true;
+      });
+    }
+
+    function renderKPIs(list) {
+      const totalR = list.length;
+      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
+      const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
+
+      const elTotalRows = document.getElementById("kpiTotalRows");
+      if (elTotalRows) elTotalRows.innerText = totalR;
+
+      const elTotalPieces = document.getElementById("kpiTotalPieces");
+      if (elTotalPieces) elTotalPieces.innerText = totalP;
+
+      const elZeroStock = document.getElementById("kpiZeroStock");
+      if (elZeroStock) elZeroStock.innerText = zeroS;
+
+      const elAtypicalStock = document.getElementById("kpiAtypicalStock");
+      if (elAtypicalStock) elAtypicalStock.innerText = atypS;
+
+      const elAgentsTotalRows = document.getElementById("kpiAgentsTotalRows");
+      if (elAgentsTotalRows) elAgentsTotalRows.innerText = totalR;
+
+      const elAgentsTotalPieces = document.getElementById("kpiAgentsTotalPieces");
+      if (elAgentsTotalPieces) elAgentsTotalPieces.innerText = totalP;
+
+      const elAgentsZeroStock = document.getElementById("kpiAgentsZeroStock");
+      if (elAgentsZeroStock) elAgentsZeroStock.innerText = zeroS;
+
+      const elAgentsAtypicalStock = document.getElementById("kpiAgentsAtypicalStock");
+      if (elAgentsAtypicalStock) elAgentsAtypicalStock.innerText = atypS;
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById("supervisionTableBody");
+      if (!tbody) return;
+
+      const alertZeroEl = document.getElementById("cfgAlertZero");
+      const alertZero = alertZeroEl ? alertZeroEl.checked : false;
+      
+      const countLabel = document.getElementById("tableCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${list.length} saisie(s) répertoriée(s)`;
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      list.forEach(item => {
+        const q = Number(item.quantity);
+        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
+        const bgClass = isAlert ? 'bg-amber-50/60' : '';
+        const textClass = q === 0 ? 'text-rose-600' : 'text-emerald-700';
+
+        html += `
+          <tr class="hover:bg-slate-50 transition ${bgClass}">
+            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
+            <td class="p-3 font-bold text-slate-900">${item.user}</td>
+            <td class="p-3 text-slate-700">${item.contractor}</td>
+            <td class="p-3 text-slate-500">${item.trade}</td>
+            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
+            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
+            <td class="p-3 text-center font-mono font-black ${textClass} text-sm">${q}</td>
+            <td class="p-3 text-right whitespace-nowrap">
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+      lucide.createIcons();
+    }
+
     function renderMap(list) {
       const mapDiv = document.getElementById("mapContainer");
       if (!mapDiv) return;
@@ -1813,7 +2359,7 @@
         const tooltipHtml = `
           <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[220px] overflow-hidden border border-slate-200">
             <div class="px-3 py-2 flex justify-between items-center border-b border-slate-100 bg-slate-50">
-              <span class="font-bold text-[10px] text-slate-500 uppercase flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${formatDateDMY(p.timestamp, true)}</span>
+              <span class="font-bold text-[10px] text-slate-500 uppercase flex items-center gap-1">📅 ${formatDateDMY(p.timestamp, true)}</span>
               <span class="px-1.5 py-0.5 rounded text-[8px] font-black ${isRupture ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}">${isRupture ? 'RUPTURE' : 'COMPTÉ'}</span>
             </div>
             <div class="p-3 space-y-2">
