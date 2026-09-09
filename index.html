@@ -51,9 +51,10 @@
 
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[70vh]" id="mainScrollArea">
     
+    <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
       
-      <!-- BANDEAU MISSION ACTIVE : DESIGN ÉPURÉ RACCORD -->
+      <!-- BANDEAU MISSION ACTIVE : DESIGN ÉPURÉ -->
       <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative">
         <div class="flex justify-between items-center">
           <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -82,7 +83,6 @@
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
-          <!-- Suppression de onblur et du bouton OK pour la recherche -->
           <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
@@ -96,7 +96,7 @@
           </button>
         </div>
 
-        <!-- ZONE DE SÉLECTION COMPACTE, ÉPURÉE ET DIVISÉE PAR 2 EN HAUTEUR -->
+        <!-- ZONE DE SÉLECTION COMPACTE (Hauteur divisée par 2) -->
         <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-300 p-2 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-2.5">
           <div class="bg-emerald-100 p-1.5 rounded-lg text-emerald-700 shrink-0">
              <i data-lucide="check" class="w-4 h-4"></i>
@@ -126,6 +126,7 @@
       </div>
     </section>
 
+    <!-- ONGLET 2 : HISTORIQUE -->
     <section id="tabHistorique" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
@@ -134,6 +135,7 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
+    <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
         <h2 id="tourneeDebugHeader" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">File de travail Assignée</h2>
@@ -158,6 +160,7 @@
     </button>
   </nav>
 
+  <!-- MODALE SCAN CAMÉRA -->
   <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="w-full flex justify-between items-center text-white py-2 px-2">
       <span class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner Code-Barres / OCR</span>
@@ -178,6 +181,7 @@
     </div>
   </div>
 
+  <!-- MODALE CONFIGURATION PROFIL -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-[32px] p-6 shadow-2xl text-center flex flex-col gap-5">
       <div>
@@ -239,7 +243,10 @@
     let isSyncing = false; 
     let openTourneeGroups = {}; 
 
-    async function safeSetStorage(key, data) { try { await localforage.setItem(key, data); } catch (e) { console.warn("Stockage saturé ou erreur IndexedDB."); } }
+    async function safeSetStorage(key, data) { 
+      try { await localforage.setItem(key, data); } 
+      catch (e) { console.warn("Stockage saturé ou erreur IndexedDB."); } 
+    }
 
     let selectedArticle = null, activeMissionContext = null, currentGpsCoords = { lat: null, lng: null };
     let mediaStream = null, barcodeDetector = null, scanLoopActive = false;
@@ -327,6 +334,7 @@
       return str.split(' ')[0];
     }
 
+    // --- CORRECTION DU SCROLL POUR NE PAS CACHER LA RECHERCHE SOUS LE HEADER (-70px) ---
     function handleQuantityFocus() {
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
@@ -339,7 +347,6 @@
 
     function closeQtyKeyboard() { document.getElementById('inputQuantity').blur(); }
     
-    // --- CORRECTION DU SCROLL POUR LA RECHERCHE SAP ---
     function handleSearchFocus() {
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection'), mainArea = document.getElementById('mainScrollArea');
@@ -470,7 +477,8 @@
     }
 
     async function submitInventoryEntry() {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE AJOUTÉ
+      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
+      
       if(!currentAgent){alert("Configurez l'agent");openConfigModal();return;} if(!selectedArticle){alert("Sélectionnez un article");return;}
       const qInputStr = document.getElementById("inputQuantity").value;
       const q = parseInt(qInputStr, 10) || 0;
@@ -518,7 +526,6 @@
       if(navigator.onLine) setTimeout(syncMobileData, 100);
     }
 
-    // --- CORRECTION DU BLOC D'AFFECTATION ---
     function renderHistory() {
       const c = document.getElementById("historyListContainer"); if(!c) return;
       const ag = String(currentAgent||"").trim().toLowerCase();
@@ -544,7 +551,6 @@
           <p class="font-bold text-slate-900 text-sm leading-tight break-words">${h.designation}</p>
           
           <div class="flex gap-3 pt-1 items-stretch">
-            <!-- SUPPRESSION DU TEXTE "AFFECTATION" -->
             <div class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-2xl text-sm font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center min-w-0">
               <span class="truncate text-slate-800">${h.contractor}</span>
               <span class="truncate text-slate-600 font-bold">${h.trade}</span>
@@ -566,7 +572,7 @@
     }
 
     async function editHistoryItem(id) {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE AJOUTÉ
+      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
       const it=sessionHistory.find(h=>h.id===id); if(!it) return; const q=prompt("Modifier la quantité :", it.quantity); if(q===null) return; const p=parseInt(q,10); if(isNaN(p)||p<0) return;
       it.quantity=p; await safeSetStorage("mob_session_history", sessionHistory);
       const pc=pendingSyncQueue.find(x=>x.id===id&&x.action==='CREATE'); if(pc) pc.quantity=p; else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"UPDATE_INVENTORY", id:id, quantity:p, user:currentAgent}); }
@@ -574,7 +580,7 @@
     }
 
     async function deleteHistoryItem(id) {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE AJOUTÉ
+      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
       if(!confirm("Supprimer cette saisie ?")) return;
       const it=sessionHistory.find(h=>h.id===id); sessionHistory=sessionHistory.filter(h=>h.id!==id); await safeSetStorage("mob_session_history", sessionHistory);
       const pi=pendingSyncQueue.findIndex(x=>x.id===id&&x.action==='CREATE'); if(pi!==-1) pendingSyncQueue.splice(pi,1); else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"DELETE_INVENTORY", id:id, user:currentAgent}); }
