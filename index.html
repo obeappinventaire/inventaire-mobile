@@ -29,7 +29,7 @@
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
-  <!-- EN-TÊTE MOBILE (Nom Agent en grand) -->
+  <!-- EN-TÊTE MOBILE -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs z-20">
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
@@ -98,7 +98,6 @@
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
 
-        <!-- BOUTONS AGRANDIS (Taille identique à "Enregistrer") -->
         <div class="grid grid-cols-2 gap-3 pt-1">
           <button onclick="toggleVoiceSearch()" id="micBtn" class="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm">
             <i data-lucide="mic" class="w-6 h-6 text-orange-600"></i> Vocale
@@ -125,7 +124,7 @@
         </div>
       </div>
 
-      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT (Sans titre) -->
+      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3" id="quantitySection">
         <div class="flex items-stretch gap-3 relative">
           <div class="relative flex-1">
@@ -163,7 +162,6 @@
 
   </main>
 
-  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
@@ -179,7 +177,7 @@
     </button>
   </nav>
 
-  <!-- MODALE SCAN CAMÉRA (Boutons ajustés) -->
+  <!-- MODALE SCAN CAMÉRA -->
   <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="w-full flex justify-between items-center text-white py-2 px-2">
       <span class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner Code-Barres / OCR</span>
@@ -193,7 +191,6 @@
     </div>
     <canvas id="scanCanvas" class="hidden"></canvas>
     <div class="w-full max-w-xs py-4 space-y-2">
-      <!-- Bouton OCR reprenant la taille et couleur du bouton Scanner -->
       <button onclick="captureAndOCR()" class="w-full h-16 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl text-base shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
         <i data-lucide="camera" class="w-6 h-6"></i> Déclencher
       </button>
@@ -201,7 +198,7 @@
     </div>
   </div>
 
-  <!-- MODALE CONFIGURATION PROFIL -->
+  <!-- MODALE CONFIGURATION PROFIL & BOUTON URGENCE CACHE -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div>
@@ -215,6 +212,11 @@
       <div class="space-y-2 pt-2">
         <button onclick="saveAgentConfig()" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 font-bold text-white rounded-xl text-sm shadow-md transition cursor-pointer">Activer ce profil</button>
         <button onclick="logoutMobileAgentStep1()" class="w-full h-12 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold rounded-xl text-sm transition cursor-pointer">Se déconnecter</button>
+      </div>
+      <div class="pt-4 border-t border-slate-100">
+        <button onclick="hardResetApp()" class="w-full h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Vider le cache et réparer
+        </button>
       </div>
     </div>
   </div>
@@ -251,8 +253,7 @@
       try {
         await localforage.setItem(key, data);
       } catch (e) {
-        alert("⚠️ Stockage de l'appareil saturé ou erreur IndexedDB.");
-        console.warn("Erreur de stockage local :", e);
+        alert("⚠️ Stockage saturé ou erreur IndexedDB.");
       }
     }
 
@@ -286,7 +287,7 @@
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
           currentGpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        }, err => console.warn("GPS warning:", err), { enableHighAccuracy: true });
+        }, err => {}, { enableHighAccuracy: true });
       }
 
       if ('BarcodeDetector' in window) {
@@ -297,6 +298,19 @@
       renderTournee();
       await syncMobileData();
     });
+
+    async function hardResetApp() {
+      if(confirm("Cela va forcer la mise à jour de l'application et vider la mémoire. Continuer ?")) {
+         await localforage.clear();
+         localStorage.clear();
+         sessionStorage.clear();
+         if('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(let r of regs) await r.unregister();
+         }
+         window.location.reload(true);
+      }
+    }
 
     function initMobileDropdowns() {
       const agentSel = document.getElementById("configAgentSelect");
@@ -352,7 +366,7 @@
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
       if (dateVal instanceof Date) return `${dateVal.getFullYear()}-${String(dateVal.getMonth()+1).padStart(2,'0')}-${String(dateVal.getDate()).padStart(2,'0')}`;
-      const str = String(dateVal).trim();
+      const str = String(dateVal).trim().replace(/['"]/g, ''); 
       if (str.includes('T')) return str.split('T')[0];
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
       if (parts) return `${parts[3]}-${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
@@ -423,8 +437,8 @@
             let pendingUpdatesToMerge = [...recentlyProcessedTourneeUpdates];
             pendingSyncQueue.forEach(q => { if(q.action === "UPDATE_TOURNEE_STATUS") pendingUpdatesToMerge.push(q); });
 
-            const localValides = new Set(cachedTournees.filter(t=>String(t.statut).toUpperCase()==='VALIDE').map(t=>String(t.id)));
-            pendingUpdatesToMerge.forEach(pu => { if(pu.statut === 'VALIDE') localValides.add(String(pu.id)); });
+            const localValides = new Set(cachedTournees.filter(t=>String(t.statut).trim().toUpperCase()==='VALIDE').map(t=>String(t.id)));
+            pendingUpdatesToMerge.forEach(pu => { if(String(pu.statut).trim().toUpperCase() === 'VALIDE') localValides.add(String(pu.id)); });
 
             cachedTournees = data.tournees.map(s => localValides.has(String(s.id)) ? { ...s, statut: 'VALIDE' } : s);
             await safeSetStorage("offline_tournees", cachedTournees);
@@ -485,11 +499,13 @@
       document.getElementById("scanModal").classList.remove("hidden"); document.getElementById("ocrStatus").innerText = "Initialisation...";
       try { mediaStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}}); document.getElementById("scanVideo").srcObject = mediaStream; document.getElementById("ocrStatus").innerText = barcodeDetector?"Scan automatique...":"Cadrez"; scanLoopActive = true; if(barcodeDetector) requestAnimationFrame(detectBarcodeLoop); } catch (err) { document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; }
     }
+    
     async function detectBarcodeLoop() {
       if(!scanLoopActive) return; const v=document.getElementById("scanVideo");
       if(v.readyState===v.HAVE_ENOUGH_DATA && barcodeDetector){ try{ const b=await barcodeDetector.detect(v); if(b.length>0){ const i=catalog.find(x=>String(x.sapRef).trim()===b[0].rawValue || String(x.ean).trim()===b[0].rawValue); if(i){selectArticleFromSearch(i);closeScanModal();return;} } }catch(e){} }
       requestAnimationFrame(detectBarcodeLoop);
     }
+    
     function closeScanModal() { scanLoopActive=false; if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;} document.getElementById("scanModal").classList.add("hidden"); }
 
     async function captureAndOCR() {
@@ -607,6 +623,7 @@
       const pc=pendingSyncQueue.find(x=>x.id===id&&x.action==='CREATE'); if(pc) pc.quantity=p; else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"UPDATE_INVENTORY", id:id, quantity:p, user:currentAgent}); }
       await safeSetStorage("offline_pending_sync", pendingSyncQueue); updatePendingBadge(); renderHistory(); if(navigator.onLine) syncMobileData();
     }
+
     async function deleteHistoryItem(id) {
       if(!confirm("Supprimer cette saisie ?")) return;
       const it=sessionHistory.find(h=>h.id===id); sessionHistory=sessionHistory.filter(h=>h.id!==id); await safeSetStorage("mob_session_history", sessionHistory);
@@ -624,9 +641,9 @@
       const c = document.getElementById("tourneeListContainer"); if(!c) return; const tStr=normalizeDateYMD(new Date());
       const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
       
-      const aTraiter = agentTournees.filter(t => t.statut !== 'VALIDE' && normalizeDateYMD(t.date) <= tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
-      const aVenir = agentTournees.filter(t => t.statut !== 'VALIDE' && normalizeDateYMD(t.date) > tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
-      const terminees = agentTournees.filter(t => t.statut === 'VALIDE' && normalizeDateYMD(t.date) === tStr);
+      const aTraiter = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) <= tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
+      const aVenir = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) > tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
+      const terminees = agentTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE' && normalizeDateYMD(t.date) === tStr);
 
       let html = '';
 
