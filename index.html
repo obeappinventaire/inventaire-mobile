@@ -70,7 +70,7 @@
         <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
       </div>
 
-      <!-- PARAMÈTRES DE SAISIE (ZONE CLAIRE AVEC LISERÉ ORANGE AU CLIC) -->
+      <!-- PARAMÈTRES DE SAISIE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -84,14 +84,13 @@
         </div>
       </div>
 
-      <!-- RECHERCHE ACTIVE (SANS BOUTON OK, AVEC CROIX LIÉE) -->
+      <!-- RECHERCHE ACTIVE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
           
           <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-10 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
           
-          <!-- BOUTON CROIX DE RECHERCHE -->
           <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 transition cursor-pointer bg-slate-100 rounded-full p-0.5">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
@@ -108,7 +107,6 @@
           </button>
         </div>
 
-        <!-- ZONE DE SÉLECTION COMPACTE ET VERT TRÈS CLAIR -->
         <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-200 p-2 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-2.5">
           <div class="bg-emerald-200 p-1.5 rounded-lg text-emerald-800 shrink-0">
              <i data-lucide="check" class="w-4 h-4"></i>
@@ -120,14 +118,12 @@
              </div>
              <p id="cardDesignation" class="text-[10px] text-slate-700 truncate leading-tight mt-0.5">--</p>
           </div>
-          <!-- CROIX DE L'ARTICLE LIÉE -->
           <button onclick="resetComptageForm()" class="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-200 rounded-full transition cursor-pointer" title="Annuler la sélection">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
       </div>
 
-      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
         <div class="relative w-full">
           <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-emerald-50 focus:text-emerald-800 font-mono shadow-inner transition-all">
@@ -149,7 +145,7 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
+    <!-- ONGLET 3 : TOURNÉE (MISSIONS GROUPÉES) -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
         <h2 id="tourneeDebugHeader" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Comptages Assignés</h2>
@@ -349,12 +345,10 @@
       return str.split(' ')[0];
     }
 
-    // --- CORRECTION DU SCROLL : GARANTIT QUE LE BOUTON EST VISIBLE ---
     function handleQuantityFocus() {
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
         if (qtySec) {
-          // block 'end' cale le bas du bloc juste au-dessus du clavier ouvert
           qtySec.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
       }, 300);
@@ -374,7 +368,6 @@
     
     function closeKeyboard() { document.getElementById('sapSearchInput').blur(); }
     
-    // --- LIAISON DES CROIX : EFFACE TOUT ET GARDE LE FOCUS ---
     function clearSearch() {
       resetComptageForm();
       const input = document.getElementById("sapSearchInput");
@@ -460,7 +453,6 @@
       document.getElementById("activeMissionBanner")?.classList.add("hidden"); resetComptageForm();
     }
 
-    // --- RESTE GLOBALE LIÉE ---
     function resetComptageForm() { 
       selectedArticle=null; 
       const searchInput = document.getElementById("sapSearchInput");
@@ -727,9 +719,12 @@
       const groupedTasks = buildTourneeGroups(agentTournees);
       
       const safeSort = (a, b) => normalizeDateYMD(a.date).localeCompare(normalizeDateYMD(b.date));
+      
+      const todayStr = normalizeDateYMD(new Date());
 
+      // Tri et filtrage : On affiche les tâches à traiter et on masque les tâches terminées depuis hier ou avant.
       const aTraiter = groupedTasks.filter(g => g.statut !== 'VALIDE').sort(safeSort);
-      const terminees = groupedTasks.filter(g => g.statut === 'VALIDE').sort(safeSort);
+      const terminees = groupedTasks.filter(g => g.statut === 'VALIDE' && normalizeDateYMD(g.date) >= todayStr).sort(safeSort);
 
       let html = '';
 
@@ -738,50 +733,59 @@
         const dateStr = formatTourneeDate(g.date);
         
         return `
-          <div class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200'} rounded-2xl shadow-sm mb-4 overflow-hidden transition-all">
+          <div class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'} rounded-3xl shadow-sm flex flex-col transition-all overflow-hidden mb-4">
             
-            <div class="px-4 py-3 flex justify-between items-center border-b border-slate-100 ${isDone ? 'bg-emerald-50' : 'bg-slate-50'}">
-              <span class="font-bold text-[11px] text-slate-600 uppercase flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr} - ${g.tranche||'MATIN'}</span>
-              <span class="px-2.5 py-1 rounded-lg text-[10px] font-black shadow-xs ${isDone ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-white tracking-wide'}">${isDone ? '✓ TERMINÉ' : 'À FAIRE'}</span>
+            <!-- ZONE CLIQUABLE PRINCIPALE -->
+            <div onclick="toggleTourneeGroup('${g.id}')" class="p-4 cursor-pointer active:bg-slate-50 transition-colors">
+              <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                  <span class="font-bold text-slate-700 text-xs uppercase">${dateStr} - ${g.tranche||'MATIN'}</span>
+                </div>
+                ${isDone 
+                  ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ TERMINÉ</span>' 
+                  : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400 text-white shadow-xs tracking-wide">À FAIRE</span>'}
+              </div>
+              
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex-1 min-w-0">
+                  <p class="font-black text-slate-900 text-sm leading-tight truncate">${g.contractor}</p>
+                  <p class="text-[11px] font-semibold text-slate-500 truncate mt-0.5">${g.trade}</p>
+                </div>
+                <div class="shrink-0 ml-3 bg-slate-50 p-1.5 rounded-full text-slate-400 border border-slate-100 shadow-sm">
+                   <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5"></i>
+                </div>
+              </div>
+              
+              <div class="flex gap-3 items-stretch">
+                <div class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-2xl text-sm font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center items-center">
+                  <span class="text-[9px] text-slate-500 font-bold uppercase mb-0.5">Attribués</span>
+                  <span>${g.total}</span>
+                </div>
+                <div class="${isDone ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'} px-3 py-1.5 rounded-2xl text-sm font-black shadow-inner border flex-1 flex flex-col justify-center items-center">
+                  <span class="text-[9px] font-bold uppercase mb-0.5 opacity-80">Restants</span>
+                  <span>${g.pending}</span>
+                </div>
+              </div>
             </div>
 
-            <div class="p-4 space-y-3">
-              <div class="flex items-center gap-2 mt-1">
-                <span class="text-sm font-black text-slate-900 truncate">${g.contractor}</span>
-                <span class="text-xs font-bold text-slate-500 truncate border-l border-slate-300 pl-2">${g.trade}</span>
-              </div>
-
-              <div class="flex gap-2">
-                <div class="bg-slate-100 px-3 py-1.5 rounded-xl text-[11px] text-slate-600 font-medium border border-slate-200 flex-1 text-center">
-                  <b>${g.total}</b> article(s) attribué(s)
-                </div>
-                <div class="${isDone ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-orange-50 border-orange-200 text-orange-700'} px-3 py-1.5 rounded-xl text-[11px] font-bold border flex-1 text-center">
-                  <b>${g.pending}</b> restant(s)
-                </div>
-              </div>
-
-              <button onclick="toggleTourneeGroup('${g.id}')" class="w-full mt-1 flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-[11px] font-bold rounded-xl border border-slate-200 transition cursor-pointer">
-                <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-orange-500"></i>
-                ${isOpen ? 'Masquer les articles' : 'Afficher les articles dans l\'ordre'}
-              </button>
-
-              <div class="${isOpen ? 'block' : 'hidden'} mt-3 space-y-2 pt-3 border-t border-slate-100">
-                ${g.items.map(t => {
-                   const isItemDone = String(t.statut).toUpperCase() === 'VALIDE';
-                   return `
-                     <div ${isItemDone ? '' : `onclick="selectTourneeTask('${t.id}')"`} class="flex items-center justify-between p-2.5 rounded-xl ${isItemDone ? 'bg-emerald-50 border border-emerald-100 opacity-60' : 'bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-orange-300 active:scale-95 transition'}">
-                        <div class="min-w-0 pr-2 flex-1">
-                           <div class="flex items-center gap-2 mb-0.5">
-                             <span class="font-mono font-black text-[11px] text-orange-600">${t.sapRef}</span>
-                             ${isItemDone ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>' : ''}
-                           </div>
-                           <div class="text-[10px] font-medium text-slate-600 truncate leading-snug">${t.designation}</div>
-                        </div>
-                        ${!isItemDone ? '<div class="shrink-0 bg-orange-50 p-1.5 rounded-lg text-orange-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></div>' : ''}
-                     </div>
-                   `;
-                }).join('')}
-              </div>
+            <!-- CONTENU ACCORDÉON (Liste des articles) -->
+            <div class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50 p-3 space-y-2">
+              ${g.items.map(t => {
+                 const isItemDone = String(t.statut).toUpperCase() === 'VALIDE';
+                 return `
+                   <div ${isItemDone ? '' : `onclick="selectTourneeTask('${t.id}')"`} class="flex items-center justify-between p-2.5 rounded-xl ${isItemDone ? 'bg-emerald-50 border border-emerald-100 opacity-60' : 'bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-orange-300 active:scale-95 transition'}">
+                      <div class="min-w-0 pr-2 flex-1">
+                         <div class="flex items-center gap-2 mb-0.5">
+                           <span class="font-mono font-black text-[11px] text-orange-600">${t.sapRef}</span>
+                           ${isItemDone ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>' : ''}
+                         </div>
+                         <div class="text-[10px] font-medium text-slate-600 truncate leading-snug">${t.designation}</div>
+                      </div>
+                      ${!isItemDone ? '<div class="shrink-0 bg-orange-50 p-1.5 rounded-lg text-orange-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></div>' : ''}
+                   </div>
+                 `;
+              }).join('')}
             </div>
           </div>
         `;
