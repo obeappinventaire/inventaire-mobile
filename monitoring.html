@@ -70,7 +70,7 @@
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
-
+      
       <p class="text-[9px] text-slate-400 mt-2">Code de secours hors-ligne : 1234</p>
     </div>
   </div>
@@ -111,11 +111,10 @@
   <!-- STRUCTURE CENTRALE -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- BARRE LATÉRALE GAUCHE -->
-    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0 text-slate-100 relative">
-      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+    <!-- BARRE LATÉRALE -->
+    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100 relative">
+      <div class="p-4 space-y-5 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
         
-        <!-- Navigation Principale -->
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
           <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer">
@@ -136,19 +135,19 @@
           </button>
         </div>
 
-        <!-- Filtres Repoussés vers le bas avec mt-auto -->
         <div class="mt-auto pt-6 space-y-4">
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
               </span>
-              <span id="weekBadgeLabel" class="text-[9px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
+              <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
             </div>
 
             <div class="relative">
-              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
                 <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
+                <option value="NEXT_WEEK">▶ Semaine prochaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
                 <option value="TODAY">☀️ Aujourd'hui</option>
                 <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
@@ -171,7 +170,7 @@
 
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères
               </span>
               <span class="text-[9px] bg-amber-950/50 text-amber-400 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
@@ -202,7 +201,7 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE DE DROITE -->
+    <!-- ZONE PRINCIPALE -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50">
       
       <div class="space-y-6 flex-1">
@@ -224,6 +223,7 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
+
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
@@ -233,6 +233,7 @@
                 </div>
                 <span id="kpiZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
               </div>
+
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
@@ -245,74 +246,68 @@
             </div>
           </div>
 
-          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
-            <div class="space-y-2">
-              <div class="flex items-center justify-between gap-4">
-                <div class="flex-1 relative" onclick="event.stopPropagation()">
-                  <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-slate-400"></i>
-                  <input type="text" id="articleTagInput" onfocus="showArticleSuggestions()" oninput="onArticleTagInput(this.value)" placeholder="Sélectionner un ou plusieurs articles (Réf SAP, désignation)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white shadow-xs">
-                  <div id="articleDropdownList" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 z-40 max-h-60 overflow-y-auto custom-scrollbar space-y-1"></div>
-                </div>
-
-                <div class="flex items-center space-x-2">
-                  <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer">
-                    Effacer filtres
-                  </button>
-                  <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs cursor-pointer">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                    <span>Exporter CSV</span>
-                  </button>
-                </div>
+          <!-- FILTRES GLOBAUX COMPACTÉS -->
+          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="relative flex-1 min-w-[280px]" onclick="event.stopPropagation()">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                <input type="text" id="articleTagInput" onfocus="showArticleSuggestions()" oninput="onArticleTagInput(this.value)" placeholder="Réf SAP ou désignation..." class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white shadow-xs">
+                <div id="articleDropdownList" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 z-40 max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
               </div>
-              <div id="selectedArticleTagsContainer" class="flex flex-wrap gap-1.5 empty:hidden pt-1"></div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg text-xs transition cursor-pointer">Effacer</button>
+                <button onclick="exportTableToCSV()" class="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
+                </button>
+              </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 pt-1 border-t border-slate-100">
+            <div class="grid grid-cols-3 gap-3">
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
-                  <span id="btnLabelAgents" class="truncate font-semibold">Tous les agents</span>
+                <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
+                  <span id="btnLabelAgents" class="truncate font-semibold text-slate-600">Tous les agents</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
-                <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                <div id="dropdownAgents" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-30 space-y-1">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[10px]">
                     <button type="button" onclick="selectAll('agents', true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
                     <button type="button" onclick="selectAll('agents', false)" class="text-slate-500 hover:underline cursor-pointer">Tout décocher</button>
                   </div>
-                  <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                  <div id="checkboxesAgents" class="max-h-40 overflow-y-auto custom-scrollbar pr-1"></div>
                 </div>
               </div>
 
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
-                  <span id="btnLabelContractors" class="truncate font-semibold">Tous les entrepreneurs</span>
+                <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
+                  <span id="btnLabelContractors" class="truncate font-semibold text-slate-600">Tous les entrepreneurs</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
-                <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                <div id="dropdownContractors" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-30 space-y-1">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[10px]">
                     <button type="button" onclick="selectAll('contractors', true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
                     <button type="button" onclick="selectAll('contractors', false)" class="text-slate-500 hover:underline cursor-pointer">Tout décocher</button>
                   </div>
-                  <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                  <div id="checkboxesContractors" class="max-h-40 overflow-y-auto custom-scrollbar pr-1"></div>
                 </div>
               </div>
 
               <div class="relative" onclick="event.stopPropagation()">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
-                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
-                  <span id="btnLabelTrades" class="truncate font-semibold">Tous les métiers</span>
+                <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
+                  <span id="btnLabelTrades" class="truncate font-semibold text-slate-600">Tous les métiers</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                 </button>
-                <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-30 space-y-2">
-                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                <div id="dropdownTrades" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-30 space-y-1">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[10px]">
                     <button type="button" onclick="selectAll('trades', true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
                     <button type="button" onclick="selectAll('trades', false)" class="text-slate-500 hover:underline cursor-pointer">Tout décocher</button>
                   </div>
-                  <div id="checkboxesTrades" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+                  <div id="checkboxesTrades" class="max-h-40 overflow-y-auto custom-scrollbar pr-1"></div>
                 </div>
               </div>
             </div>
+            
+            <div id="selectedArticleTagsContainer" class="flex flex-wrap gap-1.5 empty:hidden pt-1"></div>
           </div>
 
           <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden flex-1 flex flex-col min-h-[400px]">
@@ -358,7 +353,7 @@
           <div id="agentsAccordionContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE GEOGRAPHIQUE ================= -->
+        <!-- ================= ONGLET 3 : CARTE ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
@@ -383,14 +378,14 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & MISSIONS ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Missions regroupées par Entrepreneur & Métier • Glissez-déposez pour replanifier.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Missions regroupées. L'agenda affiche les 7 jours de la période sélectionnée.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
@@ -410,41 +405,42 @@
             
             <!-- AGENDA GAUCHE -->
             <div class="lg:col-span-8 space-y-4">
-              <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center space-x-2">
-                  <span class="text-xs font-bold text-slate-500 uppercase">Filtre Agent :</span>
-                  <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-orange-500">
-                    <option value="">Tous les agents</option>
-                  </select>
-                </div>
-                <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
-              </div>
-
-              <!-- ZONE DES RETARDS (GRILLE FLUIDE) -->
+              
+              <!-- ZONE BUFFER & FILTRE AGENT FUSIONNÉS -->
               <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col">
-                <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 text-xs shrink-0">
-                  <span class="font-bold text-amber-800 uppercase tracking-wide flex items-center gap-1.5">
-                    <i data-lucide="clock-4" class="w-4 h-4"></i> Buffer Opérationnel (En retard / À replanifier)
+                <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 shrink-0">
+                  <span class="font-bold text-amber-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                    <i data-lucide="clock-4" class="w-4 h-4"></i> Buffer Opérationnel (Retards / À replanifier)
                   </span>
+                  
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-amber-700 uppercase">Filtre Agent :</span>
+                    <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 focus:outline-none cursor-pointer shadow-xs">
+                      <option value="">Tous</option>
+                    </select>
+                  </div>
                 </div>
+                
                 <div id="overdueTasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto custom-scrollbar max-h-[160px] pr-1"></div>
               </div>
 
-              <!-- GRILLE 7 JOURS -->
+              <!-- GRILLE DE L'AGENDA (Défilement horizontal) -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs mb-3">
-                  <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (7 prochains jours)</span>
+                  <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (Période ciblée)</span>
                 </div>
-                <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[420px]"></div>
+                <!-- Grille flex pour accommoder les colonnes fines et larges -->
+                <div id="wallPlanningGrid" class="flex flex-nowrap gap-2 min-h-[420px] overflow-x-auto custom-scrollbar pb-2"></div>
               </div>
             </div>
 
-            <!-- COCKPIT COMPLÉTION DROITE -->
+            <!-- COCKPIT DE COMPLÉTION DATA -->
             <div class="lg:col-span-4 space-y-4 sticky top-6">
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pilotage Réalisation</span>
-                  <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Période Active</span>
+                  <!-- AFFICHAGE DYNAMIQUE DE LA PERIODE ACTIVE -->
+                  <span id="kpiPeriodLabel" class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Période Active</span>
                 </div>
 
                 <div class="space-y-1.5">
@@ -487,6 +483,7 @@
                 </div>
               </div>
             </div>
+            
           </div>
         </section>
 
@@ -496,6 +493,7 @@
 
   <!-- MODALES ADMIN -->
   
+  <!-- Modale Ajout Manuel -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -553,12 +551,10 @@
           <div id="adminCatalogPickerList" class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
         </div>
       </div>
-      <div class="pt-2 border-t border-slate-100 flex gap-2">
-        <button onclick="closeManualAssignModal()" class="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Fermer</button>
-      </div>
     </div>
   </div>
 
+  <!-- Modale Détails de Tournée/Mission -->
   <div id="tourneeDetailsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -649,14 +645,7 @@
       const badgeText = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
       
       const badge = document.getElementById("weekBadgeLabel");
-      const wallBadge = document.getElementById("wallPlanningWeekLabel");
-      
-      if (badge) {
-        badge.innerText = badgeText;
-      }
-      if (wallBadge) {
-        wallBadge.innerText = badgeText;
-      }
+      if (badge) badge.innerText = badgeText;
     }
 
     function parseItemDate(str) {
@@ -737,7 +726,7 @@
         today.setHours(0,0,0,0);
 
         if (d < today) { 
-          alert("Impossible de planifier une tâche dans le passé."); 
+          alert("Impossible de créer une tâche dans le passé."); 
           inputElem.value = ""; 
           return false; 
         }
@@ -754,7 +743,6 @@
         return true;
     }
 
-    // FONCTION RESTAURÉE POUR ÉVITER LE CRASH AU DÉMARRAGE
     function updateActiveAgentsButtonUI() {
       const btnText = document.getElementById("btnFilterActiveText");
       const btn = document.getElementById("btnFilterActiveAgentsOnly");
@@ -817,7 +805,6 @@
         });
       });
 
-      // APPELS D'INITIALISATION
       updateActiveAgentsButtonUI();
       applyFilters();
       switchView(activeView);
@@ -853,21 +840,17 @@
           result = JSON.parse(rawText);
         } catch (e) {
           console.warn("Le serveur n'a pas renvoyé de JSON valide:", rawText);
-          
-          // MODE SECOURS ANTI-BLOCAGE
           if (pwd === "1234" || pwd === "admin") {
-            alert("⚠️ Le serveur ne répond pas. Connexion forcée en mode local (Code de secours utilisé).");
             currentAdmin = selected;
             sessionStorage.setItem("mon_current_admin", currentAdmin);
             sessionStorage.setItem("mon_auth_token", "LOCAL_TOKEN");
             adminToken = "LOCAL_TOKEN";
-            
             document.getElementById("activeAdminName").innerText = currentAdmin;
             document.getElementById("authModal").classList.add("hidden");
             applyFilters();
             return;
           } else {
-             throw new Error("Réponse serveur invalide et mot de passe de secours incorrect.");
+             throw new Error("Réponse serveur invalide.");
           }
         }
 
@@ -884,9 +867,7 @@
           alert("Mot de passe incorrect.");
         }
       } catch (err) {
-        console.error(err);
         if (pwd === "1234" || pwd === "admin") {
-            alert("⚠️ Erreur réseau. Connexion forcée en mode local.");
             currentAdmin = selected;
             sessionStorage.setItem("mon_current_admin", currentAdmin);
             sessionStorage.setItem("mon_auth_token", "OFFLINE_TOKEN");
@@ -895,7 +876,7 @@
             document.getElementById("authModal").classList.add("hidden");
             applyFilters();
         } else {
-            alert("Erreur de connexion. Si le serveur bloque, utilisez le code de secours '1234'.");
+            alert("Erreur de connexion serveur. Utilisez le code '1234' en cas de blocage technique.");
         }
       } finally {
         btn.innerHTML = originalText;
@@ -1157,6 +1138,7 @@
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
       
+      // Onglet 1 : Modèle
       const planningData = [
         ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"],
         [
@@ -1174,6 +1156,7 @@
       ws1['!cols'] = [{wch: 18}, {wch: 28}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 18}];
       XLSX.utils.book_append_sheet(wb, ws1, "Import_Masse");
 
+      // Onglet 2 : Références
       const maxRows = Math.max(availableAgents.length, availableContractors.length, availableTrades.length, catalog.length);
       const masterData = [["AGENTS DISPONIBLES", "ENTREPRENEURS", "METIERS", "CATALOGUE (REF SAP)", "DESIGNATION"]];
 
@@ -1206,7 +1189,6 @@
       reader.onload = function(e) {
         try {
           const data = new Uint8Array(e.target.result);
-          // cellDates permet de décoder les dates Excel
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0]; 
           const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
@@ -1232,7 +1214,6 @@
           for (let i = 1; i < jsonRows.length; i++) {
             const row = jsonRows[i];
             
-            // Sécurité anti-lignes fantômes Excel
             if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) {
               continue;
             }
@@ -1240,22 +1221,17 @@
             const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
             const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
             
-            if (!sapRef || !agent) {
-              continue;
-            }
+            if (!sapRef || !agent) continue; 
 
             const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
             const agentExists = availableAgents.includes(agent);
 
-            if (!catItem) {
-              missingSaps.add(sapRef);
-            }
-            if (!agentExists) {
-              missingAgents.add(agent);
-            }
+            if (!catItem) missingSaps.add(sapRef);
+            if (!agentExists) missingAgents.add(agent);
 
             let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
             
+            // AUTO-CORRECTION DATE EXCEL NUMÉRIQUE (ex: 46275)
             if (typeof rawDate === 'number') {
                 const utc_days  = Math.floor(rawDate - 25569);
                 const utc_value = utc_days * 86400;
@@ -1306,11 +1282,7 @@
         }
       };
       reader.readAsArrayBuffer(file);
-      
-      const inputEl = document.getElementById('excelFileInput');
-      if (inputEl) {
-        inputEl.value = '';
-      }
+      document.getElementById('excelFileInput').value = '';
     }
 
     async function uploadBulkTournees(bulkItems) {
@@ -1477,17 +1449,21 @@
         overdueContainer.innerHTML = overdueHtml;
       }
 
-      // AGENDA 7 JOURS
+      // AGENDA DYNAMIQUE : Affichage de 7 jours selon la Période Active !
+      const sInputVal = document.getElementById("filterStartDate").value;
+      const agendaStartDate = sInputVal ? new Date(sInputVal + "T00:00:00") : new Date(today);
+      agendaStartDate.setHours(0,0,0,0);
+
       const weekDays = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() + i);
+        const d = new Date(agendaStartDate);
+        d.setDate(agendaStartDate.getDate() + i);
         return d;
       });
 
       const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
       let gridHtml = '';
-      weekDays.forEach((dayObj, idx) => {
+      weekDays.forEach(dayObj => {
         const dateStr = normalizeDateYMD(dayObj);
         const dayGroups = allGroups.filter(g => g.date === dateStr);
 
@@ -1522,33 +1498,44 @@
         };
 
         const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
-        const bgClass = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-slate-50/50 hover:bg-orange-50/50 cursor-pointer';
+        
+        // COLONNES SLIM POUR LES JOURS NON OUVRÉS
+        const colClass = isBlocked ? 'w-16 shrink-0 bg-slate-100/60 items-center justify-center' : 'w-64 min-w-[200px] flex-1';
+        
+        let innerContentHtml = '';
+        if (isBlocked) {
+           innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-xs font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
+        } else {
+           innerContentHtml = `
+            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 rounded-lg p-1.5 flex flex-col transition bg-sky-50/40 hover:bg-sky-100/60 border border-sky-100 border-dashed cursor-pointer">
+              <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider mb-2">Matin</span>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
+            </div>
+            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 rounded-lg p-1.5 flex flex-col transition bg-amber-50/40 hover:bg-amber-100/60 border border-amber-100 border-dashed cursor-pointer">
+              <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider mb-2">Après-midi</span>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
+            </div>
+           `;
+        }
+
+        const isToday = dayObj.toDateString() === today.toDateString();
 
         gridHtml += `
-          <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px] shadow-sm">
-            <div class="text-center pb-2 pt-1 border-b border-slate-100">
-              <span class="text-[11px] font-bold uppercase tracking-widest block ${idx === 0 ? 'text-orange-600' : 'text-slate-500'}">
-                ${idx === 0 ? "Aujourd'hui" : dayNames[dayObj.getDay()]}
+          <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px] shadow-sm transition-all ${colClass}">
+            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 text-orange-800 rounded-lg border-orange-200' : ''}">
+              <span class="text-[11px] font-bold uppercase tracking-widest block ${isToday ? 'text-orange-700' : 'text-slate-500'}">
+                ${isToday ? "Aujourd'hui" : dayNames[dayObj.getDay()]}
               </span>
-              <span class="text-[9px] font-mono font-medium ${idx === 0 ? 'text-orange-500' : 'text-slate-400'}">
+              <span class="text-[9px] font-mono font-medium ${isToday ? 'text-orange-600' : 'text-slate-400'}">
                 ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
               </span>
             </div>
-
-            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 rounded-lg p-1.5 flex flex-col transition ${bgClass}">
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Matin</span>
-              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
-            </div>
-
-            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 rounded-lg p-1.5 flex flex-col transition ${bgClass}">
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Après-midi</span>
-              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
-            </div>
+            ${innerContentHtml}
           </div>
         `;
       });
+      
       gridContainer.innerHTML = gridHtml;
-
       lucide.createIcons();
     }
 
@@ -1792,35 +1779,25 @@
       const elSlaScore = document.getElementById("kpiSlaScore");
       if (elSlaScore) elSlaScore.innerText = `${slaScore}%`;
 
-      const agentListContainer = document.getElementById("agentCompletionList");
-      if (!agentListContainer) return;
-
-      const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
-      if (activeAgentsThisPeriod.length === 0) {
-        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`;
-        return;
+      // NOUVEAU: MISE À JOUR DYNAMIQUE DU TEXTE PÉRIODE DU COCKPIT
+      const badgePilotage = document.getElementById("kpiPeriodLabel");
+      if (badgePilotage) {
+        const sDate = document.getElementById("filterStartDate").value;
+        const eDate = document.getElementById("filterEndDate").value;
+        let txt = "Période Active";
+        if (sDate && eDate) {
+          const d = new Date(sDate + "T00:00:00");
+          const iso = getISOWeekNumber(d);
+          const dE = new Date(eDate + "T00:00:00");
+          // Si l'écart est de 6 jours, on présume une semaine complète
+          if ((dE - d) / 86400000 === 6) {
+             txt = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
+          } else {
+             txt = `${formatDateDMY(sDate)} - ${formatDateDMY(eDate)}`;
+          }
+        }
+        badgePilotage.innerText = txt;
       }
-
-      let agentListHtml = '';
-      activeAgentsThisPeriod.forEach(agent => {
-        const aGroups = periodGroups.filter(g => g.agent === agent);
-        const aTotalGroups = aGroups.length;
-        const aDoneGroups = aGroups.filter(g => g.isDone).length;
-        const aPct = aTotalGroups > 0 ? Math.round((aDoneGroups / aTotalGroups) * 100) : 0;
-
-        agentListHtml += `
-          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
-            <div class="flex justify-between items-center text-xs">
-              <span class="font-bold text-slate-900">${agent}</span>
-              <span class="font-mono text-[10px] font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-500'}">${aDoneGroups}/${aTotalGroups} missions (${aPct}%)</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
-            </div>
-          </div>
-        `;
-      });
-      agentListContainer.innerHTML = agentListHtml;
     }
 
     function applyFilters() {
@@ -1838,9 +1815,6 @@
       
       const badgeGlobal = document.getElementById("periodBadgeGlobal");
       if (badgeGlobal) badgeGlobal.innerText = periodLabel;
-
-      const badgeAgents = document.getElementById("periodBadgeAgents");
-      if (badgeAgents) badgeAgents.innerText = periodLabel;
 
       const periodData = getPeriodFilteredHistory();
       const filtered = getFilteredHistory();
@@ -2098,6 +2072,14 @@
         prevSunday.setDate(prevMonday.getDate() + 6);
         if (sInput) sInput.value = normalizeDateYMD(prevMonday);
         if (eInput) eInput.value = normalizeDateYMD(prevSunday);
+      } else if (mode === 'NEXT_WEEK') {
+        const day = now.getDay() || 7;
+        const nextMonday = new Date(now);
+        nextMonday.setDate(now.getDate() - day + 8);
+        const nextSunday = new Date(nextMonday);
+        nextSunday.setDate(nextMonday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(nextMonday);
+        if (eInput) eInput.value = normalizeDateYMD(nextSunday);
       } else if (mode === 'CURRENT_MONTH') {
         if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
         if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
@@ -2166,7 +2148,6 @@
       const elAtypicalStock = document.getElementById("kpiAtypicalStock");
       if (elAtypicalStock) elAtypicalStock.innerText = atypS;
 
-      // KPIs de la page Agents (s'ils existent)
       const elAgentsTotalRows = document.getElementById("kpiAgentsTotalRows");
       if (elAgentsTotalRows) elAgentsTotalRows.innerText = totalR;
 
