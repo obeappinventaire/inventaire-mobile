@@ -51,8 +51,8 @@
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL (Espace vide ajouté : pb-[50vh]) -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[50vh]" id="mainScrollArea">
+  <!-- CONTENU PRINCIPAL (Espace vide de sécurité augmenté à 70vh) -->
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[70vh]" id="mainScrollArea">
     
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
@@ -365,14 +365,19 @@
       return str.split(' ')[0];
     }
 
-    // Fonction améliorée pour monter tout le bloc en haut lors de la saisie
+    // --- CORRECTION DU DEFILEMENT CLAVIER ---
     function handleQuantityFocus() {
       setTimeout(() => {
+        const mainArea = document.getElementById('mainScrollArea');
         const qtySec = document.getElementById('quantitySection');
-        if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (mainArea && qtySec) {
+          // On force le scroll absolu pour coller le bloc en haut
+          mainArea.scrollTo({
+            top: qtySec.offsetTop - 15,
+            behavior: 'smooth'
+          });
         }
-      }, 300);
+      }, 400); // Délai de 400ms pour laisser le clavier natif iOS/Android se déployer entièrement
     }
 
     function closeQtyKeyboard() {
@@ -380,11 +385,16 @@
     }
 
     function handleSearchFocus() {
-      document.getElementById('closeKeyboardBtn').classList.remove('hidden');
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection');
-        if (searchSec) searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
+        const mainArea = document.getElementById('mainScrollArea');
+        if (mainArea && searchSec) {
+          mainArea.scrollTo({
+            top: searchSec.offsetTop - 15,
+            behavior: 'smooth'
+          });
+        }
+      }, 400);
     }
 
     function closeKeyboard() {
