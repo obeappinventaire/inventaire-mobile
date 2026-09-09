@@ -222,7 +222,6 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
-
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
@@ -232,7 +231,6 @@
                 </div>
                 <span id="kpiZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
               </div>
-
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
@@ -245,6 +243,7 @@
             </div>
           </div>
 
+          <!-- FILTRES GLOBAUX COMPACTÉS -->
           <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
             <div class="flex flex-wrap items-center gap-3">
               <div class="relative flex-1 min-w-[280px]" onclick="event.stopPropagation()">
@@ -308,6 +307,7 @@
             <div id="selectedArticleTagsContainer" class="flex flex-wrap gap-1.5 empty:hidden pt-1"></div>
           </div>
 
+          <!-- Table des Données -->
           <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden flex-1 flex flex-col min-h-[400px]">
             <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs bg-slate-50">
               <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
@@ -335,49 +335,49 @@
 
         <!-- ================= ONGLET 2 : SUIVI SCORECARD AGENTS ================= -->
         <section id="viewAgents" class="hidden space-y-6">
-          <div>
-            <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
-                <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
-              </div>
-              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer">
-                <span class="w-2 h-2 rounded-full bg-slate-300"></span>
-                <span id="btnFilterActiveText">Afficher toute la flotte</span>
-              </button>
+          <div class="flex justify-between items-center mb-2 px-1">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="users-round" class="w-4 h-4 text-orange-600"></i> Scorecard & Activité Agents
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">Performance consolidée basée sur la période sélectionnée à gauche.</p>
             </div>
-            
-            <!-- KPIs DE LA FLOTTE (RESTAURÉS) -->
-            <div class="grid grid-cols-4 gap-3 max-w-5xl mb-6">
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
-                <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
-                <span id="kpiAgentsTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
-              </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
-                <span class="text-[11px] font-bold text-slate-500 uppercase block">Pièces Totales</span>
-                <span id="kpiAgentsTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
-              </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
-                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs">
-                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </div>
-                </div>
-                <span id="kpiAgentsZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
-              </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Flotte</span>
-                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs">
-                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </div>
-                </div>
-                <span id="kpiAgentsAtypicalStock" class="text-xl font-black text-amber-600 mt-0.5 block">0</span>
-              </div>
-            </div>
+            <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer bg-white border border-slate-200 hover:bg-slate-50">
+              <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+              <span id="btnFilterActiveText">Afficher toute la flotte</span>
+            </button>
           </div>
           
+          <!-- KPIs DE LA FLOTTE RESTAURÉS -->
+          <div class="grid grid-cols-4 gap-3 max-w-5xl mb-6">
+            <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+              <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
+              <span id="kpiAgentsTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+              <span class="text-[11px] font-bold text-slate-500 uppercase block">Pièces Totales</span>
+              <span id="kpiAgentsTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
+                <div class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs">
+                  <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+              <span id="kpiAgentsZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Flotte</span>
+                <div class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs">
+                  <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+              <span id="kpiAgentsAtypicalStock" class="text-xl font-black text-amber-600 mt-0.5 block">0</span>
+            </div>
+          </div>
+
           <div id="agentsAccordionContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"></div>
         </section>
 
@@ -417,7 +417,7 @@
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel</span>
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel (.xlsx)</span>
               </button>
               <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
               <button type="button" onclick="document.getElementById('excelFileInput').click()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
@@ -457,7 +457,8 @@
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs mb-3">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (Période ciblée)</span>
                 </div>
-                <div id="wallPlanningGrid" class="flex flex-nowrap gap-2 min-h-[420px] overflow-x-auto custom-scrollbar pb-2"></div>
+                <!-- CLASSE items-stretch AJOUTÉE ICI -->
+                <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
               </div>
             </div>
 
@@ -661,9 +662,7 @@
     async function safeSetStorage(key, data) {
       try {
         await localforage.setItem(key, data);
-      } catch (e) {
-        // storage silent fail
-      }
+      } catch (e) {}
     }
 
     function getISOWeekNumber(d) {
@@ -764,7 +763,7 @@
         today.setHours(0,0,0,0);
 
         if (d < today) { 
-          alert("Impossible de créer une tâche dans le passé."); 
+          alert("Impossible de planifier une tâche dans le passé."); 
           inputElem.value = ""; 
           return false; 
         }
@@ -877,8 +876,6 @@
         try {
           result = JSON.parse(rawText);
         } catch (e) {
-          console.warn("Le serveur n'a pas renvoyé de JSON valide:", rawText);
-          
           if (pwd === "1234" || pwd === "admin") {
             currentAdmin = selected;
             sessionStorage.setItem("mon_current_admin", currentAdmin);
@@ -889,7 +886,7 @@
             applyFilters();
             return;
           } else {
-             throw new Error("Réponse serveur invalide et mot de passe de secours incorrect.");
+             throw new Error("Réponse serveur invalide.");
           }
         }
 
@@ -906,7 +903,6 @@
           alert("Mot de passe incorrect.");
         }
       } catch (err) {
-        console.error(err);
         if (pwd === "1234" || pwd === "admin") {
             currentAdmin = selected;
             sessionStorage.setItem("mon_current_admin", currentAdmin);
@@ -916,7 +912,7 @@
             document.getElementById("authModal").classList.add("hidden");
             applyFilters();
         } else {
-            alert("Erreur de connexion. Utilisez le code '1234' en cas de panne serveur.");
+            alert("Erreur de connexion serveur. Utilisez le code '1234' en cas de panne.");
         }
       } finally {
         btn.innerHTML = originalText;
@@ -935,20 +931,14 @@
 
     async function syncMonitoringData() {
       if (!navigator.onLine) return;
-      
       if (isSyncing) return;
       isSyncing = true;
       
       const dot = document.getElementById("statusDot");
       const txt = document.getElementById("statusText");
       
-      if (dot) {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
-      }
-      if (txt) { 
-        txt.innerText = "Synchronisation..."; 
-        txt.className = "text-xs font-bold text-amber-600"; 
-      }
+      if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
+      if (txt) { txt.innerText = "Synchronisation..."; txt.className = "text-xs font-bold text-amber-600"; }
 
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
@@ -1028,31 +1018,21 @@
           applyFilters();
         }
       } catch (err) {
-        // En cas d'erreur réseau, on ne dit rien
       } finally {
         isSyncing = false;
-        if (dot) {
-          dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-        }
-        if (txt) { 
-          txt.innerText = "Connecté"; 
-          txt.className = "text-xs font-bold text-emerald-600"; 
-        }
+        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        if (txt) { txt.innerText = "Connecté"; txt.className = "text-xs font-bold text-emerald-600"; }
       }
     }
 
     function openManualAssignModal(defaultDate = null, defaultTranche = 'MATIN') {
       const dateInput = document.getElementById("adminAssignDate");
-      if (defaultDate) {
-        dateInput.value = defaultDate;
-      }
-      if (defaultTranche) {
-        document.getElementById("adminAssignTranche").value = defaultTranche;
-      }
+      if (defaultDate) dateInput.value = defaultDate;
+      if (defaultTranche) document.getElementById("adminAssignTranche").value = defaultTranche;
+      
       if (!validateAssignDate(dateInput)) {
          dateInput.value = new Date().toISOString().split('T')[0]; 
       }
-      
       document.getElementById("manualAssignModal").classList.remove("hidden");
       renderAdminCatalogPicker("");
     }
@@ -1071,18 +1051,10 @@
       const tradeSel = document.getElementById("adminAssignTrade");
       const filterAgentSel = document.getElementById("agendaFilterAgent");
 
-      if (agentSel) {
-        agentSel.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
-      if (filterAgentSel) {
-        filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
-      if (contractorSel) {
-        contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      }
-      if (tradeSel) {
-        tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
-      }
+      if (agentSel) agentSel.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      if (filterAgentSel) filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      if (contractorSel) contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (tradeSel) tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
     function renderAdminCatalogPicker(filterText) {
@@ -1096,9 +1068,7 @@
         return searchTerms.every(term => textTarget.includes(term));
       });
 
-      if (countLabel) {
-        countLabel.innerText = `${filtered.length} article(s) trouvé(s)`;
-      }
+      if (countLabel) countLabel.innerText = `${filtered.length} article(s) trouvé(s)`;
       
       if (filtered.length === 0) {
         container.innerHTML = `<div class="p-2 text-center text-slate-400 text-xs italic">Aucun article trouvé.</div>`;
@@ -1137,14 +1107,8 @@
       const trade = document.getElementById("adminAssignTrade").value;
       const date = document.getElementById("adminAssignDate").value;
 
-      if (!agent) { 
-        alert("Veuillez sélectionner un agent."); 
-        return; 
-      }
-      if (manualSelectedCatalogSaps.length === 0) { 
-        alert("Veuillez cocher au moins un article."); 
-        return; 
-      }
+      if (!agent) { alert("Veuillez sélectionner un agent."); return; }
+      if (manualSelectedCatalogSaps.length === 0) { alert("Veuillez cocher au moins un article."); return; }
 
       const items = manualSelectedCatalogSaps.map((sapRef, idx) => {
         const catItem = catalog.find(i => String(i.sapRef).trim() === sapRef);
@@ -1171,28 +1135,16 @@
       
       closeManualAssignModal();
       manualSelectedCatalogSaps = [];
-      
       applyFilters();
 
-      if (navigator.onLine) {
-         setTimeout(syncMonitoringData, 100);
-      }
+      if (navigator.onLine) setTimeout(syncMonitoringData, 100);
     }
 
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
-      
       const planningData = [
         ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"],
-        [
-          "15/09/2026", 
-          "MATIN", 
-          availableAgents[0] || "Ex: Thomas", 
-          availableContractors[0] || "Ex: Demol", 
-          availableTrades[0] || "Ex: OBE VSTR", 
-          catalog[0] ? catalog[0].sapRef : "106468", 
-          1
-        ]
+        ["15/09/2026", "MATIN", availableAgents[0] || "Ex: Thomas", availableContractors[0] || "Ex: Demol", availableTrades[0] || "Ex: OBE VSTR", catalog[0] ? catalog[0].sapRef : "106468", 1]
       ];
       
       const ws1 = XLSX.utils.aoa_to_sheet(planningData);
@@ -1215,15 +1167,12 @@
       const ws2 = XLSX.utils.aoa_to_sheet(masterData);
       ws2['!cols'] = [{wch: 25}, {wch: 25}, {wch: 25}, {wch: 20}, {wch: 50}];
       XLSX.utils.book_append_sheet(wb, ws2, "Donnees_Reference");
-
       XLSX.writeFile(wb, "Modele_Import_Masse_Tournees.xlsx");
     }
 
     function handleExcelFileSelect(e) {
       const files = e.target.files;
-      if (files.length > 0) {
-        processExcelFile(files[0]);
-      }
+      if (files.length > 0) processExcelFile(files[0]);
     }
 
     function processExcelFile(file) {
@@ -1235,10 +1184,7 @@
           const sheetName = workbook.SheetNames[0]; 
           const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
           
-          if (jsonRows.length <= 1) { 
-            alert("Le fichier Excel est vide ou invalide."); 
-            return; 
-          }
+          if (jsonRows.length <= 1) { alert("Le fichier Excel est vide ou invalide."); return; }
 
           const headers = jsonRows[0].map(h => String(h || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
           const dateIdx = headers.findIndex(h => h.includes('date'));
@@ -1255,14 +1201,10 @@
 
           for (let i = 1; i < jsonRows.length; i++) {
             const row = jsonRows[i];
-            
-            if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) {
-              continue;
-            }
+            if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) continue;
             
             const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
             const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
-            
             if (!sapRef || !agent) continue; 
 
             const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
@@ -1272,7 +1214,6 @@
             if (!agentExists) missingAgents.add(agent);
 
             let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
-            
             if (typeof rawDate === 'number') {
                 const utc_days  = Math.floor(rawDate - 25569);
                 const utc_value = utc_days * 86400;
@@ -1280,13 +1221,9 @@
             }
             
             let formattedDate = normalizeDateYMD(rawDate || new Date());
-            
             let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) {
-                rawTranche = 'APRES_MIDI';
-            } else {
-                rawTranche = 'MATIN';
-            }
+            if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) { rawTranche = 'APRES_MIDI'; } 
+            else { rawTranche = 'MATIN'; }
 
             bulkItems.push({
               date: formattedDate,
@@ -1300,33 +1237,20 @@
             });
           }
 
-          if (bulkItems.length === 0) {
-             alert("Aucune ligne valide trouvée dans le fichier.");
-             return;
-          }
+          if (bulkItems.length === 0) { alert("Aucune ligne valide trouvée dans le fichier."); return; }
 
           let confirmMsg = `Préparation de l'import : ${bulkItems.length} tâche(s) détectée(s).\n\n`;
-          if (missingAgents.size > 0) {
-            confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
-          }
-          if (missingSaps.size > 0) {
-            confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
-          }
+          if (missingAgents.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
+          if (missingSaps.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
           confirmMsg += `\nVoulez-vous continuer l'importation de masse ?`;
           
-          if(confirm(confirmMsg)) {
-             uploadBulkTournees(bulkItems);
-          }
+          if(confirm(confirmMsg)) uploadBulkTournees(bulkItems);
 
-        } catch (err) {
-          alert("Erreur lors de la lecture du fichier Excel : " + err);
-        }
+        } catch (err) { alert("Erreur lors de la lecture du fichier Excel : " + err); }
       };
       reader.readAsArrayBuffer(file);
       const inputEl = document.getElementById('excelFileInput');
-      if (inputEl) {
-        inputEl.value = '';
-      }
+      if (inputEl) inputEl.value = '';
     }
 
     async function uploadBulkTournees(bulkItems) {
@@ -1344,10 +1268,7 @@
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
 
       applyFilters();
-
-      if(navigator.onLine) {
-        setTimeout(syncMonitoringData, 100);
-      }
+      if(navigator.onLine) setTimeout(syncMonitoringData, 100);
       alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
     }
 
@@ -1363,24 +1284,11 @@
       if (!draggedGroupPayload) return;
 
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
-      const today = new Date(); 
-      today.setHours(0,0,0,0);
+      const today = new Date(); today.setHours(0,0,0,0);
 
-      if (targetDateObj < today) { 
-        alert("Impossible de déplacer une mission dans le passé."); 
-        draggedGroupPayload = null; 
-        return; 
-      }
-      if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { 
-        alert("Impossible de déplacer sur un week-end."); 
-        draggedGroupPayload = null; 
-        return; 
-      }
-      if (isBelgianHoliday(targetDateObj)) { 
-        alert("Impossible de déplacer sur un jour férié."); 
-        draggedGroupPayload = null; 
-        return; 
-      }
+      if (targetDateObj < today) { alert("Impossible de déplacer une mission dans le passé."); draggedGroupPayload = null; return; }
+      if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { alert("Impossible de déplacer sur un week-end."); draggedGroupPayload = null; return; }
+      if (isBelgianHoliday(targetDateObj)) { alert("Impossible de déplacer sur un jour férié."); draggedGroupPayload = null; return; }
 
       const itemsToUpdate = [];
 
@@ -1401,9 +1309,7 @@
         const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
         pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
         await localforage.setItem("offline_pending_sync", pendingSyncQueue);
-        if(navigator.onLine) {
-          setTimeout(syncMonitoringData, 100);
-        }
+        if(navigator.onLine) setTimeout(syncMonitoringData, 100);
       }
     }
 
@@ -1443,7 +1349,6 @@
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const overdueContainer = document.getElementById("overdueTasksContainer");
-      
       const filterAgentEl = document.getElementById("agendaFilterAgent");
       const filterAgent = filterAgentEl ? filterAgentEl.value : "";
       
@@ -1461,21 +1366,13 @@
       const allGroups = buildTourneeGroups(allTournees);
 
       const overdueGroups = allGroups.filter(g => !g.isDone && g.date < todayStr);
-
       if (overdueGroups.length === 0) {
-        overdueContainer.innerHTML = `
-          <div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">
-            <i data-lucide="check-circle" class="w-4 h-4"></i> Aucun retard opérationnel détecté.
-          </div>
-        `;
+        overdueContainer.innerHTML = `<div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">Aucun retard opérationnel.</div>`;
       } else {
         let overdueHtml = '';
         overdueGroups.forEach(g => {
           overdueHtml += `
-            <div draggable="true" 
-                 ondragstart="handleGroupDragStart(event, '${g.id}')"
-                 onclick="openTourneeGroupModal('${g.id}')" 
-                 class="p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
+            <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
               <div>
                 <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1">
                   <span class="font-bold text-[11px] truncate">${g.agent}</span>
@@ -1503,8 +1400,8 @@
       });
 
       const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-
       let gridHtml = '';
+
       weekDays.forEach((dayObj, idx) => {
         const dateStr = normalizeDateYMD(dayObj);
         const dayGroups = allGroups.filter(g => g.date === dateStr);
@@ -1515,16 +1412,9 @@
         const renderGroupCards = (groups) => {
           let cardsHtml = '';
           groups.forEach(g => {
-            const badgeColor = g.isDone 
-              ? "bg-emerald-50 border-emerald-300" 
-              : "bg-white border-slate-200 hover:border-orange-300";
-
+            const badgeColor = g.isDone ? "bg-emerald-50 border-emerald-300" : "bg-white border-slate-200 hover:border-orange-300";
             cardsHtml += `
-              <div draggable="true" 
-                   ondragstart="handleGroupDragStart(event, '${g.id}')"
-                   onclick="openTourneeGroupModal('${g.id}')" 
-                   class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] space-y-1 mb-2">
-                
+              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] space-y-1 mb-2">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
                   <span class="font-bold text-slate-700 truncate">${g.agent}</span>
                   <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
@@ -1547,11 +1437,11 @@
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-xs font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
            innerContentHtml = `
-            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 rounded-lg p-1.5 flex flex-col transition bg-sky-50/40 hover:bg-sky-100/60 border border-sky-100 border-dashed cursor-pointer">
+            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 min-h-[140px] rounded-lg p-1.5 flex flex-col transition bg-sky-50/40 hover:bg-sky-100/60 border border-sky-100 border-dashed cursor-pointer">
               <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider mb-2 text-center">Matin</span>
               <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
             </div>
-            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 rounded-lg p-1.5 flex flex-col transition bg-amber-50/40 hover:bg-amber-100/60 border border-amber-100 border-dashed cursor-pointer">
+            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 min-h-[140px] rounded-lg p-1.5 flex flex-col transition bg-amber-50/40 hover:bg-amber-100/60 border border-amber-100 border-dashed cursor-pointer mt-2">
               <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider mb-2 text-center">Après-midi</span>
               <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
             </div>
@@ -1561,8 +1451,8 @@
         const isToday = dayObj.toDateString() === today.toDateString();
 
         gridHtml += `
-          <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px] shadow-sm transition-all ${colClass}">
-            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 text-orange-800 rounded-lg border-orange-200' : ''}">
+          <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col shadow-sm transition-all h-auto ${colClass}">
+            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 text-orange-800 rounded-lg border-orange-200' : ''} mb-2">
               <span class="text-[11px] font-bold uppercase tracking-widest block ${isToday ? 'text-orange-700' : 'text-slate-500'}">
                 ${isToday ? "Aujourd'hui" : dayNames[dayObj.getDay()]}
               </span>
@@ -1570,7 +1460,9 @@
                 ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
               </span>
             </div>
-            ${innerContentHtml}
+            <div class="flex flex-col flex-1 gap-2">
+              ${innerContentHtml}
+            </div>
           </div>
         `;
       });
