@@ -70,16 +70,16 @@
         <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
       </div>
 
-      <!-- PARAMÈTRES DE SAISIE (ZONE SOMBRE) -->
-      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-md space-y-3">
+      <!-- PARAMÈTRES DE SAISIE (ZONE CLAIRE AVEC LISERÉ ORANGE AU CLIC) -->
+      <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
-            <select id="selectContractor" class="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-sm font-bold text-white focus:outline-none focus:border-orange-400"></select>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
+            <select id="selectContractor" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm"></select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Métier</label>
-            <select id="selectTrade" class="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-sm font-bold text-white focus:outline-none focus:border-orange-400"></select>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métier</label>
+            <select id="selectTrade" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm"></select>
           </div>
         </div>
       </div>
@@ -100,11 +100,9 @@
         </div>
 
         <div class="grid grid-cols-2 gap-3 pt-1">
-          <!-- BOUTON VOCAL INDIGO -->
           <button onclick="toggleVoiceSearch()" id="micBtn" class="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm">
             <i data-lucide="mic" class="w-6 h-6 text-indigo-500"></i> Vocale
           </button>
-          <!-- BOUTON SCANNER ORANGE CLAIR -->
           <button onclick="openScanModal()" class="h-16 bg-orange-300 hover:bg-orange-400 text-orange-900 font-black rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer shadow-md border border-orange-400">
             <i data-lucide="camera" class="w-6 h-6"></i> Scanner
           </button>
@@ -135,7 +133,6 @@
           <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-emerald-50 focus:text-emerald-800 font-mono shadow-inner transition-all">
         </div>
 
-        <!-- BOUTON ENREGISTRER VERT PLUS CLAIR -->
         <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-200 hover:bg-emerald-300 active:bg-emerald-400 font-black text-emerald-900 rounded-2xl shadow-md flex items-center justify-center gap-3 text-lg transition cursor-pointer border border-emerald-300">
           <i data-lucide="check-square" class="w-7 h-7"></i>
           <span>Enregistrer</span>
