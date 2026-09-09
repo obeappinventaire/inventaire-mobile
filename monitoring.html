@@ -137,15 +137,14 @@
         <div class="mt-auto pt-6 space-y-4">
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
+              <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
               </span>
-              <!-- BADGE NUMERO DE SEMAINE PLUS CLAIR ET PLUS GRAND -->
               <span id="weekBadgeLabel" class="text-sm font-bold bg-orange-100 text-orange-800 px-3 py-0.5 rounded border border-orange-300 shadow-sm">--</span>
             </div>
 
             <div class="relative">
-              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
                 <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
                 <option value="NEXT_WEEK">▶ Semaine prochaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
@@ -170,8 +169,8 @@
 
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères
+              <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Critères
               </span>
               <span class="text-[9px] bg-amber-950/50 text-amber-400 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
             </div>
@@ -202,19 +201,20 @@
     </aside>
 
     <!-- ZONE PRINCIPALE DE DROITE -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50" id="mainScrollArea">
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50">
       
       <div class="space-y-6 flex-1">
         
-        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
+        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE (COCKPIT EXPERT) ================= -->
         <section id="viewGlobal" class="space-y-6">
           <div>
-            <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
-              <span id="periodBadgeGlobal" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
+            <div class="flex justify-between items-center mb-2 px-1 max-w-6xl">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cockpit Qualité & Activité Entrepôt</span>
+              <span id="periodBadgeGlobal" class="text-xs text-indigo-700 font-mono font-bold bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shadow-xs">--</span>
             </div>
             
-            <div class="grid grid-cols-4 gap-3 max-w-5xl">
+            <!-- KPIs EXPERTS -->
+            <div class="grid grid-cols-4 gap-3 max-w-6xl mb-4">
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Saisies</span>
                 <span id="kpiTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
@@ -223,39 +223,60 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
-                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition shadow-2xs">
-                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </div>
-                </div>
-                <span id="kpiZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                <span class="text-[11px] font-bold text-indigo-500 uppercase block">Articles Uniques</span>
+                <span id="kpiUniqueArticles" class="text-xl font-black text-indigo-700 mt-0.5 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
-                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition shadow-2xs">
-                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </div>
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                <span class="text-[11px] font-bold text-emerald-600 uppercase block">Taux de Fiabilité</span>
+                <span id="kpiReliabilityRate" class="text-xl font-black text-emerald-700 mt-0.5 block">100%</span>
+              </div>
+            </div>
+
+            <!-- VISUELS EXPERTS -->
+            <div class="grid grid-cols-2 gap-4 max-w-6xl">
+              <!-- VISUEL 1 : JAUGE DE SANTÉ STOCK -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs flex flex-col justify-center space-y-2">
+                <div class="flex justify-between items-end">
+                   <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Santé du Stock Audité</span>
+                   <span class="text-[10px] text-slate-400 font-mono">Normal vs Rupture vs Alerte</span>
                 </div>
-                <span id="kpiAtypicalStock" class="text-xl font-black text-amber-600 mt-0.5 block">0</span>
+                <div class="w-full h-4 rounded-full overflow-hidden flex" id="kpiQualityBarContainer">
+                   <div id="kpiQualNormal" class="bg-emerald-500 h-full transition-all" style="width: 100%" title="Normal"></div>
+                   <div id="kpiQualAtyp" class="bg-amber-400 h-full transition-all" style="width: 0%" title="Alerte Volume"></div>
+                   <div id="kpiQualZero" class="bg-rose-500 h-full transition-all" style="width: 0%" title="Rupture"></div>
+                </div>
+                <div class="flex justify-between text-[10px] font-bold mt-1" id="kpiQualityLegend">
+                   <span class="text-emerald-600"><i data-lucide="circle-check" class="w-3 h-3 inline"></i> 0 Normaux</span>
+                   <span class="text-rose-600"><i data-lucide="triangle-alert" class="w-3 h-3 inline"></i> 0 Anomalies</span>
+                </div>
+              </div>
+
+              <!-- VISUEL 2 : TOP 3 HOTSPOTS ANOMALIES -->
+              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-3 border-b border-slate-100 pb-1">Palmarès Ruptures & Alertes (Hotspots)</span>
+                <div id="kpiTopAnomalies" class="space-y-2">
+                   <!-- Injecté en JS -->
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- FILTRES GLOBAUX COMPACTÉS -->
           <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
             <div class="flex flex-wrap items-center gap-3">
               <div class="relative flex-1 min-w-[280px]" onclick="event.stopPropagation()">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
-                <input type="text" id="articleTagInput" onfocus="showArticleSuggestions()" oninput="onArticleTagInput(this.value)" placeholder="Réf SAP ou désignation..." class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white shadow-xs">
+                <input type="text" id="articleTagInput" onfocus="showArticleSuggestions()" oninput="onArticleTagInput(this.value)" placeholder="Recherche Rapide (Réf SAP, libellé)..." class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white shadow-xs">
                 <div id="articleDropdownList" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 z-40 max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
               </div>
 
               <div class="flex items-center gap-2 shrink-0">
-                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg text-xs transition cursor-pointer">Effacer</button>
+                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
+                   <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Réinitialiser
+                </button>
                 <button onclick="exportTableToCSV()" class="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer">
-                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
                 </button>
               </div>
             </div>
@@ -407,7 +428,7 @@
         <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
         <section id="viewTourneesAdmin" class="hidden relative">
           
-          <!-- EN-TÊTE FIXE (STICKY) POUR L'AGENDA : LE HEADER ET LE BUFFER RESTENT TOUJOURS VISIBLES LORS DU SCROLL -->
+          <!-- EN-TÊTE FIXE (STICKY) POUR L'AGENDA -->
           <div class="sticky top-0 z-30 bg-slate-50 pt-2 pb-4 border-b border-slate-200 shadow-sm mb-6 -mt-2">
             
             <div class="flex items-center justify-between mb-4">
@@ -431,17 +452,29 @@
               </div>
             </div>
 
-            <!-- ZONE BUFFER OPÉRATIONNEL -->
+            <!-- ZONE BUFFER OPÉRATIONNEL & FILTRE AGENT MULTI-CHOIX -->
             <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col max-h-[220px]">
               <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 shrink-0">
                 <span class="font-bold text-amber-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
                   <i data-lucide="clock-4" class="w-4 h-4"></i> Buffer Opérationnel (Retards / À replanifier)
                 </span>
                 <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-bold text-amber-700 uppercase">Filtre Agent :</span>
-                  <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 focus:outline-none cursor-pointer shadow-xs">
-                    <option value="">Tous</option>
-                  </select>
+                  <span class="text-[10px] font-bold text-amber-700 uppercase">Filtre Agent(s) :</span>
+                  
+                  <div class="relative" onclick="event.stopPropagation()">
+                    <button type="button" onclick="toggleFilterDropdown('dropdownAgendaAgents')" class="bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 focus:outline-none cursor-pointer shadow-xs flex items-center gap-1 min-w-[120px] justify-between">
+                      <span id="btnLabelAgendaAgents" class="truncate">Tous les agents</span>
+                      <i data-lucide="chevron-down" class="w-3 h-3 text-amber-600"></i>
+                    </button>
+                    <div id="dropdownAgendaAgents" class="hidden absolute right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-40 w-48 space-y-1">
+                      <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[10px]">
+                        <button type="button" onclick="selectAllAgendaAgents(true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
+                        <button type="button" onclick="selectAllAgendaAgents(false)" class="text-slate-500 hover:underline cursor-pointer">Décocher</button>
+                      </div>
+                      <div id="checkboxesAgendaAgents" class="max-h-40 overflow-y-auto custom-scrollbar pr-1"></div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
               <div id="overdueTasksContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 overflow-y-auto custom-scrollbar pr-1 max-h-[160px]"></div>
@@ -471,7 +504,7 @@
                 </div>
                 <div class="text-center rounded-lg">
                   <!-- BADGE SEMAINE PILOTAGE PLUS GRAND -->
-                  <span id="kpiPeriodLabel" class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg inline-block">--</span>
+                  <span id="kpiPeriodLabel" class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg inline-block shadow-xs">--</span>
                 </div>
 
                 <div class="space-y-1.5">
@@ -658,6 +691,9 @@
     let pendingSyncQueue = []; 
     let isSyncing = false; 
 
+    // NOUVEAU: Multi-Sélection d'agents pour l'agenda
+    let agendaSelectedAgents = [];
+
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
@@ -675,18 +711,15 @@
       return { week: weekNo, year: date.getUTCFullYear() };
     }
 
-    // MISE A JOUR DES NUMEROS DE SEMAINE DANS TOUTES LES VUES
     function updateWeekBadge(startDateStr) {
       const targetDate = startDateStr ? parseItemDate(startDateStr) : new Date();
       const iso = getISOWeekNumber(targetDate);
       const badgeText = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
       
       const badge = document.getElementById("weekBadgeLabel");
-      const wallBadge = document.getElementById("wallPlanningWeekLabel");
       const agendaBadge = document.getElementById("agendaWeekBadge"); 
       
       if (badge) badge.innerText = badgeText;
-      if (wallBadge) wallBadge.innerText = badgeText;
       if (agendaBadge) agendaBadge.innerText = badgeText; 
     }
 
@@ -768,7 +801,7 @@
         today.setHours(0,0,0,0);
 
         if (d < today) { 
-          alert("Impossible de créer une tâche dans le passé."); 
+          alert("Impossible de planifier une tâche dans le passé."); 
           inputElem.value = ""; 
           return false; 
         }
@@ -841,7 +874,7 @@
       }
 
       document.addEventListener("click", () => {
-        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'].forEach(id => {
+        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList', 'dropdownAgendaAgents'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.classList.add("hidden");
         });
@@ -891,7 +924,7 @@
             applyFilters();
             return;
           } else {
-             throw new Error("Réponse serveur invalide et mot de passe de secours incorrect.");
+             throw new Error("Réponse serveur invalide.");
           }
         }
 
@@ -917,7 +950,7 @@
             document.getElementById("authModal").classList.add("hidden");
             applyFilters();
         } else {
-            alert("Erreur de connexion serveur. Utilisez le code '1234' en cas de panne technique.");
+            alert("Erreur de connexion serveur. Utilisez le code '1234' en cas de panne.");
         }
       } finally {
         btn.innerHTML = originalText;
@@ -1054,10 +1087,8 @@
       const agentSel = document.getElementById("adminAssignAgent");
       const contractorSel = document.getElementById("adminAssignContractor");
       const tradeSel = document.getElementById("adminAssignTrade");
-      const filterAgentSel = document.getElementById("agendaFilterAgent");
 
       if (agentSel) agentSel.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      if (filterAgentSel) filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
       if (contractorSel) contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
       if (tradeSel) tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
     }
@@ -1351,11 +1382,39 @@
       return list;
     }
 
+    // MULTI-SELECT AGENTS POUR AGENDA
+    function initAgendaMultiSelect() {
+      const el = document.getElementById("checkboxesAgendaAgents");
+      if(!el) return;
+      el.innerHTML = availableAgents.map(a => `
+        <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+          <input type="checkbox" value="${a}" onchange="onAgendaAgentChange()" ${agendaSelectedAgents.length === 0 || agendaSelectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+          <span class="truncate">${a}</span>
+        </label>
+      `).join('');
+    }
+
+    function onAgendaAgentChange() {
+      const checkboxes = document.querySelectorAll("#checkboxesAgendaAgents input:checked");
+      agendaSelectedAgents = Array.from(checkboxes).map(cb => cb.value);
+      const btn = document.getElementById("btnLabelAgendaAgents");
+      if (agendaSelectedAgents.length === 0 || agendaSelectedAgents.length === availableAgents.length) {
+         if (btn) btn.innerText = "Tous les agents";
+         agendaSelectedAgents = []; 
+      } else {
+         if (btn) btn.innerText = `${agendaSelectedAgents.length} agent(s)`;
+      }
+      renderWallPlanning();
+    }
+
+    function selectAllAgendaAgents(check) {
+      document.querySelectorAll("#checkboxesAgendaAgents input").forEach(cb => cb.checked = check);
+      onAgendaAgentChange();
+    }
+
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const overdueContainer = document.getElementById("overdueTasksContainer");
-      const filterAgentEl = document.getElementById("agendaFilterAgent");
-      const filterAgent = filterAgentEl ? filterAgentEl.value : "";
       
       if (!gridContainer || !overdueContainer) return;
 
@@ -1364,15 +1423,20 @@
       const todayStr = normalizeDateYMD(today);
 
       let allTournees = cachedTournees || [];
-      if (filterAgent) {
-        allTournees = allTournees.filter(t => t.agent === filterAgent);
+      if (agendaSelectedAgents.length > 0) {
+        allTournees = allTournees.filter(t => agendaSelectedAgents.includes(t.agent));
       }
 
       const allGroups = buildTourneeGroups(allTournees);
 
       const overdueGroups = allGroups.filter(g => !g.isDone && g.date < todayStr);
+
       if (overdueGroups.length === 0) {
-        overdueContainer.innerHTML = `<div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">Aucun retard opérationnel.</div>`;
+        overdueContainer.innerHTML = `
+          <div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> Aucun retard opérationnel détecté.
+          </div>
+        `;
       } else {
         let overdueHtml = '';
         overdueGroups.forEach(g => {
@@ -1419,14 +1483,14 @@
           groups.forEach(g => {
             const badgeColor = g.isDone ? "bg-emerald-50 border-emerald-300" : "bg-white border-slate-200 hover:border-orange-300";
             cardsHtml += `
-              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] space-y-1 mb-2">
+              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[9px] space-y-1 mb-2">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
-                  <span class="font-bold text-slate-700 truncate">${g.agent}</span>
-                  <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
+                  <span class="font-bold text-slate-700 truncate pr-1">${g.agent}</span>
+                  <span class="font-mono text-[8px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
                 </div>
                 <div class="leading-tight space-y-1">
                   <strong class="block text-slate-800 truncate">${g.contractor}</strong>
-                  <span class="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded inline-block truncate max-w-full border border-indigo-100">${g.trade}</span>
+                  <span class="text-[8px] font-medium text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded inline-block truncate max-w-full border border-indigo-100">${g.trade}</span>
                 </div>
               </div>
             `;
@@ -1435,20 +1499,20 @@
         };
 
         const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
-        const colClass = isBlocked ? 'w-16 shrink-0 bg-slate-100/60 items-center justify-center' : 'w-64 min-w-[200px] flex-1';
+        const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'w-64 min-w-[200px] flex-1';
         
         let innerContentHtml = '';
         if (isBlocked) {
-           innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-xs font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
+           innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
            innerContentHtml = `
-            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 min-h-[140px] rounded-lg p-1.5 flex flex-col transition bg-sky-50/40 hover:bg-sky-100/60 border border-sky-100 border-dashed cursor-pointer">
-              <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider mb-2 text-center">Matin</span>
-              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
+            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-sky-50 hover:bg-sky-100 border border-sky-200 border-dashed cursor-pointer">
+              <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider mb-2 text-center border-b border-sky-200/50 pb-1">Matin</span>
+              <div class="grid grid-cols-2 gap-1.5 flex-1 content-start" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
             </div>
-            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 min-h-[140px] rounded-lg p-1.5 flex flex-col transition bg-amber-50/40 hover:bg-amber-100/60 border border-amber-100 border-dashed cursor-pointer mt-2">
-              <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider mb-2 text-center">Après-midi</span>
-              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
+            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-amber-50 hover:bg-amber-100 border border-amber-200 border-dashed cursor-pointer mt-2">
+              <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider mb-2 text-center border-b border-amber-200/50 pb-1">Après-midi</span>
+              <div class="grid grid-cols-2 gap-1.5 flex-1 content-start" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
             </div>
            `;
         }
@@ -1456,8 +1520,8 @@
         const isToday = dayObj.toDateString() === today.toDateString();
 
         gridHtml += `
-          <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col shadow-sm transition-all h-auto ${colClass}">
-            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 rounded-lg border-orange-200' : ''} mb-2">
+          <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex flex-col shadow-sm transition-all h-auto ${colClass}">
+            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 rounded-lg border-orange-200' : ''} mb-2 ${isBlocked?'hidden':''}">
               <div class="flex items-baseline justify-center gap-1.5">
                 <span class="text-xs font-bold uppercase tracking-widest ${isToday ? 'text-orange-700' : 'text-slate-500'}">
                   ${isToday ? "Auj" : dayNames[dayObj.getDay()]}
@@ -1477,7 +1541,384 @@
       gridContainer.innerHTML = gridHtml;
     }
 
-    // LISTING DES SAISIES DANS LA MODALE LORS DU CLIC SUR LA CARTE
+    function toggleFilterDropdown(id) {
+      const otherIds = ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList', 'dropdownAgendaAgents'];
+      otherIds.forEach(otherId => {
+        if (otherId !== id) {
+          const el = document.getElementById(otherId);
+          if (el) el.classList.add("hidden");
+        }
+      });
+      const target = document.getElementById(id);
+      if (target) target.classList.toggle("hidden");
+    }
+
+    function initMultiSelects() {
+      const makeCheckboxes = (containerId, list, selectedArr, type) => {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        
+        let html = '';
+        list.forEach(item => {
+          const isChecked = selectedArr.includes(item) ? 'checked' : '';
+          html += `
+            <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+              <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${isChecked} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+              <span class="truncate">${item}</span>
+            </label>
+          `;
+        });
+        el.innerHTML = html;
+      };
+      
+      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
+      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
+      makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
+      initAgendaMultiSelect();
+    }
+
+    function onCheckboxChange(type) {
+      activeKpiFilter = null;
+      if (type === 'agents') {
+        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelAgents");
+        if (label) label.innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
+      } else if (type === 'contractors') {
+        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelContractors");
+        if (label) label.innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
+      } else if (type === 'trades') {
+        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelTrades");
+        if (label) label.innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
+      }
+      applyFilters();
+    }
+
+    function selectAll(type, check) {
+      activeKpiFilter = null;
+      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => {
+        b.checked = check;
+      });
+      onCheckboxChange(type);
+    }
+
+    function getDistinctArticlesOnPeriod() {
+      const periodList = getPeriodFilteredHistory() || [];
+      const mapArticles = new Map();
+      for (let i = 0; i < periodList.length; i++) {
+        const item = periodList[i];
+        const ref = String(item.sapRef || "").trim();
+        if (!ref) continue;
+        if (!mapArticles.has(ref)) {
+          mapArticles.set(ref, { sapRef: ref, designation: item.designation || 'Sans désignation', count: 1 });
+        } else {
+          mapArticles.get(ref).count++;
+        }
+      }
+      return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
+    }
+
+    function showArticleSuggestions() {
+      const input = document.getElementById("articleTagInput");
+      onArticleTagInput(input ? input.value : "");
+    }
+
+    function onArticleTagInput(query) {
+      const dd = document.getElementById("articleDropdownList");
+      if (!dd) return;
+      const q = String(query || "").trim().toLowerCase();
+      const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
+
+      if (filtered.length === 0) {
+        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`;
+        dd.classList.remove("hidden");
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(a => {
+        html += `
+          <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
+            <div class="min-w-0 pr-2">
+              <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
+              <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
+            </div>
+            <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
+          </div>
+        `;
+      });
+      dd.innerHTML = html;
+      dd.classList.remove("hidden");
+    }
+
+    function toggleArticleTag(sapRef) {
+      if (selectedArticleTags.includes(sapRef)) {
+        selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      } else {
+        selectedArticleTags.push(sapRef);
+      }
+      renderArticleTagsUI();
+      applyFilters();
+      const input = document.getElementById("articleTagInput");
+      if (input) input.value = ""; 
+      const dd = document.getElementById("articleDropdownList");
+      if (dd) dd.classList.add("hidden");
+    }
+
+    function removeArticleTag(sapRef) {
+      selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      renderArticleTagsUI();
+      applyFilters();
+    }
+
+    function renderArticleTagsUI() {
+      const container = document.getElementById("selectedArticleTagsContainer");
+      if (!container) return;
+      let html = '';
+      selectedArticleTags.forEach(ref => {
+        html += `
+          <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
+            <span class="truncate max-w-[260px]">${ref}</span>
+            <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </span>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function resetFiltersToAll() {
+      activeKpiFilter = null;
+      selectAll('agents', false);
+      selectAll('contractors', false);
+      selectAll('trades', false);
+      selectedArticleTags = [];
+      renderArticleTagsUI();
+      applyFilters();
+    }
+
+    function filterByKpi(type) {
+      activeKpiFilter = type;
+      switchView('global');
+      applyFilters();
+    }
+
+    function onSmartPeriodChange(mode) {
+      const now = new Date();
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const customBox = document.getElementById("customDateRangeBox");
+
+      if (mode === 'CUSTOM') {
+        if (customBox) customBox.classList.remove("hidden");
+        return;
+      }
+      if (customBox) customBox.classList.add("hidden");
+
+      if (mode === 'ALL') {
+        if (sInput) sInput.value = "";
+        if (eInput) eInput.value = "";
+      } else if (mode === 'TODAY') {
+        const dStr = normalizeDateYMD(now);
+        if (sInput) sInput.value = dStr;
+        if (eInput) eInput.value = dStr;
+      } else if (mode === 'CURRENT_WEEK') {
+        const day = now.getDay() || 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(sunday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(monday);
+        if (eInput) eInput.value = normalizeDateYMD(sunday);
+      } else if (mode === 'PREV_WEEK') {
+        const day = now.getDay() || 7;
+        const prevMonday = new Date(now);
+        prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday);
+        prevSunday.setDate(prevMonday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(prevMonday);
+        if (eInput) eInput.value = normalizeDateYMD(prevSunday);
+      } else if (mode === 'NEXT_WEEK') {
+        const day = now.getDay() || 7;
+        const nextMonday = new Date(now);
+        nextMonday.setDate(now.getDate() - day + 8);
+        const nextSunday = new Date(nextMonday);
+        nextSunday.setDate(nextMonday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(nextMonday);
+        if (eInput) eInput.value = normalizeDateYMD(nextSunday);
+      } else if (mode === 'CURRENT_MONTH') {
+        if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+        if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+      }
+      
+      if (sInput) updateWeekBadge(sInput.value);
+      applyFilters();
+    }
+
+    function toggleMapSelectionFilter() {
+      mapFilterOnSelection = !mapFilterOnSelection;
+      const btnText = document.getElementById("mapFilterBtnText");
+      if (btnText) btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
+      applyFilters();
+    }
+
+    function getPeriodFilteredHistory() {
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const sDateVal = sInput ? sInput.value : "";
+      const eDateVal = eInput ? eInput.value : "";
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      return (cachedHistory || []).filter(item => {
+        const itDate = parseItemDate(item.timestamp);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
+      });
+    }
+
+    function getFilteredHistory() {
+      return getPeriodFilteredHistory().filter(item => {
+        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) return false;
+        if (activeKpiFilter === 'ZERO' && Number(item.quantity) !== 0) return false;
+        if (activeKpiFilter === 'HIGH' && (customMaxQty === null || Number(item.quantity) <= customMaxQty)) return false;
+        return true;
+      });
+    }
+
+    function renderKPIs(list) {
+      const totalR = list.length;
+      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
+      const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
+
+      // NOUVEAUX KPIs EXPERTS (ACTIVITÉ GLOBALE)
+      const uniqueItems = new Set(list.map(i => String(i.sapRef).trim())).size;
+      const totalAnomalies = zeroS + atypS;
+      const anomalyRate = totalR > 0 ? Math.round((totalAnomalies / totalR) * 100) : 0;
+      const reliabilityRate = totalR > 0 ? 100 - anomalyRate : 100;
+
+      const elTotalRows = document.getElementById("kpiTotalRows");
+      if (elTotalRows) elTotalRows.innerText = totalR;
+
+      const elTotalPieces = document.getElementById("kpiTotalPieces");
+      if (elTotalPieces) elTotalPieces.innerText = totalP;
+
+      const elUnique = document.getElementById("kpiUniqueArticles");
+      if (elUnique) elUnique.innerText = uniqueItems;
+
+      const elReliab = document.getElementById("kpiReliabilityRate");
+      if (elReliab) {
+        elReliab.innerText = `${reliabilityRate}%`;
+        elReliab.className = `text-xl font-black mt-0.5 block ${reliabilityRate < 90 ? 'text-rose-600' : 'text-emerald-700'}`;
+      }
+
+      // JAUGE QUALITE STOCK
+      const pctNormal = totalR > 0 ? ((totalR - totalAnomalies) / totalR) * 100 : 100;
+      const pctZero = totalR > 0 ? (zeroS / totalR) * 100 : 0;
+      const pctAtyp = totalR > 0 ? (atypS / totalR) * 100 : 0;
+
+      document.getElementById("kpiQualNormal").style.width = `${pctNormal}%`;
+      document.getElementById("kpiQualAtyp").style.width = `${pctAtyp}%`;
+      document.getElementById("kpiQualZero").style.width = `${pctZero}%`;
+
+      document.getElementById("kpiQualityLegend").innerHTML = `
+        <span class="text-emerald-600"><i data-lucide="circle-check" class="w-3 h-3 inline"></i> ${totalR - totalAnomalies} Normaux</span>
+        <span class="text-rose-600"><i data-lucide="triangle-alert" class="w-3 h-3 inline"></i> ${totalAnomalies} Anomalies</span>
+      `;
+
+      // TOP 3 ANOMALIES
+      const anomaliesList = list.filter(r => Number(r.quantity) === 0 || (customMaxQty !== null && Number(r.quantity) > customMaxQty));
+      const countsMap = {};
+      anomaliesList.forEach(r => {
+        const key = r.sapRef;
+        if (!countsMap[key]) countsMap[key] = { sapRef: r.sapRef, des: r.designation, count: 0 };
+        countsMap[key].count++;
+      });
+      const sortedAnomalies = Object.values(countsMap).sort((a,b) => b.count - a.count).slice(0, 3);
+      
+      const topContainer = document.getElementById("kpiTopAnomalies");
+      if (topContainer) {
+        if (sortedAnomalies.length === 0) {
+          topContainer.innerHTML = `<div class="text-center text-xs text-slate-400 italic py-2">Aucune anomalie détectée</div>`;
+        } else {
+          topContainer.innerHTML = sortedAnomalies.map((item, index) => `
+            <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-100">
+               <div class="flex items-center gap-2 min-w-0 pr-2">
+                 <span class="text-[10px] font-black text-slate-400">#${index+1}</span>
+                 <span class="text-[11px] font-mono font-bold text-rose-600">${item.sapRef}</span>
+                 <span class="text-[10px] text-slate-600 truncate">${item.des}</span>
+               </div>
+               <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">${item.count}x</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // KPIs AGENTS
+      const elAgentsTotalRows = document.getElementById("kpiAgentsTotalRows");
+      if (elAgentsTotalRows) elAgentsTotalRows.innerText = totalR;
+      const elAgentsTotalPieces = document.getElementById("kpiAgentsTotalPieces");
+      if (elAgentsTotalPieces) elAgentsTotalPieces.innerText = totalP;
+      const elAgentsZeroStock = document.getElementById("kpiAgentsZeroStock");
+      if (elAgentsZeroStock) elAgentsZeroStock.innerText = zeroS;
+      const elAgentsAtypicalStock = document.getElementById("kpiAgentsAtypicalStock");
+      if (elAgentsAtypicalStock) elAgentsAtypicalStock.innerText = atypS;
+
+      lucide.createIcons();
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById("supervisionTableBody");
+      if (!tbody) return;
+
+      const alertZeroEl = document.getElementById("cfgAlertZero");
+      const alertZero = alertZeroEl ? alertZeroEl.checked : false;
+      
+      const countLabel = document.getElementById("tableCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${list.length} saisie(s) répertoriée(s)`;
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      list.forEach(item => {
+        const q = Number(item.quantity);
+        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
+        const bgClass = isAlert ? 'bg-amber-50/60' : '';
+        const textClass = q === 0 ? 'text-rose-600' : 'text-emerald-700';
+
+        html += `
+          <tr class="hover:bg-slate-50 transition ${bgClass}">
+            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
+            <td class="p-3 font-bold text-slate-900">${item.user}</td>
+            <td class="p-3 text-slate-700">${item.contractor}</td>
+            <td class="p-3 text-slate-500">${item.trade}</td>
+            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
+            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
+            <td class="p-3 text-center font-mono font-black ${textClass} text-sm">${q}</td>
+            <td class="p-3 text-right whitespace-nowrap">
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+      lucide.createIcons();
+    }
+
     function openMapListingDetail(idStr) {
       const item = cachedHistory.find(h => h.id === idStr);
       if (!item) return;
@@ -1637,7 +2078,6 @@
           });
         }
 
-        // DESIGN DES SCORECARDS AGRANDI
         agentsHtml += `
           <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm h-fit transition-all">
             <div onclick="toggleAgentDrawer('${agent}')" class="p-5 cursor-pointer hover:bg-slate-50 transition">
@@ -1710,516 +2150,6 @@
       }
     }
 
-    function renderCompletionMetrics() {
-      const periodTournees = getPeriodFilteredTournees();
-      const periodGroups = buildTourneeGroups(periodTournees);
-      
-      const totalMissions = periodGroups.length;
-      const doneMissions = periodGroups.filter(g => g.isDone).length;
-      const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
-      
-      const elMissionsPct = document.getElementById("kpiMissionsPct");
-      if (elMissionsPct) elMissionsPct.innerText = `${missionsPct}%`;
-
-      const elMissionsBar = document.getElementById("kpiMissionsBar");
-      if (elMissionsBar) elMissionsBar.style.width = `${missionsPct}%`;
-
-      const elMissionsDone = document.getElementById("kpiMissionsDone");
-      if (elMissionsDone) elMissionsDone.innerText = doneMissions;
-
-      const elMissionsTotal = document.getElementById("kpiMissionsTotal");
-      if (elMissionsTotal) elMissionsTotal.innerText = totalMissions;
-      
-      const totalLines = periodTournees.length;
-      const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
-      const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
-      
-      const elGlobalCompletionPct = document.getElementById("globalCompletionPct");
-      if (elGlobalCompletionPct) elGlobalCompletionPct.innerText = `${linesPct}%`;
-
-      const elGlobalCompletionBar = document.getElementById("globalCompletionBar");
-      if (elGlobalCompletionBar) elGlobalCompletionBar.style.width = `${linesPct}%`;
-
-      const elKpiDoneTasks = document.getElementById("kpiDoneTasks");
-      if (elKpiDoneTasks) elKpiDoneTasks.innerText = doneLines;
-
-      const elKpiPendingTasks = document.getElementById("kpiPendingTasks");
-      if (elKpiPendingTasks) elKpiPendingTasks.innerText = totalLines - doneLines;
-
-      const todayStr = normalizeDateYMD(new Date());
-      const allGroups = buildTourneeGroups(cachedTournees || []);
-      const overdueMissions = allGroups.filter(g => !g.isDone && g.date < todayStr).length;
-      const totalActiveMissions = allGroups.length;
-      const slaScore = totalActiveMissions > 0 ? Math.round(((totalActiveMissions - overdueMissions) / totalActiveMissions) * 100) : 100;
-      
-      const elOverdueCount = document.getElementById("kpiOverdueMissionsCount");
-      if (elOverdueCount) elOverdueCount.innerText = overdueMissions;
-
-      const elSlaScore = document.getElementById("kpiSlaScore");
-      if (elSlaScore) elSlaScore.innerText = `${slaScore}%`;
-
-      const badgePilotage = document.getElementById("kpiPeriodLabel");
-      if (badgePilotage) {
-        const sInput = document.getElementById("filterStartDate");
-        const eInput = document.getElementById("filterEndDate");
-        const sDate = sInput ? sInput.value : "";
-        const eDate = eInput ? eInput.value : "";
-        
-        let txt = "Période Active";
-        if (sDate && eDate) {
-          const d = new Date(sDate + "T00:00:00");
-          const iso = getISOWeekNumber(d);
-          const dE = new Date(eDate + "T00:00:00");
-          if ((dE - d) / 86400000 === 6) {
-             txt = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
-          } else {
-             txt = `${formatDateDMY(sDate)} - ${formatDateDMY(eDate)}`;
-          }
-        }
-        badgePilotage.innerText = txt;
-      }
-
-      const agentListContainer = document.getElementById("agentCompletionList");
-      if (!agentListContainer) return;
-
-      const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
-      if (activeAgentsThisPeriod.length === 0) {
-        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`;
-        return;
-      }
-
-      let agentListHtml = '';
-      activeAgentsThisPeriod.forEach(agent => {
-        const aGroups = periodGroups.filter(g => g.agent === agent);
-        const aTotalGroups = aGroups.length;
-        const aDoneGroups = aGroups.filter(g => g.isDone).length;
-        const aPct = aTotalGroups > 0 ? Math.round((aDoneGroups / aTotalGroups) * 100) : 0;
-
-        agentListHtml += `
-          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
-            <div class="flex justify-between items-center text-xs">
-              <span class="font-bold text-slate-900">${agent}</span>
-              <span class="font-mono text-[10px] font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-500'}">${aDoneGroups}/${aTotalGroups} missions (${aPct}%)</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
-            </div>
-          </div>
-        `;
-      });
-      agentListContainer.innerHTML = agentListHtml;
-    }
-
-    function applyFilters() {
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      const sDateVal = sInput ? sInput.value : "";
-      const eDateVal = eInput ? eInput.value : "";
-      
-      let periodLabel = "Tout l'historique";
-      if (sDateVal && eDateVal) {
-        periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
-      } else if (sDateVal) {
-        periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
-      } else if (eDateVal) {
-        periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
-      }
-      
-      const badgeGlobal = document.getElementById("periodBadgeGlobal");
-      if (badgeGlobal) badgeGlobal.innerText = periodLabel;
-
-      const badgeAgents = document.getElementById("periodBadgeAgents");
-      if (badgeAgents) badgeAgents.innerText = periodLabel;
-
-      const periodData = getPeriodFilteredHistory();
-      const filtered = getFilteredHistory();
-
-      renderKPIs(filtered); 
-      renderTable(filtered); 
-      renderAgentsView(periodData); 
-      renderMap(mapFilterOnSelection ? filtered : periodData);
-      renderWallPlanning(); 
-      renderCompletionMetrics(); 
-    }
-
-    function toggleActiveAgentsFilter() {
-      filterOnlyActiveAgents = !filterOnlyActiveAgents;
-      updateActiveAgentsButtonUI();
-      applyFilters();
-    }
-
-    function updateMaxQtyThreshold(val) {
-      if (val === "" || val === null) {
-        customMaxQty = null;
-        localStorage.removeItem("mon_cfg_max_qty");
-        const display = document.getElementById("cfgMaxQtyDisplay");
-        if (display) display.innerText = "--";
-      } else {
-        const parsed = Number(val);
-        if (!isNaN(parsed) && parsed >= 0) {
-          customMaxQty = parsed;
-          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
-          const display = document.getElementById("cfgMaxQtyDisplay");
-          if (display) display.innerText = customMaxQty;
-        }
-      }
-      applyFilters();
-    }
-
-    function populateAdminDropdown() {
-      const adminSel = document.getElementById("authAdminSelect");
-      if (adminSel) {
-        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
-        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
-    }
-
-    function toggleFilterDropdown(id) {
-      const otherIds = ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'];
-      otherIds.forEach(otherId => {
-        if (otherId !== id) {
-          const el = document.getElementById(otherId);
-          if (el) {
-            el.classList.add("hidden");
-          }
-        }
-      });
-      const target = document.getElementById(id);
-      if (target) {
-        target.classList.toggle("hidden");
-      }
-    }
-
-    function initMultiSelects() {
-      const makeCheckboxes = (containerId, list, selectedArr, type) => {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        
-        let html = '';
-        list.forEach(item => {
-          const isChecked = selectedArr.includes(item) ? 'checked' : '';
-          html += `
-            <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-              <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${isChecked} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-              <span class="truncate">${item}</span>
-            </label>
-          `;
-        });
-        el.innerHTML = html;
-      };
-      
-      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
-      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
-      makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
-    }
-
-    function onCheckboxChange(type) {
-      activeKpiFilter = null;
-      if (type === 'agents') {
-        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
-        const label = document.getElementById("btnLabelAgents");
-        if (label) label.innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
-      } else if (type === 'contractors') {
-        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
-        const label = document.getElementById("btnLabelContractors");
-        if (label) label.innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
-      } else if (type === 'trades') {
-        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
-        const label = document.getElementById("btnLabelTrades");
-        if (label) label.innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
-      }
-      applyFilters();
-    }
-
-    function selectAll(type, check) {
-      activeKpiFilter = null;
-      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => {
-        b.checked = check;
-      });
-      onCheckboxChange(type);
-    }
-
-    function getDistinctArticlesOnPeriod() {
-      const periodList = getPeriodFilteredHistory() || [];
-      const mapArticles = new Map();
-      
-      for (let i = 0; i < periodList.length; i++) {
-        const item = periodList[i];
-        const ref = String(item.sapRef || "").trim();
-        if (!ref) continue;
-        
-        if (!mapArticles.has(ref)) {
-          mapArticles.set(ref, {
-            sapRef: ref,
-            designation: item.designation || 'Sans désignation',
-            count: 1
-          });
-        } else {
-          mapArticles.get(ref).count++;
-        }
-      }
-      return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
-    }
-
-    function showArticleSuggestions() {
-      const input = document.getElementById("articleTagInput");
-      onArticleTagInput(input ? input.value : "");
-    }
-
-    function onArticleTagInput(query) {
-      const dd = document.getElementById("articleDropdownList");
-      if (!dd) return;
-      
-      const q = String(query || "").trim().toLowerCase();
-      const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
-
-      if (filtered.length === 0) {
-        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`;
-        dd.classList.remove("hidden");
-        return;
-      }
-
-      let html = '';
-      filtered.forEach(a => {
-        html += `
-          <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
-            <div class="min-w-0 pr-2">
-              <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
-              <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
-            </div>
-            <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
-          </div>
-        `;
-      });
-      dd.innerHTML = html;
-      dd.classList.remove("hidden");
-    }
-
-    function toggleArticleTag(sapRef) {
-      if (selectedArticleTags.includes(sapRef)) {
-        selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
-      } else {
-        selectedArticleTags.push(sapRef);
-      }
-      renderArticleTagsUI();
-      applyFilters();
-      
-      const input = document.getElementById("articleTagInput");
-      if (input) input.value = ""; 
-      
-      const dd = document.getElementById("articleDropdownList");
-      if (dd) dd.classList.add("hidden");
-    }
-
-    function removeArticleTag(sapRef) {
-      selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
-      renderArticleTagsUI();
-      applyFilters();
-    }
-
-    function renderArticleTagsUI() {
-      const container = document.getElementById("selectedArticleTagsContainer");
-      if (!container) return;
-      
-      let html = '';
-      selectedArticleTags.forEach(ref => {
-        html += `
-          <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
-            <span class="truncate max-w-[260px]">${ref}</span>
-            <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
-            </button>
-          </span>
-        `;
-      });
-      container.innerHTML = html;
-      lucide.createIcons();
-    }
-
-    function resetFiltersToAll() {
-      activeKpiFilter = null;
-      selectAll('agents', false);
-      selectAll('contractors', false);
-      selectAll('trades', false);
-      selectedArticleTags = [];
-      renderArticleTagsUI();
-      applyFilters();
-    }
-
-    function filterByKpi(type) {
-      activeKpiFilter = type;
-      switchView('global');
-      applyFilters();
-    }
-
-    function onSmartPeriodChange(mode) {
-      const now = new Date();
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      const customBox = document.getElementById("customDateRangeBox");
-
-      if (mode === 'CUSTOM') {
-        if (customBox) customBox.classList.remove("hidden");
-        return;
-      }
-      if (customBox) customBox.classList.add("hidden");
-
-      if (mode === 'ALL') {
-        if (sInput) sInput.value = "";
-        if (eInput) eInput.value = "";
-      } else if (mode === 'TODAY') {
-        const dStr = normalizeDateYMD(now);
-        if (sInput) sInput.value = dStr;
-        if (eInput) eInput.value = dStr;
-      } else if (mode === 'CURRENT_WEEK') {
-        const day = now.getDay() || 7;
-        const monday = new Date(now);
-        monday.setDate(now.getDate() - day + 1);
-        const sunday = new Date(monday);
-        sunday.setDate(sunday.getDate() + 6);
-        if (sInput) sInput.value = normalizeDateYMD(monday);
-        if (eInput) eInput.value = normalizeDateYMD(sunday);
-      } else if (mode === 'PREV_WEEK') {
-        const day = now.getDay() || 7;
-        const prevMonday = new Date(now);
-        prevMonday.setDate(now.getDate() - day - 6);
-        const prevSunday = new Date(prevMonday);
-        prevSunday.setDate(prevMonday.getDate() + 6);
-        if (sInput) sInput.value = normalizeDateYMD(prevMonday);
-        if (eInput) eInput.value = normalizeDateYMD(prevSunday);
-      } else if (mode === 'NEXT_WEEK') {
-        const day = now.getDay() || 7;
-        const nextMonday = new Date(now);
-        nextMonday.setDate(now.getDate() - day + 8);
-        const nextSunday = new Date(nextMonday);
-        nextSunday.setDate(nextMonday.getDate() + 6);
-        if (sInput) sInput.value = normalizeDateYMD(nextMonday);
-        if (eInput) eInput.value = normalizeDateYMD(nextSunday);
-      } else if (mode === 'CURRENT_MONTH') {
-        if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
-        if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-      }
-      
-      if (sInput) {
-        updateWeekBadge(sInput.value);
-      }
-      applyFilters();
-    }
-
-    function toggleMapSelectionFilter() {
-      mapFilterOnSelection = !mapFilterOnSelection;
-      const btnText = document.getElementById("mapFilterBtnText");
-      if (btnText) {
-        btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
-      }
-      applyFilters();
-    }
-
-    function getPeriodFilteredHistory() {
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      
-      const sDateVal = sInput ? sInput.value : "";
-      const eDateVal = eInput ? eInput.value : "";
-      
-      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
-      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
-
-      return (cachedHistory || []).filter(item => {
-        const itDate = parseItemDate(item.timestamp);
-        if (sDate && itDate && itDate < sDate) return false;
-        if (eDate && itDate && itDate > eDate) return false;
-        return true;
-      });
-    }
-
-    function getFilteredHistory() {
-      return getPeriodFilteredHistory().filter(item => {
-        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) return false;
-        if (activeKpiFilter === 'ZERO' && Number(item.quantity) !== 0) return false;
-        if (activeKpiFilter === 'HIGH' && (customMaxQty === null || Number(item.quantity) <= customMaxQty)) return false;
-        return true;
-      });
-    }
-
-    function renderKPIs(list) {
-      const totalR = list.length;
-      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
-      const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
-
-      const elTotalRows = document.getElementById("kpiTotalRows");
-      if (elTotalRows) elTotalRows.innerText = totalR;
-
-      const elTotalPieces = document.getElementById("kpiTotalPieces");
-      if (elTotalPieces) elTotalPieces.innerText = totalP;
-
-      const elZeroStock = document.getElementById("kpiZeroStock");
-      if (elZeroStock) elZeroStock.innerText = zeroS;
-
-      const elAtypicalStock = document.getElementById("kpiAtypicalStock");
-      if (elAtypicalStock) elAtypicalStock.innerText = atypS;
-
-      const elAgentsTotalRows = document.getElementById("kpiAgentsTotalRows");
-      if (elAgentsTotalRows) elAgentsTotalRows.innerText = totalR;
-
-      const elAgentsTotalPieces = document.getElementById("kpiAgentsTotalPieces");
-      if (elAgentsTotalPieces) elAgentsTotalPieces.innerText = totalP;
-
-      const elAgentsZeroStock = document.getElementById("kpiAgentsZeroStock");
-      if (elAgentsZeroStock) elAgentsZeroStock.innerText = zeroS;
-
-      const elAgentsAtypicalStock = document.getElementById("kpiAgentsAtypicalStock");
-      if (elAgentsAtypicalStock) elAgentsAtypicalStock.innerText = atypS;
-    }
-
-    function renderTable(list) {
-      const tbody = document.getElementById("supervisionTableBody");
-      if (!tbody) return;
-
-      const alertZeroEl = document.getElementById("cfgAlertZero");
-      const alertZero = alertZeroEl ? alertZeroEl.checked : false;
-      
-      const countLabel = document.getElementById("tableCountLabel");
-      if (countLabel) {
-        countLabel.innerText = `${list.length} saisie(s) répertoriée(s)`;
-      }
-
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
-        return;
-      }
-
-      let html = '';
-      list.forEach(item => {
-        const q = Number(item.quantity);
-        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
-        const bgClass = isAlert ? 'bg-amber-50/60' : '';
-        const textClass = q === 0 ? 'text-rose-600' : 'text-emerald-700';
-
-        html += `
-          <tr class="hover:bg-slate-50 transition ${bgClass}">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
-            <td class="p-3 font-bold text-slate-900">${item.user}</td>
-            <td class="p-3 text-slate-700">${item.contractor}</td>
-            <td class="p-3 text-slate-500">${item.trade}</td>
-            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
-            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
-            <td class="p-3 text-center font-mono font-black ${textClass} text-sm">${q}</td>
-            <td class="p-3 text-right whitespace-nowrap">
-              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-            </td>
-          </tr>
-        `;
-      });
-      tbody.innerHTML = html;
-      lucide.createIcons();
-    }
-
     function renderMap(list) {
       const mapDiv = document.getElementById("mapContainer");
       if (!mapDiv) return;
@@ -2255,7 +2185,6 @@
           fillOpacity: 0.9
         });
 
-        // NOUVEAU DESIGN CLONE DE L'APP MOBILE (MA TOURNEE)
         const tooltipHtml = `
           <div class="bg-white rounded-3xl shadow-xl flex flex-col w-[260px] overflow-hidden border border-slate-200 p-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
