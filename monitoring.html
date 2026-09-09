@@ -14,8 +14,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <!-- NOUVEAU : localForage pour utiliser IndexedDB (Gros volumes) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <style>
@@ -71,12 +69,6 @@
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
-
-      <div class="pt-2">
-        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
-          &copy; made by CO2H2O srlu
-        </span>
-      </div>
     </div>
   </div>
 
@@ -531,18 +523,21 @@
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Agent :</label>
+            <!-- L'AGENT PEUT BIEN ETRE SELECTIONNE ICI -->
             <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Agent --</option>
             </select>
           </div>
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Entr. :</label>
+            <!-- L'ENTREPRENEUR PEUT BIEN ETRE SELECTIONNE ICI -->
             <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Entrepreneur --</option>
             </select>
           </div>
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Métier :</label>
+            <!-- LE METIER PEUT BIEN ETRE SELECTIONNE ICI -->
             <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Métier --</option>
             </select>
@@ -918,7 +913,7 @@
           if (data.catalog) { catalog = data.catalog; await localforage.setItem("offline_catalog", catalog); }
 
           if (data.tournees) {
-            // SMART MERGE : Conserver les actions locales dans l'agenda qui ne sont pas encore sauvegardées
+            // FIX SMART MERGE : Conserver les actions locales dans l'agenda qui ne sont pas encore sauvegardées sur le cloud
             let pendingItemsToMerge = [];
             pendingSyncQueue.forEach(q => {
                if(q.action === "CREATE_TOURNEES_BULK" && q.items) {
@@ -937,7 +932,7 @@
               return serverTask;
             });
 
-            // Réinjecte les tâches locales "fantômes"
+            // Réinjecte les tâches locales "fantômes" qui n'ont pas encore eu le temps de s'écrire sur Google Sheets
             pendingItemsToMerge.forEach(pt => {
                if (!finalTournees.find(t => t.id === pt.id)) {
                    finalTournees.push(pt);
@@ -1036,6 +1031,7 @@
     }
 
     async function submitManualTourneeAssignment() {
+      // Les données sont bien récoltées depuis les options sélectionnées (Voir la capture d'écran de l'utilisateur)
       const agent = document.getElementById("adminAssignAgent").value;
       const tranche = document.getElementById("adminAssignTranche").value;
       const contractor = document.getElementById("adminAssignContractor").value;
@@ -1163,7 +1159,7 @@
       e.dataTransfer.setData('text/plain', JSON.stringify(draggedPayload));
     }
 
-    // Drag and Drop utilise l'ID de la tâche et synchronise avec le serveur
+    // Le Drag and Drop utilise maintenant l'ID exact de la tâche
     async function handleDropOnDay(e, targetDateStr, targetTranche) {
       e.preventDefault();
       if (!draggedPayload || !draggedPayload.id) return;
@@ -1197,7 +1193,9 @@
       }
     }
 
-    // AFFICHE LE PLANNING AVEC LA ZONE DES RETARDS
+    // ==========================================
+    // NOUVELLE VUE AGENDA (Backlog & Retards)
+    // ==========================================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const overdueContainer = document.getElementById("overdueTasksContainer");
@@ -1224,13 +1222,13 @@
             <div draggable="true" 
                  ondragstart="handleDragStart(event, '${t.agent}', '${normalizeDateYMD(t.date)}', '${t.tranche}', '${t.id}')"
                  onclick="openTourneeDetailsForDay('${normalizeDateYMD(t.date)}', '${agent}')" 
-                 class="p-1.5 rounded-lg border bg-rose-100 border-rose-300 text-rose-800 cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] min-w-[120px]">
-              <div class="flex justify-between items-center font-bold">
+                 class="p-1.5 rounded-lg border bg-rose-50 border-rose-300 text-rose-800 cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] min-w-[130px]">
+              <div class="flex justify-between items-center font-bold border-b border-rose-200 pb-1 mb-1">
                 <span class="truncate">${agent}</span>
                 <span class="font-mono text-[9px] text-rose-600 bg-white px-1 rounded border border-rose-200">${formatDateFrench(t.date).substring(0,6)}</span>
               </div>
-              <div class="text-[9px] font-mono text-rose-900 truncate mt-0.5">${t.sapRef}</div>
-              <div class="text-[8px] text-rose-600 truncate">${t.contractor || 'Divers'}</div>
+              <div class="text-[9px] font-mono font-bold text-rose-900 truncate mt-0.5">${t.sapRef}</div>
+              <div class="text-[8px] text-rose-600 truncate">${t.contractor || '-'} • ${t.trade || '-'}</div>
             </div>
           `).join('');
         }).join('');
@@ -1271,12 +1269,14 @@
               <div draggable="true" 
                    ondragstart="handleDragStart(event, '${agent}', '${dateStr}', '${trancheName}', '${t.id}')"
                    onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
-                   class="p-1 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition text-[10px] mb-1">
+                   class="p-1.5 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition text-[10px] mb-1.5">
                 <div class="flex justify-between items-center font-bold">
                   <span class="truncate">${agent}</span>
                   <span class="font-mono text-[9px] ${isFullDone ? 'text-emerald-700 font-black' : ''}">${t.statut === 'VALIDE' ? '✓' : ''}</span>
                 </div>
-                <div class="text-[9px] font-mono opacity-80 truncate">${t.sapRef}</div>
+                <div class="text-[9px] font-mono font-bold opacity-80 truncate text-slate-700 mt-0.5">${t.sapRef}</div>
+                <!-- FIX : LE CONTRACTOR ET LE METIER SONT REAFFICHES ICI SUR LA CASE -->
+                <div class="text-[8px] text-slate-500 truncate leading-tight">${t.contractor || '-'} • ${t.trade || '-'}</div>
               </div>
             `).join('');
           }).join('');
