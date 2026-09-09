@@ -94,7 +94,6 @@
     </div>
   </header>
 
-  <!-- STRUCTURE CENTRALE -->
   <div class="flex-1 flex overflow-hidden">
     
     <!-- BARRE LATÉRALE GAUCHE -->
@@ -122,7 +121,7 @@
           </button>
         </div>
 
-        <!-- Filtres Repoussés vers le bas -->
+        <!-- Filtres Repoussés vers le bas avec mt-auto -->
         <div class="mt-auto pt-6 space-y-4">
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
@@ -231,7 +230,6 @@
             </div>
           </div>
 
-          <!-- Filtres Globaux Avancés -->
           <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4">
             <div class="space-y-2">
               <div class="flex items-center justify-between gap-4">
@@ -242,9 +240,7 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                  <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer">
-                    Effacer filtres
-                  </button>
+                  <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer">Effacer filtres</button>
                   <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs cursor-pointer">
                     <i data-lucide="download" class="w-4 h-4"></i>
                     <span>Exporter CSV</span>
@@ -255,7 +251,6 @@
             </div>
 
             <div class="grid grid-cols-3 gap-3 pt-1 border-t border-slate-100">
-              <!-- Dropdown Agents -->
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Agents</label>
                 <button type="button" onclick="toggleFilterDropdown('dropdownAgents')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
@@ -270,7 +265,6 @@
                   <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
                 </div>
               </div>
-              <!-- Dropdown Entrepreneurs -->
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
                 <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
@@ -285,7 +279,6 @@
                   <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
                 </div>
               </div>
-              <!-- Dropdown Métiers -->
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
                 <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
@@ -344,10 +337,11 @@
             </button>
           </div>
           
+          <!-- Conteneur pour les accordéons -->
           <div id="agentsAccordionContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE GEOGRAPHIQUE ================= -->
+        <!-- ================= ONGLET 3 : MAP ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
@@ -628,20 +622,20 @@
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
-    async function safeSetStorage(key, data) { 
-      try { 
-        await localforage.setItem(key, data); 
+    async function safeSetStorage(key, data) {
+      try {
+        await localforage.setItem(key, data);
       } catch (e) {
-        console.warn("Stockage saturé ou erreur IndexedDB.");
-      } 
+        console.warn("Stockage de l'appareil saturé ou erreur IndexedDB.");
+      }
     }
 
     function getISOWeekNumber(d) {
       const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
       date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
       const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-      const weekNumber = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
-      return { week: weekNumber, year: date.getUTCFullYear() };
+      const weekNo = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+      return { week: weekNo, year: date.getUTCFullYear() };
     }
 
     function updateWeekBadge(startDateStr) {
@@ -662,7 +656,7 @@
       if (parts) {
         return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
       }
-      const iso = new Date(str); 
+      const iso = new Date(str);
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
 
@@ -710,41 +704,40 @@
         const m = String(dateObj.getMonth() + 1).padStart(2, '0');
         const d = String(dateObj.getDate()).padStart(2, '0');
         const dateStr = `${y}-${m}-${d}`;
+
         const easter = getEaster(y);
-        
         const addDays = (dt, days) => { 
           const r = new Date(dt); 
           r.setDate(r.getDate() + days); 
           return `${r.getFullYear()}-${String(r.getMonth() + 1).padStart(2, '0')}-${String(r.getDate()).padStart(2, '0')}`; 
         };
-        
+
         const holidays = [
-            `${y}-01-01`, `${y}-05-01`, `${y}-07-21`, `${y}-08-15`, `${y}-11-01`, `${y}-11-11`, `${y}-12-25`, 
+            `${y}-01-01`, `${y}-05-01`, `${y}-07-21`, `${y}-08-15`, `${y}-11-01`, `${y}-11-11`, `${y}-12-25`,
             addDays(easter, 1), addDays(easter, 39), addDays(easter, 50)
         ];
         return holidays.includes(dateStr);
     }
 
     function validateAssignDate(inputElem) {
-        const val = inputElem.value; 
+        const val = inputElem.value;
         if (!val) return true;
-        
         const d = new Date(val + "T00:00:00");
         const today = new Date(); 
         today.setHours(0,0,0,0);
-        
+
         if (d < today) { 
           alert("Impossible de créer une tâche dans le passé."); 
           inputElem.value = ""; 
           return false; 
         }
         if (d.getDay() === 0 || d.getDay() === 6) { 
-          alert("Impossible de planifier sur un week-end."); 
+          alert("Impossible d'assigner une tâche un week-end (Samedi/Dimanche)."); 
           inputElem.value = ""; 
           return false; 
         }
         if (isBelgianHoliday(d)) { 
-          alert("Impossible de planifier sur un jour férié."); 
+          alert("Impossible d'assigner une tâche un jour férié belge."); 
           inputElem.value = ""; 
           return false; 
         }
@@ -753,6 +746,7 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
+
       catalog = (await localforage.getItem("offline_catalog")) || [];
       availableAgents = (await localforage.getItem("offline_agents")) || [];
       availableContractors = (await localforage.getItem("offline_contractors")) || [];
@@ -762,8 +756,8 @@
       cachedTournees = (await localforage.getItem("offline_tournees")) || [];
       pendingSyncQueue = (await localforage.getItem("offline_pending_sync")) || [];
 
-      initMultiSelects(); 
-      populateAdminDropdown(); 
+      initMultiSelects();
+      populateAdminDropdown();
       populateTourneeAdminDropdowns();
       onSmartPeriodChange('CURRENT_WEEK');
 
@@ -783,21 +777,21 @@
 
       if (!currentAdmin) {
         document.getElementById("authModal").classList.remove("hidden");
-      } else { 
-        document.getElementById("activeAdminName").innerText = currentAdmin; 
-        document.getElementById("authModal").classList.add("hidden"); 
+      } else {
+        document.getElementById("activeAdminName").innerText = currentAdmin;
+        document.getElementById("authModal").classList.add("hidden");
       }
 
-      document.addEventListener("click", () => { 
-        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'].forEach(id => { 
-          const el = document.getElementById(id); 
-          if (el) el.classList.add("hidden"); 
-        }); 
+      document.addEventListener("click", () => {
+        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add("hidden");
+        });
       });
-      
-      updateActiveAgentsButtonUI(); 
-      renderWallPlanning(); 
-      applyFilters(); 
+
+      updateActiveAgentsButtonUI();
+      renderWallPlanning();
+      applyFilters();
       await syncMonitoringData();
     });
 
@@ -811,50 +805,52 @@
         return; 
       }
       
-      const btn = document.querySelector("#authModal button"); 
+      const btn = document.querySelector("#authModal button");
       const originalText = btn.innerHTML;
-      btn.innerHTML = "<span>Connexion...</span>"; 
+      btn.innerHTML = "<span>Connexion...</span>";
       btn.disabled = true;
 
       try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, { 
-          method: "POST", 
-          headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-          body: JSON.stringify({ action: "LOGIN", user: selected, pwd: pwd }) 
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "LOGIN", user: selected, pwd: pwd })
         });
         const result = await response.json();
         
         if (result.status === "success") {
-          currentAdmin = selected; 
-          sessionStorage.setItem("mon_current_admin", currentAdmin); 
-          sessionStorage.setItem("mon_auth_token", result.token); 
+          currentAdmin = selected;
+          sessionStorage.setItem("mon_current_admin", currentAdmin);
+          sessionStorage.setItem("mon_auth_token", result.token);
           adminToken = result.token;
           
-          document.getElementById("activeAdminName").innerText = currentAdmin; 
-          document.getElementById("authModal").classList.add("hidden"); 
+          document.getElementById("activeAdminName").innerText = currentAdmin;
+          document.getElementById("authModal").classList.add("hidden");
           applyFilters();
         } else {
           alert("Mot de passe incorrect.");
         }
-      } catch (err) { 
-        alert("Erreur de connexion."); 
-      } finally { 
-        btn.innerHTML = originalText; 
-        btn.disabled = false; 
+      } catch (err) {
+        alert("Erreur de connexion au serveur.");
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
       }
     }
 
     function logoutAdmin() {
-      sessionStorage.removeItem("mon_current_admin"); 
+      sessionStorage.removeItem("mon_current_admin");
       sessionStorage.removeItem("mon_auth_token");
-      currentAdmin = ""; 
-      adminToken = ""; 
-      document.getElementById("authPassword").value = ""; 
+      currentAdmin = "";
+      adminToken = "";
+      document.getElementById("authPassword").value = "";
       document.getElementById("authModal").classList.remove("hidden");
     }
 
     async function syncMonitoringData() {
-      if (!navigator.onLine || isSyncing) return;
+      if (!navigator.onLine) return;
+      
+      if (isSyncing) return;
       isSyncing = true;
       
       const dot = document.getElementById("statusDot");
@@ -864,7 +860,7 @@
         dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
       }
       if (txt) { 
-        txt.innerText = "Sync..."; 
+        txt.innerText = "Synchronisation..."; 
         txt.className = "text-xs font-bold text-amber-600"; 
       }
 
@@ -872,10 +868,10 @@
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
           try {
-            await fetch(GOOGLE_SCRIPT_URL, { 
-              method: "POST", 
-              headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-              body: JSON.stringify(item) 
+            await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify(item)
             });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
             await safeSetStorage("offline_pending_sync", pendingSyncQueue);
@@ -886,7 +882,7 @@
       }
 
       try {
-        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" }); 
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         
         if (data.status === "success") {
@@ -898,7 +894,6 @@
 
           if (data.history) {
             let serverHistory = data.history;
-            // Réappliquer les modifications locales en attente
             pendingSyncQueue.forEach(q => {
                if (q.action === "UPDATE_INVENTORY") {
                    const idx = serverHistory.findIndex(h => h.id === q.id);
@@ -910,33 +905,44 @@
             cachedHistory = serverHistory;
             await localforage.setItem("offline_history", cachedHistory);
           }
-          
+
           if (data.tournees) {
             let pendingItemsToMerge = [];
-            pendingSyncQueue.forEach(q => { 
-              if(q.action === "CREATE_TOURNEES_BULK" && q.items) {
-                pendingItemsToMerge.push(...q.items); 
-              }
+            pendingSyncQueue.forEach(q => {
+               if (q.action === "CREATE_TOURNEES_BULK" && q.items) {
+                   pendingItemsToMerge.push(...q.items);
+               }
             });
-            const localValides = new Set(cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => String(t.id)));
-            
-            let finalTournees = data.tournees.map(s => localValides.has(String(s.id)) ? { ...s, statut: 'VALIDE' } : s);
-            pendingItemsToMerge.forEach(pt => { 
-              if (!finalTournees.find(t => t.id === pt.id)) {
-                finalTournees.push(pt); 
+
+            const localValides = new Set(
+              cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => String(t.id))
+            );
+
+            let finalTournees = data.tournees.map(serverTask => {
+              if (localValides.has(String(serverTask.id))) {
+                return { ...serverTask, statut: 'VALIDE' };
               }
+              return serverTask;
             });
-            cachedTournees = finalTournees; 
+
+            pendingItemsToMerge.forEach(pt => {
+               if (!finalTournees.find(t => t.id === pt.id)) {
+                   finalTournees.push(pt);
+               }
+            });
+
+            cachedTournees = finalTournees;
             await localforage.setItem("offline_tournees", cachedTournees);
           }
-          initMultiSelects(); 
-          populateAdminDropdown(); 
-          populateTourneeAdminDropdowns(); 
-          renderWallPlanning(); 
+
+          initMultiSelects();
+          populateAdminDropdown();
+          populateTourneeAdminDropdowns();
+          renderWallPlanning();
           applyFilters();
         }
       } catch (err) {
-        // En cas d'erreur réseau, on continue avec le cache
+        // Silently handle offline/error state during background sync
       } finally {
         isSyncing = false;
         if (dot) {
@@ -949,65 +955,78 @@
       }
     }
 
-    function openManualAssignModal(defDate = null, defTranche = 'MATIN') {
-      const dateInput = document.getElementById("adminAssignDate"); 
-      if (defDate) {
-        dateInput.value = defDate;
+    function openManualAssignModal(defaultDate = null, defaultTranche = 'MATIN') {
+      const dateInput = document.getElementById("adminAssignDate");
+      if (defaultDate) {
+        dateInput.value = defaultDate;
       }
-      if (defTranche) {
-        document.getElementById("adminAssignTranche").value = defTranche;
+      if (defaultTranche) {
+        document.getElementById("adminAssignTranche").value = defaultTranche;
       }
       if (!validateAssignDate(dateInput)) {
-        dateInput.value = new Date().toISOString().split('T')[0]; 
+         dateInput.value = new Date().toISOString().split('T')[0]; 
       }
-      document.getElementById("manualAssignModal").classList.remove("hidden"); 
+      
+      document.getElementById("manualAssignModal").classList.remove("hidden");
       renderAdminCatalogPicker("");
     }
 
-    function closeManualAssignModal() { 
-      document.getElementById("manualAssignModal").classList.add("hidden"); 
+    function closeManualAssignModal() {
+      document.getElementById("manualAssignModal").classList.add("hidden");
     }
-    
-    function closeTourneeDetailsModal() { 
-      document.getElementById("tourneeDetailsModal").classList.add("hidden"); 
+
+    function closeTourneeDetailsModal() {
+      document.getElementById("tourneeDetailsModal").classList.add("hidden");
     }
 
     function populateTourneeAdminDropdowns() {
-      const a = document.getElementById("adminAssignAgent");
-      const c = document.getElementById("adminAssignContractor");
-      const t = document.getElementById("adminAssignTrade");
-      const fa = document.getElementById("agendaFilterAgent");
-      
-      if(a) a.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(x => `<option value="${x}">${x}</option>`).join('');
-      if(fa) fa.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(x => `<option value="${x}">${x}</option>`).join('');
-      if(c) c.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(x => `<option value="${x}">${x}</option>`).join('');
-      if(t) t.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(x => `<option value="${x}">${x}</option>`).join('');
+      const agentSel = document.getElementById("adminAssignAgent");
+      const contractorSel = document.getElementById("adminAssignContractor");
+      const tradeSel = document.getElementById("adminAssignTrade");
+      const filterAgentSel = document.getElementById("agendaFilterAgent");
+
+      if (agentSel) {
+        agentSel.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+      if (filterAgentSel) {
+        filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+      if (contractorSel) {
+        contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      if (tradeSel) {
+        tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
     }
 
     function renderAdminCatalogPicker(filterText) {
       const container = document.getElementById("adminCatalogPickerList");
-      const countLabel = document.getElementById("adminCatalogCount"); 
+      const countLabel = document.getElementById("adminCatalogCount");
       if (!container) return;
-      
+
       const searchTerms = String(filterText || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
-      const filtered = (catalog || []).filter(i => searchTerms.every(term => `${i.sapRef} ${i.designation} ${i.supplierRef} ${i.ean}`.toLowerCase().includes(term)));
-      
-      if(countLabel) {
-        countLabel.innerText = `${filtered.length} article(s)`;
+      const filtered = (catalog || []).filter(item => {
+        const textTarget = `${item.sapRef || ""} ${item.designation || ""} ${item.supplierRef || ""} ${item.ean || ""}`.toLowerCase();
+        return searchTerms.every(term => textTarget.includes(term));
+      });
+
+      if (countLabel) {
+        countLabel.innerText = `${filtered.length} article(s) trouvé(s)`;
       }
-      if (filtered.length === 0) { 
-        container.innerHTML = `<div class="p-2 text-center text-slate-400 text-xs italic">Aucun article.</div>`; 
-        return; 
-      }
       
-      container.innerHTML = filtered.slice(0, 60).map(i => {
-        const checked = manualSelectedCatalogSaps.includes(String(i.sapRef).trim());
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="p-2 text-center text-slate-400 text-xs italic">Aucun article trouvé.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.slice(0, 60).map(item => {
+        const isChecked = manualSelectedCatalogSaps.includes(String(item.sapRef).trim());
         return `
           <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer text-xs text-slate-700 border-b border-slate-100">
             <div class="flex items-center space-x-2 min-w-0 pr-2">
-              <input type="checkbox" value="${i.sapRef.replace(/"/g, '&quot;')}" onchange="toggleManualCatalogSelection(this.value)" ${checked ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-              <span class="font-mono font-bold text-amber-700">${i.sapRef}</span>
-              <span class="truncate max-w-[280px]">${i.designation}</span>
+              <input type="checkbox" value="${item.sapRef.replace(/"/g, '&quot;')}" onchange="toggleManualCatalogSelection(this.value)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+              <span class="font-mono font-bold text-amber-700">${item.sapRef}</span>
+              <span class="truncate max-w-[280px]">${item.designation}</span>
             </div>
           </label>
         `;
@@ -1029,45 +1048,46 @@
       const contractor = document.getElementById("adminAssignContractor").value;
       const trade = document.getElementById("adminAssignTrade").value;
       const date = document.getElementById("adminAssignDate").value;
-      
+
       if (!agent) { 
-        alert("Agent requis."); 
-        return; 
-      } 
-      if (manualSelectedCatalogSaps.length === 0) { 
-        alert("Article(s) requis."); 
+        alert("Veuillez sélectionner un agent."); 
         return; 
       }
-      
+      if (manualSelectedCatalogSaps.length === 0) { 
+        alert("Veuillez cocher au moins un article."); 
+        return; 
+      }
+
       const items = manualSelectedCatalogSaps.map((sapRef, idx) => {
         const catItem = catalog.find(i => String(i.sapRef).trim() === sapRef);
-        return { 
-          id: "TRN-LOC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6), 
-          agent: agent, 
-          contractor: contractor || '', 
-          trade: trade || '', 
-          sapRef: sapRef, 
-          designation: catItem ? catItem.designation : '', 
-          ordre: idx + 1, 
-          statut: 'A_FAIRE', 
-          date: date || new Date().toISOString().split('T')[0], 
-          tranche: tranche || 'MATIN' 
+        return {
+          id: "TRN-LOC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
+          agent: agent,
+          contractor: contractor || '',
+          trade: trade || '',
+          sapRef: sapRef,
+          designation: catItem ? catItem.designation : '',
+          ordre: idx + 1,
+          statut: 'A_FAIRE',
+          date: date || new Date().toISOString().split('T')[0],
+          tranche: tranche || 'MATIN'
         };
       });
-      
-      items.forEach(it => cachedTournees.push(it)); 
+
+      items.forEach(it => cachedTournees.push(it));
       await localforage.setItem("offline_tournees", cachedTournees);
-      
+
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
       pendingSyncQueue.push({ _syncId: syncId, action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: items });
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
       
-      closeManualAssignModal(); 
-      manualSelectedCatalogSaps = []; 
-      applyFilters();
+      closeManualAssignModal();
+      manualSelectedCatalogSaps = [];
       
-      if(navigator.onLine) {
-        setTimeout(syncMonitoringData, 100);
+      applyFilters();
+
+      if (navigator.onLine) {
+         setTimeout(syncMonitoringData, 100);
       }
     }
 
@@ -1075,33 +1095,46 @@
       const wb = XLSX.utils.book_new();
       
       const planningData = [
-        ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"], 
-        ["15/09/2026", "MATIN", availableAgents[0] || "Thomas", availableContractors[0] || "Demol", availableTrades[0] || "OBE VSTR", catalog[0] ? catalog[0].sapRef : "106468", 1]
+        ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"],
+        [
+          "15/09/2026", 
+          "MATIN", 
+          availableAgents[0] || "Ex: Thomas", 
+          availableContractors[0] || "Ex: Demol", 
+          availableTrades[0] || "Ex: OBE VSTR", 
+          catalog[0] ? catalog[0].sapRef : "106468", 
+          1
+        ]
       ];
+      
       const ws1 = XLSX.utils.aoa_to_sheet(planningData);
       ws1['!cols'] = [{wch: 18}, {wch: 28}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 18}];
       XLSX.utils.book_append_sheet(wb, ws1, "Import_Masse");
 
-      const masterData = [["AGENTS DISPONIBLES", "ENTREPRENEURS", "METIERS", "CATALOGUE (REF SAP)", "DESIGNATION"]];
       const maxRows = Math.max(availableAgents.length, availableContractors.length, availableTrades.length, catalog.length);
+      const masterData = [["AGENTS DISPONIBLES", "ENTREPRENEURS", "METIERS", "CATALOGUE (REF SAP)", "DESIGNATION"]];
+
       for (let i = 0; i < maxRows; i++) {
         masterData.push([
-          availableAgents[i] || "", 
-          availableContractors[i] || "", 
-          availableTrades[i] || "", 
-          catalog[i] ? catalog[i].sapRef : "", 
+          availableAgents[i] || "",
+          availableContractors[i] || "",
+          availableTrades[i] || "",
+          catalog[i] ? catalog[i].sapRef : "",
           catalog[i] ? catalog[i].designation : ""
         ]);
       }
-      const ws2 = XLSX.utils.aoa_to_sheet(masterData); 
+
+      const ws2 = XLSX.utils.aoa_to_sheet(masterData);
       ws2['!cols'] = [{wch: 25}, {wch: 25}, {wch: 25}, {wch: 20}, {wch: 50}];
       XLSX.utils.book_append_sheet(wb, ws2, "Donnees_Reference");
+
       XLSX.writeFile(wb, "Modele_Import_Masse_Tournees.xlsx");
     }
 
-    function handleExcelFileSelect(e) { 
-      if (e.target.files.length > 0) {
-        processExcelFile(e.target.files[0]); 
+    function handleExcelFileSelect(e) {
+      const files = e.target.files;
+      if (files.length > 0) {
+        processExcelFile(files[0]);
       }
     }
 
@@ -1109,84 +1142,110 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
-          const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
-          const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const sheetName = workbook.SheetNames[0]; 
+          const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
           
           if (jsonRows.length <= 1) { 
-            alert("Fichier vide."); 
+            alert("Le fichier Excel est vide ou invalide."); 
             return; 
           }
 
-          const h = jsonRows[0].map(x => String(x || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-          const dIdx = h.findIndex(x => x.includes('date'));
-          const tIdx = h.findIndex(x => x.includes('tranche'));
-          const aIdx = h.findIndex(x => x.includes('agent'));
-          const cIdx = h.findIndex(x => x.includes('entrepreneur') || x.includes('contractor'));
-          const trIdx = h.findIndex(x => x.includes('metier') || x.includes('trade'));
-          const sIdx = h.findIndex(x => x.includes('sap') || x.includes('ref'));
-          const oIdx = h.findIndex(x => x.includes('ordre') || x.includes('seq'));
+          const headers = jsonRows[0].map(h => String(h || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+          const dateIdx = headers.findIndex(h => h.includes('date'));
+          const trancheIdx = headers.findIndex(h => h.includes('tranche'));
+          const agentIdx = headers.findIndex(h => h.includes('agent'));
+          const contractorIdx = headers.findIndex(h => h.includes('entrepreneur') || h.includes('contractor'));
+          const tradeIdx = headers.findIndex(h => h.includes('metier') || h.includes('trade'));
+          const sapIdx = headers.findIndex(h => h.includes('sap') || h.includes('ref'));
+          const ordreIdx = headers.findIndex(h => h.includes('ordre') || h.includes('seq'));
 
-          const bulkItems = []; 
-          let mAg = new Set();
-          let mSap = new Set();
-          
+          const bulkItems = [];
+          let missingAgents = new Set();
+          let missingSaps = new Set();
+
           for (let i = 1; i < jsonRows.length; i++) {
-            const r = jsonRows[i]; 
-            if (!r || r.length === 0 || r.every(c => !c)) continue;
+            const row = jsonRows[i];
             
-            const sap = String(r[sIdx !== -1 ? sIdx : 5] || '').trim();
-            const ag = String(r[aIdx !== -1 ? aIdx : 2] || '').trim();
-            if (!sap || !ag) continue; 
-            
-            const catItem = catalog.find(x => String(x.sapRef).trim() === sap); 
-            if (!catItem) mSap.add(sap); 
-            if (!availableAgents.includes(ag)) mAg.add(ag);
-
-            let rawD = r[dIdx !== -1 ? dIdx : 0];
-            if (typeof rawD === 'number') {
-              rawD = new Date(Math.floor(rawD - 25569) * 86400 * 1000);
+            // Sécurité anti-lignes fantômes Excel
+            if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) {
+              continue;
             }
             
-            let rawT = String(r[tIdx !== -1 ? tIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
+            const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
+            
+            if (!sapRef || !agent) continue; 
 
-            bulkItems.push({ 
-              date: normalizeDateYMD(rawD || new Date()), 
-              tranche: (rawT.includes('APRES') || rawT.includes('APREM')) ? 'APRES_MIDI' : 'MATIN', 
-              agent: ag, 
-              contractor: String(r[cIdx !== -1 ? cIdx : 3] || '').trim(), 
-              trade: String(r[trIdx !== -1 ? trIdx : 4] || '').trim(), 
-              sapRef: sap, 
-              designation: catItem ? catItem.designation : 'Article inconnu', 
-              ordre: Number(r[oIdx !== -1 ? oIdx : 6] || i) 
+            const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
+            const agentExists = availableAgents.includes(agent);
+
+            if (!catItem) missingSaps.add(sapRef);
+            if (!agentExists) missingAgents.add(agent);
+
+            let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
+            
+            // AUTO-CORRECTION DATE EXCEL NUMÉRIQUE (ex: 46275)
+            if (typeof rawDate === 'number') {
+                const utc_days  = Math.floor(rawDate - 25569);
+                const utc_value = utc_days * 86400;
+                rawDate = new Date(utc_value * 1000);
+            }
+            
+            let formattedDate = normalizeDateYMD(rawDate || new Date());
+            
+            let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) {
+                rawTranche = 'APRES_MIDI';
+            } else {
+                rawTranche = 'MATIN';
+            }
+
+            bulkItems.push({
+              date: formattedDate,
+              tranche: rawTranche,
+              agent: agent,
+              contractor: String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim(),
+              trade: String(row[tradeIdx !== -1 ? tradeIdx : 4] || '').trim(),
+              sapRef: sapRef,
+              designation: catItem ? catItem.designation : 'Article inconnu (Forcé via Import)',
+              ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
             });
           }
-          
-          if (bulkItems.length === 0) { 
-            alert("Aucune ligne valide."); 
-            return; 
+
+          if (bulkItems.length === 0) {
+             alert("Aucune ligne valide trouvée dans le fichier.");
+             return;
           }
-          
-          let msg = `${bulkItems.length} tâche(s) détectée(s).\n\n`;
-          if (mAg.size > 0) msg += `⚠️ ${mAg.size} Agent(s) inconnu(s).\n`; 
-          if (mSap.size > 0) msg += `⚠️ ${mSap.size} Réf(s) SAP hors catalogue.\n`;
-          
-          if (confirm(msg + "\nContinuer l'importation ?")) {
-            uploadBulkTournees(bulkItems);
+
+          let confirmMsg = `Préparation de l'import : ${bulkItems.length} tâche(s) détectée(s).\n\n`;
+          if (missingAgents.size > 0) {
+            confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
           }
-        } catch (err) { 
-          alert("Erreur : " + err); 
+          if (missingSaps.size > 0) {
+            confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
+          }
+          confirmMsg += `\nVoulez-vous continuer l'importation de masse ?`;
+          
+          if(confirm(confirmMsg)) {
+             uploadBulkTournees(bulkItems);
+          }
+
+        } catch (err) {
+          alert("Erreur lors de la lecture du fichier Excel : " + err);
         }
-      }; 
-      reader.readAsArrayBuffer(file); 
+      };
+      reader.readAsArrayBuffer(file);
       document.getElementById('excelFileInput').value = '';
     }
 
     async function uploadBulkTournees(bulkItems) {
       bulkItems.forEach(it => {
-        cachedTournees.push({ 
-          id: "TRN-EXC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6), 
-          ...it, 
-          statut: 'A_FAIRE' 
+        cachedTournees.push({
+          id: "TRN-EXC-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
+          ...it,
+          statut: 'A_FAIRE'
         });
       });
       await localforage.setItem("offline_tournees", cachedTournees);
@@ -1194,87 +1253,102 @@
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
       pendingSyncQueue.push({ _syncId: syncId, action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: bulkItems });
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
-      
-      applyFilters(); 
-      if (navigator.onLine) {
-        setTimeout(syncMonitoringData, 100); 
+
+      applyFilters();
+
+      if(navigator.onLine) {
+        setTimeout(syncMonitoringData, 100);
       }
-      alert(`${bulkItems.length} tâche(s) ajoutée(s) !`);
+      alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
     }
 
     let draggedGroupPayload = null;
     
-    function handleGroupDragStart(e, groupId) { 
-      draggedGroupPayload = groupId; 
-      e.dataTransfer.setData('text/plain', groupId); 
+    function handleGroupDragStart(e, groupId) {
+      draggedGroupPayload = groupId;
+      e.dataTransfer.setData('text/plain', groupId);
     }
 
     async function handleDropOnDay(e, targetDateStr, targetTranche) {
-      e.preventDefault(); 
+      e.preventDefault();
       if (!draggedGroupPayload) return;
-      
-      const tD = new Date(targetDateStr + "T00:00:00");
+
+      const targetDateObj = new Date(targetDateStr + "T00:00:00");
       const today = new Date(); 
       today.setHours(0,0,0,0);
-      
-      if (tD < today) { 
-        alert("Pas dans le passé."); 
+
+      if (targetDateObj < today) { 
+        alert("Impossible de déplacer une mission dans le passé."); 
         draggedGroupPayload = null; 
         return; 
       }
-      if (tD.getDay() === 0 || tD.getDay() === 6) { 
-        alert("Pas sur un week-end."); 
+      if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { 
+        alert("Impossible de déplacer sur un week-end."); 
         draggedGroupPayload = null; 
         return; 
       }
-      if (isBelgianHoliday(tD)) { 
-        alert("Pas un jour férié."); 
+      if (isBelgianHoliday(targetDateObj)) { 
+        alert("Impossible de déplacer sur un jour férié."); 
         draggedGroupPayload = null; 
         return; 
       }
 
       const itemsToUpdate = [];
+
       cachedTournees.forEach(t => {
         const itemGroupId = "GRP_" + `${t.agent}_${normalizeDateYMD(t.date)}_${t.contractor}_${t.trade}_${t.tranche}`.replace(/[^a-zA-Z0-9]/g, '_');
-        if (itemGroupId === draggedGroupPayload) { 
-          t.date = targetDateStr; 
-          t.tranche = targetTranche; 
-          itemsToUpdate.push({ id: t.id, date: targetDateStr, tranche: targetTranche }); 
+        if (itemGroupId === draggedGroupPayload) {
+          t.date = targetDateStr;
+          t.tranche = targetTranche;
+          itemsToUpdate.push({ id: t.id, date: targetDateStr, tranche: targetTranche });
         }
       });
-      await localforage.setItem("offline_tournees", cachedTournees); 
+
+      await localforage.setItem("offline_tournees", cachedTournees);
       applyFilters(); 
       draggedGroupPayload = null;
-      
+
       if (itemsToUpdate.length > 0) {
         const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
         pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
-        await localforage.setItem("offline_pending_sync", pendingSyncQueue); 
-        if (navigator.onLine) {
+        await localforage.setItem("offline_pending_sync", pendingSyncQueue);
+        if(navigator.onLine) {
           setTimeout(syncMonitoringData, 100);
         }
       }
     }
 
     function buildTourneeGroups(tourneesList) {
-      const map = {};
+      const groupsMap = {};
       tourneesList.forEach(t => {
-        const d = normalizeDateYMD(t.date);
-        const tr = t.tranche || 'MATIN';
-        const k = `${t.agent}_${d}_${t.contractor}_${t.trade}_${tr}`;
-        const id = "GRP_" + k.replace(/[^a-zA-Z0-9]/g, '_');
-        
-        if (!map[id]) {
-          map[id] = { id: id, agent: t.agent, date: d, tranche: tr, contractor: t.contractor, trade: t.trade, items: [] };
+        const dateYMD = normalizeDateYMD(t.date);
+        const tranche = t.tranche || 'MATIN';
+        const key = `${t.agent}_${dateYMD}_${t.contractor}_${t.trade}_${tranche}`;
+        const cleanId = "GRP_" + key.replace(/[^a-zA-Z0-9]/g, '_');
+
+        if (!groupsMap[cleanId]) {
+          groupsMap[cleanId] = {
+            id: cleanId,
+            agent: t.agent,
+            date: dateYMD,
+            tranche: tranche,
+            contractor: t.contractor,
+            trade: t.trade,
+            items: []
+          };
         }
-        map[id].items.push(t);
+        groupsMap[cleanId].items.push(t);
       });
-      return Object.values(map).map(g => {
-        g.total = g.items.length; 
-        g.done = g.items.filter(i => String(i.statut).toUpperCase() === 'VALIDE').length; 
-        g.isDone = (g.total - g.done) === 0; 
-        return g;
+
+      const list = Object.values(groupsMap);
+      list.forEach(g => {
+        g.items.sort((a, b) => (Number(a.ordre) || 0) - (Number(b.ordre) || 0));
+        g.total = g.items.length;
+        g.done = g.items.filter(i => String(i.statut).trim().toUpperCase() === 'VALIDE').length;
+        g.pending = g.total - g.done;
+        g.isDone = g.pending === 0;
       });
+      return list;
     }
 
     function renderWallPlanning() {
@@ -1283,23 +1357,32 @@
       const filterAgent = document.getElementById("agendaFilterAgent").value;
       
       if (!gridContainer || !overdueContainer) return;
-      
-      const todayStr = normalizeDateYMD(new Date());
-      let allTournees = cachedTournees || []; 
-      
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const todayStr = normalizeDateYMD(today);
+
+      let allTournees = cachedTournees || [];
       if (filterAgent) {
         allTournees = allTournees.filter(t => t.agent === filterAgent);
       }
-      
+
       const allGroups = buildTourneeGroups(allTournees);
 
-      // ZONE RETARDS (GRILLE VERTICALE ADAPTATIVE)
+      // 1. GRILLE FLUIDE DES RETARDS
       const overdueGroups = allGroups.filter(g => !g.isDone && g.date < todayStr);
+
       if (overdueGroups.length === 0) {
-        overdueContainer.innerHTML = `<div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Aucun retard opérationnel détecté.</div>`;
+        overdueContainer.innerHTML = `
+          <div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> Aucun retard opérationnel détecté.
+          </div>
+        `;
       } else {
         overdueContainer.innerHTML = overdueGroups.map(g => `
-          <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" 
+          <div draggable="true" 
+               ondragstart="handleGroupDragStart(event, '${g.id}')"
+               onclick="openTourneeGroupModal('${g.id}')" 
                class="p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
             <div>
               <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1">
@@ -1315,103 +1398,132 @@
         `).join('');
       }
 
-      // AGENDA 7 JOURS
-      const weekDays = Array.from({ length: 7 }, (_, i) => { 
-        const d = new Date(); 
-        d.setHours(0,0,0,0); 
-        d.setDate(d.getDate() + i); 
-        return d; 
+      // 2. GRILLE DE L'AGENDA 7 JOURS
+      const weekDays = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        return d;
       });
-      
-      gridContainer.innerHTML = weekDays.map((dObj, idx) => {
-        const dStr = normalizeDateYMD(dObj);
-        const dayGroups = allGroups.filter(g => g.date === dStr);
-        
-        const renderCards = (groups) => groups.map(g => `
-          <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="p-2 rounded-xl border ${g.isDone ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-200 hover:border-orange-300'} cursor-grab shadow-sm transition text-[10px] space-y-1 mb-2">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
-              <span class="font-bold text-slate-700 truncate">${g.agent}</span>
-              <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
-            </div>
-            <div class="leading-tight space-y-1">
-              <strong class="block text-slate-800 truncate">${g.contractor}</strong>
-              <span class="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded inline-block truncate max-w-full border border-indigo-100">${g.trade}</span>
-            </div>
-          </div>
-        `).join('');
 
-        const isBlocked = dObj.getDay() === 0 || dObj.getDay() === 6 || isBelgianHoliday(dObj);
+      const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+      gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
+        const dateStr = normalizeDateYMD(dayObj);
+        const dayGroups = allGroups.filter(g => g.date === dateStr);
+
+        const matinGroups = dayGroups.filter(g => g.tranche === 'MATIN');
+        const apresMidiGroups = dayGroups.filter(g => g.tranche === 'APRES_MIDI');
+
+        const renderGroupCards = (groups) => {
+          return groups.map(g => {
+            const badgeColor = g.isDone 
+              ? "bg-emerald-50 border-emerald-300" 
+              : "bg-white border-slate-200 hover:border-orange-300";
+
+            return `
+              <div draggable="true" 
+                   ondragstart="handleGroupDragStart(event, '${g.id}')"
+                   onclick="openTourneeGroupModal('${g.id}')" 
+                   class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] space-y-1 mb-2">
+                
+                <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
+                  <span class="font-bold text-slate-700 truncate">${g.agent}</span>
+                  <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
+                </div>
+                <div class="leading-tight space-y-1">
+                  <strong class="block text-slate-800 truncate">${g.contractor}</strong>
+                  <span class="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded inline-block truncate max-w-full border border-indigo-100">${g.trade}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        };
+
+        const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
+        const bgClass = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-slate-50/50 hover:bg-orange-50/50 cursor-pointer';
+
         return `
           <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px] shadow-sm">
             <div class="text-center pb-2 pt-1 border-b border-slate-100">
-              <span class="text-[11px] font-bold uppercase tracking-widest block ${idx === 0 ? 'text-orange-600' : 'text-slate-500'}">${idx === 0 ? "Aujourd'hui" : ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][dObj.getDay()]}</span>
-              <span class="text-[9px] font-mono font-medium ${idx === 0 ? 'text-orange-500' : 'text-slate-400'}">${dObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dObj.getMonth()]}</span>
+              <span class="text-[11px] font-bold uppercase tracking-widest block ${idx === 0 ? 'text-orange-600' : 'text-slate-500'}">
+                ${idx === 0 ? "Aujourd'hui" : dayNames[dayObj.getDay()]}
+              </span>
+              <span class="text-[9px] font-mono font-medium ${idx === 0 ? 'text-orange-500' : 'text-slate-400'}">
+                ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
+              </span>
             </div>
-            <div onclick="if(!${isBlocked}) openManualAssignModal('${dStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dStr}', 'MATIN')" class="flex-1 rounded-lg p-1.5 flex flex-col bg-slate-50/50 hover:bg-orange-50/50 transition cursor-pointer">
+
+            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 rounded-lg p-1.5 flex flex-col transition ${bgClass}">
               <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Matin</span>
-              <div class="space-y-1" onclick="event.stopPropagation()">${renderCards(dayGroups.filter(g => g.tranche === 'MATIN'))}</div>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
             </div>
-            <div onclick="if(!${isBlocked}) openManualAssignModal('${dStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dStr}', 'APRES_MIDI')" class="flex-1 rounded-lg p-1.5 flex flex-col bg-slate-50/50 hover:bg-orange-50/50 transition cursor-pointer">
+
+            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 rounded-lg p-1.5 flex flex-col transition ${bgClass}">
               <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Après-midi</span>
-              <div class="space-y-1" onclick="event.stopPropagation()">${renderCards(dayGroups.filter(g => g.tranche === 'APRES_MIDI'))}</div>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
             </div>
           </div>
         `;
       }).join('');
-      
+
       lucide.createIcons();
     }
 
     function openTourneeGroupModal(groupId) {
-      const g = buildTourneeGroups(cachedTournees || []).find(x => x.id === groupId); 
+      const allGroups = buildTourneeGroups(cachedTournees || []);
+      const g = allGroups.find(x => x.id === groupId);
       if (!g) return;
-      
+
       document.getElementById("modalTourneeTitle").innerText = `${g.contractor} - ${g.trade}`;
       document.getElementById("modalTourneeSubtitle").innerText = `${g.agent} • ${formatDateFrench(g.date)} (${g.tranche}) • ${g.items.length} article(s)`;
-      
-      document.getElementById("modalTourneeContent").innerHTML = g.items.sort((a,b)=>(Number(a.ordre)||0)-(Number(b.ordre)||0)).map(t => {
+
+      document.getElementById("modalTourneeContent").innerHTML = g.items.map(t => {
         const isDone = String(t.statut).toUpperCase() === 'VALIDE';
         return `
           <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
             <div class="min-w-0 pr-2">
               <div class="flex items-center gap-1.5">
                 <span class="font-mono font-bold text-orange-600">${t.sapRef}</span>
-                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone?'bg-emerald-100 text-emerald-800':'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                <span class="text-[9px] text-slate-400 font-mono">Ordre: ${t.ordre || 1}</span>
               </div>
               <p class="text-[11px] text-slate-700 truncate mt-0.5">${t.designation || 'Sans libellé'}</p>
             </div>
-            <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `;
       }).join('');
-      
-      document.getElementById("tourneeDetailsModal").classList.remove("hidden"); 
+
+      document.getElementById("tourneeDetailsModal").classList.remove("hidden");
       lucide.createIcons();
     }
 
     function getPeriodFilteredTournees() {
-      const s = document.getElementById("filterStartDate").value;
-      const e = document.getElementById("filterEndDate").value;
-      const sD = s ? new Date(s + "T00:00:00") : null;
-      const eD = e ? new Date(e + "T23:59:59") : null;
-      return (cachedTournees || []).filter(item => { 
-        const itDate = parseItemDate(item.date); 
-        return (!sD || itDate >= sD) && (!eD || itDate <= eD); 
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      return (cachedTournees || []).filter(item => {
+        const itDate = parseItemDate(item.date);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
       });
     }
 
     function renderAgentsView(periodHistory) {
-      const container = document.getElementById("agentsAccordionContainer"); 
+      const container = document.getElementById("agentsAccordionContainer");
       if (!container) return;
-      
+
       let agentsToDisplay = availableAgents;
       if (filterOnlyActiveAgents) {
         agentsToDisplay = availableAgents.filter(a => periodHistory.some(r => r.user === a) || getPeriodFilteredTournees().some(t => t.agent === a));
       }
-      
-      if (agentsToDisplay.length === 0) { 
-        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-2xl">Aucun agent actif sur cette période.</div>`; 
-        return; 
+
+      if (agentsToDisplay.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-2xl">Aucun agent actif sur cette période.</div>`;
+        return;
       }
 
       const periodTournees = getPeriodFilteredTournees();
@@ -1425,30 +1537,36 @@
         const aGrp = periodGroups.filter(g => g.agent === agent);
         const aGrpTotal = aGrp.length;
         const aGrpDone = aGrp.filter(g => g.isDone).length;
-        const aGrpPct = aGrpTotal > 0 ? Math.round((aGrpDone/aGrpTotal)*100) : 0;
+        const aGrpPct = aGrpTotal > 0 ? Math.round((aGrpDone / aGrpTotal) * 100) : 0;
         
         const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
         const isOpen = !!openDrawers[agent];
 
-        let missionsHtml = '<div class="text-[10px] text-slate-400 italic">Aucune mission assignée.</div>';
-        if (aGrpTotal > 0) {
+        let missionsHtml = '';
+        if (aGrpTotal === 0) {
+          missionsHtml = '<div class="text-[10px] text-slate-400 italic">Aucune mission assignée.</div>';
+        } else {
           missionsHtml = aGrp.map(g => `
-            <div class="mb-2 border-l-2 ${g.isDone?'border-emerald-400':'border-orange-400'} pl-2 py-0.5">
+            <div class="mb-2 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2 py-0.5">
               <span class="block text-[10px] font-bold text-slate-800 truncate">${g.contractor}</span>
               <span class="block text-[9px] text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
             </div>
           `).join('');
         }
 
-        let historyHtml = '<div class="text-[10px] text-slate-400 italic">Aucun enregistrement.</div>';
-        if (aHist.length > 0) {
+        let historyHtml = '';
+        if (aHist.length === 0) {
+          historyHtml = '<div class="text-[10px] text-slate-400 italic">Aucun enregistrement.</div>';
+        } else {
           historyHtml = aHist.map(r => `
             <div class="mb-2 flex justify-between items-start gap-1">
               <div class="min-w-0">
                 <span class="block font-mono text-[9px] font-bold text-amber-700">${r.sapRef}</span>
                 <span class="block text-[9px] text-slate-600 truncate">${r.contractor}</span>
               </div>
-              <span class="font-mono text-[10px] font-black ${r.quantity === 0 ? 'text-rose-600' : 'text-emerald-700'} bg-white px-1.5 py-0.5 rounded border border-slate-200">${r.quantity}</span>
+              <span class="font-mono text-[10px] font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'} bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                ${r.quantity}
+              </span>
             </div>
           `).join('');
         }
@@ -1458,7 +1576,9 @@
             <div onclick="toggleAgentDrawer('${agent}')" class="p-4 cursor-pointer hover:bg-slate-50 transition">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center space-x-3">
-                  <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-sm border border-orange-200">${agent.substring(0, 2).toUpperCase()}</div>
+                  <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-sm border border-orange-200">
+                    ${agent.substring(0, 2).toUpperCase()}
+                  </div>
                   <h4 class="font-bold text-slate-900 text-sm tracking-wide">${agent}</h4>
                 </div>
                 <i id="icon_${cleanAgentId}" data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5 text-slate-300"></i>
@@ -1479,6 +1599,7 @@
               </div>
             </div>
 
+            <!-- DOM ISOLÉ POUR ÉVITER LE CLIGNOTEMENT -->
             <div id="drawer_${cleanAgentId}" class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50">
               <div class="grid grid-cols-2 divide-x divide-slate-100">
                 <div class="p-3 max-h-60 overflow-y-auto custom-scrollbar">
@@ -1497,8 +1618,8 @@
       lucide.createIcons();
     }
 
-    function toggleAgentDrawer(agent) { 
-      openDrawers[agent] = !openDrawers[agent]; 
+    function toggleAgentDrawer(agent) {
+      openDrawers[agent] = !openDrawers[agent];
       const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
       const drawer = document.getElementById(`drawer_${cleanAgentId}`);
       const icon = document.getElementById(`icon_${cleanAgentId}`);
@@ -1530,18 +1651,18 @@
       const doneMissions = periodGroups.filter(g => g.isDone).length;
       const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
       
-      document.getElementById("kpiMissionsPct").innerText = `${missionsPct}%`; 
-      document.getElementById("kpiMissionsBar").style.width = `${missionsPct}%`; 
-      document.getElementById("kpiMissionsDone").innerText = doneMissions; 
+      document.getElementById("kpiMissionsPct").innerText = `${missionsPct}%`;
+      document.getElementById("kpiMissionsBar").style.width = `${missionsPct}%`;
+      document.getElementById("kpiMissionsDone").innerText = doneMissions;
       document.getElementById("kpiMissionsTotal").innerText = totalMissions;
       
       const totalLines = periodTournees.length;
       const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
       const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
       
-      document.getElementById("globalCompletionPct").innerText = `${linesPct}%`; 
-      document.getElementById("globalCompletionBar").style.width = `${linesPct}%`; 
-      document.getElementById("kpiDoneTasks").innerText = doneLines; 
+      document.getElementById("globalCompletionPct").innerText = `${linesPct}%`;
+      document.getElementById("globalCompletionBar").style.width = `${linesPct}%`;
+      document.getElementById("kpiDoneTasks").innerText = doneLines;
       document.getElementById("kpiPendingTasks").innerText = totalLines - doneLines;
 
       const todayStr = normalizeDateYMD(new Date());
@@ -1549,24 +1670,24 @@
       const overdueMissions = allGroups.filter(g => !g.isDone && g.date < todayStr).length;
       const slaScore = totalMissions > 0 ? Math.round(((totalMissions - overdueMissions) / totalMissions) * 100) : 100;
       
-      document.getElementById("kpiOverdueMissionsCount").innerText = overdueMissions; 
+      document.getElementById("kpiOverdueMissionsCount").innerText = overdueMissions;
       document.getElementById("kpiSlaScore").innerText = `${slaScore}%`;
 
-      const agentListContainer = document.getElementById("agentCompletionList"); 
+      const agentListContainer = document.getElementById("agentCompletionList");
       if (!agentListContainer) return;
-      
+
       const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
-      if (activeAgentsThisPeriod.length === 0) { 
-        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`; 
-        return; 
+      if (activeAgentsThisPeriod.length === 0) {
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`;
+        return;
       }
-      
+
       agentListContainer.innerHTML = activeAgentsThisPeriod.map(agent => {
         const aGroups = periodGroups.filter(g => g.agent === agent);
         const aTotalGroups = aGroups.length;
         const aDoneGroups = aGroups.filter(g => g.isDone).length;
         const aPct = aTotalGroups > 0 ? Math.round((aDoneGroups / aTotalGroups) * 100) : 0;
-        
+
         return `
           <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
             <div class="flex justify-between items-center text-xs">
@@ -1594,7 +1715,7 @@
         periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
       }
       
-      document.getElementById("periodBadgeGlobal").innerText = periodLabel; 
+      document.getElementById("periodBadgeGlobal").innerText = periodLabel;
       document.getElementById("periodBadgeAgents").innerText = periodLabel;
 
       const periodData = getPeriodFilteredHistory();
@@ -1614,52 +1735,58 @@
       const btn = document.getElementById("btnFilterActiveAgentsOnly");
       if (!btn || !btnText) return;
       
-      btn.className = filterOnlyActiveAgents ? "px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 flex items-center gap-2 transition shadow-sm cursor-pointer" : "px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-900 flex items-center gap-2 transition shadow-sm cursor-pointer";
+      btn.className = filterOnlyActiveAgents 
+        ? "px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 flex items-center gap-2 transition shadow-sm cursor-pointer" 
+        : "px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-900 flex items-center gap-2 transition shadow-sm cursor-pointer";
+      
       btnText.innerText = filterOnlyActiveAgents ? "Afficher toute la flotte" : "En cours uniquement";
-      btn.querySelector('span:first-child').className = filterOnlyActiveAgents ? "w-2 h-2 rounded-full bg-slate-300" : "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+      btn.querySelector('span:first-child').className = filterOnlyActiveAgents 
+        ? "w-2 h-2 rounded-full bg-slate-300" 
+        : "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+      
       applyFilters();
     }
 
     function updateMaxQtyThreshold(val) {
-      if (val === "" || val === null) { 
-        customMaxQty = null; 
-        localStorage.removeItem("mon_cfg_max_qty"); 
-        document.getElementById("cfgMaxQtyDisplay").innerText = "--"; 
-      } else { 
-        const parsed = Number(val); 
-        if (!isNaN(parsed) && parsed >= 0) { 
-          customMaxQty = parsed; 
-          localStorage.setItem("mon_cfg_max_qty", customMaxQty); 
-          document.getElementById("cfgMaxQtyDisplay").innerText = customMaxQty; 
-        } 
+      if (val === "" || val === null) {
+        customMaxQty = null;
+        localStorage.removeItem("mon_cfg_max_qty");
+        document.getElementById("cfgMaxQtyDisplay").innerText = "--";
+      } else {
+        const parsed = Number(val);
+        if (!isNaN(parsed) && parsed >= 0) {
+          customMaxQty = parsed;
+          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+          document.getElementById("cfgMaxQtyDisplay").innerText = customMaxQty;
+        }
       }
       applyFilters();
     }
 
     function populateAdminDropdown() {
       const adminSel = document.getElementById("authAdminSelect");
-      if (adminSel) { 
-        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"]; 
-        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join(''); 
+      if (adminSel) {
+        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
+        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
       }
     }
 
-    function toggleFilterDropdown(id) { 
-      ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'].forEach(otherId => { 
-        if (otherId !== id) { 
-          const el = document.getElementById(otherId); 
-          if (el) el.classList.add("hidden"); 
-        } 
-      }); 
-      const target = document.getElementById(id); 
+    function toggleFilterDropdown(id) {
+      ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'].forEach(otherId => {
+        if (otherId !== id) {
+          const el = document.getElementById(otherId);
+          if (el) el.classList.add("hidden");
+        }
+      });
+      const target = document.getElementById(id);
       if (target) {
-        target.classList.toggle("hidden"); 
+        target.classList.toggle("hidden");
       }
     }
 
     function initMultiSelects() {
       const makeCheckboxes = (containerId, list, selectedArr, type) => {
-        const el = document.getElementById(containerId); 
+        const el = document.getElementById(containerId);
         if (!el) return;
         el.innerHTML = list.map(item => `
           <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
@@ -1668,30 +1795,30 @@
           </label>
         `).join('');
       };
-      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents'); 
-      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors'); 
+      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
+      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
       makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
     }
 
     function onCheckboxChange(type) {
       activeKpiFilter = null;
-      if (type === 'agents') { 
-        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value); 
-        document.getElementById("btnLabelAgents").innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`; 
-      } else if (type === 'contractors') { 
-        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value); 
-        document.getElementById("btnLabelContractors").innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`; 
-      } else if (type === 'trades') { 
-        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value); 
-        document.getElementById("btnLabelTrades").innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`; 
+      if (type === 'agents') {
+        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
+        document.getElementById("btnLabelAgents").innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
+      } else if (type === 'contractors') {
+        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
+        document.getElementById("btnLabelContractors").innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
+      } else if (type === 'trades') {
+        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
+        document.getElementById("btnLabelTrades").innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
       }
       applyFilters();
     }
 
-    function selectAll(type, check) { 
-      activeKpiFilter = null; 
-      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => b.checked = check); 
-      onCheckboxChange(type); 
+    function selectAll(type, check) {
+      activeKpiFilter = null;
+      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => b.checked = check);
+      onCheckboxChange(type);
     }
 
     function getDistinctArticlesOnPeriod() {
@@ -1700,11 +1827,11 @@
       
       for (let i = 0; i < periodList.length; i++) {
         const item = periodList[i];
-        const ref = String(item.sapRef || "").trim(); 
+        const ref = String(item.sapRef || "").trim();
         if (!ref) continue;
         
         if (!mapArticles.has(ref)) {
-          mapArticles.set(ref, { sapRef: ref, designation: item.designation || 'Sans désignation', count: 1 }); 
+          mapArticles.set(ref, { sapRef: ref, designation: item.designation || 'Sans désignation', count: 1 });
         } else {
           mapArticles.get(ref).count++;
         }
@@ -1712,24 +1839,24 @@
       return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
     }
 
-    function showArticleSuggestions() { 
-      const input = document.getElementById("articleTagInput"); 
-      onArticleTagInput(input ? input.value : ""); 
+    function showArticleSuggestions() {
+      const input = document.getElementById("articleTagInput");
+      onArticleTagInput(input ? input.value : "");
     }
 
     function onArticleTagInput(query) {
-      const dd = document.getElementById("articleDropdownList"); 
+      const dd = document.getElementById("articleDropdownList");
       if (!dd) return;
       
       const q = String(query || "").trim().toLowerCase();
       const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
-      
-      if (filtered.length === 0) { 
-        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`; 
-        dd.classList.remove("hidden"); 
-        return; 
+
+      if (filtered.length === 0) {
+        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`;
+        dd.classList.remove("hidden");
+        return;
       }
-      
+
       dd.innerHTML = filtered.map(a => `
         <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
           <div class="min-w-0 pr-2">
@@ -1748,24 +1875,24 @@
       } else {
         selectedArticleTags.push(sapRef);
       }
-      renderArticleTagsUI(); 
-      applyFilters(); 
+      renderArticleTagsUI();
+      applyFilters();
       
-      const input = document.getElementById("articleTagInput"); 
+      const input = document.getElementById("articleTagInput");
       if (input) input.value = ""; 
       
-      const dd = document.getElementById("articleDropdownList"); 
+      const dd = document.getElementById("articleDropdownList");
       if (dd) dd.classList.add("hidden");
     }
 
-    function removeArticleTag(sapRef) { 
-      selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef); 
-      renderArticleTagsUI(); 
-      applyFilters(); 
+    function removeArticleTag(sapRef) {
+      selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      renderArticleTagsUI();
+      applyFilters();
     }
 
     function renderArticleTagsUI() {
-      const container = document.getElementById("selectedArticleTagsContainer"); 
+      const container = document.getElementById("selectedArticleTagsContainer");
       if (!container) return;
       container.innerHTML = selectedArticleTags.map(ref => `
         <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
@@ -1778,20 +1905,20 @@
       lucide.createIcons();
     }
 
-    function resetFiltersToAll() { 
-      activeKpiFilter = null; 
-      selectAll('agents', false); 
-      selectAll('contractors', false); 
-      selectAll('trades', false); 
-      selectedArticleTags = []; 
-      renderArticleTagsUI(); 
-      applyFilters(); 
+    function resetFiltersToAll() {
+      activeKpiFilter = null;
+      selectAll('agents', false);
+      selectAll('contractors', false);
+      selectAll('trades', false);
+      selectedArticleTags = [];
+      renderArticleTagsUI();
+      applyFilters();
     }
 
-    function filterByKpi(type) { 
-      activeKpiFilter = type; 
-      switchView('global'); 
-      applyFilters(); 
+    function filterByKpi(type) {
+      activeKpiFilter = type;
+      switchView('global');
+      applyFilters();
     }
 
     function onSmartPeriodChange(mode) {
@@ -1799,48 +1926,48 @@
       const sInput = document.getElementById("filterStartDate");
       const eInput = document.getElementById("filterEndDate");
       const customBox = document.getElementById("customDateRangeBox");
-      
-      if (mode === 'CUSTOM') { 
-        customBox.classList.remove("hidden"); 
-        return; 
-      } 
-      customBox.classList.add("hidden");
-      
-      if (mode === 'ALL') { 
-        sInput.value = ""; 
-        eInput.value = ""; 
-      } else if (mode === 'TODAY') { 
-        const dStr = normalizeDateYMD(now); 
-        sInput.value = dStr; 
-        eInput.value = dStr; 
-      } else if (mode === 'CURRENT_WEEK') { 
-        const day = now.getDay() || 7; 
-        const monday = new Date(now); 
-        monday.setDate(now.getDate() - day + 1); 
-        const sunday = new Date(monday); 
-        sunday.setDate(sunday.getDate() + 6); 
-        sInput.value = normalizeDateYMD(monday); 
-        eInput.value = normalizeDateYMD(sunday); 
-      } else if (mode === 'PREV_WEEK') { 
-        const day = now.getDay() || 7; 
-        const prevMonday = new Date(now); 
-        prevMonday.setDate(now.getDate() - day - 6); 
-        const prevSunday = new Date(prevMonday); 
-        prevSunday.setDate(prevMonday.getDate() + 6); 
-        sInput.value = normalizeDateYMD(prevMonday); 
-        eInput.value = normalizeDateYMD(prevSunday); 
-      } else if (mode === 'CURRENT_MONTH') { 
-        sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1)); 
-        eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0)); 
+
+      if (mode === 'CUSTOM') {
+        customBox.classList.remove("hidden");
+        return;
       }
-      updateWeekBadge(sInput.value); 
+      customBox.classList.add("hidden");
+
+      if (mode === 'ALL') {
+        sInput.value = "";
+        eInput.value = "";
+      } else if (mode === 'TODAY') {
+        const dStr = normalizeDateYMD(now);
+        sInput.value = dStr;
+        eInput.value = dStr;
+      } else if (mode === 'CURRENT_WEEK') {
+        const day = now.getDay() || 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(sunday.getDate() + 6);
+        sInput.value = normalizeDateYMD(monday);
+        eInput.value = normalizeDateYMD(sunday);
+      } else if (mode === 'PREV_WEEK') {
+        const day = now.getDay() || 7;
+        const prevMonday = new Date(now);
+        prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday);
+        prevSunday.setDate(prevMonday.getDate() + 6);
+        sInput.value = normalizeDateYMD(prevMonday);
+        eInput.value = normalizeDateYMD(prevSunday);
+      } else if (mode === 'CURRENT_MONTH') {
+        sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+        eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+      }
+      updateWeekBadge(sInput.value);
       applyFilters();
     }
 
-    function toggleMapSelectionFilter() { 
-      mapFilterOnSelection = !mapFilterOnSelection; 
-      document.getElementById("mapFilterBtnText").innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période"; 
-      applyFilters(); 
+    function toggleMapSelectionFilter() {
+      mapFilterOnSelection = !mapFilterOnSelection;
+      document.getElementById("mapFilterBtnText").innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
+      applyFilters();
     }
 
     function renderKPIs(list) {
@@ -1849,27 +1976,28 @@
       const zeroS = list.filter(r => Number(r.quantity) === 0).length;
       const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
       
-      document.getElementById("kpiTotalRows").innerText = totalR; 
-      document.getElementById("kpiTotalPieces").innerText = totalP; 
-      document.getElementById("kpiZeroStock").innerText = zeroS; 
+      document.getElementById("kpiTotalRows").innerText = totalR;
+      document.getElementById("kpiTotalPieces").innerText = totalP;
+      document.getElementById("kpiZeroStock").innerText = zeroS;
       document.getElementById("kpiAtypicalStock").innerText = atypS;
       
-      document.getElementById("kpiAgentsTotalRows").innerText = totalR; 
-      document.getElementById("kpiAgentsTotalPieces").innerText = totalP; 
-      document.getElementById("kpiAgentsZeroStock").innerText = zeroS; 
+      document.getElementById("kpiAgentsTotalRows").innerText = totalR;
+      document.getElementById("kpiAgentsTotalPieces").innerText = totalP;
+      document.getElementById("kpiAgentsZeroStock").innerText = zeroS;
       document.getElementById("kpiAgentsAtypicalStock").innerText = atypS;
     }
 
     function renderTable(list) {
       const tbody = document.getElementById("supervisionTableBody");
-      const alertZero = document.getElementById("cfgAlertZero").checked; 
+      const alertZero = document.getElementById("cfgAlertZero").checked;
+      
       document.getElementById("tableCountLabel").innerText = `${list.length} saisie(s) répertoriée(s)`;
-      
-      if (list.length === 0) { 
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`; 
-        return; 
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
+        return;
       }
-      
+
       tbody.innerHTML = list.map(item => {
         const q = Number(item.quantity);
         const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
@@ -1888,33 +2016,34 @@
             </td>
           </tr>
         `;
-      }).join(''); 
+      }).join('');
       lucide.createIcons();
     }
 
     function renderMap(list) {
-      const mapDiv = document.getElementById("mapContainer"); 
+      const mapDiv = document.getElementById("mapContainer");
       if (!mapDiv) return;
-      
-      if (!map) { 
-        map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM); 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map); 
-        markersLayer = L.layerGroup().addTo(map); 
+
+      if (!map) {
+        map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
       }
-      
-      markersLayer.clearLayers(); 
-      const pointsWithGps = list.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng)); 
+
+      markersLayer.clearLayers();
+      const pointsWithGps = list.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng));
       document.getElementById("mapPointsCountLabel").innerText = `${pointsWithGps.length} point(s) GPS`;
-      
-      pointsWithGps.forEach(p => { 
-        const marker = L.circleMarker([p.lat, p.lng], { 
-          radius: 7, 
-          fillColor: Number(p.quantity) === 0 ? "#e11d48" : "#f97316", 
-          color: "#ffffff", 
-          weight: 2, 
-          opacity: 1, 
-          fillOpacity: 0.85 
-        }); 
+
+      pointsWithGps.forEach(p => {
+        const marker = L.circleMarker([p.lat, p.lng], {
+          radius: 7,
+          fillColor: Number(p.quantity) === 0 ? "#e11d48" : "#f97316",
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.85
+        });
+
         marker.bindPopup(`
           <div class="space-y-1">
             <span class="font-bold text-slate-900">${p.user}</span>
@@ -1923,67 +2052,70 @@
             <div class="text-[10px] text-slate-400">${p.contractor} (${p.trade})</div>
             <div class="text-[9px] text-slate-400 font-mono">${formatDateDMY(p.timestamp, true)}</div>
           </div>
-        `); 
-        markersLayer.addLayer(marker); 
+        `);
+        markersLayer.addLayer(marker);
       });
     }
 
-    function resetMapToBelgium() { 
+    function resetMapToBelgium() {
       if (map) {
-        map.setView(BELGIUM_CENTER, BELGIUM_ZOOM); 
+        map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
       }
     }
 
     function exportTableToCSV() {
-      const data = getFilteredHistory(); 
+      const data = getFilteredHistory();
       if (data.length === 0) { 
         alert("Aucune donnée à exporter."); 
         return; 
       }
+
       const headers = ["ID", "Horodatage", "Agent", "Entrepreneur", "Metier", "Ref_SAP", "Designation", "Quantite", "Latitude", "Longitude"];
       const rows = data.map(r => [
-        `"${r.id || ''}"`, 
-        `"${formatDateDMY(r.timestamp, true)}"`, 
-        `"${(r.user || '').replace(/"/g, '""')}"`, 
-        `"${(r.contractor || '').replace(/"/g, '""')}"`, 
-        `"${(r.trade || '').replace(/"/g, '""')}"`, 
-        `"${(r.sapRef || '').replace(/"/g, '""')}"`, 
-        `"${(r.designation || '').replace(/"/g, '""')}"`, 
-        r.quantity || 0, 
-        r.lat || '', 
+        `"${r.id || ''}"`,
+        `"${formatDateDMY(r.timestamp, true)}"`,
+        `"${(r.user || '').replace(/"/g, '""')}"`,
+        `"${(r.contractor || '').replace(/"/g, '""')}"`,
+        `"${(r.trade || '').replace(/"/g, '""')}"`,
+        `"${(r.sapRef || '').replace(/"/g, '""')}"`,
+        `"${(r.designation || '').replace(/"/g, '""')}"`,
+        r.quantity || 0,
+        r.lat || '',
         r.lng || ''
       ]);
+
       const csvContent = "\uFEFF" + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.setAttribute("href", url); 
-      link.setAttribute("download", `Inventaire_Export_${new Date().toISOString().split('T')[0]}.csv`); 
-      document.body.appendChild(link); 
-      link.click(); 
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Inventaire_Export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
       document.body.removeChild(link);
     }
 
     async function editTableItem(id, currentQty) {
-      const input = prompt("Nouvelle quantité comptée :", currentQty); 
+      const input = prompt("Nouvelle quantité comptée :", currentQty);
       if (input === null) return;
-      const parsed = parseInt(input, 10); 
+      
+      const parsed = parseInt(input, 10);
       if (isNaN(parsed) || parsed < 0) { 
         alert("Quantité invalide."); 
         return; 
       }
-      
-      const item = cachedHistory.find(h => h.id === id); 
-      if (item) { 
-        item.quantity = parsed; 
-        await safeSetStorage("offline_history", cachedHistory); 
-        applyFilters(); 
+
+      const item = cachedHistory.find(h => h.id === id);
+      if (item) {
+        item.quantity = parsed;
+        await safeSetStorage("offline_history", cachedHistory);
+        applyFilters();
       }
-      
+
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-      pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin, token: adminToken }); 
+      pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin, token: adminToken });
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      
+
       if (navigator.onLine) {
         setTimeout(syncMonitoringData, 100);
       }
@@ -1991,15 +2123,15 @@
 
     async function deleteTableItem(id) {
       if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
-      
-      cachedHistory = cachedHistory.filter(h => h.id !== id); 
-      await safeSetStorage("offline_history", cachedHistory); 
+
+      cachedHistory = cachedHistory.filter(h => h.id !== id);
+      await safeSetStorage("offline_history", cachedHistory);
       applyFilters();
-      
+
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_INVENTORY", id: id, user: currentAdmin, token: adminToken }); 
+      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_INVENTORY", id: id, user: currentAdmin, token: adminToken });
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      
+
       if (navigator.onLine) {
         setTimeout(syncMonitoringData, 100);
       }
@@ -2007,58 +2139,54 @@
 
     async function deleteTourneeAdminItem(id) {
       if (!confirm("Supprimer cet article de la mission ?")) return;
-      
-      cachedTournees = cachedTournees.filter(t => t.id !== id); 
+
+      cachedTournees = cachedTournees.filter(t => t.id !== id);
       await localforage.setItem("offline_tournees", cachedTournees);
       
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_TOURNEE", id: id, user: currentAdmin, token: adminToken }); 
+      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_TOURNEE", id: id, user: currentAdmin, token: adminToken });
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
-      
-      closeTourneeDetailsModal(); 
+
+      closeTourneeDetailsModal();
       applyFilters(); 
-      
-      if (navigator.onLine) {
+      if(navigator.onLine) {
         setTimeout(syncMonitoringData, 100);
       }
     }
 
     function switchView(v) {
-      activeView = v; 
+      activeView = v;
       localStorage.setItem("mon_active_view", v);
       
-      ['Global', 'Agents', 'Map', 'TourneesAdmin'].forEach(id => { 
-        const el = document.getElementById("view" + id); 
-        if (el) el.classList.add("hidden"); 
+      ['Global', 'Agents', 'Map', 'TourneesAdmin'].forEach(id => {
+        const el = document.getElementById("view" + id);
+        if (el) el.classList.add("hidden");
       });
       
-      ['Global', 'Agents', 'Map', 'Tournees'].forEach(id => { 
-        const el = document.getElementById("btnNav" + id); 
-        if (el) el.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer"; 
+      ['Global', 'Agents', 'Map', 'Tournees'].forEach(id => {
+        const el = document.getElementById("btnNav" + id);
+        if (el) el.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer";
       });
-      
-      if (v === 'global') { 
-        document.getElementById("viewGlobal").classList.remove("hidden"); 
-        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer"; 
-      } 
-      else if (v === 'agents') { 
-        document.getElementById("viewAgents").classList.remove("hidden"); 
-        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer"; 
-      } 
-      else if (v === 'map') { 
-        document.getElementById("viewMap").classList.remove("hidden"); 
-        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer"; 
-        setTimeout(() => { 
-          if (map) { 
-            map.invalidateSize(); 
-            resetMapToBelgium(); 
-          } 
-        }, 200); 
-      } 
-      else if (v === 'tournees') { 
-        document.getElementById("viewTourneesAdmin").classList.remove("hidden"); 
-        document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer"; 
-        renderWallPlanning(); 
+
+      if (v === 'global') {
+        document.getElementById("viewGlobal").classList.remove("hidden");
+        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+      } else if (v === 'agents') {
+        document.getElementById("viewAgents").classList.remove("hidden");
+        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+      } else if (v === 'map') {
+        document.getElementById("viewMap").classList.remove("hidden");
+        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+        setTimeout(() => {
+          if (map) {
+            map.invalidateSize();
+            resetMapToBelgium();
+          }
+        }, 200);
+      } else if (v === 'tournees') {
+        document.getElementById("viewTourneesAdmin").classList.remove("hidden");
+        document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+        renderWallPlanning();
       }
       lucide.createIcons();
     }
