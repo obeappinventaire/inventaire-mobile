@@ -229,6 +229,19 @@
     let cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
     let pendingSyncQueue = JSON.parse(localStorage.getItem("offline_pending_sync") || "[]");
 
+    // --- UTILITAIRE DE STOCKAGE SÉCURISÉ ---
+    function safeSetStorage(key, data) {
+      try {
+        localStorage.setItem(key, typeof data === 'string' ? data : JSON.stringify(data));
+      } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+          alert("⚠️ Stockage de l'appareil saturé (catalogue très volumineux). Veuillez purger le cache du navigateur pour garantir la sauvegarde des données.");
+        } else {
+          console.warn("Erreur de stockage local :", e);
+        }
+      }
+    }
+
     let selectedArticle = null;
     let activeMissionContext = null;
     let currentGpsCoords = { lat: null, lng: null };
@@ -375,7 +388,7 @@
               body: JSON.stringify(item)
             });
             pendingSyncQueue = pendingSyncQueue.filter(q => q.id !== item.id);
-            localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
+            safeSetStorage("offline_pending_sync", pendingSyncQueue);
           } catch (err) {
             console.warn("Échec envoi tâche différée :", err);
             break;
@@ -389,10 +402,10 @@
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
         if (data.status === "success") {
-          if (data.catalog) localStorage.setItem("offline_catalog", JSON.stringify(catalog = data.catalog));
-          if (data.agents) localStorage.setItem("offline_agents", JSON.stringify(availableAgents = data.agents));
-          if (data.contractors) localStorage.setItem("offline_contractors", JSON.stringify(availableContractors = data.contractors));
-          if (data.trades) localStorage.setItem("offline_trades", JSON.stringify(availableTrades = data.trades));
+          if (data.catalog) { catalog = data.catalog; safeSetStorage("offline_catalog", catalog); }
+          if (data.agents) { availableAgents = data.agents; safeSetStorage("offline_agents", availableAgents); }
+          if (data.contractors) { availableContractors = data.contractors; safeSetStorage("offline_contractors", availableContractors); }
+          if (data.trades) { availableTrades = data.trades; safeSetStorage("offline_trades", availableTrades); }
 
           // Tournées : conservation des validations locales récentes
           if (data.tournees) {
@@ -409,19 +422,19 @@
               return serverTask;
             });
 
-            localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+            safeSetStorage("offline_tournees", cachedTournees);
           }
 
           // HISTORIQUE : Purge immédiate des éléments supprimés dans Google Sheets
           if (data.history) {
-            localStorage.setItem("offline_history", JSON.stringify(data.history));
+            safeSetStorage("offline_history", data.history);
             
             // On reconstruit mob_session_history à partir de la réponse serveur exacte
             const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
             const serverAgentHistory = data.history.filter(h => 
               String(h.user || "").trim().toLowerCase() === activeAgentNorm
             );
-            localStorage.setItem("mob_session_history", JSON.stringify(serverAgentHistory));
+            safeSetStorage("mob_session_history", serverAgentHistory);
           }
 
           initMobileDropdowns();
@@ -577,11 +590,13 @@
       try {
         const result = await Tesseract.recognize(canvas, 'eng');
         const text = result.data.text;
-        const matches = text.match(/\b\d{6}\b/g) || text.match(/\b\d{5,8}\b/g);
+        
+        // Regex élargie pour capter les suites alphanumériques de 4 à 12 caractères
+        const matches = text.match(/\b[A-Z0-9]{4,12}\b/gi);
 
         if (matches && matches.length > 0) {
-          const foundRef = matches[0];
-          const item = catalog.find(i => String(i.sapRef).trim() === foundRef);
+          const foundRef = matches[0].toUpperCase();
+          const item = catalog.find(i => String(i.sapRef).trim().toUpperCase() === foundRef);
           if (item) {
             selectArticleFromSearch(item);
             closeScanModal();
@@ -657,7 +672,7 @@
       // 1. Mise à jour locale immédiate de l'historique
       let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       sessionHistory.unshift({ ...record, isPending: !navigator.onLine });
-      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+      safeSetStorage("mob_session_history", sessionHistory);
 
       // 2. Validation ciblée de la tournée
       let matchedTourneeId = tourneeId;
@@ -670,7 +685,7 @@
           if (!matchedTourneeId) matchedTourneeId = t.id;
         }
       });
-      localStorage.setItem("offline_tournees", JSON.stringify(cachedTournees));
+      safeSetStorage("offline_tournees", cachedTournees);
 
       // 3. Mise en file d'attente
       pendingSyncQueue.push({ action: "CREATE", ...record });
@@ -683,7 +698,7 @@
           sapRef: selectedArticle.sapRef 
         });
       }
-      localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
+      safeSetStorage("offline_pending_sync", pendingSyncQueue);
       updatePendingBadge();
 
       // 4. Nettoyage et basculement garanti vers l'onglet Historique
@@ -768,7 +783,7 @@
       if (isNaN(parsed) || parsed < 0) { alert("Quantité invalide."); return; }
 
       item.quantity = parsed;
-      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+      safeSetStorage("mob_session_history", sessionHistory);
 
       const pendingCreate = pendingSyncQueue.find(p => p.id === id && p.action === 'CREATE');
       if (pendingCreate) {
@@ -777,7 +792,7 @@
         pendingSyncQueue.push({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAgent });
       }
 
-      localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
+      safeSetStorage("offline_pending_sync", pendingSyncQueue);
       updatePendingBadge();
       renderHistory();
       if (navigator.onLine) syncMobileData();
@@ -787,7 +802,7 @@
       if (!confirm("Supprimer cette saisie ?")) return;
       let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       sessionHistory = sessionHistory.filter(h => h.id !== id);
-      localStorage.setItem("mob_session_history", JSON.stringify(sessionHistory));
+      safeSetStorage("mob_session_history", sessionHistory);
 
       const pendingIdx = pendingSyncQueue.findIndex(p => p.id === id && p.action === 'CREATE');
       if (pendingIdx !== -1) {
@@ -796,7 +811,7 @@
         pendingSyncQueue.push({ action: "DELETE_INVENTORY", id: id, user: currentAgent });
       }
 
-      localStorage.setItem("offline_pending_sync", JSON.stringify(pendingSyncQueue));
+      safeSetStorage("offline_pending_sync", pendingSyncQueue);
       updatePendingBadge();
       renderHistory();
       if (navigator.onLine) syncMobileData();
