@@ -23,11 +23,13 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100 overflow-hidden">
 
+  <!-- BANDEAU MISE À JOUR PWA -->
   <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
     <span class="font-bold">🔄 Mise à jour détectée !</span>
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
+  <!-- EN-TÊTE MOBILE -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs z-20">
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
@@ -49,6 +51,7 @@
     </div>
   </header>
 
+  <!-- CONTENU PRINCIPAL -->
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[70vh]" id="mainScrollArea">
     
     <!-- ONGLET 1 : COMPTAGE -->
@@ -67,26 +70,28 @@
         <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
       </div>
 
-      <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
+      <!-- PARAMÈTRES DE SAISIE (ZONE SOMBRE) -->
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-md space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
-            <select id="selectContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-orange-500"></select>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Entrepreneur</label>
+            <select id="selectContractor" class="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-sm font-bold text-white focus:outline-none focus:border-orange-400"></select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métier</label>
-            <select id="selectTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-orange-500"></select>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Métier</label>
+            <select id="selectTrade" class="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-sm font-bold text-white focus:outline-none focus:border-orange-400"></select>
           </div>
         </div>
       </div>
 
+      <!-- RECHERCHE ACTIVE (SANS BOUTON OK, AVEC CROIX LIÉE) -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
           
           <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-10 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
           
-          <!-- BOUTON CROIX INTELLIGENT -->
+          <!-- BOUTON CROIX DE RECHERCHE -->
           <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 transition cursor-pointer bg-slate-100 rounded-full p-0.5">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
@@ -99,33 +104,39 @@
           <button onclick="toggleVoiceSearch()" id="micBtn" class="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm">
             <i data-lucide="mic" class="w-6 h-6 text-indigo-500"></i> Vocale
           </button>
-          <button onclick="openScanModal()" class="h-16 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer shadow-md">
+          <!-- BOUTON SCANNER ORANGE CLAIR -->
+          <button onclick="openScanModal()" class="h-16 bg-orange-300 hover:bg-orange-400 text-orange-900 font-black rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer shadow-md border border-orange-400">
             <i data-lucide="camera" class="w-6 h-6"></i> Scanner
           </button>
         </div>
 
-        <!-- CARTE ARTICLE SÉLECTIONNÉ (Divisée par deux en hauteur) -->
-        <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-300 py-2 px-3 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-3">
-          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
-          <div class="flex-1 min-w-0 flex items-center justify-between">
-             <div class="flex items-center gap-2 truncate">
-               <span id="cardSapRef" class="font-mono font-black text-emerald-800 text-sm">--</span>
-               <span id="cardDesignation" class="text-[11px] text-slate-700 font-medium truncate">--</span>
-             </div>
+        <!-- ZONE DE SÉLECTION COMPACTE ET VERT TRÈS CLAIR -->
+        <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-200 p-2 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-2.5">
+          <div class="bg-emerald-200 p-1.5 rounded-lg text-emerald-800 shrink-0">
+             <i data-lucide="check" class="w-4 h-4"></i>
           </div>
-          <button onclick="resetComptageForm()" class="p-1 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-full transition cursor-pointer shrink-0">
+          <div class="flex-1 min-w-0 pr-6 flex flex-col justify-center">
+             <div class="flex items-center gap-2">
+               <span id="cardSapRef" class="font-mono font-bold text-emerald-900 text-sm">--</span>
+               <span id="cardSupplierRef" class="font-mono text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300">--</span>
+             </div>
+             <p id="cardDesignation" class="text-[10px] text-slate-700 truncate leading-tight mt-0.5">--</p>
+          </div>
+          <!-- CROIX DE L'ARTICLE LIÉE -->
+          <button onclick="resetComptageForm()" class="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-200 rounded-full transition cursor-pointer" title="Annuler la sélection">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
       </div>
 
+      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
         <div class="relative w-full">
-          <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-500 focus:bg-emerald-50 focus:text-emerald-700 font-mono shadow-inner transition-all">
+          <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-emerald-50 focus:text-emerald-800 font-mono shadow-inner transition-all">
         </div>
 
         <!-- BOUTON ENREGISTRER VERT PLUS CLAIR -->
-        <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-400 hover:bg-emerald-500 active:bg-emerald-600 font-bold text-white rounded-2xl shadow-md flex items-center justify-center gap-3 text-lg transition cursor-pointer">
+        <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-200 hover:bg-emerald-300 active:bg-emerald-400 font-black text-emerald-900 rounded-2xl shadow-md flex items-center justify-center gap-3 text-lg transition cursor-pointer border border-emerald-300">
           <i data-lucide="check-square" class="w-7 h-7"></i>
           <span>Enregistrer</span>
         </button>
@@ -141,7 +152,7 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ONGLET 3 : TOURNÉES -->
+    <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
         <h2 id="tourneeDebugHeader" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Comptages Assignés</h2>
@@ -151,6 +162,7 @@
 
   </main>
 
+  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
@@ -174,13 +186,13 @@
         <i data-lucide="x" class="w-6 h-6"></i>
       </button>
     </div>
-    <div class="relative w-full max-w-xs aspect-[4/3] bg-black rounded-2xl overflow-hidden border-2 border-orange-500 shadow-2xl flex items-center justify-center">
+    <div class="relative w-full max-w-xs aspect-[4/3] bg-black rounded-2xl overflow-hidden border-2 border-orange-400 shadow-2xl flex items-center justify-center">
       <video id="scanVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-      <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-orange-500/80 animate-pulse shadow-sm"></div>
+      <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-orange-400/80 animate-pulse shadow-sm"></div>
     </div>
     <canvas id="scanCanvas" class="hidden"></canvas>
     <div class="w-full max-w-xs py-4 space-y-2">
-      <button onclick="captureAndOCR()" class="w-full h-16 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl text-base shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+      <button onclick="captureAndOCR()" class="w-full h-16 bg-orange-300 hover:bg-orange-400 text-orange-900 font-black rounded-2xl text-base shadow-lg transition flex items-center justify-center gap-2 cursor-pointer border border-orange-400">
         <i data-lucide="camera" class="w-6 h-6"></i> Déclencher
       </button>
       <div id="ocrStatus" class="text-center text-xs text-white/80 font-mono pt-2">Prêt pour la capture</div>
@@ -340,33 +352,36 @@
       return str.split(' ')[0];
     }
 
+    // --- CORRECTION DU SCROLL : GARANTIT QUE LE BOUTON EST VISIBLE ---
     function handleQuantityFocus() {
       setTimeout(() => {
-        const mainArea = document.getElementById('mainScrollArea');
-        const searchSec = document.getElementById('searchSection');
-        if (mainArea && searchSec) {
-          mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
+        const qtySec = document.getElementById('quantitySection');
+        if (qtySec) {
+          // block 'end' cale le bas du bloc juste au-dessus du clavier ouvert
+          qtySec.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
-      }, 400);
+      }, 300);
     }
 
     function closeQtyKeyboard() { document.getElementById('inputQuantity').blur(); }
     
     function handleSearchFocus() {
       setTimeout(() => {
-        const searchSec = document.getElementById('searchSection'), mainArea = document.getElementById('mainScrollArea');
-        if (mainArea && searchSec) mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
+        const searchSec = document.getElementById('searchSection');
+        const mainArea = document.getElementById('mainScrollArea');
+        if (mainArea && searchSec) {
+          mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
+        }
       }, 300);
     }
     
     function closeKeyboard() { document.getElementById('sapSearchInput').blur(); }
     
+    // --- LIAISON DES CROIX : EFFACE TOUT ET GARDE LE FOCUS ---
     function clearSearch() {
+      resetComptageForm();
       const input = document.getElementById("sapSearchInput");
       if (input) {
-        input.value = "";
-        onSapSearchInput(""); 
-        document.getElementById('clearSearchBtn').classList.add('hidden');
         input.focus();
       }
     }
@@ -448,13 +463,23 @@
       document.getElementById("activeMissionBanner")?.classList.add("hidden"); resetComptageForm();
     }
 
+    // --- RESTE GLOBALE LIÉE ---
     function resetComptageForm() { 
       selectedArticle=null; 
-      document.getElementById("sapSearchInput").value=""; 
-      document.getElementById("clearSearchBtn").classList.add("hidden");
-      document.getElementById("selectedArticleCard").classList.add("hidden"); 
-      document.getElementById("inputQuantity").value=""; 
-      document.getElementById("inputQuantity").blur();
+      const searchInput = document.getElementById("sapSearchInput");
+      if (searchInput) searchInput.value = ""; 
+      
+      const clearBtn = document.getElementById("clearSearchBtn");
+      if (clearBtn) clearBtn.classList.add("hidden");
+      
+      const card = document.getElementById("selectedArticleCard");
+      if (card) card.classList.add("hidden"); 
+      
+      const qty = document.getElementById("inputQuantity");
+      if (qty) {
+        qty.value = ""; 
+        qty.blur();
+      }
     }
 
     async function openScanModal() {
@@ -488,7 +513,6 @@
       r.lang='fr-FR'; 
       const btn=document.getElementById("micBtn"); 
       btn.className="h-16 bg-indigo-500 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 animate-pulse shadow-md border border-indigo-600"; 
-      
       r.onresult=e=>{ 
         const m=e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); 
         const v=m?m[0]:e.results[0][0].transcript; 
@@ -505,7 +529,7 @@
       const q = String(val||"").trim().toLowerCase(); 
       const dd = document.getElementById("sapSuggestions");
       const clearBtn = document.getElementById("clearSearchBtn");
-      
+
       if (clearBtn) {
         if (q.length > 0) clearBtn.classList.remove("hidden");
         else clearBtn.classList.add("hidden");
@@ -514,16 +538,9 @@
       if(!q){ dd.classList.add("hidden"); return; }
       
       const f = catalog.filter(i=>String(i.sapRef).toLowerCase().includes(q)||String(i.designation).toLowerCase().includes(q)).slice(0,30);
-      if(f.length===0){ dd.innerHTML=`<div class="p-3 text-xs italic text-center">Aucun article trouvé</div>`; dd.classList.remove("hidden"); return; }
+      if(f.length===0){ dd.innerHTML=`<div class="p-3 text-xs italic text-center text-slate-500">Aucun article trouvé</div>`; dd.classList.remove("hidden"); return; }
       
-      dd.innerHTML = f.map(i=>`
-        <div onclick='selectArticleFromSearch(${JSON.stringify(i)})' class="p-3 hover:bg-emerald-50 border-b cursor-pointer flex justify-between items-center text-sm transition-colors">
-          <div>
-            <span class="font-mono font-bold text-emerald-700">${i.sapRef}</span>
-            <span class="ml-2 font-semibold text-slate-800">${i.designation}</span>
-          </div>
-        </div>
-      `).join('');
+      dd.innerHTML = f.map(i=>`<div onclick='selectArticleFromSearch(${JSON.stringify(i)})' class="p-3 hover:bg-emerald-50 border-b cursor-pointer flex justify-between items-center text-sm transition-colors"><div><span class="font-mono font-bold text-emerald-700">${i.sapRef}</span><span class="ml-2 font-semibold text-slate-800">${i.designation}</span></div></div>`).join('');
       dd.classList.remove("hidden");
     }
 
@@ -531,17 +548,19 @@
       selectedArticle=i; 
       document.getElementById("sapSearchInput").value=i.sapRef; 
       document.getElementById("sapSuggestions").classList.add("hidden"); 
+      
       const clearBtn = document.getElementById("clearSearchBtn");
       if (clearBtn) clearBtn.classList.remove("hidden");
 
       document.getElementById("cardSapRef").innerText=i.sapRef; 
+      document.getElementById("cardSupplierRef").innerText=`Fourn: ${i.supplierRef||'N/C'}`; 
       document.getElementById("cardDesignation").innerText=i.designation; 
       document.getElementById("selectedArticleCard").classList.remove("hidden");
       document.getElementById("sapSearchInput").blur();
     }
 
     async function submitInventoryEntry() {
-      if (navigator.vibrate) navigator.vibrate(40); 
+      if (navigator.vibrate) navigator.vibrate(40);
       
       if(!currentAgent){alert("Configurez l'agent");openConfigModal();return;} 
       if(!selectedArticle){alert("Sélectionnez un article");return;}
@@ -725,12 +744,8 @@
           <div class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200'} rounded-2xl shadow-sm mb-4 overflow-hidden transition-all">
             
             <div class="px-4 py-3 flex justify-between items-center border-b border-slate-100 ${isDone ? 'bg-emerald-50' : 'bg-slate-50'}">
-              <span class="font-bold text-[11px] text-slate-600 uppercase flex items-center gap-1.5">
-                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr} - ${g.tranche||'MATIN'}
-              </span>
-              <span class="px-2.5 py-1 rounded-lg text-[10px] font-black shadow-xs ${isDone ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-white tracking-wide'}">
-                ${isDone ? '✓ TERMINÉ' : 'À FAIRE'}
-              </span>
+              <span class="font-bold text-[11px] text-slate-600 uppercase flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr} - ${g.tranche||'MATIN'}</span>
+              <span class="px-2.5 py-1 rounded-lg text-[10px] font-black shadow-xs ${isDone ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-white tracking-wide'}">${isDone ? '✓ TERMINÉ' : 'À FAIRE'}</span>
             </div>
 
             <div class="p-4 space-y-3">
