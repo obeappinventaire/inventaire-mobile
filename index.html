@@ -207,7 +207,6 @@
         <button onclick="logoutMobileAgentStep1()" class="w-full h-12 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold rounded-xl text-sm transition cursor-pointer">Se déconnecter</button>
       </div>
       
-      <!-- NOUVEAU BOUTON RESET AGRESSIF -->
       <div class="pt-4 border-t border-slate-100 mt-2">
         <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2">
           <i data-lucide="trash-2" class="w-4 h-4"></i> Forcer la Réinitialisation
@@ -292,7 +291,6 @@
       await syncMobileData();
     });
 
-    // --- NOUVEAU BOUTON RESET AGRESSIF ---
     async function hardResetApp() {
       if(!confirm("⚠️ Attention : Cette action va vider le cache et forcer le retéléchargement complet de l'application. Continuer ?")) return;
       
@@ -315,7 +313,6 @@
         }
       } catch(e) { console.warn(e); }
       
-      // Force le rechargement absolu en ajoutant un paramètre unique à l'URL
       window.location.href = window.location.pathname + '?reset=' + Date.now();
     }
 
@@ -436,7 +433,6 @@
           if (item.action === "UPDATE_TOURNEE_STATUS") recentlyProcessedTourneeUpdates.push(item);
 
           try {
-            // Contournement du cache pour s'assurer que les envois passent
             await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(item) });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
             await safeSetStorage("offline_pending_sync", pendingSyncQueue);
@@ -446,7 +442,6 @@
       }
 
       try {
-        // Ajout de "cache: 'no-store'" pour forcer le bypass du Service Worker
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         
@@ -662,6 +657,7 @@
       return `${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]} ${d.getDate()} ${['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][d.getMonth()]}`;
     }
 
+    // --- CORRECTION DU TRI POUR ÉVITER LE CRASH JAVASCRIPT ---
     function renderTournee() {
       const c = document.getElementById("tourneeListContainer"); 
       const tHeader = document.getElementById("tourneeDebugHeader");
@@ -670,14 +666,17 @@
       const tStr = normalizeDateYMD(new Date());
       const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
       
-      // --- MOUCHARD DE DEBOGAGE (Affiche "x tâches pour vous / y totales sur le serveur") ---
       if (tHeader) {
         tHeader.innerText = `FILE DE TRAVAIL ASSIGNÉE (${agentTournees.length} / ${cachedTournees.length})`;
       }
 
-      const aTraiter = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) <= tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
-      const aVenir = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) > tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
-      const terminees = agentTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE' && normalizeDateYMD(t.date) === tStr);
+      // Tri textuel sécurisé à la place du "new Date()" capricieux
+      const safeSort = (a, b) => normalizeDateYMD(a.date).localeCompare(normalizeDateYMD(b.date));
+
+      const aTraiter = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) <= tStr).sort(safeSort);
+      const aVenir = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) > tStr).sort(safeSort);
+      const terminees = agentTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE' && normalizeDateYMD(t.date) === tStr).sort(safeSort);
+      const archives = agentTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE' && normalizeDateYMD(t.date) !== tStr).sort(safeSort);
 
       let html = '';
 
@@ -734,6 +733,11 @@
       if (terminees.length > 0) {
         html += `<h3 class="text-xs font-black text-emerald-600 uppercase tracking-wider mt-5 mb-3 flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Terminées Aujourd'hui</h3>`;
         html += terminees.map(t => renderCard(t, true)).join('');
+      }
+
+      if (archives.length > 0) {
+        html += `<h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mt-5 mb-3 flex items-center gap-1.5"><i data-lucide="archive" class="w-4 h-4"></i> Archives (Validées)</h3>`;
+        html += archives.map(t => renderCard(t, true)).join('');
       }
 
       if (html === '') {
