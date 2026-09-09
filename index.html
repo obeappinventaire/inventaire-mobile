@@ -29,7 +29,7 @@
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
-  <!-- EN-TÊTE MOBILE -->
+  <!-- EN-TÊTE MOBILE (Nom Agent en grand) -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs z-20">
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
@@ -52,7 +52,7 @@
   </header>
 
   <!-- CONTENU PRINCIPAL -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24">
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24" id="mainScrollArea">
     
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
@@ -85,16 +85,12 @@
         </div>
       </div>
 
-      <!-- RECHERCHE ACTIVE (Sans titre) -->
+      <!-- RECHERCHE ACTIVE (Bouton OK supprimé) -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
-          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" onblur="setTimeout(() => document.getElementById('closeKeyboardBtn').classList.add('hidden'), 200)" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-14 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
+          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
           
-          <button id="closeKeyboardBtn" onmousedown="event.preventDefault(); closeKeyboard()" class="hidden absolute right-1.5 top-1.5 bottom-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg font-bold text-xs flex items-center gap-1 transition cursor-pointer">
-            <i data-lucide="keyboard" class="w-4 h-4"></i> OK
-          </button>
-
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
 
@@ -124,22 +120,16 @@
         </div>
       </div>
 
-      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
-      <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3" id="quantitySection">
-        <div class="flex items-stretch gap-3 relative">
-          <div class="relative flex-1">
-            <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" onblur="setTimeout(() => document.getElementById('closeQtyKeyboardBtn').classList.add('hidden'), 200)" class="w-full h-16 text-center font-black text-3xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-white font-mono shadow-sm transition-all">
-            
-            <button id="closeQtyKeyboardBtn" onmousedown="event.preventDefault(); closeQtyKeyboard()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1 transition cursor-pointer shadow-sm">
-              <i data-lucide="keyboard" class="w-4 h-4"></i> OK
-            </button>
-          </div>
-
-          <button onclick="submitInventoryEntry()" class="h-16 px-5 bg-emerald-500/80 hover:bg-emerald-500 active:bg-emerald-600 font-bold text-white rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base transition cursor-pointer backdrop-blur-sm shrink-0">
-            <i data-lucide="check-square" class="w-6 h-6"></i>
-            <span>Enregistrer</span>
-          </button>
+      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT (Nouvelle ergonomie XXL) -->
+      <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
+        <div class="relative w-full">
+          <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-500 focus:bg-emerald-50 focus:text-emerald-700 font-mono shadow-inner transition-all">
         </div>
+
+        <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 font-bold text-white rounded-2xl shadow-md flex items-center justify-center gap-3 text-lg transition cursor-pointer">
+          <i data-lucide="check-square" class="w-7 h-7"></i>
+          <span>Enregistrer</span>
+        </button>
       </div>
     </section>
 
@@ -162,6 +152,7 @@
 
   </main>
 
+  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
@@ -198,7 +189,7 @@
     </div>
   </div>
 
-  <!-- MODALE CONFIGURATION PROFIL & BOUTON URGENCE CACHE -->
+  <!-- MODALE CONFIGURATION PROFIL -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div>
@@ -250,11 +241,8 @@
     let isSyncing = false; 
 
     async function safeSetStorage(key, data) {
-      try {
-        await localforage.setItem(key, data);
-      } catch (e) {
-        alert("⚠️ Stockage saturé ou erreur IndexedDB.");
-      }
+      try { await localforage.setItem(key, data); } 
+      catch (e) { alert("⚠️ Stockage saturé ou erreur IndexedDB."); }
     }
 
     let selectedArticle = null;
@@ -373,30 +361,19 @@
       return str.split(' ')[0];
     }
 
+    // Gestion du Focus pour faire glisser l'écran vers le haut
     function handleQuantityFocus() {
-      document.getElementById('closeQtyKeyboardBtn').classList.remove('hidden');
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
-        if (qtySec) qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
-    }
-
-    function closeQtyKeyboard() {
-      document.getElementById('inputQuantity').blur();
-      document.getElementById('closeQtyKeyboardBtn').classList.add('hidden');
+        if (qtySec) qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
     }
 
     function handleSearchFocus() {
-      document.getElementById('closeKeyboardBtn').classList.remove('hidden');
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection');
         if (searchSec) searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
-    }
-
-    function closeKeyboard() {
-      document.getElementById('sapSearchInput').blur();
-      document.getElementById('closeKeyboardBtn').classList.add('hidden');
+      }, 200);
     }
 
     async function syncMobileData() {
@@ -492,7 +469,8 @@
 
     function resetComptageForm() { 
       selectedArticle=null; document.getElementById("sapSearchInput").value=""; document.getElementById("selectedArticleCard").classList.add("hidden"); 
-      document.getElementById("inputQuantity").value=""; closeKeyboard(); closeQtyKeyboard(); 
+      document.getElementById("inputQuantity").value=""; 
+      document.getElementById("inputQuantity").blur();
     }
 
     async function openScanModal() {
@@ -529,7 +507,8 @@
     function selectArticleFromSearch(i) {
       selectedArticle=i; document.getElementById("sapSearchInput").value=i.sapRef; document.getElementById("sapSuggestions").classList.add("hidden"); 
       document.getElementById("cardSapRef").innerText=i.sapRef; document.getElementById("cardSupplierRef").innerText=`Fourn: ${i.supplierRef||'N/C'}`; 
-      document.getElementById("cardDesignation").innerText=i.designation; document.getElementById("selectedArticleCard").classList.remove("hidden"); closeKeyboard();
+      document.getElementById("cardDesignation").innerText=i.designation; document.getElementById("selectedArticleCard").classList.remove("hidden");
+      document.getElementById("sapSearchInput").blur();
     }
 
     async function submitInventoryEntry() {
