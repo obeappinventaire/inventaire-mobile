@@ -54,7 +54,7 @@
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
       
-      <!-- BANDEAU MISSION ACTIVE : DESIGN ÉPURÉ -->
+      <!-- BANDEAU MISSION ACTIVE -->
       <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative">
         <div class="flex justify-between items-center">
           <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -83,32 +83,37 @@
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
-          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
+          
+          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-10 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
+          
+          <!-- BOUTON CROIX INTELLIGENT -->
+          <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 transition cursor-pointer bg-slate-100 rounded-full p-0.5">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 pt-1">
+          <!-- BOUTON VOCAL INDIGO -->
           <button onclick="toggleVoiceSearch()" id="micBtn" class="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm">
-            <i data-lucide="mic" class="w-6 h-6 text-orange-600"></i> Vocale
+            <i data-lucide="mic" class="w-6 h-6 text-indigo-500"></i> Vocale
           </button>
           <button onclick="openScanModal()" class="h-16 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer shadow-md">
             <i data-lucide="camera" class="w-6 h-6"></i> Scanner
           </button>
         </div>
 
-        <!-- ZONE DE SÉLECTION COMPACTE (Hauteur divisée par 2) -->
-        <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-300 p-2 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-2.5">
-          <div class="bg-emerald-100 p-1.5 rounded-lg text-emerald-700 shrink-0">
-             <i data-lucide="check" class="w-4 h-4"></i>
-          </div>
-          <div class="flex-1 min-w-0 pr-6 flex flex-col justify-center">
-             <div class="flex items-center gap-2">
-               <span id="cardSapRef" class="font-mono font-bold text-emerald-800 text-sm">--</span>
-               <span id="cardSupplierRef" class="font-mono text-[9px] font-bold text-emerald-600 bg-emerald-100/50 px-1.5 py-0.5 rounded border border-emerald-200">--</span>
+        <!-- CARTE ARTICLE SÉLECTIONNÉ (Divisée par deux en hauteur) -->
+        <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-300 py-2 px-3 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-3">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+          <div class="flex-1 min-w-0 flex items-center justify-between">
+             <div class="flex items-center gap-2 truncate">
+               <span id="cardSapRef" class="font-mono font-black text-emerald-800 text-sm">--</span>
+               <span id="cardDesignation" class="text-[11px] text-slate-700 font-medium truncate">--</span>
              </div>
-             <p id="cardDesignation" class="text-[10px] text-slate-700 truncate leading-tight mt-0.5">--</p>
           </div>
-          <button onclick="resetComptageForm()" class="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-full transition cursor-pointer" title="Annuler la sélection">
+          <button onclick="resetComptageForm()" class="p-1 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-full transition cursor-pointer shrink-0">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
@@ -119,7 +124,8 @@
           <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-500 focus:bg-emerald-50 focus:text-emerald-700 font-mono shadow-inner transition-all">
         </div>
 
-        <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 font-bold text-white rounded-2xl shadow-md flex items-center justify-center gap-3 text-lg transition cursor-pointer">
+        <!-- BOUTON ENREGISTRER VERT PLUS CLAIR -->
+        <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-400 hover:bg-emerald-500 active:bg-emerald-600 font-bold text-white rounded-2xl shadow-md flex items-center justify-center gap-3 text-lg transition cursor-pointer">
           <i data-lucide="check-square" class="w-7 h-7"></i>
           <span>Enregistrer</span>
         </button>
@@ -135,10 +141,10 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
+    <!-- ONGLET 3 : TOURNÉES -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
-        <h2 id="tourneeDebugHeader" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">File de travail Assignée</h2>
+        <h2 id="tourneeDebugHeader" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Comptages Assignés</h2>
       </div>
       <div id="tourneeListContainer" class="space-y-3 pb-8"></div>
     </section>
@@ -211,7 +217,7 @@
           <i data-lucide="triangle-alert" class="w-4 h-4 text-rose-600"></i>
           <span class="text-[10px] font-black uppercase tracking-wider text-rose-600">Dépannage système</span>
         </div>
-        <p class="text-[10px] text-slate-500 mb-3 leading-relaxed">À utiliser uniquement si l'application semble figée ou si vos tâches refusent de s'afficher.</p>
+        <p class="text-[10px] text-slate-500 mb-3 leading-relaxed">À utiliser uniquement si l'application semble figée.</p>
         <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-10 bg-white border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-rose-600 active:scale-95 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="rotate-cw" class="w-4 h-4"></i> Forcer la réparation
         </button>
@@ -334,7 +340,6 @@
       return str.split(' ')[0];
     }
 
-    // --- CORRECTION DU SCROLL POUR NE PAS CACHER LA RECHERCHE SOUS LE HEADER (-70px) ---
     function handleQuantityFocus() {
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
@@ -355,6 +360,16 @@
     }
     
     function closeKeyboard() { document.getElementById('sapSearchInput').blur(); }
+    
+    function clearSearch() {
+      const input = document.getElementById("sapSearchInput");
+      if (input) {
+        input.value = "";
+        onSapSearchInput(""); 
+        document.getElementById('clearSearchBtn').classList.add('hidden');
+        input.focus();
+      }
+    }
 
     async function syncMobileData() {
       if (!navigator.onLine || isSyncing) return;
@@ -434,8 +449,12 @@
     }
 
     function resetComptageForm() { 
-      selectedArticle=null; document.getElementById("sapSearchInput").value=""; document.getElementById("selectedArticleCard").classList.add("hidden"); 
-      document.getElementById("inputQuantity").value=""; document.getElementById("inputQuantity").blur();
+      selectedArticle=null; 
+      document.getElementById("sapSearchInput").value=""; 
+      document.getElementById("clearSearchBtn").classList.add("hidden");
+      document.getElementById("selectedArticleCard").classList.add("hidden"); 
+      document.getElementById("inputQuantity").value=""; 
+      document.getElementById("inputQuantity").blur();
     }
 
     async function openScanModal() {
@@ -452,6 +471,7 @@
     function closeScanModal() { scanLoopActive=false; if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;} document.getElementById("scanModal").classList.add("hidden"); }
 
     async function captureAndOCR() {
+      if (navigator.vibrate) navigator.vibrate(40);
       const v=document.getElementById("scanVideo"), c=document.getElementById("scanCanvas"); if(!v.srcObject) return;
       c.width=v.videoWidth||640; c.height=v.videoHeight||480; c.getContext('2d').drawImage(v,0,0,c.width,c.height); document.getElementById("ocrStatus").innerText="OCR en cours...";
       try {
@@ -460,26 +480,72 @@
       } catch (err) { document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; }
     }
 
+    function toggleVoiceSearch() { 
+      if (navigator.vibrate) navigator.vibrate(40);
+      const S=window.SpeechRecognition||window.webkitSpeechRecognition; 
+      if(!S) return; 
+      const r=new S(); 
+      r.lang='fr-FR'; 
+      const btn=document.getElementById("micBtn"); 
+      btn.className="h-16 bg-indigo-500 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 animate-pulse shadow-md border border-indigo-600"; 
+      
+      r.onresult=e=>{ 
+        const m=e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); 
+        const v=m?m[0]:e.results[0][0].transcript; 
+        document.getElementById("sapSearchInput").value=v; 
+        onSapSearchInput(v); 
+      }; 
+      r.onerror=r.onend=()=>{ 
+        btn.className="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; 
+      }; 
+      r.start(); 
+    }
+
     function onSapSearchInput(val) {
-      const q = String(val||"").trim().toLowerCase(); const dd = document.getElementById("sapSuggestions");
+      const q = String(val||"").trim().toLowerCase(); 
+      const dd = document.getElementById("sapSuggestions");
+      const clearBtn = document.getElementById("clearSearchBtn");
+      
+      if (clearBtn) {
+        if (q.length > 0) clearBtn.classList.remove("hidden");
+        else clearBtn.classList.add("hidden");
+      }
+
       if(!q){ dd.classList.add("hidden"); return; }
+      
       const f = catalog.filter(i=>String(i.sapRef).toLowerCase().includes(q)||String(i.designation).toLowerCase().includes(q)).slice(0,30);
       if(f.length===0){ dd.innerHTML=`<div class="p-3 text-xs italic text-center">Aucun article trouvé</div>`; dd.classList.remove("hidden"); return; }
-      dd.innerHTML = f.map(i=>`<div onclick='selectArticleFromSearch(${JSON.stringify(i)})' class="p-3 hover:bg-emerald-50 border-b cursor-pointer flex justify-between items-center text-sm transition-colors"><div><span class="font-mono font-bold text-emerald-700">${i.sapRef}</span><span class="ml-2 font-semibold text-slate-800">${i.designation}</span></div></div>`).join('');
+      
+      dd.innerHTML = f.map(i=>`
+        <div onclick='selectArticleFromSearch(${JSON.stringify(i)})' class="p-3 hover:bg-emerald-50 border-b cursor-pointer flex justify-between items-center text-sm transition-colors">
+          <div>
+            <span class="font-mono font-bold text-emerald-700">${i.sapRef}</span>
+            <span class="ml-2 font-semibold text-slate-800">${i.designation}</span>
+          </div>
+        </div>
+      `).join('');
       dd.classList.remove("hidden");
     }
 
     function selectArticleFromSearch(i) {
-      selectedArticle=i; document.getElementById("sapSearchInput").value=i.sapRef; document.getElementById("sapSuggestions").classList.add("hidden"); 
-      document.getElementById("cardSapRef").innerText=i.sapRef; document.getElementById("cardSupplierRef").innerText=`Fourn: ${i.supplierRef||'N/C'}`; 
-      document.getElementById("cardDesignation").innerText=i.designation; document.getElementById("selectedArticleCard").classList.remove("hidden");
+      selectedArticle=i; 
+      document.getElementById("sapSearchInput").value=i.sapRef; 
+      document.getElementById("sapSuggestions").classList.add("hidden"); 
+      const clearBtn = document.getElementById("clearSearchBtn");
+      if (clearBtn) clearBtn.classList.remove("hidden");
+
+      document.getElementById("cardSapRef").innerText=i.sapRef; 
+      document.getElementById("cardDesignation").innerText=i.designation; 
+      document.getElementById("selectedArticleCard").classList.remove("hidden");
       document.getElementById("sapSearchInput").blur();
     }
 
     async function submitInventoryEntry() {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
+      if (navigator.vibrate) navigator.vibrate(40); 
       
-      if(!currentAgent){alert("Configurez l'agent");openConfigModal();return;} if(!selectedArticle){alert("Sélectionnez un article");return;}
+      if(!currentAgent){alert("Configurez l'agent");openConfigModal();return;} 
+      if(!selectedArticle){alert("Sélectionnez un article");return;}
+      
       const qInputStr = document.getElementById("inputQuantity").value;
       const q = parseInt(qInputStr, 10) || 0;
       
@@ -550,20 +616,18 @@
           </div>
           <p class="font-bold text-slate-900 text-sm leading-tight break-words">${h.designation}</p>
           
-          <div class="flex gap-3 pt-1 items-stretch">
-            <div class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-2xl text-sm font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center min-w-0">
-              <span class="truncate text-slate-800">${h.contractor}</span>
-              <span class="truncate text-slate-600 font-bold">${h.trade}</span>
+          <div class="flex gap-2 pt-1 items-stretch">
+            <div class="bg-slate-100 text-slate-700 px-2 py-1.5 rounded-xl shadow-inner border border-slate-200 flex flex-col justify-center w-[40%] shrink-0 min-w-0">
+              <span class="truncate text-xs font-bold text-slate-800">${h.contractor}</span>
+              <span class="truncate text-[10px] font-semibold text-slate-500">${h.trade}</span>
             </div>
             
-            <div class="flex flex-col gap-2 shrink-0">
-              <div class="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-2xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center h-full">
+            <div class="flex gap-2 flex-1">
+              <div class="bg-emerald-100 text-emerald-800 px-2 py-1.5 rounded-xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center flex-1">
                 ${h.quantity} <span class="text-[10px] ml-1 opacity-70">PCS</span>
               </div>
-              <div class="flex gap-2">
-                <button onclick="editHistoryItem('${h.id}')" class="p-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                <button onclick="deleteHistoryItem('${h.id}')" class="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-              </div>
+              <button onclick="editHistoryItem('${h.id}')" class="w-12 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform flex items-center justify-center"><i data-lucide="edit-3" class="w-5 h-5"></i></button>
+              <button onclick="deleteHistoryItem('${h.id}')" class="w-12 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform flex items-center justify-center"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
             </div>
           </div>
         </div>
@@ -572,7 +636,7 @@
     }
 
     async function editHistoryItem(id) {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
+      if (navigator.vibrate) navigator.vibrate(40); 
       const it=sessionHistory.find(h=>h.id===id); if(!it) return; const q=prompt("Modifier la quantité :", it.quantity); if(q===null) return; const p=parseInt(q,10); if(isNaN(p)||p<0) return;
       it.quantity=p; await safeSetStorage("mob_session_history", sessionHistory);
       const pc=pendingSyncQueue.find(x=>x.id===id&&x.action==='CREATE'); if(pc) pc.quantity=p; else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"UPDATE_INVENTORY", id:id, quantity:p, user:currentAgent}); }
@@ -580,7 +644,7 @@
     }
 
     async function deleteHistoryItem(id) {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
+      if (navigator.vibrate) navigator.vibrate(40); 
       if(!confirm("Supprimer cette saisie ?")) return;
       const it=sessionHistory.find(h=>h.id===id); sessionHistory=sessionHistory.filter(h=>h.id!==id); await safeSetStorage("mob_session_history", sessionHistory);
       const pi=pendingSyncQueue.findIndex(x=>x.id===id&&x.action==='CREATE'); if(pi!==-1) pendingSyncQueue.splice(pi,1); else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"DELETE_INVENTORY", id:id, user:currentAgent}); }
@@ -641,10 +705,11 @@
       const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
       
       if (tHeader) {
-        tHeader.innerHTML = `FILE DE TRAVAIL ASSIGNÉE <span class="text-orange-600 font-mono">(${agentTournees.length} à vous / ${cachedTournees.length} totales)</span>`;
+        tHeader.innerHTML = `COMPTAGES ASSIGNÉS <span class="text-orange-600 font-mono">(${agentTournees.length} à vous / ${cachedTournees.length} totales)</span>`;
       }
 
       const groupedTasks = buildTourneeGroups(agentTournees);
+      
       const safeSort = (a, b) => normalizeDateYMD(a.date).localeCompare(normalizeDateYMD(b.date));
 
       const aTraiter = groupedTasks.filter(g => g.statut !== 'VALIDE').sort(safeSort);
@@ -660,15 +725,18 @@
           <div class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200'} rounded-2xl shadow-sm mb-4 overflow-hidden transition-all">
             
             <div class="px-4 py-3 flex justify-between items-center border-b border-slate-100 ${isDone ? 'bg-emerald-50' : 'bg-slate-50'}">
-              <span class="font-bold text-[11px] text-slate-600 uppercase flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr} - ${g.tranche||'MATIN'}</span>
-              <span class="px-2 py-0.5 rounded-md text-[9px] font-bold shadow-xs ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? '✓ TERMINÉ' : 'À FAIRE'}</span>
+              <span class="font-bold text-[11px] text-slate-600 uppercase flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr} - ${g.tranche||'MATIN'}
+              </span>
+              <span class="px-2.5 py-1 rounded-lg text-[10px] font-black shadow-xs ${isDone ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-white tracking-wide'}">
+                ${isDone ? '✓ TERMINÉ' : 'À FAIRE'}
+              </span>
             </div>
 
             <div class="p-4 space-y-3">
-              <div class="leading-tight">
-                <span class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Affectation Globale</span>
-                <span class="text-sm font-black text-slate-900 block">${g.contractor}</span>
-                <span class="text-xs font-bold text-slate-600">${g.trade}</span>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-sm font-black text-slate-900 truncate">${g.contractor}</span>
+                <span class="text-xs font-bold text-slate-500 truncate border-l border-slate-300 pl-2">${g.trade}</span>
               </div>
 
               <div class="flex gap-2">
@@ -708,7 +776,7 @@
       };
 
       if (aTraiter.length > 0) {
-        html += `<h3 class="text-xs font-black text-rose-600 uppercase tracking-wider mb-3 mt-1 flex items-center gap-1.5"><i data-lucide="alert-circle" class="w-4 h-4"></i> Missions à traiter</h3>`;
+        html += `<h3 class="text-xs font-black text-indigo-600 uppercase tracking-wider mb-3 mt-1 flex items-center gap-1.5"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Missions à traiter</h3>`;
         html += aTraiter.map(t => renderCard(t, false)).join('');
       }
 
@@ -729,9 +797,20 @@
       lucide.createIcons();
     }
 
-    function switchMobileTab(t) { ['Comptage','Historique','Tournee'].forEach(x=>{ document.getElementById("tab"+x)?.classList.add("hidden"); const n=document.getElementById("nav"+x); if(n) n.className="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer"; }); const a=t.charAt(0).toUpperCase()+t.slice(1); document.getElementById("tab"+a)?.classList.remove("hidden"); const aN=document.getElementById("nav"+a); if(aN) aN.className="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer"; if(t==='historique') renderHistory(); if(t==='tournee') renderTournee(); lucide.createIcons(); }
-    
-    function toggleVoiceSearch() { const S=window.SpeechRecognition||window.webkitSpeechRecognition; if(!S) return; const r=new S(); r.lang='fr-FR'; const btn=document.getElementById("micBtn"); btn.className="h-16 bg-rose-600 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700"; r.onresult=e=>{ const m=e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); const v=m?m[0]:e.results[0][0].transcript; document.getElementById("sapSearchInput").value=v; onSapSearchInput(v); }; r.onerror=r.onend=()=>{ btn.className="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; }; r.start(); }
+    function switchMobileTab(t) { 
+      ['Comptage','Historique','Tournee'].forEach(x=>{ 
+        document.getElementById("tab"+x)?.classList.add("hidden"); 
+        const n=document.getElementById("nav"+x); 
+        if(n) n.className="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer"; 
+      }); 
+      const a=t.charAt(0).toUpperCase()+t.slice(1); 
+      document.getElementById("tab"+a)?.classList.remove("hidden"); 
+      const aN=document.getElementById("nav"+a); 
+      if(aN) aN.className="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer"; 
+      if(t==='historique') renderHistory(); 
+      if(t==='tournee') renderTournee(); 
+      lucide.createIcons(); 
+    }
   </script>
 </body>
 </html>
