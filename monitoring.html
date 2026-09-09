@@ -374,9 +374,9 @@
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
-                  <span class="p-1 rounded-md bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition shadow-2xs">
+                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </span>
+                  </div>
                 </div>
                 <span id="kpiAgentsZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
               </div>
@@ -384,9 +384,9 @@
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Flotte</span>
-                  <span class="p-1 rounded-md bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition shadow-2xs">
+                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </span>
+                  </div>
                 </div>
                 <span id="kpiAgentsAtypicalStock" class="text-xl font-black text-amber-600 mt-0.5 block">0</span>
               </div>
@@ -509,7 +509,7 @@
     </main>
   </div>
 
-  <!-- MODALE ASSIGNATION MANUELLE AVEC VERROUILLAGES DES DATES -->
+  <!-- MODALE ASSIGNATION MANUELLE -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -561,7 +561,7 @@
           </div>
         </div>
 
-        <!-- LE COMPTEUR A ETE RESTAURE ICI CORRECTEMENT -->
+        <!-- CORRECTIF : RESTAURATION DU COMPTEUR POUR EVITER LE CRASH -->
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
             <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
@@ -598,7 +598,6 @@
   </div>
 
   <script>
-    // === ENREGISTREMENT DU SERVICE WORKER ===
     if ('serviceWorker' in navigator) {
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -617,7 +616,6 @@
 
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    // === VARIABLES GLOBALES VIDES (Remplies par IndexedDB) ===
     let availableAgents = [];
     let availableContractors = [];
     let availableTrades = [];
@@ -649,7 +647,6 @@
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
-    // === GESTION DES DATES ===
     function getISOWeekNumber(d) {
       const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
       date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -677,7 +674,7 @@
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
 
-    // FIX : Normalisation de date robuste
+    // CORRECTIF : Normalisation stricte de la date pour éviter le saut de jour (UTC)
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
       if (dateVal instanceof Date) {
@@ -704,7 +701,7 @@
       return includeTime ? `${base} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : base;
     }
 
-    // --- FIX : ALGORITHME JOURS FERIES BELGES ---
+    // --- ALGORITHME JOURS FERIES BELGES ---
     function getEaster(year) {
         const f = Math.floor, G = year % 19, C = f(year / 100),
         H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
@@ -757,12 +754,9 @@
         return true;
     }
 
-
-    // === INITIALISATION ===
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
 
-      // FIX : Remplacement des localStorage bloquants par localforage (IndexedDB)
       catalog = (await localforage.getItem("offline_catalog")) || [];
       availableAgents = (await localforage.getItem("offline_agents")) || [];
       availableContractors = (await localforage.getItem("offline_contractors")) || [];
@@ -810,7 +804,6 @@
       await syncMonitoringData();
     });
 
-    // === AUTHENTIFICATION ===
     async function authenticateAdmin() {
       const adminSel = document.getElementById("authAdminSelect");
       const selected = adminSel ? adminSel.value : "";
@@ -863,7 +856,6 @@
       document.getElementById("authModal").classList.remove("hidden");
     }
 
-    // === SYNCHRONISATION ===
     async function syncMonitoringData() {
       if (!navigator.onLine) return;
       const dot = document.getElementById("statusDot");
@@ -880,8 +872,21 @@
           if (data.trades) { availableTrades = data.trades; await localforage.setItem("offline_trades", availableTrades); }
           if (data.admins) { adminAgents = data.admins; await localforage.setItem("offline_admins", adminAgents); }
           if (data.history) { cachedHistory = data.history; await localforage.setItem("offline_history", cachedHistory); }
-          if (data.tournees) { cachedTournees = data.tournees; await localforage.setItem("offline_tournees", cachedTournees); }
           if (data.catalog) { catalog = data.catalog; await localforage.setItem("offline_catalog", catalog); }
+
+          if (data.tournees) {
+            // FIX : Auto-validation gérée uniquement par l'ID exact de la tâche
+            const localValides = new Set(
+              cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => String(t.id))
+            );
+            cachedTournees = data.tournees.map(serverTask => {
+              if (localValides.has(String(serverTask.id))) {
+                return { ...serverTask, statut: 'VALIDE' };
+              }
+              return serverTask;
+            });
+            await localforage.setItem("offline_tournees", cachedTournees);
+          }
 
           initMultiSelects();
           populateAdminDropdown();
@@ -897,7 +902,6 @@
       }
     }
 
-    // === GESTION DES MODALES TOURNÉE ===
     function openManualAssignModal(defaultDate = null, defaultTranche = 'MATIN') {
       const dateInput = document.getElementById("adminAssignDate");
       if (defaultDate) dateInput.value = defaultDate;
@@ -949,6 +953,7 @@
         return;
       }
 
+      // FIX : dataset.ref pour éviter que les apostrophes cassent le rendu
       container.innerHTML = filtered.slice(0, 60).map(item => {
         const isChecked = manualSelectedCatalogSaps.includes(String(item.sapRef).trim());
         return `
@@ -1018,7 +1023,6 @@
       }
     }
 
-    // === EXCEL UPLOAD ===
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
       const planningData = [
@@ -1105,7 +1109,7 @@
       e.dataTransfer.setData('text/plain', JSON.stringify(draggedPayload));
     }
 
-    // FIX : Drag and Drop avec envoi de la mise à jour serveur
+    // FIX : Synchronisation serveur pour le Drag & Drop
     async function handleDropOnDay(e, targetDateStr, targetTranche) {
       e.preventDefault();
       if (!draggedPayload) return;
@@ -1197,7 +1201,6 @@
           }).join('');
         };
 
-        // FIX : Blocage visuel des zones passées, week-ends et jours fériés
         const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj) || dayObj < (new Date(new Date().setHours(0,0,0,0)));
         const bgClassMatin = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-white/70 hover:bg-orange-50/40 cursor-pointer';
         const bgClassAprem = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-white/70 hover:bg-orange-50/40 cursor-pointer';
@@ -1392,7 +1395,7 @@
       onCheckboxChange(type);
     }
 
-    // FIX PERFORMANCE: Algo O(N) avec table de hachage (Empêche le gel de page)
+    // FIX PERFORMANCE: Optimisation O(N) pour empêcher le blocage d'interface
     function getDistinctArticlesOnPeriod() {
       const periodList = getPeriodFilteredHistory() || [];
       const mapArticles = new Map();
@@ -1432,7 +1435,7 @@
         return;
       }
 
-      // FIX : dataset.ref pour gérer proprement les apostrophes ou guillemets éventuels
+      // FIX : data-ref et fermeture de dropdown propre (toggleArticleTag)
       dd.innerHTML = filtered.map(a => `
         <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
           <div class="min-w-0 pr-2">
@@ -1445,7 +1448,6 @@
       dd.classList.remove("hidden");
     }
 
-    // FIX UI : Cacher le menu déroulant lors d'une sélection
     function toggleArticleTag(sapRef) {
       selectedArticleTags = selectedArticleTags.includes(sapRef) 
         ? selectedArticleTags.filter(r => r !== sapRef) 
