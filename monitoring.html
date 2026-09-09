@@ -19,7 +19,7 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     
@@ -42,7 +42,7 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- MODALE D'AUTHENTIFICATION ADMIN AVEC SYSTÈME DE SECOURS -->
+  <!-- MODALE D'AUTHENTIFICATION ADMIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -70,7 +70,7 @@
         <span>Ouvrir la session</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
-      
+
       <p class="text-[9px] text-slate-400 mt-2">Code de secours hors-ligne : 1234</p>
     </div>
   </div>
@@ -111,10 +111,11 @@
   <!-- STRUCTURE CENTRALE -->
   <div class="flex-1 flex overflow-hidden">
     
-    <!-- BARRE LATÉRALE -->
-    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100">
-      <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar flex-1 flex flex-col">
+    <!-- BARRE LATÉRALE GAUCHE -->
+    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0 text-slate-100 relative">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
         
+        <!-- Navigation Principale -->
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
           <button id="btnNavGlobal" onclick="switchView('global')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer">
@@ -135,17 +136,18 @@
           </button>
         </div>
 
+        <!-- Filtres Repoussés vers le bas avec mt-auto -->
         <div class="mt-auto pt-6 space-y-4">
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
+              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
               </span>
-              <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
+              <span id="weekBadgeLabel" class="text-[9px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
             </div>
 
             <div class="relative">
-              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
                 <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
                 <option value="TODAY">☀️ Aujourd'hui</option>
@@ -169,10 +171,10 @@
 
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Critères
+              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères
               </span>
-              <span class="text-[9px] bg-amber-950/50 text-amber-300 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
+              <span class="text-[9px] bg-amber-950/50 text-amber-400 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
             </div>
 
             <div class="space-y-2 text-xs pt-1">
@@ -186,7 +188,7 @@
                   <span class="text-[11px] text-slate-200 font-medium">Seuil volume atypique</span>
                   <span class="text-[11px] font-mono text-amber-400 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
                 </div>
-                <input type="number" id="cfgMaxQty" value="" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-1.5 text-xs text-slate-200 font-mono text-center">
+                <input type="number" id="cfgMaxQty" value="" placeholder="Ex: 50" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-1.5 text-xs text-slate-200 font-mono text-center">
               </div>
             </div>
           </div>
@@ -222,7 +224,6 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
-
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
@@ -232,7 +233,6 @@
                 </div>
                 <span id="kpiZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
               </div>
-
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
@@ -264,7 +264,6 @@
                   </button>
                 </div>
               </div>
-
               <div id="selectedArticleTagsContainer" class="flex flex-wrap gap-1.5 empty:hidden pt-1"></div>
             </div>
 
@@ -359,24 +358,22 @@
           <div id="agentsAccordionContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE ================= -->
+        <!-- ================= ONGLET 3 : CARTE GEOGRAPHIQUE ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
-                Cartographie Interactive du Terrain (Belgique)
+                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i> Cartographie Interactive (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique • Bouton d'affichage ciblé sur la sélection active</p>
+              <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique ciblée sur la période active.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
-                <span id="mapFilterBtnText">Afficher toute la période</span>
+                <span id="mapFilterBtnText">Toute la période</span>
               </button>
               <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer">
-                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
-                <span>Recentrer Belgique</span>
+                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i><span>Recentrer Belgique</span>
               </button>
               <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
             </div>
@@ -386,35 +383,32 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES ================= -->
+        <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
-                Planning Semaine & Missions Chantiers
+                <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Missions regroupées par Entrepreneur & Métier • Glissez une mission pour replanifier l'ensemble des articles</p>
+              <p class="text-xs text-slate-500 mt-0.5">Missions regroupées par Entrepreneur & Métier • Glissez-déposez pour replanifier.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
-                <span>Modèle Excel Multi-Onglets (.xlsx)</span>
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel (.xlsx)</span>
               </button>
               <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
               <button type="button" onclick="document.getElementById('excelFileInput').click()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
-                <span>Importer Planning</span>
+                <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i><span>Importer Planning</span>
               </button>
               <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Nouvelle Tâche</span>
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Nouvelle Tâche</span>
               </button>
             </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
+            <!-- AGENDA GAUCHE -->
             <div class="lg:col-span-8 space-y-4">
               <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center space-x-2">
@@ -426,7 +420,7 @@
                 <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- ZONE DES RETARDS (Grille Fluide sur 4 colonnes) -->
+              <!-- ZONE DES RETARDS (GRILLE FLUIDE) -->
               <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col">
                 <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 text-xs shrink-0">
                   <span class="font-bold text-amber-800 uppercase tracking-wide flex items-center gap-1.5">
@@ -436,7 +430,7 @@
                 <div id="overdueTasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto custom-scrollbar max-h-[160px] pr-1"></div>
               </div>
 
-              <!-- GRILLE DES 7 JOURS -->
+              <!-- GRILLE 7 JOURS -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs mb-3">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (7 prochains jours)</span>
@@ -445,7 +439,7 @@
               </div>
             </div>
 
-            <!-- COCKPIT DE COMPLÉTION (Data-driven) -->
+            <!-- COCKPIT COMPLÉTION DROITE -->
             <div class="lg:col-span-4 space-y-4 sticky top-6">
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -453,7 +447,6 @@
                   <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Période Active</span>
                 </div>
 
-                <!-- KPI Macro -->
                 <div class="space-y-1.5">
                   <div class="flex justify-between items-center text-xs">
                     <span class="font-bold text-slate-700">Missions Chantiers (Macro)</span>
@@ -468,7 +461,6 @@
                   </div>
                 </div>
 
-                <!-- KPI Micro -->
                 <div class="space-y-1.5 pt-3 border-t border-slate-100">
                   <div class="flex justify-between items-center text-xs">
                     <span class="font-bold text-slate-700">Lignes Articles (Micro)</span>
@@ -483,7 +475,6 @@
                   </div>
                 </div>
 
-                <!-- Santé opérationnelle -->
                 <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-center text-xs">
                   <div class="bg-amber-50/50 border border-amber-200 p-2.5 rounded-xl">
                     <span class="text-[9px] text-amber-700 block uppercase font-bold">Missions Retardées</span>
@@ -496,7 +487,6 @@
                 </div>
               </div>
             </div>
-            
           </div>
         </section>
 
@@ -506,17 +496,16 @@
 
   <!-- MODALES ADMIN -->
   
-  <!-- Modale Ajout Manuel -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
         <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="plus-circle" class="w-4 h-4 text-orange-600"></i>
-          Nouvelle Affectation de Tâche
+          <i data-lucide="plus-circle" class="w-4 h-4 text-orange-600"></i> Nouvelle Affectation
         </h3>
-        <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
       </div>
-
       <div class="space-y-2.5 text-xs">
         <div class="grid grid-cols-3 gap-2">
           <div>
@@ -538,14 +527,12 @@
             </select>
           </div>
         </div>
-
         <div class="flex items-center justify-between pt-1">
-          <label class="font-bold text-slate-700 uppercase tracking-wide">Date & Tranche de planification :</label>
+          <label class="font-bold text-slate-700 uppercase tracking-wide">Date & Tranche :</label>
           <button onclick="submitManualTourneeAssignment()" class="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg text-xs shadow-2xs transition cursor-pointer flex items-center gap-1">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Enregistrer
           </button>
         </div>
-
         <div class="grid grid-cols-2 gap-2">
           <div>
             <input type="date" id="adminAssignDate" onchange="validateAssignDate(this)" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
@@ -557,24 +544,21 @@
             </select>
           </div>
         </div>
-
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
-            <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
+            <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets :</label>
             <span id="adminCatalogCount" class="text-[10px] font-mono text-orange-700 font-bold">0 article(s)</span>
           </div>
-          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Recherche multicritères (ex: vis bois, 106626)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 font-medium">
+          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Recherche multicritères..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 font-medium">
           <div id="adminCatalogPickerList" class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
         </div>
       </div>
-
       <div class="pt-2 border-t border-slate-100 flex gap-2">
         <button onclick="closeManualAssignModal()" class="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Fermer</button>
       </div>
     </div>
   </div>
 
-  <!-- Modale Détails de Tournée/Mission -->
   <div id="tourneeDetailsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -582,24 +566,24 @@
           <h3 id="modalTourneeTitle" class="text-sm font-bold text-slate-900 uppercase">Détails de la Mission</h3>
           <span id="modalTourneeSubtitle" class="text-[11px] text-slate-500 font-mono">--</span>
         </div>
-        <button onclick="closeTourneeDetailsModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeTourneeDetailsModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
       </div>
-
       <div id="modalTourneeContent" class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 text-xs"></div>
     </div>
   </div>
 
-  <!-- JAVASCRIPT PRINCIPAL -->
+  <!-- JAVASCRIPT PRINCIPAL DÉCOMPRESSÉ ET SÉCURISÉ -->
   <script>
     if ('serviceWorker' in navigator) {
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
+        if (!refreshing) { 
+          refreshing = true; 
+          window.location.reload(); 
         }
       });
-
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
           .then(reg => reg.update())
@@ -662,14 +646,17 @@
     function updateWeekBadge(startDateStr) {
       const targetDate = startDateStr ? parseItemDate(startDateStr) : new Date();
       const iso = getISOWeekNumber(targetDate);
-      const weekStr = String(iso.week).padStart(2, '0');
-      const badgeText = `S${weekStr} ${iso.year}`;
+      const badgeText = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
       
       const badge = document.getElementById("weekBadgeLabel");
       const wallBadge = document.getElementById("wallPlanningWeekLabel");
       
-      if (badge) badge.innerText = badgeText;
-      if (wallBadge) wallBadge.innerText = badgeText;
+      if (badge) {
+        badge.innerText = badgeText;
+      }
+      if (wallBadge) {
+        wallBadge.innerText = badgeText;
+      }
     }
 
     function parseItemDate(str) {
@@ -689,6 +676,7 @@
       }
       const str = String(dateVal).trim().replace(/['"]/g, '');
       if (str.includes('T')) return str.split('T')[0];
+      
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
       if (parts) {
         return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
@@ -713,13 +701,11 @@
       return base;
     }
 
-    function getEaster(year) {
-        const f = Math.floor, G = year % 19, C = f(year / 100),
-        H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
-        I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
-        J = (year + f(year / 4) + I + 2 - C + f(C / 4)) % 7,
-        L = I - J, month = 3 + f((L + 40) / 44), day = L + 28 - 31 * f(month / 4);
-        return new Date(year, month - 1, day);
+    function getEaster(y) {
+        const f = Math.floor, G = y % 19, C = f(y / 100), H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
+        I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)), J = (y + f(y / 4) + I + 2 - C + f(C / 4)) % 7,
+        L = I - J, m = 3 + f((L + 40) / 44), d = L + 28 - 31 * f(m / 4);
+        return new Date(y, m - 1, d);
     }
 
     function isBelgianHoliday(dateObj) {
@@ -751,19 +737,19 @@
         today.setHours(0,0,0,0);
 
         if (d < today) { 
-            alert("Impossible de créer une tâche dans le passé."); 
-            inputElem.value = ""; 
-            return false; 
+          alert("Impossible de planifier une tâche dans le passé."); 
+          inputElem.value = ""; 
+          return false; 
         }
         if (d.getDay() === 0 || d.getDay() === 6) { 
-            alert("Impossible d'assigner une tâche un week-end (Samedi/Dimanche)."); 
-            inputElem.value = ""; 
-            return false; 
+          alert("Impossible de planifier sur un week-end."); 
+          inputElem.value = ""; 
+          return false; 
         }
         if (isBelgianHoliday(d)) { 
-            alert("Impossible d'assigner une tâche un jour férié belge."); 
-            inputElem.value = ""; 
-            return false; 
+          alert("Impossible de planifier sur un jour férié."); 
+          inputElem.value = ""; 
+          return false; 
         }
         return true;
     }
@@ -831,7 +817,7 @@
         });
       });
 
-      // APPEL RESTAURÉ ET SÉCURISÉ
+      // APPELS D'INITIALISATION
       updateActiveAgentsButtonUI();
       applyFilters();
       switchView(activeView);
@@ -870,17 +856,18 @@
           
           // MODE SECOURS ANTI-BLOCAGE
           if (pwd === "1234" || pwd === "admin") {
-            alert("⚠️ Connexion serveur échouée. Accès forcé en mode local.");
+            alert("⚠️ Le serveur ne répond pas. Connexion forcée en mode local (Code de secours utilisé).");
             currentAdmin = selected;
             sessionStorage.setItem("mon_current_admin", currentAdmin);
             sessionStorage.setItem("mon_auth_token", "LOCAL_TOKEN");
             adminToken = "LOCAL_TOKEN";
+            
             document.getElementById("activeAdminName").innerText = currentAdmin;
             document.getElementById("authModal").classList.add("hidden");
             applyFilters();
             return;
           } else {
-             throw new Error("Réponse serveur invalide. Le Google Script est peut-être mal configuré ou l'URL est erronée.");
+             throw new Error("Réponse serveur invalide et mot de passe de secours incorrect.");
           }
         }
 
@@ -898,7 +885,18 @@
         }
       } catch (err) {
         console.error(err);
-        alert(`Erreur de connexion : ${err.message}\nAstuce: Utilisez le code '1234' pour forcer l'accès en test.`);
+        if (pwd === "1234" || pwd === "admin") {
+            alert("⚠️ Erreur réseau. Connexion forcée en mode local.");
+            currentAdmin = selected;
+            sessionStorage.setItem("mon_current_admin", currentAdmin);
+            sessionStorage.setItem("mon_auth_token", "OFFLINE_TOKEN");
+            adminToken = "OFFLINE_TOKEN";
+            document.getElementById("activeAdminName").innerText = currentAdmin;
+            document.getElementById("authModal").classList.add("hidden");
+            applyFilters();
+        } else {
+            alert("Erreur de connexion. Si le serveur bloque, utilisez le code de secours '1234'.");
+        }
       } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -915,9 +913,7 @@
     }
 
     async function syncMonitoringData() {
-      if (!navigator.onLine) return;
-      
-      if (isSyncing) return;
+      if (!navigator.onLine || isSyncing) return;
       isSyncing = true;
       
       const dot = document.getElementById("statusDot");
@@ -976,7 +972,7 @@
           if (data.tournees) {
             let pendingItemsToMerge = [];
             pendingSyncQueue.forEach(q => {
-               if(q.action === "CREATE_TOURNEES_BULK" && q.items) {
+               if (q.action === "CREATE_TOURNEES_BULK" && q.items) {
                    pendingItemsToMerge.push(...q.items);
                }
             });
@@ -1009,7 +1005,7 @@
           applyFilters();
         }
       } catch (err) {
-        // Silently handle offline/error state during background sync
+        // Mode hors ligne
       } finally {
         isSyncing = false;
         if (dot) {
@@ -1161,7 +1157,6 @@
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
       
-      // Onglet 1 : Modèle
       const planningData = [
         ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"],
         [
@@ -1179,7 +1174,6 @@
       ws1['!cols'] = [{wch: 18}, {wch: 28}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 18}];
       XLSX.utils.book_append_sheet(wb, ws1, "Import_Masse");
 
-      // Onglet 2 : Références
       const maxRows = Math.max(availableAgents.length, availableContractors.length, availableTrades.length, catalog.length);
       const masterData = [["AGENTS DISPONIBLES", "ENTREPRENEURS", "METIERS", "CATALOGUE (REF SAP)", "DESIGNATION"]];
 
@@ -1212,7 +1206,7 @@
       reader.onload = function(e) {
         try {
           const data = new Uint8Array(e.target.result);
-          // cellDates permet de décoder les nombres de série Excel
+          // cellDates permet de décoder les dates Excel
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0]; 
           const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
@@ -1246,17 +1240,22 @@
             const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
             const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
             
-            if (!sapRef || !agent) continue; 
+            if (!sapRef || !agent) {
+              continue;
+            }
 
             const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
             const agentExists = availableAgents.includes(agent);
 
-            if (!catItem) missingSaps.add(sapRef);
-            if (!agentExists) missingAgents.add(agent);
+            if (!catItem) {
+              missingSaps.add(sapRef);
+            }
+            if (!agentExists) {
+              missingAgents.add(agent);
+            }
 
             let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
             
-            // AUTO-CORRECTION DATE EXCEL NUMÉRIQUE (ex: 46275)
             if (typeof rawDate === 'number') {
                 const utc_days  = Math.floor(rawDate - 25569);
                 const utc_value = utc_days * 86400;
@@ -1307,7 +1306,11 @@
         }
       };
       reader.readAsArrayBuffer(file);
-      document.getElementById('excelFileInput').value = '';
+      
+      const inputEl = document.getElementById('excelFileInput');
+      if (inputEl) {
+        inputEl.value = '';
+      }
     }
 
     async function uploadBulkTournees(bulkItems) {
@@ -1333,7 +1336,7 @@
     }
 
     let draggedGroupPayload = null;
-    
+
     function handleGroupDragStart(e, groupId) {
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
@@ -1424,7 +1427,9 @@
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const overdueContainer = document.getElementById("overdueTasksContainer");
-      const filterAgent = document.getElementById("agendaFilterAgent").value;
+      
+      const filterAgentEl = document.getElementById("agendaFilterAgent");
+      const filterAgent = filterAgentEl ? filterAgentEl.value : "";
       
       if (!gridContainer || !overdueContainer) return;
 
@@ -1439,7 +1444,7 @@
 
       const allGroups = buildTourneeGroups(allTournees);
 
-      // GRILLE FLUIDE DES RETARDS
+      // GRILLE FLUIDE DES RETARDS PC
       const overdueGroups = allGroups.filter(g => !g.isDone && g.date < todayStr);
 
       if (overdueGroups.length === 0) {
@@ -1449,26 +1454,30 @@
           </div>
         `;
       } else {
-        overdueContainer.innerHTML = overdueGroups.map(g => `
-          <div draggable="true" 
-               ondragstart="handleGroupDragStart(event, '${g.id}')"
-               onclick="openTourneeGroupModal('${g.id}')" 
-               class="p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
-            <div>
-              <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1">
-                <span class="font-bold text-[11px] truncate">${g.agent}</span>
-                <span class="font-mono text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
-              </div>
-              <div class="flex items-center gap-1.5 mt-1">
-                <strong class="truncate leading-tight flex-1 text-[10px]">${g.contractor}</strong>
-                <span class="text-[9px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded truncate border border-orange-100">${g.trade}</span>
+        let overdueHtml = '';
+        overdueGroups.forEach(g => {
+          overdueHtml += `
+            <div draggable="true" 
+                 ondragstart="handleGroupDragStart(event, '${g.id}')"
+                 onclick="openTourneeGroupModal('${g.id}')" 
+                 class="p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
+              <div>
+                <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1">
+                  <span class="font-bold text-[11px] truncate">${g.agent}</span>
+                  <span class="font-mono text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <strong class="truncate leading-tight flex-1 text-[10px]">${g.contractor}</strong>
+                  <span class="text-[9px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded truncate border border-orange-100">${g.trade}</span>
+                </div>
               </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        });
+        overdueContainer.innerHTML = overdueHtml;
       }
 
-      // AGENDA 7 JOURS GLISSANTS
+      // AGENDA 7 JOURS
       const weekDays = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
@@ -1477,7 +1486,8 @@
 
       const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-      gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
+      let gridHtml = '';
+      weekDays.forEach((dayObj, idx) => {
         const dateStr = normalizeDateYMD(dayObj);
         const dayGroups = allGroups.filter(g => g.date === dateStr);
 
@@ -1485,12 +1495,13 @@
         const apresMidiGroups = dayGroups.filter(g => g.tranche === 'APRES_MIDI');
 
         const renderGroupCards = (groups) => {
-          return groups.map(g => {
+          let cardsHtml = '';
+          groups.forEach(g => {
             const badgeColor = g.isDone 
               ? "bg-emerald-50 border-emerald-300" 
               : "bg-white border-slate-200 hover:border-orange-300";
 
-            return `
+            cardsHtml += `
               <div draggable="true" 
                    ondragstart="handleGroupDragStart(event, '${g.id}')"
                    onclick="openTourneeGroupModal('${g.id}')" 
@@ -1506,13 +1517,14 @@
                 </div>
               </div>
             `;
-          }).join('');
+          });
+          return cardsHtml;
         };
 
         const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
         const bgClass = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-slate-50/50 hover:bg-orange-50/50 cursor-pointer';
 
-        return `
+        gridHtml += `
           <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px] shadow-sm">
             <div class="text-center pb-2 pt-1 border-b border-slate-100">
               <span class="text-[11px] font-bold uppercase tracking-widest block ${idx === 0 ? 'text-orange-600' : 'text-slate-500'}">
@@ -1534,7 +1546,8 @@
             </div>
           </div>
         `;
-      }).join('');
+      });
+      gridContainer.innerHTML = gridHtml;
 
       lucide.createIcons();
     }
@@ -1544,27 +1557,38 @@
       const g = allGroups.find(x => x.id === groupId);
       if (!g) return;
 
-      document.getElementById("modalTourneeTitle").innerText = `${g.contractor} - ${g.trade}`;
-      document.getElementById("modalTourneeSubtitle").innerText = `${g.agent} • ${formatDateFrench(g.date)} (${g.tranche}) • ${g.items.length} article(s)`;
+      const titleEl = document.getElementById("modalTourneeTitle");
+      if (titleEl) titleEl.innerText = `${g.contractor} - ${g.trade}`;
+      
+      const subTitleEl = document.getElementById("modalTourneeSubtitle");
+      if (subTitleEl) subTitleEl.innerText = `${g.agent} • ${formatDateFrench(g.date)} (${g.tranche}) • ${g.items.length} article(s)`;
 
-      document.getElementById("modalTourneeContent").innerHTML = g.items.map(t => {
-        const isDone = String(t.statut).toUpperCase() === 'VALIDE';
-        return `
-          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div class="min-w-0 pr-2">
-              <div class="flex items-center gap-1.5">
-                <span class="font-mono font-bold text-orange-600">${t.sapRef}</span>
-                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
-                <span class="text-[9px] text-slate-400 font-mono">Ordre: ${t.ordre || 1}</span>
+      const contentEl = document.getElementById("modalTourneeContent");
+      if (contentEl) {
+        let contentHtml = '';
+        const sortedItems = g.items.sort((a,b) => (Number(a.ordre)||0) - (Number(b.ordre)||0));
+        
+        sortedItems.forEach(t => {
+          const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+          contentHtml += `
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div class="min-w-0 pr-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-orange-600">${t.sapRef}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                  <span class="text-[9px] text-slate-400 font-mono">Ordre: ${t.ordre || 1}</span>
+                </div>
+                <p class="text-[11px] text-slate-700 truncate mt-0.5">${t.designation || 'Sans libellé'}</p>
               </div>
-              <p class="text-[11px] text-slate-700 truncate mt-0.5">${t.designation || 'Sans libellé'}</p>
+              <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
-            <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-          </div>
-        `;
-      }).join('');
+          `;
+        });
+        contentEl.innerHTML = contentHtml;
+      }
 
-      document.getElementById("tourneeDetailsModal").classList.remove("hidden");
+      const modalEl = document.getElementById("tourneeDetailsModal");
+      if (modalEl) modalEl.classList.remove("hidden");
       lucide.createIcons();
     }
 
@@ -1599,7 +1623,9 @@
       const periodTournees = getPeriodFilteredTournees();
       const periodGroups = buildTourneeGroups(periodTournees);
 
-      container.innerHTML = agentsToDisplay.map(agent => {
+      let agentsHtml = '';
+
+      agentsToDisplay.forEach(agent => {
         const aHist = periodHistory.filter(r => r.user === agent);
         const aPcs = aHist.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
         const aZero = aHist.filter(r => Number(r.quantity) === 0).length;
@@ -1616,32 +1642,36 @@
         if (aGrpTotal === 0) {
           missionsHtml = '<div class="text-[10px] text-slate-400 italic">Aucune mission assignée.</div>';
         } else {
-          missionsHtml = aGrp.map(g => `
-            <div class="mb-2 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2 py-0.5">
-              <span class="block text-[10px] font-bold text-slate-800 truncate">${g.contractor}</span>
-              <span class="block text-[9px] text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
-            </div>
-          `).join('');
+          aGrp.forEach(g => {
+            missionsHtml += `
+              <div class="mb-2 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2 py-0.5">
+                <span class="block text-[10px] font-bold text-slate-800 truncate">${g.contractor}</span>
+                <span class="block text-[9px] text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
+              </div>
+            `;
+          });
         }
 
         let historyHtml = '';
         if (aHist.length === 0) {
           historyHtml = '<div class="text-[10px] text-slate-400 italic">Aucun enregistrement.</div>';
         } else {
-          historyHtml = aHist.map(r => `
-            <div class="mb-2 flex justify-between items-start gap-1">
-              <div class="min-w-0">
-                <span class="block font-mono text-[9px] font-bold text-amber-700">${r.sapRef}</span>
-                <span class="block text-[9px] text-slate-600 truncate">${r.contractor}</span>
+          aHist.forEach(r => {
+            historyHtml += `
+              <div class="mb-2 flex justify-between items-start gap-1">
+                <div class="min-w-0">
+                  <span class="block font-mono text-[9px] font-bold text-amber-700">${r.sapRef}</span>
+                  <span class="block text-[9px] text-slate-600 truncate">${r.contractor}</span>
+                </div>
+                <span class="font-mono text-[10px] font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'} bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                  ${r.quantity}
+                </span>
               </div>
-              <span class="font-mono text-[10px] font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'} bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                ${r.quantity}
-              </span>
-            </div>
-          `).join('');
+            `;
+          });
         }
 
-        return `
+        agentsHtml += `
           <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs h-fit transition-all">
             <div onclick="toggleAgentDrawer('${agent}')" class="p-4 cursor-pointer hover:bg-slate-50 transition">
               <div class="flex items-center justify-between mb-3">
@@ -1684,7 +1714,8 @@
             </div>
           </div>
         `;
-      }).join('');
+      });
+      container.innerHTML = agentsHtml;
       lucide.createIcons();
     }
 
@@ -1721,19 +1752,33 @@
       const doneMissions = periodGroups.filter(g => g.isDone).length;
       const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
       
-      document.getElementById("kpiMissionsPct").innerText = `${missionsPct}%`;
-      document.getElementById("kpiMissionsBar").style.width = `${missionsPct}%`;
-      document.getElementById("kpiMissionsDone").innerText = doneMissions;
-      document.getElementById("kpiMissionsTotal").innerText = totalMissions;
+      const elMissionsPct = document.getElementById("kpiMissionsPct");
+      if (elMissionsPct) elMissionsPct.innerText = `${missionsPct}%`;
+
+      const elMissionsBar = document.getElementById("kpiMissionsBar");
+      if (elMissionsBar) elMissionsBar.style.width = `${missionsPct}%`;
+
+      const elMissionsDone = document.getElementById("kpiMissionsDone");
+      if (elMissionsDone) elMissionsDone.innerText = doneMissions;
+
+      const elMissionsTotal = document.getElementById("kpiMissionsTotal");
+      if (elMissionsTotal) elMissionsTotal.innerText = totalMissions;
       
       const totalLines = periodTournees.length;
       const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
       const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
       
-      document.getElementById("globalCompletionPct").innerText = `${linesPct}%`;
-      document.getElementById("globalCompletionBar").style.width = `${linesPct}%`;
-      document.getElementById("kpiDoneTasks").innerText = doneLines;
-      document.getElementById("kpiPendingTasks").innerText = totalLines - doneLines;
+      const elGlobalCompletionPct = document.getElementById("globalCompletionPct");
+      if (elGlobalCompletionPct) elGlobalCompletionPct.innerText = `${linesPct}%`;
+
+      const elGlobalCompletionBar = document.getElementById("globalCompletionBar");
+      if (elGlobalCompletionBar) elGlobalCompletionBar.style.width = `${linesPct}%`;
+
+      const elKpiDoneTasks = document.getElementById("kpiDoneTasks");
+      if (elKpiDoneTasks) elKpiDoneTasks.innerText = doneLines;
+
+      const elKpiPendingTasks = document.getElementById("kpiPendingTasks");
+      if (elKpiPendingTasks) elKpiPendingTasks.innerText = totalLines - doneLines;
 
       const todayStr = normalizeDateYMD(new Date());
       const allGroups = buildTourneeGroups(cachedTournees || []);
@@ -1741,8 +1786,11 @@
       const totalActiveMissions = allGroups.length;
       const slaScore = totalActiveMissions > 0 ? Math.round(((totalActiveMissions - overdueMissions) / totalActiveMissions) * 100) : 100;
       
-      document.getElementById("kpiOverdueMissionsCount").innerText = overdueMissions;
-      document.getElementById("kpiSlaScore").innerText = `${slaScore}%`;
+      const elOverdueCount = document.getElementById("kpiOverdueMissionsCount");
+      if (elOverdueCount) elOverdueCount.innerText = overdueMissions;
+
+      const elSlaScore = document.getElementById("kpiSlaScore");
+      if (elSlaScore) elSlaScore.innerText = `${slaScore}%`;
 
       const agentListContainer = document.getElementById("agentCompletionList");
       if (!agentListContainer) return;
@@ -1753,13 +1801,14 @@
         return;
       }
 
-      agentListContainer.innerHTML = activeAgentsThisPeriod.map(agent => {
+      let agentListHtml = '';
+      activeAgentsThisPeriod.forEach(agent => {
         const aGroups = periodGroups.filter(g => g.agent === agent);
         const aTotalGroups = aGroups.length;
         const aDoneGroups = aGroups.filter(g => g.isDone).length;
         const aPct = aTotalGroups > 0 ? Math.round((aDoneGroups / aTotalGroups) * 100) : 0;
 
-        return `
+        agentListHtml += `
           <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
             <div class="flex justify-between items-center text-xs">
               <span class="font-bold text-slate-900">${agent}</span>
@@ -1770,7 +1819,8 @@
             </div>
           </div>
         `;
-      }).join('');
+      });
+      agentListContainer.innerHTML = agentListHtml;
     }
 
     function applyFilters() {
@@ -1786,8 +1836,11 @@
         periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
       }
       
-      document.getElementById("periodBadgeGlobal").innerText = periodLabel;
-      document.getElementById("periodBadgeAgents").innerText = periodLabel;
+      const badgeGlobal = document.getElementById("periodBadgeGlobal");
+      if (badgeGlobal) badgeGlobal.innerText = periodLabel;
+
+      const badgeAgents = document.getElementById("periodBadgeAgents");
+      if (badgeAgents) badgeAgents.innerText = periodLabel;
 
       const periodData = getPeriodFilteredHistory();
       const filtered = getFilteredHistory();
@@ -1802,21 +1855,7 @@
 
     function toggleActiveAgentsFilter() {
       filterOnlyActiveAgents = !filterOnlyActiveAgents;
-      const btnText = document.getElementById("btnFilterActiveText");
-      const btn = document.getElementById("btnFilterActiveAgentsOnly");
-      if (!btn || !btnText) return;
-      
-      btn.className = filterOnlyActiveAgents 
-        ? "px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer bg-white border border-slate-200 hover:bg-slate-50 text-slate-700" 
-        : "px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer bg-slate-800 border border-slate-900 text-white";
-      
-      btnText.innerText = filterOnlyActiveAgents ? "Afficher toute la flotte" : "En cours uniquement";
-      
-      const spanDot = btn.querySelector('span:first-child');
-      if (spanDot) {
-          spanDot.className = filterOnlyActiveAgents ? "w-2 h-2 rounded-full bg-slate-300" : "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-      }
-      
+      updateActiveAgentsButtonUI();
       applyFilters();
     }
 
@@ -1824,13 +1863,15 @@
       if (val === "" || val === null) {
         customMaxQty = null;
         localStorage.removeItem("mon_cfg_max_qty");
-        document.getElementById("cfgMaxQtyDisplay").innerText = "--";
+        const display = document.getElementById("cfgMaxQtyDisplay");
+        if (display) display.innerText = "--";
       } else {
         const parsed = Number(val);
         if (!isNaN(parsed) && parsed >= 0) {
           customMaxQty = parsed;
           localStorage.setItem("mon_cfg_max_qty", customMaxQty);
-          document.getElementById("cfgMaxQtyDisplay").innerText = customMaxQty;
+          const display = document.getElementById("cfgMaxQtyDisplay");
+          if (display) display.innerText = customMaxQty;
         }
       }
       applyFilters();
@@ -1845,10 +1886,13 @@
     }
 
     function toggleFilterDropdown(id) {
-      ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'].forEach(otherId => {
+      const otherIds = ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'];
+      otherIds.forEach(otherId => {
         if (otherId !== id) {
           const el = document.getElementById(otherId);
-          if (el) el.classList.add("hidden");
+          if (el) {
+            el.classList.add("hidden");
+          }
         }
       });
       const target = document.getElementById(id);
@@ -1861,12 +1905,18 @@
       const makeCheckboxes = (containerId, list, selectedArr, type) => {
         const el = document.getElementById(containerId);
         if (!el) return;
-        el.innerHTML = list.map(item => `
-          <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-            <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${selectedArr.includes(item) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-            <span class="truncate">${item}</span>
-          </label>
-        `).join('');
+        
+        let html = '';
+        list.forEach(item => {
+          const isChecked = selectedArr.includes(item) ? 'checked' : '';
+          html += `
+            <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+              <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${isChecked} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+              <span class="truncate">${item}</span>
+            </label>
+          `;
+        });
+        el.innerHTML = html;
       };
       
       makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
@@ -1878,20 +1928,25 @@
       activeKpiFilter = null;
       if (type === 'agents') {
         selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
-        document.getElementById("btnLabelAgents").innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
+        const label = document.getElementById("btnLabelAgents");
+        if (label) label.innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
       } else if (type === 'contractors') {
         selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
-        document.getElementById("btnLabelContractors").innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
+        const label = document.getElementById("btnLabelContractors");
+        if (label) label.innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
       } else if (type === 'trades') {
         selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
-        document.getElementById("btnLabelTrades").innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
+        const label = document.getElementById("btnLabelTrades");
+        if (label) label.innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
       }
       applyFilters();
     }
 
     function selectAll(type, check) {
       activeKpiFilter = null;
-      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => b.checked = check);
+      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => {
+        b.checked = check;
+      });
       onCheckboxChange(type);
     }
 
@@ -1935,15 +1990,19 @@
         return;
       }
 
-      dd.innerHTML = filtered.map(a => `
-        <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
-          <div class="min-w-0 pr-2">
-            <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
-            <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
+      let html = '';
+      filtered.forEach(a => {
+        html += `
+          <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
+            <div class="min-w-0 pr-2">
+              <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
+              <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
+            </div>
+            <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
           </div>
-          <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
-        </div>
-      `).join('');
+        `;
+      });
+      dd.innerHTML = html;
       dd.classList.remove("hidden");
     }
 
@@ -1973,14 +2032,18 @@
       const container = document.getElementById("selectedArticleTagsContainer");
       if (!container) return;
       
-      container.innerHTML = selectedArticleTags.map(ref => `
-        <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
-          <span class="truncate max-w-[260px]">${ref}</span>
-          <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
-            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-          </button>
-        </span>
-      `).join('');
+      let html = '';
+      selectedArticleTags.forEach(ref => {
+        html += `
+          <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
+            <span class="truncate max-w-[260px]">${ref}</span>
+            <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </span>
+        `;
+      });
+      container.innerHTML = html;
       lucide.createIcons();
     }
 
@@ -2007,39 +2070,42 @@
       const customBox = document.getElementById("customDateRangeBox");
 
       if (mode === 'CUSTOM') {
-        customBox.classList.remove("hidden");
+        if (customBox) customBox.classList.remove("hidden");
         return;
       }
-      customBox.classList.add("hidden");
+      if (customBox) customBox.classList.add("hidden");
 
       if (mode === 'ALL') {
-        sInput.value = "";
-        eInput.value = "";
+        if (sInput) sInput.value = "";
+        if (eInput) eInput.value = "";
       } else if (mode === 'TODAY') {
         const dStr = normalizeDateYMD(now);
-        sInput.value = dStr;
-        eInput.value = dStr;
+        if (sInput) sInput.value = dStr;
+        if (eInput) eInput.value = dStr;
       } else if (mode === 'CURRENT_WEEK') {
         const day = now.getDay() || 7;
         const monday = new Date(now);
         monday.setDate(now.getDate() - day + 1);
         const sunday = new Date(monday);
         sunday.setDate(sunday.getDate() + 6);
-        sInput.value = normalizeDateYMD(monday);
-        eInput.value = normalizeDateYMD(sunday);
+        if (sInput) sInput.value = normalizeDateYMD(monday);
+        if (eInput) eInput.value = normalizeDateYMD(sunday);
       } else if (mode === 'PREV_WEEK') {
         const day = now.getDay() || 7;
         const prevMonday = new Date(now);
         prevMonday.setDate(now.getDate() - day - 6);
         const prevSunday = new Date(prevMonday);
         prevSunday.setDate(prevMonday.getDate() + 6);
-        sInput.value = normalizeDateYMD(prevMonday);
-        eInput.value = normalizeDateYMD(prevSunday);
+        if (sInput) sInput.value = normalizeDateYMD(prevMonday);
+        if (eInput) eInput.value = normalizeDateYMD(prevSunday);
       } else if (mode === 'CURRENT_MONTH') {
-        sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
-        eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+        if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+        if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
       }
-      updateWeekBadge(sInput.value);
+      
+      if (sInput) {
+        updateWeekBadge(sInput.value);
+      }
       applyFilters();
     }
 
@@ -2053,8 +2119,12 @@
     }
 
     function getPeriodFilteredHistory() {
-      const sDateVal = document.getElementById("filterStartDate").value;
-      const eDateVal = document.getElementById("filterEndDate").value;
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      
+      const sDateVal = sInput ? sInput.value : "";
+      const eDateVal = eInput ? eInput.value : "";
+      
       const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
       const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
@@ -2078,170 +2148,80 @@
       });
     }
 
-    function applyFilters() {
-      const sDateVal = document.getElementById("filterStartDate").value;
-      const eDateVal = document.getElementById("filterEndDate").value;
-      
-      let periodLabel = "Tout l'historique";
-      if (sDateVal && eDateVal) {
-        periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
-      } else if (sDateVal) {
-        periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
-      } else if (eDateVal) {
-        periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
-      }
-
-      document.getElementById("periodBadgeGlobal").innerText = periodLabel;
-      document.getElementById("periodBadgeAgents").innerText = periodLabel;
-
-      const periodData = getPeriodFilteredHistory();
-      const filtered = getFilteredHistory();
-
-      renderKPIs(filtered); 
-      renderTable(filtered); 
-      renderAgentsView(periodData); 
-      renderMap(mapFilterOnSelection ? filtered : periodData);
-      renderWallPlanning(); 
-      renderCompletionMetrics(); 
-    }
-
     function renderKPIs(list) {
       const totalR = list.length;
       const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
       const zeroS = list.filter(r => Number(r.quantity) === 0).length;
       const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
 
-      document.getElementById("kpiTotalRows").innerText = totalR;
-      document.getElementById("kpiTotalPieces").innerText = totalP;
-      document.getElementById("kpiZeroStock").innerText = zeroS;
-      document.getElementById("kpiAtypicalStock").innerText = atypS;
+      const elTotalRows = document.getElementById("kpiTotalRows");
+      if (elTotalRows) elTotalRows.innerText = totalR;
 
-      document.getElementById("kpiAgentsTotalRows").innerText = totalR;
-      document.getElementById("kpiAgentsTotalPieces").innerText = totalP;
-      document.getElementById("kpiAgentsZeroStock").innerText = zeroS;
-      document.getElementById("kpiAgentsAtypicalStock").innerText = atypS;
+      const elTotalPieces = document.getElementById("kpiTotalPieces");
+      if (elTotalPieces) elTotalPieces.innerText = totalP;
+
+      const elZeroStock = document.getElementById("kpiZeroStock");
+      if (elZeroStock) elZeroStock.innerText = zeroS;
+
+      const elAtypicalStock = document.getElementById("kpiAtypicalStock");
+      if (elAtypicalStock) elAtypicalStock.innerText = atypS;
+
+      // KPIs de la page Agents (s'ils existent)
+      const elAgentsTotalRows = document.getElementById("kpiAgentsTotalRows");
+      if (elAgentsTotalRows) elAgentsTotalRows.innerText = totalR;
+
+      const elAgentsTotalPieces = document.getElementById("kpiAgentsTotalPieces");
+      if (elAgentsTotalPieces) elAgentsTotalPieces.innerText = totalP;
+
+      const elAgentsZeroStock = document.getElementById("kpiAgentsZeroStock");
+      if (elAgentsZeroStock) elAgentsZeroStock.innerText = zeroS;
+
+      const elAgentsAtypicalStock = document.getElementById("kpiAgentsAtypicalStock");
+      if (elAgentsAtypicalStock) elAgentsAtypicalStock.innerText = atypS;
     }
 
     function renderTable(list) {
       const tbody = document.getElementById("supervisionTableBody");
-      const alertZero = document.getElementById("cfgAlertZero").checked;
+      if (!tbody) return;
+
+      const alertZeroEl = document.getElementById("cfgAlertZero");
+      const alertZero = alertZeroEl ? alertZeroEl.checked : false;
       
-      document.getElementById("tableCountLabel").innerText = `${list.length} saisie(s) répertoriée(s)`;
+      const countLabel = document.getElementById("tableCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${list.length} saisie(s) répertoriée(s)`;
+      }
 
       if (list.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = list.map(item => {
+      let html = '';
+      list.forEach(item => {
         const q = Number(item.quantity);
         const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
-        return `
-          <tr class="hover:bg-slate-50 transition ${isAlert ? 'bg-amber-50/60' : ''}">
+        const bgClass = isAlert ? 'bg-amber-50/60' : '';
+        const textClass = q === 0 ? 'text-rose-600' : 'text-emerald-700';
+
+        html += `
+          <tr class="hover:bg-slate-50 transition ${bgClass}">
             <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
             <td class="p-3 font-bold text-slate-900">${item.user}</td>
             <td class="p-3 text-slate-700">${item.contractor}</td>
             <td class="p-3 text-slate-500">${item.trade}</td>
             <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
             <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
-            <td class="p-3 text-center font-mono font-black ${q === 0 ? 'text-rose-600' : 'text-emerald-700'} text-sm">${q}</td>
+            <td class="p-3 text-center font-mono font-black ${textClass} text-sm">${q}</td>
             <td class="p-3 text-right whitespace-nowrap">
               <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
               <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
             </td>
           </tr>
         `;
-      }).join('');
+      });
+      tbody.innerHTML = html;
       lucide.createIcons();
-    }
-
-    function renderAgentsView(periodList) {
-      const container = document.getElementById("agentsAccordionContainer");
-      if (!container) return;
-
-      let agentsToDisplay = availableAgents;
-      if (filterOnlyActiveAgents) {
-        agentsToDisplay = availableAgents.filter(agent => periodList.some(r => r.user === agent));
-      }
-
-      if (agentsToDisplay.length === 0) {
-        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-2xl">Aucun agent actif sur cette période.</div>`;
-        return;
-      }
-
-      container.innerHTML = agentsToDisplay.map(agent => {
-        const agentRecords = periodList.filter(r => r.user === agent);
-        const totalRows = agentRecords.length;
-        const totalPieces = agentRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-        const zeroStock = agentRecords.filter(r => Number(r.quantity) === 0).length;
-        
-        const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
-        const isOpen = !!openDrawers[agent];
-
-        return `
-          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-            <div onclick="toggleAgentDrawer('${agent}')" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition">
-              <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl ${totalRows > 0 ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-400'} flex items-center justify-center font-bold text-sm">
-                  ${agent.substring(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h4 class="font-bold text-slate-900 text-sm">${agent}</h4>
-                  <span class="text-[11px] text-slate-400">${totalRows > 0 ? 'Activité enregistrée' : 'Aucune saisie'}</span>
-                </div>
-              </div>
-
-              <div class="flex items-center space-x-4">
-                <div class="flex items-center space-x-3 text-xs font-mono">
-                  <span class="text-slate-600"><strong>${totalRows}</strong> lignes</span>
-                  <span class="text-orange-600"><strong>${totalPieces}</strong> pcs</span>
-                  ${zeroStock > 0 ? `<span class="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded">${zeroStock} rupture(s)</span>` : ''}
-                </div>
-                <i id="icon_${cleanAgentId}" data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>
-              </div>
-            </div>
-
-            <div id="drawer_${cleanAgentId}" class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 p-3 bg-slate-50/50 space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar text-xs">
-              ${totalRows === 0 ? '<div class="text-slate-400 italic text-center py-2">Aucune ligne disponible.</div>' : agentRecords.map(r => `
-                <div class="p-2 bg-white border border-slate-200 rounded-xl flex justify-between items-center">
-                  <div class="min-w-0 pr-2">
-                    <span class="font-mono font-bold text-amber-700">${r.sapRef}</span>
-                    <span class="text-slate-700 ml-1 truncate">${r.designation}</span>
-                    <span class="text-[10px] text-slate-400 block">${r.contractor} (${r.trade})</span>
-                  </div>
-                  <span class="font-mono font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'}">${r.quantity} pcs</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      }).join('');
-      lucide.createIcons();
-    }
-
-    function toggleAgentDrawer(agent) {
-      openDrawers[agent] = !openDrawers[agent];
-      const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
-      const drawer = document.getElementById(`drawer_${cleanAgentId}`);
-      const icon = document.getElementById(`icon_${cleanAgentId}`);
-      
-      if (drawer) {
-        if (openDrawers[agent]) {
-          drawer.classList.remove('hidden');
-          drawer.classList.add('block');
-          if (icon) {
-            icon.setAttribute('data-lucide', 'chevron-up');
-            lucide.createIcons();
-          }
-        } else {
-          drawer.classList.add('hidden');
-          drawer.classList.remove('block');
-          if (icon) {
-            icon.setAttribute('data-lucide', 'chevron-down');
-            lucide.createIcons();
-          }
-        }
-      }
     }
 
     function renderMap(list) {
@@ -2259,7 +2239,11 @@
 
       markersLayer.clearLayers();
       const pointsWithGps = list.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng));
-      document.getElementById("mapPointsCountLabel").innerText = `${pointsWithGps.length} point(s) GPS`;
+      
+      const countLabel = document.getElementById("mapPointsCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${pointsWithGps.length} point(s) GPS`;
+      }
 
       pointsWithGps.forEach(p => {
         const marker = L.circleMarker([p.lat, p.lng], {
@@ -2376,7 +2360,7 @@
 
       closeTourneeDetailsModal();
       applyFilters(); 
-      if(navigator.onLine) {
+      if (navigator.onLine) {
         setTimeout(syncMonitoringData, 100);
       }
     }
@@ -2385,25 +2369,37 @@
       activeView = v;
       localStorage.setItem("mon_active_view", v);
       
-      ['Global', 'Agents', 'Map', 'TourneesAdmin'].forEach(id => {
+      const viewIds = ['Global', 'Agents', 'Map', 'TourneesAdmin'];
+      viewIds.forEach(id => {
         const el = document.getElementById("view" + id);
-        if (el) el.classList.add("hidden");
+        if (el) {
+          el.classList.add("hidden");
+        }
       });
       
-      ['Global', 'Agents', 'Map', 'Tournees'].forEach(id => {
+      const btnIds = ['Global', 'Agents', 'Map', 'Tournees'];
+      btnIds.forEach(id => {
         const el = document.getElementById("btnNav" + id);
-        if (el) el.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+        if (el) {
+          el.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+        }
       });
 
       if (v === 'global') {
-        document.getElementById("viewGlobal").classList.remove("hidden");
-        document.getElementById("btnNavGlobal").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+        const view = document.getElementById("viewGlobal");
+        if (view) view.classList.remove("hidden");
+        const btn = document.getElementById("btnNavGlobal");
+        if (btn) btn.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
       } else if (v === 'agents') {
-        document.getElementById("viewAgents").classList.remove("hidden");
-        document.getElementById("btnNavAgents").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+        const view = document.getElementById("viewAgents");
+        if (view) view.classList.remove("hidden");
+        const btn = document.getElementById("btnNavAgents");
+        if (btn) btn.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
       } else if (v === 'map') {
-        document.getElementById("viewMap").classList.remove("hidden");
-        document.getElementById("btnNavMap").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+        const view = document.getElementById("viewMap");
+        if (view) view.classList.remove("hidden");
+        const btn = document.getElementById("btnNavMap");
+        if (btn) btn.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
         setTimeout(() => {
           if (map) {
             map.invalidateSize();
@@ -2411,8 +2407,10 @@
           }
         }, 200);
       } else if (v === 'tournees') {
-        document.getElementById("viewTourneesAdmin").classList.remove("hidden");
-        document.getElementById("btnNavTournees").className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
+        const view = document.getElementById("viewTourneesAdmin");
+        if (view) view.classList.remove("hidden");
+        const btn = document.getElementById("btnNavTournees");
+        if (btn) btn.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-[#f97316] text-white shadow-xs transition cursor-pointer";
         renderWallPlanning();
       }
       lucide.createIcons();
