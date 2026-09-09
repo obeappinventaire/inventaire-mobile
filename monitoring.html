@@ -25,7 +25,7 @@
     
     #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
     
-    /* TOOLTIP LEAFLET MODERNE & TRANSPARENT */
+    /* TOOLTIP LEAFLET MODERNE & TRANSPARENT POUR CLONER L'APP MOBILE */
     .leaflet-tooltip.custom-map-tooltip {
       background: transparent;
       border: none;
@@ -140,11 +140,12 @@
               <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
               </span>
+              <!-- BADGE NUMERO DE SEMAINE PLUS CLAIR ET PLUS GRAND -->
               <span id="weekBadgeLabel" class="text-sm font-bold bg-orange-100 text-orange-800 px-3 py-0.5 rounded border border-orange-300 shadow-sm">--</span>
             </div>
 
             <div class="relative">
-              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
                 <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
                 <option value="NEXT_WEEK">▶ Semaine prochaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
@@ -169,7 +170,7 @@
 
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères
               </span>
               <span class="text-[9px] bg-amber-950/50 text-amber-400 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
@@ -201,19 +202,19 @@
     </aside>
 
     <!-- ZONE PRINCIPALE DE DROITE -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50">
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50" id="mainScrollArea">
       
       <div class="space-y-6 flex-1">
         
-        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE (COCKPIT EXPERT) ================= -->
+        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
         <section id="viewGlobal" class="space-y-6">
           <div>
-            <div class="flex justify-between items-center mb-2 px-1 max-w-6xl">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cockpit Qualité & Activité Entrepôt</span>
-              <span id="periodBadgeGlobal" class="text-xs text-indigo-700 font-mono font-bold bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shadow-xs">--</span>
+            <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Activité Entrepôt Cumulée sur la Période Active</span>
+              <span id="periodBadgeGlobal" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">--</span>
             </div>
             
-            <div class="grid grid-cols-4 gap-3 max-w-6xl mb-4">
+            <div class="grid grid-cols-4 gap-3 max-w-5xl">
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Saisies</span>
                 <span id="kpiTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
@@ -222,58 +223,39 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
-                <span class="text-[11px] font-bold text-indigo-500 uppercase block">Articles Uniques</span>
-                <span id="kpiUniqueArticles" class="text-xl font-black text-indigo-700 mt-0.5 block">0</span>
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
+                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition shadow-2xs">
+                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
+                  </div>
+                </div>
+                <span id="kpiZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
               </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
-                <span class="text-[11px] font-bold text-emerald-600 uppercase block">Taux de Fiabilité</span>
-                <span id="kpiReliabilityRate" class="text-xl font-black text-emerald-700 mt-0.5 block">100%</span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 max-w-6xl">
-              <!-- VISUEL 1 : JAUGE DE SANTÉ STOCK -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs flex flex-col justify-center space-y-2">
-                <div class="flex justify-between items-end">
-                   <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Santé du Stock Audité</span>
-                   <span class="text-[10px] text-slate-400 font-mono">Normal vs Rupture vs Alerte</span>
+              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
+                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition shadow-2xs">
+                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
+                  </div>
                 </div>
-                <div class="w-full h-4 rounded-full overflow-hidden flex bg-slate-100" id="kpiQualityBarContainer">
-                   <div id="kpiQualNormal" class="bg-emerald-500 h-full transition-all" style="width: 100%" title="Normal"></div>
-                   <div id="kpiQualAtyp" class="bg-amber-400 h-full transition-all" style="width: 0%" title="Alerte Volume"></div>
-                   <div id="kpiQualZero" class="bg-rose-500 h-full transition-all" style="width: 0%" title="Rupture"></div>
-                </div>
-                <div class="flex justify-between text-[10px] font-bold mt-1" id="kpiQualityLegend">
-                   <span class="text-emerald-600"><i data-lucide="circle-check" class="w-3 h-3 inline"></i> 0 Normaux</span>
-                   <span class="text-rose-600"><i data-lucide="triangle-alert" class="w-3 h-3 inline"></i> 0 Anomalies</span>
-                </div>
-              </div>
-
-              <!-- VISUEL 2 : TOP 3 HOTSPOTS ANOMALIES -->
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
-                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-3 border-b border-slate-100 pb-1">Palmarès Ruptures & Alertes (Hotspots)</span>
-                <div id="kpiTopAnomalies" class="space-y-2">
-                </div>
+                <span id="kpiAtypicalStock" class="text-xl font-black text-amber-600 mt-0.5 block">0</span>
               </div>
             </div>
           </div>
 
-          <!-- FILTRES GLOBAUX COMPACTÉS -->
           <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
             <div class="flex flex-wrap items-center gap-3">
               <div class="relative flex-1 min-w-[280px]" onclick="event.stopPropagation()">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
-                <input type="text" id="articleTagInput" onfocus="showArticleSuggestions()" oninput="onArticleTagInput(this.value)" placeholder="Recherche Rapide (Réf SAP, libellé)..." class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white shadow-xs">
+                <input type="text" id="articleTagInput" onfocus="showArticleSuggestions()" oninput="onArticleTagInput(this.value)" placeholder="Réf SAP ou désignation..." class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 pl-9 pr-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white shadow-xs">
                 <div id="articleDropdownList" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 z-40 max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
               </div>
 
               <div class="flex items-center gap-2 shrink-0">
-                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5">
-                   <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Réinitialiser
-                </button>
+                <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg text-xs transition cursor-pointer">Effacer</button>
                 <button onclick="exportTableToCSV()" class="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer">
-                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
                 </button>
               </div>
             </div>
@@ -352,12 +334,14 @@
 
         <!-- ================= ONGLET 2 : SUIVI SCORECARD AGENTS ================= -->
         <section id="viewAgents" class="hidden space-y-6">
-          <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
-              <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
+          <div class="flex justify-between items-center mb-2 px-1">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="users-round" class="w-4 h-4 text-orange-600"></i> Scorecard & Activité Agents
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">Performance consolidée basée sur la période sélectionnée à gauche.</p>
             </div>
-            <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer bg-white border border-slate-200 hover:bg-slate-50">
+            <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer bg-white border border-slate-200 hover:bg-slate-50">
               <span class="w-2 h-2 rounded-full bg-slate-300"></span>
               <span id="btnFilterActiveText">Afficher toute la flotte</span>
             </button>
@@ -423,6 +407,7 @@
         <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
         <section id="viewTourneesAdmin" class="hidden relative">
           
+          <!-- EN-TÊTE FIXE (STICKY) POUR L'AGENDA : LE HEADER ET LE BUFFER RESTENT TOUJOURS VISIBLES LORS DU SCROLL -->
           <div class="sticky top-0 z-30 bg-slate-50 pt-2 pb-4 border-b border-slate-200 shadow-sm mb-6 -mt-2">
             
             <div class="flex items-center justify-between mb-4">
@@ -446,28 +431,17 @@
               </div>
             </div>
 
+            <!-- ZONE BUFFER OPÉRATIONNEL -->
             <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col max-h-[220px]">
               <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 shrink-0">
                 <span class="font-bold text-amber-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
                   <i data-lucide="clock-4" class="w-4 h-4"></i> Buffer Opérationnel (Retards / À replanifier)
                 </span>
                 <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-bold text-amber-700 uppercase">Filtre Agent(s) :</span>
-                  
-                  <div class="relative" onclick="event.stopPropagation()">
-                    <button type="button" onclick="toggleFilterDropdown('dropdownAgendaAgents')" class="bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 focus:outline-none cursor-pointer shadow-xs flex items-center gap-1 min-w-[120px] justify-between">
-                      <span id="btnLabelAgendaAgents" class="truncate">Tous les agents</span>
-                      <i data-lucide="chevron-down" class="w-3 h-3 text-amber-600"></i>
-                    </button>
-                    <div id="dropdownAgendaAgents" class="hidden absolute right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-40 w-48 space-y-1">
-                      <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[10px]">
-                        <button type="button" onclick="selectAllAgendaAgents(true)" class="text-orange-600 font-bold hover:underline cursor-pointer">Tout cocher</button>
-                        <button type="button" onclick="selectAllAgendaAgents(false)" class="text-slate-500 hover:underline cursor-pointer">Décocher</button>
-                      </div>
-                      <div id="checkboxesAgendaAgents" class="max-h-40 overflow-y-auto custom-scrollbar pr-1"></div>
-                    </div>
-                  </div>
-
+                  <span class="text-[10px] font-bold text-amber-700 uppercase">Filtre Agent :</span>
+                  <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 focus:outline-none cursor-pointer shadow-xs">
+                    <option value="">Tous</option>
+                  </select>
                 </div>
               </div>
               <div id="overdueTasksContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 overflow-y-auto custom-scrollbar pr-1 max-h-[160px]"></div>
@@ -477,23 +451,27 @@
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
+            <!-- GRILLE DE L'AGENDA (9 COLONNES) -->
             <div class="lg:col-span-9 bg-white border border-slate-200 rounded-2xl shadow-xs p-4">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
                 <div class="flex items-center">
                    <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (Période ciblée)</span>
+                   <!-- BADGE SEMAINE SPECIFIQUE A L'AGENDA -->
                    <span id="agendaWeekBadge" class="ml-3 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded"></span>
                 </div>
               </div>
               <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
             </div>
 
+            <!-- COCKPIT DE COMPLÉTION DATA (3 COLONNES) -->
             <div class="lg:col-span-3 space-y-4">
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pilotage Réalisation</span>
                 </div>
                 <div class="text-center rounded-lg">
-                  <span id="kpiPeriodLabel" class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg inline-block shadow-xs">--</span>
+                  <!-- BADGE SEMAINE PILOTAGE PLUS GRAND -->
+                  <span id="kpiPeriodLabel" class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg inline-block">--</span>
                 </div>
 
                 <div class="space-y-1.5">
@@ -536,6 +514,7 @@
                 </div>
               </div>
 
+              <!-- BLOC : AVANCEMENT PAR AGENT -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-2">Avancement / Agent</span>
                 <div id="agentCompletionList" class="space-y-2.5 max-h-[180px] overflow-y-auto custom-scrollbar pr-1"></div>
@@ -679,8 +658,6 @@
     let pendingSyncQueue = []; 
     let isSyncing = false; 
 
-    let agendaSelectedAgents = [];
-
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
@@ -698,15 +675,18 @@
       return { week: weekNo, year: date.getUTCFullYear() };
     }
 
+    // MISE A JOUR DES NUMEROS DE SEMAINE DANS TOUTES LES VUES
     function updateWeekBadge(startDateStr) {
       const targetDate = startDateStr ? parseItemDate(startDateStr) : new Date();
       const iso = getISOWeekNumber(targetDate);
       const badgeText = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
       
       const badge = document.getElementById("weekBadgeLabel");
+      const wallBadge = document.getElementById("wallPlanningWeekLabel");
       const agendaBadge = document.getElementById("agendaWeekBadge"); 
       
       if (badge) badge.innerText = badgeText;
+      if (wallBadge) wallBadge.innerText = badgeText;
       if (agendaBadge) agendaBadge.innerText = badgeText; 
     }
 
@@ -788,7 +768,7 @@
         today.setHours(0,0,0,0);
 
         if (d < today) { 
-          alert("Impossible de planifier une tâche dans le passé."); 
+          alert("Impossible de créer une tâche dans le passé."); 
           inputElem.value = ""; 
           return false; 
         }
@@ -861,7 +841,7 @@
       }
 
       document.addEventListener("click", () => {
-        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList', 'dropdownAgendaAgents'].forEach(id => {
+        ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.classList.add("hidden");
         });
@@ -911,7 +891,7 @@
             applyFilters();
             return;
           } else {
-             throw new Error("Réponse serveur invalide.");
+             throw new Error("Réponse serveur invalide et mot de passe de secours incorrect.");
           }
         }
 
@@ -1074,8 +1054,10 @@
       const agentSel = document.getElementById("adminAssignAgent");
       const contractorSel = document.getElementById("adminAssignContractor");
       const tradeSel = document.getElementById("adminAssignTrade");
+      const filterAgentSel = document.getElementById("agendaFilterAgent");
 
       if (agentSel) agentSel.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      if (filterAgentSel) filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
       if (contractorSel) contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
       if (tradeSel) tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
     }
@@ -1369,38 +1351,11 @@
       return list;
     }
 
-    function initAgendaMultiSelect() {
-      const el = document.getElementById("checkboxesAgendaAgents");
-      if(!el) return;
-      el.innerHTML = availableAgents.map(a => `
-        <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-          <input type="checkbox" value="${a}" onchange="onAgendaAgentChange()" ${agendaSelectedAgents.length === 0 || agendaSelectedAgents.includes(a) ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-          <span class="truncate">${a}</span>
-        </label>
-      `).join('');
-    }
-
-    function onAgendaAgentChange() {
-      const checkboxes = document.querySelectorAll("#checkboxesAgendaAgents input:checked");
-      agendaSelectedAgents = Array.from(checkboxes).map(cb => cb.value);
-      const btn = document.getElementById("btnLabelAgendaAgents");
-      if (agendaSelectedAgents.length === 0 || agendaSelectedAgents.length === availableAgents.length) {
-         if (btn) btn.innerText = "Tous les agents";
-         agendaSelectedAgents = []; 
-      } else {
-         if (btn) btn.innerText = `${agendaSelectedAgents.length} agent(s)`;
-      }
-      renderWallPlanning();
-    }
-
-    function selectAllAgendaAgents(check) {
-      document.querySelectorAll("#checkboxesAgendaAgents input").forEach(cb => cb.checked = check);
-      onAgendaAgentChange();
-    }
-
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const overdueContainer = document.getElementById("overdueTasksContainer");
+      const filterAgentEl = document.getElementById("agendaFilterAgent");
+      const filterAgent = filterAgentEl ? filterAgentEl.value : "";
       
       if (!gridContainer || !overdueContainer) return;
 
@@ -1409,20 +1364,15 @@
       const todayStr = normalizeDateYMD(today);
 
       let allTournees = cachedTournees || [];
-      if (agendaSelectedAgents.length > 0) {
-        allTournees = allTournees.filter(t => agendaSelectedAgents.includes(t.agent));
+      if (filterAgent) {
+        allTournees = allTournees.filter(t => t.agent === filterAgent);
       }
 
       const allGroups = buildTourneeGroups(allTournees);
 
       const overdueGroups = allGroups.filter(g => !g.isDone && g.date < todayStr);
-
       if (overdueGroups.length === 0) {
-        overdueContainer.innerHTML = `
-          <div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">
-            <i data-lucide="check-circle" class="w-4 h-4"></i> Aucun retard opérationnel détecté.
-          </div>
-        `;
+        overdueContainer.innerHTML = `<div class="col-span-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">Aucun retard opérationnel.</div>`;
       } else {
         let overdueHtml = '';
         overdueGroups.forEach(g => {
@@ -1469,14 +1419,14 @@
           groups.forEach(g => {
             const badgeColor = g.isDone ? "bg-emerald-50 border-emerald-300" : "bg-white border-slate-200 hover:border-orange-300";
             cardsHtml += `
-              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[9px] space-y-1 mb-2">
+              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] space-y-1 mb-2">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
-                  <span class="font-bold text-slate-700 truncate pr-1">${g.agent}</span>
-                  <span class="font-mono text-[8px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
+                  <span class="font-bold text-slate-700 truncate">${g.agent}</span>
+                  <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
                 </div>
                 <div class="leading-tight space-y-1">
                   <strong class="block text-slate-800 truncate">${g.contractor}</strong>
-                  <span class="text-[8px] font-medium text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded inline-block truncate max-w-full border border-indigo-100">${g.trade}</span>
+                  <span class="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded inline-block truncate max-w-full border border-indigo-100">${g.trade}</span>
                 </div>
               </div>
             `;
@@ -1485,20 +1435,20 @@
         };
 
         const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
-        const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'w-64 min-w-[200px] flex-1';
+        const colClass = isBlocked ? 'w-16 shrink-0 bg-slate-100/60 items-center justify-center' : 'w-64 min-w-[200px] flex-1';
         
         let innerContentHtml = '';
         if (isBlocked) {
-           innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
+           innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-xs font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
            innerContentHtml = `
-            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-sky-50 hover:bg-sky-100 border border-sky-200 border-dashed cursor-pointer">
-              <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider mb-2 text-center border-b border-sky-200/50 pb-1">Matin</span>
-              <div class="grid grid-cols-2 gap-1.5 flex-1 content-start" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
+            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 min-h-[140px] rounded-lg p-1.5 flex flex-col transition bg-sky-50/40 hover:bg-sky-100/60 border border-sky-100 border-dashed cursor-pointer">
+              <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider mb-2 text-center">Matin</span>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
             </div>
-            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-amber-50 hover:bg-amber-100 border border-amber-200 border-dashed cursor-pointer mt-2">
-              <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider mb-2 text-center border-b border-amber-200/50 pb-1">Après-midi</span>
-              <div class="grid grid-cols-2 gap-1.5 flex-1 content-start" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
+            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 min-h-[140px] rounded-lg p-1.5 flex flex-col transition bg-amber-50/40 hover:bg-amber-100/60 border border-amber-100 border-dashed cursor-pointer mt-2">
+              <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider mb-2 text-center">Après-midi</span>
+              <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
             </div>
            `;
         }
@@ -1506,8 +1456,8 @@
         const isToday = dayObj.toDateString() === today.toDateString();
 
         gridHtml += `
-          <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex flex-col shadow-sm transition-all h-auto ${colClass}">
-            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 rounded-lg border-orange-200' : ''} mb-2 ${isBlocked?'hidden':''}">
+          <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col shadow-sm transition-all h-auto ${colClass}">
+            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 rounded-lg border-orange-200' : ''} mb-2">
               <div class="flex items-baseline justify-center gap-1.5">
                 <span class="text-xs font-bold uppercase tracking-widest ${isToday ? 'text-orange-700' : 'text-slate-500'}">
                   ${isToday ? "Auj" : dayNames[dayObj.getDay()]}
@@ -1527,170 +1477,417 @@
       gridContainer.innerHTML = gridHtml;
     }
 
-    function toggleFilterDropdown(id) {
-      const otherIds = ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList', 'dropdownAgendaAgents'];
-      otherIds.forEach(otherId => {
-        if (otherId !== id) {
-          const el = document.getElementById(otherId);
-          if (el) el.classList.add("hidden");
-        }
-      });
-      const target = document.getElementById(id);
-      if (target) target.classList.toggle("hidden");
-    }
+    // LISTING DES SAISIES DANS LA MODALE LORS DU CLIC SUR LA CARTE
+    function openMapListingDetail(idStr) {
+      const item = cachedHistory.find(h => h.id === idStr);
+      if (!item) return;
 
-    // FONCTION UTILITAIRE : Null-check sécurisé pour DOM
-    function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
-    function safeSetHtml(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
-    function safeSetWidth(id, pct) { const el = document.getElementById(id); if (el) el.style.width = `${pct}%`; }
-    function safeSetClass(id, cls) { const el = document.getElementById(id); if (el) el.className = cls; }
-
-    function renderKPIs(list) {
-      const totalR = list.length;
-      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
-      const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
-
-      const uniqueItems = new Set(list.map(i => String(i.sapRef).trim())).size;
-      const totalAnomalies = zeroS + atypS;
-      const anomalyRate = totalR > 0 ? Math.round((totalAnomalies / totalR) * 100) : 0;
-      const reliabilityRate = totalR > 0 ? 100 - anomalyRate : 100;
-
-      // MISE A JOUR SECURISEE DU COCKPIT
-      safeSetText("kpiTotalRows", totalR);
-      safeSetText("kpiTotalPieces", totalP);
-      safeSetText("kpiUniqueArticles", uniqueItems);
+      const titleEl = document.getElementById("modalTourneeTitle");
+      if (titleEl) titleEl.innerText = `Détail Saisie : ${item.user}`;
       
-      safeSetText("kpiReliabilityRate", `${reliabilityRate}%`);
-      safeSetClass("kpiReliabilityRate", `text-xl font-black mt-0.5 block ${reliabilityRate < 90 ? 'text-rose-600' : 'text-emerald-700'}`);
+      const subTitleEl = document.getElementById("modalTourneeSubtitle");
+      if (subTitleEl) subTitleEl.innerText = `${formatDateDMY(item.timestamp, true)} • Réf: ${item.sapRef}`;
 
-      const pctNormal = totalR > 0 ? ((totalR - totalAnomalies) / totalR) * 100 : 100;
-      const pctZero = totalR > 0 ? (zeroS / totalR) * 100 : 0;
-      const pctAtyp = totalR > 0 ? (atypS / totalR) * 100 : 0;
-
-      safeSetWidth("kpiQualNormal", pctNormal);
-      safeSetWidth("kpiQualAtyp", pctAtyp);
-      safeSetWidth("kpiQualZero", pctZero);
-
-      safeSetHtml("kpiQualityLegend", `
-        <span class="text-emerald-600"><i data-lucide="circle-check" class="w-3 h-3 inline"></i> ${totalR - totalAnomalies} Normaux</span>
-        <span class="text-rose-600"><i data-lucide="triangle-alert" class="w-3 h-3 inline"></i> ${totalAnomalies} Anomalies</span>
-      `);
-
-      const anomaliesList = list.filter(r => Number(r.quantity) === 0 || (customMaxQty !== null && Number(r.quantity) > customMaxQty));
-      const countsMap = {};
-      anomaliesList.forEach(r => {
-        const key = r.sapRef;
-        if (!countsMap[key]) countsMap[key] = { sapRef: r.sapRef, des: r.designation, count: 0 };
-        countsMap[key].count++;
-      });
-      const sortedAnomalies = Object.values(countsMap).sort((a,b) => b.count - a.count).slice(0, 3);
-      
-      const topContainer = document.getElementById("kpiTopAnomalies");
-      if (topContainer) {
-        if (sortedAnomalies.length === 0) {
-          topContainer.innerHTML = `<div class="text-center text-xs text-slate-400 italic py-2">Aucune anomalie détectée</div>`;
-        } else {
-          topContainer.innerHTML = sortedAnomalies.map((item, index) => `
-            <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-100">
-               <div class="flex items-center gap-2 min-w-0 pr-2">
-                 <span class="text-[10px] font-black text-slate-400">#${index+1}</span>
-                 <span class="text-[11px] font-mono font-bold text-rose-600">${item.sapRef}</span>
-                 <span class="text-[10px] text-slate-600 truncate">${item.des}</span>
-               </div>
-               <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">${item.count}x</span>
+      const contentEl = document.getElementById("modalTourneeContent");
+      if (contentEl) {
+        contentEl.innerHTML = `
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+               <span class="font-black text-slate-800 text-sm">${item.contractor}</span>
+               <span class="text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">${item.trade}</span>
             </div>
-          `).join('');
-        }
+            <p class="text-sm text-slate-700 font-medium">${item.designation}</p>
+            <div class="flex justify-between items-center pt-3 border-t border-slate-200">
+               <span class="px-3 py-1.5 rounded-lg ${Number(item.quantity) === 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'} text-sm font-mono font-black border ${Number(item.quantity) === 0 ? 'border-rose-300' : 'border-emerald-300'}">
+                 ${item.quantity} PCS
+               </span>
+               <div class="flex gap-2">
+                 <button onclick="editTableItem('${item.id}', ${item.quantity}); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-white border border-slate-300 shadow-sm rounded-lg hover:bg-slate-100 text-slate-600 font-bold flex items-center gap-1.5 transition">
+                   Modifier
+                 </button>
+                 <button onclick="deleteTableItem('${item.id}'); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-rose-50 border border-rose-200 shadow-sm rounded-lg hover:bg-rose-100 text-rose-600 font-bold flex items-center gap-1.5 transition">
+                   Supprimer
+                 </button>
+               </div>
+            </div>
+          </div>
+        `;
       }
 
-      // MISE A JOUR SECURISEE DU SUIVI AGENTS
-      safeSetText("kpiAgentsTotalRows", totalR);
-      safeSetText("kpiAgentsTotalPieces", totalP);
-      safeSetText("kpiAgentsZeroStock", zeroS);
-      safeSetText("kpiAgentsAtypicalStock", atypS);
-      
-      safeSetText("kpiZeroStock", zeroS);
-      safeSetText("kpiAtypicalStock", atypS);
+      const modalEl = document.getElementById("tourneeDetailsModal");
+      if (modalEl) modalEl.classList.remove("hidden");
+    }
 
+    function openTourneeGroupModal(groupId) {
+      const allGroups = buildTourneeGroups(cachedTournees || []);
+      const g = allGroups.find(x => x.id === groupId);
+      if (!g) return;
+
+      const titleEl = document.getElementById("modalTourneeTitle");
+      if (titleEl) titleEl.innerText = `${g.contractor} - ${g.trade}`;
+      
+      const subTitleEl = document.getElementById("modalTourneeSubtitle");
+      if (subTitleEl) subTitleEl.innerText = `${g.agent} • ${formatDateFrench(g.date)} (${g.tranche}) • ${g.items.length} article(s)`;
+
+      const contentEl = document.getElementById("modalTourneeContent");
+      if (contentEl) {
+        let contentHtml = '';
+        const sortedItems = g.items.sort((a,b) => (Number(a.ordre)||0) - (Number(b.ordre)||0));
+        
+        sortedItems.forEach(t => {
+          const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+          contentHtml += `
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div class="min-w-0 pr-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-orange-600">${t.sapRef}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                  <span class="text-[9px] text-slate-400 font-mono">Ordre: ${t.ordre || 1}</span>
+                </div>
+                <p class="text-[11px] text-slate-700 truncate mt-0.5">${t.designation || 'Sans libellé'}</p>
+              </div>
+              <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          `;
+        });
+        contentEl.innerHTML = contentHtml;
+      }
+
+      const modalEl = document.getElementById("tourneeDetailsModal");
+      if (modalEl) modalEl.classList.remove("hidden");
       lucide.createIcons();
     }
 
-    function renderMap(list) {
-      const mapDiv = document.getElementById("mapContainer");
-      if (!mapDiv) return;
+    function getPeriodFilteredTournees() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
 
-      if (!map) {
-        map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
-        markersLayer = L.layerGroup().addTo(map);
+      return (cachedTournees || []).filter(item => {
+        const itDate = parseItemDate(item.date);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
+      });
+    }
+
+    function renderAgentsView(periodHistory) {
+      const container = document.getElementById("agentsAccordionContainer");
+      if (!container) return;
+
+      let agentsToDisplay = availableAgents;
+      if (filterOnlyActiveAgents) {
+        agentsToDisplay = availableAgents.filter(agent => periodHistory.some(r => r.user === agent) || getPeriodFilteredTournees().some(t => t.agent === agent));
       }
 
-      markersLayer.clearLayers();
-      const pointsWithGps = list.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng));
-      
-      const countLabel = document.getElementById("mapPointsCountLabel");
-      if (countLabel) {
-        countLabel.innerText = `${pointsWithGps.length} point(s) GPS`;
+      if (agentsToDisplay.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-3xl">Aucun agent actif sur cette période.</div>`;
+        return;
       }
 
-      pointsWithGps.forEach(p => {
-        const qty = Number(p.quantity);
-        const isRupture = qty === 0;
-        const markerColor = isRupture ? "#e11d48" : "#f97316";
+      const periodTournees = getPeriodFilteredTournees();
+      const periodGroups = buildTourneeGroups(periodTournees);
 
-        const marker = L.circleMarker([p.lat, p.lng], {
-          radius: 8,
-          fillColor: markerColor,
-          color: "#ffffff",
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.9
-        });
+      let agentsHtml = '';
 
-        // BULLE DE SURVOL DE CARTE (CONCENTREE & OPTIMISEE)
-        const tooltipHtml = `
-          <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[230px] overflow-hidden border border-slate-200 p-2.5">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
-              <div class="flex items-center gap-1 min-w-0">
-                <span class="font-black text-slate-800 text-[11px] uppercase truncate">👤 ${p.user}</span>
+      agentsToDisplay.forEach(agent => {
+        const aHist = periodHistory.filter(r => r.user === agent);
+        const aPcs = aHist.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+        const aZero = aHist.filter(r => Number(r.quantity) === 0).length;
+        
+        const aGrp = periodGroups.filter(g => g.agent === agent);
+        const aGrpTotal = aGrp.length;
+        const aGrpDone = aGrp.filter(g => g.isDone).length;
+        const aGrpPct = aGrpTotal > 0 ? Math.round((aGrpDone / aGrpTotal) * 100) : 0;
+        
+        const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
+        const isOpen = !!openDrawers[agent];
+
+        let missionsHtml = '';
+        if (aGrpTotal === 0) {
+          missionsHtml = '<div class="text-[10px] text-slate-400 italic">Aucune mission assignée.</div>';
+        } else {
+          aGrp.forEach(g => {
+            missionsHtml += `
+              <div class="mb-2 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2 py-0.5">
+                <span class="block text-[10px] font-bold text-slate-800 truncate">${g.contractor}</span>
+                <span class="block text-[9px] text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
               </div>
-              <span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 ${isRupture ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}">${isRupture ? 'RUPTURE' : 'COMPTÉ'}</span>
-            </div>
-            
-            <div class="mb-2 leading-tight">
-              <p class="font-bold text-slate-900 text-xs truncate">${p.contractor}</p>
-              <p class="text-[9px] font-semibold text-slate-500 truncate">${p.trade} • 📅 ${formatDateDMY(p.timestamp)}</p>
-            </div>
-            
-            <div class="flex gap-1.5 items-stretch">
-              <div class="bg-slate-50 text-slate-700 px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center items-center">
-                <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Réf SAP</span>
-                <span class="truncate max-w-[80px] text-orange-600">${p.sapRef}</span>
+            `;
+          });
+        }
+
+        let historyHtml = '';
+        if (aHist.length === 0) {
+          historyHtml = '<div class="text-[10px] text-slate-400 italic">Aucun enregistrement.</div>';
+        } else {
+          aHist.forEach(r => {
+            historyHtml += `
+              <div class="mb-2 flex justify-between items-start gap-1">
+                <div class="min-w-0">
+                  <span class="block font-mono text-[9px] font-bold text-amber-700">${r.sapRef}</span>
+                  <span class="block text-[9px] text-slate-600 truncate">${r.contractor}</span>
+                </div>
+                <span class="font-mono text-[10px] font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'} bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                  ${r.quantity}
+                </span>
               </div>
-              <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border flex-1 flex flex-col justify-center items-center">
-                <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Quantité</span>
-                <span>${qty}</span>
+            `;
+          });
+        }
+
+        // DESIGN DES SCORECARDS AGRANDI
+        agentsHtml += `
+          <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm h-fit transition-all">
+            <div onclick="toggleAgentDrawer('${agent}')" class="p-5 cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-4">
+                  <div class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-lg border border-orange-200">
+                    ${agent.substring(0, 2).toUpperCase()}
+                  </div>
+                  <h4 class="font-black text-slate-900 text-base tracking-wide">${agent}</h4>
+                </div>
+                <i id="icon_${cleanAgentId}" data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-6 h-6 text-slate-400"></i>
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Missions</span>
+                  <span class="font-mono text-sm font-black ${aGrpPct === 100 ? 'text-emerald-600' : 'text-slate-700'}">${aGrpDone}/${aGrpTotal}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Pièces</span>
+                  <span class="font-mono text-sm font-black text-orange-600">${aPcs}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Ruptures</span>
+                  <span class="font-mono text-sm font-black ${aZero > 0 ? 'text-rose-600' : 'text-slate-400'}">${aZero}</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="drawer_${cleanAgentId}" class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50">
+              <div class="grid grid-cols-2 divide-x divide-slate-100">
+                <div class="p-4 max-h-64 overflow-y-auto custom-scrollbar">
+                  <span class="block text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-2">Plan de Tournée</span>
+                  ${missionsHtml}
+                </div>
+                <div class="p-4 max-h-64 overflow-y-auto custom-scrollbar">
+                  <span class="block text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-2">Dernières Saisies</span>
+                  ${historyHtml}
+                </div>
               </div>
             </div>
           </div>
         `;
-
-        marker.bindTooltip(tooltipHtml, {
-          direction: 'top',
-          className: 'custom-map-tooltip',
-          offset: [0, -10]
-        });
-
-        marker.on('click', () => {
-          openMapListingDetail(p.id);
-        });
-
-        markersLayer.addLayer(marker);
       });
+      container.innerHTML = agentsHtml;
+      lucide.createIcons();
+    }
+
+    function toggleAgentDrawer(agent) {
+      openDrawers[agent] = !openDrawers[agent];
+      const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
+      const drawer = document.getElementById(`drawer_${cleanAgentId}`);
+      const icon = document.getElementById(`icon_${cleanAgentId}`);
+      
+      if (drawer) {
+        if (openDrawers[agent]) {
+          drawer.classList.remove('hidden');
+          drawer.classList.add('block');
+          if (icon) {
+            icon.setAttribute('data-lucide', 'chevron-up');
+            lucide.createIcons();
+          }
+        } else {
+          drawer.classList.add('hidden');
+          drawer.classList.remove('block');
+          if (icon) {
+            icon.setAttribute('data-lucide', 'chevron-down');
+            lucide.createIcons();
+          }
+        }
+      }
+    }
+
+    function renderCompletionMetrics() {
+      const periodTournees = getPeriodFilteredTournees();
+      const periodGroups = buildTourneeGroups(periodTournees);
+      
+      const totalMissions = periodGroups.length;
+      const doneMissions = periodGroups.filter(g => g.isDone).length;
+      const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
+      
+      const elMissionsPct = document.getElementById("kpiMissionsPct");
+      if (elMissionsPct) elMissionsPct.innerText = `${missionsPct}%`;
+
+      const elMissionsBar = document.getElementById("kpiMissionsBar");
+      if (elMissionsBar) elMissionsBar.style.width = `${missionsPct}%`;
+
+      const elMissionsDone = document.getElementById("kpiMissionsDone");
+      if (elMissionsDone) elMissionsDone.innerText = doneMissions;
+
+      const elMissionsTotal = document.getElementById("kpiMissionsTotal");
+      if (elMissionsTotal) elMissionsTotal.innerText = totalMissions;
+      
+      const totalLines = periodTournees.length;
+      const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
+      const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
+      
+      const elGlobalCompletionPct = document.getElementById("globalCompletionPct");
+      if (elGlobalCompletionPct) elGlobalCompletionPct.innerText = `${linesPct}%`;
+
+      const elGlobalCompletionBar = document.getElementById("globalCompletionBar");
+      if (elGlobalCompletionBar) elGlobalCompletionBar.style.width = `${linesPct}%`;
+
+      const elKpiDoneTasks = document.getElementById("kpiDoneTasks");
+      if (elKpiDoneTasks) elKpiDoneTasks.innerText = doneLines;
+
+      const elKpiPendingTasks = document.getElementById("kpiPendingTasks");
+      if (elKpiPendingTasks) elKpiPendingTasks.innerText = totalLines - doneLines;
+
+      const todayStr = normalizeDateYMD(new Date());
+      const allGroups = buildTourneeGroups(cachedTournees || []);
+      const overdueMissions = allGroups.filter(g => !g.isDone && g.date < todayStr).length;
+      const totalActiveMissions = allGroups.length;
+      const slaScore = totalActiveMissions > 0 ? Math.round(((totalActiveMissions - overdueMissions) / totalActiveMissions) * 100) : 100;
+      
+      const elOverdueCount = document.getElementById("kpiOverdueMissionsCount");
+      if (elOverdueCount) elOverdueCount.innerText = overdueMissions;
+
+      const elSlaScore = document.getElementById("kpiSlaScore");
+      if (elSlaScore) elSlaScore.innerText = `${slaScore}%`;
+
+      const badgePilotage = document.getElementById("kpiPeriodLabel");
+      if (badgePilotage) {
+        const sInput = document.getElementById("filterStartDate");
+        const eInput = document.getElementById("filterEndDate");
+        const sDate = sInput ? sInput.value : "";
+        const eDate = eInput ? eInput.value : "";
+        
+        let txt = "Période Active";
+        if (sDate && eDate) {
+          const d = new Date(sDate + "T00:00:00");
+          const iso = getISOWeekNumber(d);
+          const dE = new Date(eDate + "T00:00:00");
+          if ((dE - d) / 86400000 === 6) {
+             txt = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
+          } else {
+             txt = `${formatDateDMY(sDate)} - ${formatDateDMY(eDate)}`;
+          }
+        }
+        badgePilotage.innerText = txt;
+      }
+
+      const agentListContainer = document.getElementById("agentCompletionList");
+      if (!agentListContainer) return;
+
+      const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
+      if (activeAgentsThisPeriod.length === 0) {
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`;
+        return;
+      }
+
+      let agentListHtml = '';
+      activeAgentsThisPeriod.forEach(agent => {
+        const aGroups = periodGroups.filter(g => g.agent === agent);
+        const aTotalGroups = aGroups.length;
+        const aDoneGroups = aGroups.filter(g => g.isDone).length;
+        const aPct = aTotalGroups > 0 ? Math.round((aDoneGroups / aTotalGroups) * 100) : 0;
+
+        agentListHtml += `
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-slate-900">${agent}</span>
+              <span class="font-mono text-[10px] font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-500'}">${aDoneGroups}/${aTotalGroups} missions (${aPct}%)</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      agentListContainer.innerHTML = agentListHtml;
+    }
+
+    function applyFilters() {
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const sDateVal = sInput ? sInput.value : "";
+      const eDateVal = eInput ? eInput.value : "";
+      
+      let periodLabel = "Tout l'historique";
+      if (sDateVal && eDateVal) {
+        periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
+      } else if (sDateVal) {
+        periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
+      } else if (eDateVal) {
+        periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
+      }
+      
+      const badgeGlobal = document.getElementById("periodBadgeGlobal");
+      if (badgeGlobal) badgeGlobal.innerText = periodLabel;
+
+      const badgeAgents = document.getElementById("periodBadgeAgents");
+      if (badgeAgents) badgeAgents.innerText = periodLabel;
+
+      const periodData = getPeriodFilteredHistory();
+      const filtered = getFilteredHistory();
+
+      renderKPIs(filtered); 
+      renderTable(filtered); 
+      renderAgentsView(periodData); 
+      renderMap(mapFilterOnSelection ? filtered : periodData);
+      renderWallPlanning(); 
+      renderCompletionMetrics(); 
+    }
+
+    function toggleActiveAgentsFilter() {
+      filterOnlyActiveAgents = !filterOnlyActiveAgents;
+      updateActiveAgentsButtonUI();
+      applyFilters();
+    }
+
+    function updateMaxQtyThreshold(val) {
+      if (val === "" || val === null) {
+        customMaxQty = null;
+        localStorage.removeItem("mon_cfg_max_qty");
+        const display = document.getElementById("cfgMaxQtyDisplay");
+        if (display) display.innerText = "--";
+      } else {
+        const parsed = Number(val);
+        if (!isNaN(parsed) && parsed >= 0) {
+          customMaxQty = parsed;
+          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+          const display = document.getElementById("cfgMaxQtyDisplay");
+          if (display) display.innerText = customMaxQty;
+        }
+      }
+      applyFilters();
+    }
+
+    function populateAdminDropdown() {
+      const adminSel = document.getElementById("authAdminSelect");
+      if (adminSel) {
+        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
+        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+    }
+
+    function toggleFilterDropdown(id) {
+      const otherIds = ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList'];
+      otherIds.forEach(otherId => {
+        if (otherId !== id) {
+          const el = document.getElementById(otherId);
+          if (el) {
+            el.classList.add("hidden");
+          }
+        }
+      });
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.toggle("hidden");
+      }
     }
 
     function initMultiSelects() {
@@ -1714,7 +1911,6 @@
       makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
       makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
       makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
-      initAgendaMultiSelect();
     }
 
     function onCheckboxChange(type) {
@@ -1949,6 +2145,37 @@
       });
     }
 
+    function renderKPIs(list) {
+      const totalR = list.length;
+      const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+      const zeroS = list.filter(r => Number(r.quantity) === 0).length;
+      const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
+
+      const elTotalRows = document.getElementById("kpiTotalRows");
+      if (elTotalRows) elTotalRows.innerText = totalR;
+
+      const elTotalPieces = document.getElementById("kpiTotalPieces");
+      if (elTotalPieces) elTotalPieces.innerText = totalP;
+
+      const elZeroStock = document.getElementById("kpiZeroStock");
+      if (elZeroStock) elZeroStock.innerText = zeroS;
+
+      const elAtypicalStock = document.getElementById("kpiAtypicalStock");
+      if (elAtypicalStock) elAtypicalStock.innerText = atypS;
+
+      const elAgentsTotalRows = document.getElementById("kpiAgentsTotalRows");
+      if (elAgentsTotalRows) elAgentsTotalRows.innerText = totalR;
+
+      const elAgentsTotalPieces = document.getElementById("kpiAgentsTotalPieces");
+      if (elAgentsTotalPieces) elAgentsTotalPieces.innerText = totalP;
+
+      const elAgentsZeroStock = document.getElementById("kpiAgentsZeroStock");
+      if (elAgentsZeroStock) elAgentsZeroStock.innerText = zeroS;
+
+      const elAgentsAtypicalStock = document.getElementById("kpiAgentsAtypicalStock");
+      if (elAgentsAtypicalStock) elAgentsAtypicalStock.innerText = atypS;
+    }
+
     function renderTable(list) {
       const tbody = document.getElementById("supervisionTableBody");
       if (!tbody) return;
@@ -1991,6 +2218,83 @@
       });
       tbody.innerHTML = html;
       lucide.createIcons();
+    }
+
+    function renderMap(list) {
+      const mapDiv = document.getElementById("mapContainer");
+      if (!mapDiv) return;
+
+      if (!map) {
+        map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+      }
+
+      markersLayer.clearLayers();
+      const pointsWithGps = list.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng));
+      
+      const countLabel = document.getElementById("mapPointsCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${pointsWithGps.length} point(s) GPS`;
+      }
+
+      pointsWithGps.forEach(p => {
+        const qty = Number(p.quantity);
+        const isRupture = qty === 0;
+        const markerColor = isRupture ? "#e11d48" : "#f97316";
+
+        const marker = L.circleMarker([p.lat, p.lng], {
+          radius: 8,
+          fillColor: markerColor,
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        });
+
+        // NOUVEAU DESIGN CLONE DE L'APP MOBILE (MA TOURNEE)
+        const tooltipHtml = `
+          <div class="bg-white rounded-3xl shadow-xl flex flex-col w-[260px] overflow-hidden border border-slate-200 p-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 text-xs uppercase flex items-center gap-1.5">📅 ${formatDateDMY(p.timestamp)}</span>
+              </div>
+              <span class="px-2 py-1 rounded text-[9px] font-bold tracking-wide ${isRupture ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}">${isRupture ? 'RUPTURE' : 'COMPTÉ'}</span>
+            </div>
+            
+            <div class="mb-4">
+              <p class="font-black text-slate-900 text-sm leading-tight truncate">${p.contractor}</p>
+              <p class="text-xs font-semibold text-slate-500 truncate mt-0.5">${p.trade}</p>
+            </div>
+            
+            <div class="flex gap-2 items-stretch">
+              <div class="bg-slate-100 text-slate-700 px-2 py-2 rounded-2xl text-xs font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center items-center">
+                <span class="text-[9px] text-slate-500 font-bold uppercase mb-0.5">Réf SAP</span>
+                <span class="truncate max-w-[90px] text-orange-600">${p.sapRef}</span>
+              </div>
+              <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-2 rounded-2xl text-xs font-black shadow-inner border flex-1 flex flex-col justify-center items-center">
+                <span class="text-[9px] font-bold uppercase mb-0.5 opacity-80">Quantité</span>
+                <span>${qty}</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        marker.bindTooltip(tooltipHtml, {
+          direction: 'top',
+          className: 'custom-map-tooltip',
+          offset: [0, -10]
+        });
+
+        marker.on('click', () => {
+          openMapListingDetail(p.id);
+        });
+
+        markersLayer.addLayer(marker);
+      });
     }
 
     function resetMapToBelgium() {
