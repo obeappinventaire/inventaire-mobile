@@ -34,7 +34,7 @@
         <img src="app_icon_co2h2o.png" alt="Logo" class="w-7 h-7 object-contain">
       </div>
       <div>
-        <h1 id="headerAgentName" class="text-xl font-black text-slate-800 tracking-tight truncate max-w-[150px]">--</h1>
+        <h1 id="headerAgentName" class="text-lg font-medium text-slate-700 tracking-wide truncate max-w-[150px]">--</h1>
       </div>
     </div>
     <div class="flex items-center space-x-3">
@@ -97,17 +97,23 @@
           </button>
         </div>
 
-        <div id="selectedArticleCard" class="hidden bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl shadow-sm space-y-2 mt-2 transition-all">
-          <div class="flex items-start gap-3 border-b border-emerald-200 pb-3">
-            <div class="bg-emerald-100 p-2 rounded-xl text-emerald-700 shadow-inner mt-0.5">
+        <!-- ZONE DE SÉLECTION AMÉLIORÉE (Designation plus fine, Réf Fournisseur en évidence, Croix pour fermer) -->
+        <div id="selectedArticleCard" class="hidden bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl shadow-sm space-y-2 mt-2 transition-all relative">
+          
+          <button onclick="resetComptageForm()" class="absolute top-2 right-2 p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-full transition cursor-pointer" title="Annuler la sélection">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+
+          <div class="flex items-start gap-3 border-b border-emerald-200 pb-3 pr-6">
+            <div class="bg-emerald-100 p-2 rounded-xl text-emerald-700 shadow-inner mt-0.5 shrink-0">
                <i data-lucide="check-circle" class="w-6 h-6"></i>
             </div>
             <div class="flex-1 min-w-0">
-               <div class="flex justify-between items-start">
+               <div class="flex flex-col items-start gap-1">
                  <span id="cardSapRef" class="font-mono font-black text-emerald-800 text-base">--</span>
-                 <span id="cardSupplierRef" class="font-mono text-[10px] text-emerald-600 bg-white px-2 py-1 rounded border border-emerald-200 shadow-xs">Fourn: --</span>
+                 <span id="cardSupplierRef" class="font-mono text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-300 shadow-xs">Fourn: --</span>
                </div>
-               <p id="cardDesignation" class="font-bold text-slate-900 text-sm leading-snug mt-1.5 whitespace-normal break-words">--</p>
+               <p id="cardDesignation" class="font-normal text-slate-700 text-xs leading-snug mt-2 whitespace-normal break-words">--</p>
             </div>
           </div>
         </div>
@@ -133,7 +139,6 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ONGLET TOURNÉE SIMPLIFIÉ -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
         <h2 id="tourneeDebugHeader" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">File de travail Assignée</h2>
@@ -158,7 +163,26 @@
     </button>
   </nav>
 
-  <!-- MODALE CONFIGURATION (AVEC NOUVEAU BOUTON RESET) -->
+  <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
+    <div class="w-full flex justify-between items-center text-white py-2 px-2">
+      <span class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner Code-Barres / OCR</span>
+      <button onclick="closeScanModal()" class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center text-white cursor-pointer shadow-lg">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+    </div>
+    <div class="relative w-full max-w-xs aspect-[4/3] bg-black rounded-2xl overflow-hidden border-2 border-orange-500 shadow-2xl flex items-center justify-center">
+      <video id="scanVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+      <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-orange-500/80 animate-pulse shadow-sm"></div>
+    </div>
+    <canvas id="scanCanvas" class="hidden"></canvas>
+    <div class="w-full max-w-xs py-4 space-y-2">
+      <button onclick="captureAndOCR()" class="w-full h-16 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl text-base shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+        <i data-lucide="camera" class="w-6 h-6"></i> Déclencher
+      </button>
+      <div id="ocrStatus" class="text-center text-xs text-white/80 font-mono pt-2">Prêt pour la capture</div>
+    </div>
+  </div>
+
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-[32px] p-6 shadow-2xl text-center flex flex-col gap-5">
       <div>
@@ -188,26 +212,11 @@
           <i data-lucide="triangle-alert" class="w-4 h-4 text-rose-600"></i>
           <span class="text-[10px] font-black uppercase tracking-wider text-rose-600">Dépannage système</span>
         </div>
+        <p class="text-[10px] text-slate-500 mb-3 leading-relaxed">À utiliser uniquement si l'application semble figée ou si vos tâches refusent de s'afficher.</p>
         <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-10 bg-white border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-rose-600 active:scale-95 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="rotate-cw" class="w-4 h-4"></i> Forcer la réparation
         </button>
       </div>
-    </div>
-  </div>
-
-  <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
-    <!-- ... (Scan modal conservée à l'identique) ... -->
-    <div class="w-full flex justify-between items-center text-white py-2 px-2">
-      <span class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner Code-Barres</span>
-      <button onclick="closeScanModal()" class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-    </div>
-    <div class="relative w-full max-w-xs aspect-[4/3] bg-black rounded-2xl overflow-hidden border-2 border-orange-500 shadow-2xl flex items-center justify-center">
-      <video id="scanVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-    </div>
-    <canvas id="scanCanvas" class="hidden"></canvas>
-    <div class="w-full max-w-xs py-4 space-y-2">
-      <button onclick="captureAndOCR()" class="w-full h-16 bg-orange-400 text-white font-bold rounded-2xl text-base shadow-lg flex items-center justify-center gap-2"><i data-lucide="camera" class="w-6 h-6"></i> Déclencher</button>
-      <div id="ocrStatus" class="text-center text-xs text-white/80 font-mono pt-2">Prêt</div>
     </div>
   </div>
 
@@ -234,7 +243,7 @@
     let cachedTournees = [], pendingSyncQueue = [], sessionHistory = [];
     let isSyncing = false; 
 
-    async function safeSetStorage(key, data) { try { await localforage.setItem(key, data); } catch (e) {} }
+    async function safeSetStorage(key, data) { try { await localforage.setItem(key, data); } catch (e) { console.warn("Stockage saturé ou erreur IndexedDB."); } }
 
     let selectedArticle = null, activeMissionContext = null, currentGpsCoords = { lat: null, lng: null };
     let mediaStream = null, barcodeDetector = null, scanLoopActive = false;
@@ -262,7 +271,7 @@
     });
 
     async function hardResetApp() {
-      if(!confirm("⚠️ Attention : Vider le cache ?")) return;
+      if(!confirm("⚠️ Attention : Cette action va vider le cache et forcer le retéléchargement complet de l'application. Continuer ?")) return;
       document.getElementById("btnHardReset").innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Nettoyage...';
       try {
         await localforage.clear(); localStorage.clear(); sessionStorage.clear();
@@ -304,18 +313,46 @@
     }
 
     function logoutMobileAgentStep1() {
-      if (confirm("Se déconnecter ?")) { localStorage.removeItem("mob_current_agent"); window.location.reload(true); }
+      if (confirm("Se déconnecter ? Les saisies non envoyées resteront en mémoire.")) { localStorage.removeItem("mob_current_agent"); window.location.reload(true); }
     }
 
     function updatePendingBadge() {
-      const badge = document.getElementById("pendingBadge");
-      if (!badge) return;
+      const badge = document.getElementById("pendingBadge"); if (!badge) return;
       if (pendingSyncQueue.length > 0) { badge.innerText = pendingSyncQueue.length; badge.classList.remove("hidden"); } else badge.classList.add("hidden");
     }
 
-    function handleQuantityFocus() { setTimeout(() => { const m = document.getElementById('mainScrollArea'), q = document.getElementById('quantitySection'); if (m && q) m.scrollTo({ top: q.offsetTop - 15, behavior: 'smooth' }); }, 400); }
+    function normalizeDateYMD(dateVal) {
+      if (!dateVal) return "";
+      if (dateVal instanceof Date) return `${dateVal.getFullYear()}-${String(dateVal.getMonth()+1).padStart(2,'0')}-${String(dateVal.getDate()).padStart(2,'0')}`;
+      const str = String(dateVal).trim().replace(/['"]/g, ''); 
+      if (str.includes('T')) return str.split('T')[0];
+      const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (parts) return `${parts[3]}-${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
+      return str.split(' ')[0];
+    }
+
+    // --- CORRECTION ERGONOMIQUE DU SCROLL ---
+    function handleQuantityFocus() {
+      setTimeout(() => {
+        const mainArea = document.getElementById('mainScrollArea');
+        const searchSec = document.getElementById('searchSection');
+        if (mainArea && searchSec) {
+          // On s'aligne sur la section de recherche pour que la case verte de l'article reste 100% visible
+          mainArea.scrollTo({ top: searchSec.offsetTop - 15, behavior: 'smooth' });
+        }
+      }, 400);
+    }
+
     function closeQtyKeyboard() { document.getElementById('inputQuantity').blur(); }
-    function handleSearchFocus() { document.getElementById('closeKeyboardBtn').classList.remove('hidden'); setTimeout(() => { const s = document.getElementById('searchSection'), m = document.getElementById('mainScrollArea'); if (m && s) m.scrollTo({ top: s.offsetTop - 15, behavior: 'smooth' }); }, 300); }
+    
+    function handleSearchFocus() {
+      document.getElementById('closeKeyboardBtn').classList.remove('hidden');
+      setTimeout(() => {
+        const searchSec = document.getElementById('searchSection'), mainArea = document.getElementById('mainScrollArea');
+        if (mainArea && searchSec) mainArea.scrollTo({ top: searchSec.offsetTop - 15, behavior: 'smooth' });
+      }, 300);
+    }
+    
     function closeKeyboard() { document.getElementById('sapSearchInput').blur(); document.getElementById('closeKeyboardBtn').classList.add('hidden'); }
 
     async function syncMobileData() {
@@ -470,10 +507,26 @@
       }
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
 
-      updatePendingBadge(); cancelActiveMission(); renderTournee(); renderHistory(); switchMobileTab('historique');
+      updatePendingBadge(); 
+      cancelActiveMission(); 
+      renderTournee(); 
+      renderHistory(); 
+
+      // --- LOGIQUE DE NAVIGATION INTELLIGENTE APRÈS SAISIE ---
+      const agentPendingTasks = cachedTournees.filter(t => String(t.agent).toLowerCase() === String(currentAgent).toLowerCase() && String(t.statut).toUpperCase() !== 'VALIDE');
+      
+      if (agentPendingTasks.length > 0) {
+        // S'il reste des tâches dans la tournée, on redirige vers Ma Tournée
+        switchMobileTab('tournee');
+      } else {
+        // Sinon, on reste sur Comptage mais on remonte tout en haut
+        document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
       if(navigator.onLine) setTimeout(syncMobileData, 100);
     }
 
+    // --- CORRECTION DU DESIGN DE L'HISTORIQUE ---
     function renderHistory() {
       const c = document.getElementById("historyListContainer"); if(!c) return;
       const ag = String(currentAgent||"").trim().toLowerCase();
@@ -497,12 +550,14 @@
             </span>
           </div>
           <p class="font-bold text-slate-900 text-sm leading-tight break-words">${h.designation}</p>
+          
           <div class="flex gap-3 pt-1 items-stretch">
-            <div class="bg-slate-100 text-slate-700 px-3 py-2 rounded-2xl text-xs font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center min-w-0">
-              <span class="block text-slate-400 font-bold uppercase text-[9px] mb-0.5">Affectation</span>
-              <span class="truncate">${h.contractor}</span>
-              <span class="truncate text-slate-500 font-semibold">${h.trade}</span>
+            <div class="bg-slate-100 text-slate-700 px-3 py-2 rounded-2xl text-sm font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center min-w-0">
+              <span class="block text-slate-500 font-bold uppercase text-[10px] mb-0.5">Affectation</span>
+              <span class="truncate text-slate-800">${h.contractor}</span>
+              <span class="truncate text-slate-600 font-bold">${h.trade}</span>
             </div>
+            
             <div class="flex flex-col gap-2 shrink-0">
               <div class="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-2xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center h-full">
                 ${h.quantity} <span class="text-[10px] ml-1 opacity-70">PCS</span>
@@ -533,7 +588,19 @@
       await safeSetStorage("offline_pending_sync", pendingSyncQueue); updatePendingBadge(); renderHistory(); renderTournee(); if(navigator.onLine) syncMobileData();
     }
 
-    // --- CORRECTION MAJEURE: SUPPRESSION DES FILTRES DE DATE ---
+    // --- TRADUCTION DE LA DATE (Jour en toutes lettres) ---
+    function formatTourneeDate(dStr) {
+      if (!dStr) return "Aucune date";
+      const parts = dStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        if (!isNaN(d.getTime())) {
+          return `${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][d.getDay()]} ${d.getDate()} ${['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][d.getMonth()]}`;
+        }
+      }
+      return dStr;
+    }
+
     function renderTournee() {
       const c = document.getElementById("tourneeListContainer"); 
       const tHeader = document.getElementById("tourneeDebugHeader");
@@ -545,7 +612,8 @@
         tHeader.innerHTML = `FILE DE TRAVAIL ASSIGNÉE <span class="text-orange-600 font-mono">(${agentTournees.length} à vous / ${cachedTournees.length} totales)</span>`;
       }
 
-      // Filtres simplifiés uniquement sur le statut (contourne tous les bugs de format de date)
+      const safeSort = (a, b) => normalizeDateYMD(a.date).localeCompare(normalizeDateYMD(b.date));
+
       const aTraiter = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE');
       const terminees = agentTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE');
 
@@ -560,7 +628,8 @@
             <div class="flex justify-between items-start">
               <div class="space-y-1.5 flex-1 pr-2">
                 <div class="flex items-center space-x-2">
-                  <span class="font-mono font-black text-orange-800 text-sm">${t.sapRef}</span>
+                  <!-- MODIFICATION DESIGN TOURNÉE : Réf en ORANGE -->
+                  <span class="font-mono font-black text-orange-600 text-base">${t.sapRef}</span>
                   <span class="px-2 py-0.5 rounded-md text-[9px] font-bold shadow-xs ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? '✓ VALIDÉ' : 'À FAIRE'}</span>
                 </div>
                 <p class="text-sm font-bold text-slate-900 leading-tight">${t.designation || 'Sans libellé'}</p>
@@ -572,7 +641,7 @@
                 ${t.contractor} <span class="text-slate-400 font-normal mx-1">|</span> ${t.trade}
               </div>
               <div class="flex justify-between items-center text-xs font-bold text-slate-500 px-1">
-                <span>📅 ${t.date || 'Aucune date'}</span>
+                <span>📅 ${formatTourneeDate(t.date)}</span>
                 <span>⏱️ ${t.tranche || 'MATIN'}</span>
               </div>
             </div>
@@ -592,11 +661,7 @@
 
       if (html === '') {
         if (agentTournees.length > 0) {
-          // Si le code arrive ici, c'est que le filtre "statut" a échoué. On affiche l'erreur brute.
-          html = `<div class="p-4 bg-slate-800 text-green-400 font-mono text-[10px] rounded-xl overflow-auto">
-                    <b>ERREUR FILTRE STATUT</b><br>
-                    ${JSON.stringify(agentTournees, null, 2)}
-                  </div>`;
+          html = `<div class="p-4 bg-slate-800 text-green-400 font-mono text-[10px] rounded-xl overflow-auto"><b>ERREUR FILTRE STATUT</b><br>${JSON.stringify(agentTournees, null, 2)}</div>`;
         } else {
           html = `<div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl shadow-sm">Aucune tâche assignée. Votre file d'attente est vide !</div>`;
         }
