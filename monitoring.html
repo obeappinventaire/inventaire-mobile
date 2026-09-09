@@ -25,7 +25,7 @@
     
     #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
     
-    /* TOOLTIP LEAFLET MODERNE & TRANSPARENT */
+    /* TOOLTIP LEAFLET MODERNE & TRANSPARENT POUR CLONER L'APP MOBILE */
     .leaflet-tooltip.custom-map-tooltip {
       background: transparent;
       border: none;
@@ -140,7 +140,8 @@
               <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
               </span>
-              <span id="weekBadgeLabel" class="text-[9px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
+              <!-- BADGE NUMERO DE SEMAINE PLUS CLAIR ET PLUS GRAND -->
+              <span id="weekBadgeLabel" class="text-sm font-bold bg-orange-100 text-orange-800 px-3 py-0.5 rounded border border-orange-300 shadow-sm">--</span>
             </div>
 
             <div class="relative">
@@ -201,7 +202,7 @@
     </aside>
 
     <!-- ZONE PRINCIPALE DE DROITE -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50">
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50" id="mainScrollArea">
       
       <div class="space-y-6 flex-1">
         
@@ -243,7 +244,6 @@
             </div>
           </div>
 
-          <!-- FILTRES GLOBAUX COMPACTÉS -->
           <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
             <div class="flex flex-wrap items-center gap-3">
               <div class="relative flex-1 min-w-[280px]" onclick="event.stopPropagation()">
@@ -307,7 +307,6 @@
             <div id="selectedArticleTagsContainer" class="flex flex-wrap gap-1.5 empty:hidden pt-1"></div>
           </div>
 
-          <!-- Table des Données -->
           <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden flex-1 flex flex-col min-h-[400px]">
             <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs bg-slate-50">
               <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
@@ -348,7 +347,6 @@
             </button>
           </div>
           
-          <!-- KPIs DE LA FLOTTE RESTAURÉS -->
           <div class="grid grid-cols-4 gap-3 max-w-5xl mb-6">
             <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
               <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
@@ -407,69 +405,73 @@
         </section>
 
         <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
-        <section id="viewTourneesAdmin" class="hidden space-y-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
-              </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Glissez-déposez pour replanifier. L'agenda affiche la Période Active sélectionnée à gauche.</p>
+        <section id="viewTourneesAdmin" class="hidden relative">
+          
+          <!-- EN-TÊTE FIXE (STICKY) POUR L'AGENDA : LE HEADER ET LE BUFFER RESTENT TOUJOURS VISIBLES LORS DU SCROLL -->
+          <div class="sticky top-0 z-30 bg-slate-50 pt-2 pb-4 border-b border-slate-200 shadow-sm mb-6 -mt-2">
+            
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Glissez-déposez pour replanifier. L'agenda affiche la Période Active sélectionnée à gauche.</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel (.xlsx)</span>
+                </button>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
+                <button type="button" onclick="document.getElementById('excelFileInput').click()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i><span>Importer Planning</span>
+                </button>
+                <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Nouvelle Tâche</span>
+                </button>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel (.xlsx)</span>
-              </button>
-              <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
-              <button type="button" onclick="document.getElementById('excelFileInput').click()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i><span>Importer Planning</span>
-              </button>
-              <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Nouvelle Tâche</span>
-              </button>
+
+            <!-- ZONE BUFFER OPÉRATIONNEL -->
+            <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col max-h-[220px]">
+              <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 shrink-0">
+                <span class="font-bold text-amber-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                  <i data-lucide="clock-4" class="w-4 h-4"></i> Buffer Opérationnel (Retards / À replanifier)
+                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-bold text-amber-700 uppercase">Filtre Agent :</span>
+                  <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 focus:outline-none cursor-pointer shadow-xs">
+                    <option value="">Tous</option>
+                  </select>
+                </div>
+              </div>
+              <div id="overdueTasksContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 overflow-y-auto custom-scrollbar pr-1 max-h-[160px]"></div>
             </div>
+
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            <!-- AGENDA GAUCHE (ÉLARGIT À 9 COLONNES) -->
-            <div class="lg:col-span-9 space-y-4">
-              
-              <!-- ZONE BUFFER & FILTRE AGENT FUSIONNÉS -->
-              <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col">
-                <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 shrink-0">
-                  <span class="font-bold text-amber-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
-                    <i data-lucide="clock-4" class="w-4 h-4"></i> Buffer Opérationnel (Retards / À replanifier)
-                  </span>
-                  
-                  <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-amber-700 uppercase">Filtre Agent :</span>
-                    <select id="agendaFilterAgent" onchange="renderWallPlanning()" class="bg-white border border-amber-200 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 focus:outline-none cursor-pointer shadow-xs">
-                      <option value="">Tous</option>
-                    </select>
-                  </div>
+            <!-- GRILLE DE L'AGENDA (9 COLONNES) -->
+            <div class="lg:col-span-9 bg-white border border-slate-200 rounded-2xl shadow-xs p-4">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+                <div class="flex items-center">
+                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (Période ciblée)</span>
+                   <!-- BADGE SEMAINE SPECIFIQUE A L'AGENDA -->
+                   <span id="agendaWeekBadge" class="ml-3 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded"></span>
                 </div>
-                
-                <div id="overdueTasksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto custom-scrollbar max-h-[160px] pr-1"></div>
               </div>
-
-              <!-- GRILLE DE L'AGENDA (Défilement horizontal adaptatif) -->
-              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs mb-3">
-                  <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (Période ciblée)</span>
-                </div>
-                <!-- CLASSE items-stretch AJOUTÉE ICI -->
-                <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
-              </div>
+              <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
             </div>
 
-            <!-- COCKPIT DE COMPLÉTION (RÉDUIT À 3 COLONNES) -->
-            <div class="lg:col-span-3 space-y-4 sticky top-6">
+            <!-- COCKPIT DE COMPLÉTION DATA (3 COLONNES) -->
+            <div class="lg:col-span-3 space-y-4">
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pilotage Réalisation</span>
                 </div>
-                <div class="text-center bg-slate-100/50 rounded-lg p-1.5 border border-slate-200">
-                  <span id="kpiPeriodLabel" class="text-[10px] font-mono font-bold text-slate-600">--</span>
+                <div class="text-center rounded-lg">
+                  <!-- BADGE SEMAINE PILOTAGE PLUS GRAND -->
+                  <span id="kpiPeriodLabel" class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg inline-block">--</span>
                 </div>
 
                 <div class="space-y-1.5">
@@ -512,7 +514,7 @@
                 </div>
               </div>
 
-              <!-- BLOC : AVANCEMENT PAR AGENT (RESTAURÉ) -->
+              <!-- BLOC : AVANCEMENT PAR AGENT -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-2">Avancement / Agent</span>
                 <div id="agentCompletionList" class="space-y-2.5 max-h-[180px] overflow-y-auto custom-scrollbar pr-1"></div>
@@ -673,6 +675,7 @@
       return { week: weekNo, year: date.getUTCFullYear() };
     }
 
+    // MISE A JOUR DES NUMEROS DE SEMAINE DANS TOUTES LES VUES
     function updateWeekBadge(startDateStr) {
       const targetDate = startDateStr ? parseItemDate(startDateStr) : new Date();
       const iso = getISOWeekNumber(targetDate);
@@ -680,9 +683,11 @@
       
       const badge = document.getElementById("weekBadgeLabel");
       const wallBadge = document.getElementById("wallPlanningWeekLabel");
+      const agendaBadge = document.getElementById("agendaWeekBadge"); 
       
       if (badge) badge.innerText = badgeText;
       if (wallBadge) wallBadge.innerText = badgeText;
+      if (agendaBadge) agendaBadge.innerText = badgeText; 
     }
 
     function parseItemDate(str) {
@@ -763,7 +768,7 @@
         today.setHours(0,0,0,0);
 
         if (d < today) { 
-          alert("Impossible de planifier une tâche dans le passé."); 
+          alert("Impossible de créer une tâche dans le passé."); 
           inputElem.value = ""; 
           return false; 
         }
@@ -886,7 +891,7 @@
             applyFilters();
             return;
           } else {
-             throw new Error("Réponse serveur invalide.");
+             throw new Error("Réponse serveur invalide et mot de passe de secours incorrect.");
           }
         }
 
@@ -912,7 +917,7 @@
             document.getElementById("authModal").classList.add("hidden");
             applyFilters();
         } else {
-            alert("Erreur de connexion serveur. Utilisez le code '1234' en cas de panne.");
+            alert("Erreur de connexion serveur. Utilisez le code '1234' en cas de panne technique.");
         }
       } finally {
         btn.innerHTML = originalText;
@@ -1399,7 +1404,7 @@
         return d;
       });
 
-      const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+      const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
       let gridHtml = '';
 
       weekDays.forEach((dayObj, idx) => {
@@ -1452,13 +1457,15 @@
 
         gridHtml += `
           <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col shadow-sm transition-all h-auto ${colClass}">
-            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 text-orange-800 rounded-lg border-orange-200' : ''} mb-2">
-              <span class="text-[11px] font-bold uppercase tracking-widest block ${isToday ? 'text-orange-700' : 'text-slate-500'}">
-                ${isToday ? "Aujourd'hui" : dayNames[dayObj.getDay()]}
-              </span>
-              <span class="text-[9px] font-mono font-medium ${isToday ? 'text-orange-600' : 'text-slate-400'}">
-                ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
-              </span>
+            <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 rounded-lg border-orange-200' : ''} mb-2">
+              <div class="flex items-baseline justify-center gap-1.5">
+                <span class="text-xs font-bold uppercase tracking-widest ${isToday ? 'text-orange-700' : 'text-slate-500'}">
+                  ${isToday ? "Auj" : dayNames[dayObj.getDay()]}
+                </span>
+                <span class="text-xs font-mono font-medium ${isToday ? 'text-orange-600' : 'text-slate-400'}">
+                  ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
+                </span>
+              </div>
             </div>
             <div class="flex flex-col flex-1 gap-2">
               ${innerContentHtml}
@@ -1468,9 +1475,9 @@
       });
       
       gridContainer.innerHTML = gridHtml;
-      lucide.createIcons();
     }
 
+    // LISTING DES SAISIES DANS LA MODALE LORS DU CLIC SUR LA CARTE
     function openMapListingDetail(idStr) {
       const item = cachedHistory.find(h => h.id === idStr);
       if (!item) return;
@@ -1575,7 +1582,7 @@
       }
 
       if (agentsToDisplay.length === 0) {
-        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-2xl">Aucun agent actif sur cette période.</div>`;
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-3xl">Aucun agent actif sur cette période.</div>`;
         return;
       }
 
@@ -1630,43 +1637,43 @@
           });
         }
 
+        // DESIGN DES SCORECARDS AGRANDI
         agentsHtml += `
-          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs h-fit transition-all">
-            <div onclick="toggleAgentDrawer('${agent}')" class="p-4 cursor-pointer hover:bg-slate-50 transition">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center space-x-3">
-                  <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-sm border border-orange-200">
+          <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm h-fit transition-all">
+            <div onclick="toggleAgentDrawer('${agent}')" class="p-5 cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-4">
+                  <div class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-lg border border-orange-200">
                     ${agent.substring(0, 2).toUpperCase()}
                   </div>
-                  <h4 class="font-bold text-slate-900 text-sm tracking-wide">${agent}</h4>
+                  <h4 class="font-black text-slate-900 text-base tracking-wide">${agent}</h4>
                 </div>
-                <i id="icon_${cleanAgentId}" data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5 text-slate-300"></i>
+                <i id="icon_${cleanAgentId}" data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-6 h-6 text-slate-400"></i>
               </div>
-              <div class="grid grid-cols-3 gap-2">
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center flex flex-col justify-center">
-                  <span class="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Missions</span>
-                  <span class="font-mono text-xs font-black ${aGrpPct === 100 ? 'text-emerald-600' : 'text-slate-700'}">${aGrpDone}/${aGrpTotal}</span>
+              <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Missions</span>
+                  <span class="font-mono text-sm font-black ${aGrpPct === 100 ? 'text-emerald-600' : 'text-slate-700'}">${aGrpDone}/${aGrpTotal}</span>
                 </div>
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center flex flex-col justify-center">
-                  <span class="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Pièces Saisies</span>
-                  <span class="font-mono text-xs font-black text-orange-600">${aPcs}</span>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Pièces</span>
+                  <span class="font-mono text-sm font-black text-orange-600">${aPcs}</span>
                 </div>
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center flex flex-col justify-center">
-                  <span class="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Ruptures</span>
-                  <span class="font-mono text-xs font-black ${aZero > 0 ? 'text-rose-600' : 'text-slate-400'}">${aZero}</span>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Ruptures</span>
+                  <span class="font-mono text-sm font-black ${aZero > 0 ? 'text-rose-600' : 'text-slate-400'}">${aZero}</span>
                 </div>
               </div>
             </div>
 
-            <!-- DOM ISOLÉ POUR ÉVITER LE CLIGNOTEMENT -->
             <div id="drawer_${cleanAgentId}" class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50">
               <div class="grid grid-cols-2 divide-x divide-slate-100">
-                <div class="p-3 max-h-60 overflow-y-auto custom-scrollbar">
-                  <span class="block text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-2">Plan de Tournée</span>
+                <div class="p-4 max-h-64 overflow-y-auto custom-scrollbar">
+                  <span class="block text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-2">Plan de Tournée</span>
                   ${missionsHtml}
                 </div>
-                <div class="p-3 max-h-60 overflow-y-auto custom-scrollbar">
-                  <span class="block text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-2">Dernières Saisies</span>
+                <div class="p-4 max-h-64 overflow-y-auto custom-scrollbar">
+                  <span class="block text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-2">Dernières Saisies</span>
                   ${historyHtml}
                 </div>
               </div>
@@ -2248,20 +2255,29 @@
           fillOpacity: 0.9
         });
 
+        // NOUVEAU DESIGN CLONE DE L'APP MOBILE (MA TOURNEE)
         const tooltipHtml = `
-          <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[220px] overflow-hidden border border-slate-200">
-            <div class="px-3 py-2 flex justify-between items-center border-b border-slate-100 bg-slate-50">
-              <span class="font-bold text-[10px] text-slate-500 uppercase flex items-center gap-1">📅 ${formatDateDMY(p.timestamp, true)}</span>
-              <span class="px-1.5 py-0.5 rounded text-[8px] font-black ${isRupture ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}">${isRupture ? 'RUPTURE' : 'COMPTÉ'}</span>
-            </div>
-            <div class="p-3 space-y-2">
-              <div>
-                <span class="font-black text-slate-800 text-xs block truncate">${p.contractor}</span>
-                <span class="text-[10px] font-semibold text-slate-500 block truncate">${p.trade}</span>
+          <div class="bg-white rounded-3xl shadow-xl flex flex-col w-[260px] overflow-hidden border border-slate-200 p-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 text-xs uppercase flex items-center gap-1.5">📅 ${formatDateDMY(p.timestamp)}</span>
               </div>
-              <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100">
-                <span class="font-mono font-bold text-orange-600 text-xs truncate max-w-[80px]">${p.sapRef}</span>
-                <span class="font-black text-slate-800 text-xs">${qty} <span class="text-[9px] font-normal text-slate-500">pcs</span></span>
+              <span class="px-2 py-1 rounded text-[9px] font-bold tracking-wide ${isRupture ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}">${isRupture ? 'RUPTURE' : 'COMPTÉ'}</span>
+            </div>
+            
+            <div class="mb-4">
+              <p class="font-black text-slate-900 text-sm leading-tight truncate">${p.contractor}</p>
+              <p class="text-xs font-semibold text-slate-500 truncate mt-0.5">${p.trade}</p>
+            </div>
+            
+            <div class="flex gap-2 items-stretch">
+              <div class="bg-slate-100 text-slate-700 px-2 py-2 rounded-2xl text-xs font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center items-center">
+                <span class="text-[9px] text-slate-500 font-bold uppercase mb-0.5">Réf SAP</span>
+                <span class="truncate max-w-[90px] text-orange-600">${p.sapRef}</span>
+              </div>
+              <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-2 rounded-2xl text-xs font-black shadow-inner border flex-1 flex flex-col justify-center items-center">
+                <span class="text-[9px] font-bold uppercase mb-0.5 opacity-80">Quantité</span>
+                <span>${qty}</span>
               </div>
             </div>
           </div>
