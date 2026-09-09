@@ -41,7 +41,6 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- MODALE D'AUTHENTIFICATION ADMIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -72,7 +71,6 @@
     </div>
   </div>
 
-  <!-- EN-TÊTE FIXE -->
   <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
     <div class="flex items-center space-x-3">
       <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
@@ -105,10 +103,7 @@
     </div>
   </header>
 
-  <!-- STRUCTURE CENTRALE -->
   <div class="flex-1 flex overflow-hidden">
-    
-    <!-- BARRE LATÉRALE -->
     <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100">
       <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
         
@@ -196,12 +191,10 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col justify-between bg-slate-50">
       
       <div class="space-y-6">
         
-        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
         <section id="viewGlobal" class="space-y-6">
           <div>
             <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
@@ -386,7 +379,7 @@
           <div id="agentsAccordionContainer" class="space-y-3"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE & GÉOLOCALISATION ================= -->
+        <!-- ================= ONGLET 3 : CARTE ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
@@ -491,7 +484,7 @@
               </div>
 
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Actifs uniquement)</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">État par Agent (Période Active)</span>
                 <div id="agentCompletionList" class="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
             </div>
@@ -649,7 +642,6 @@
         await localforage.setItem(key, data);
       } catch (e) {
         alert("⚠️ Stockage de l'appareil saturé ou erreur IndexedDB.");
-        console.warn("Erreur de stockage local :", e);
       }
     }
 
@@ -845,8 +837,7 @@
           alert("Mot de passe incorrect.");
         }
       } catch (err) {
-        alert("Erreur de connexion au serveur. Vérifiez l'URL de votre script.");
-        console.error(err);
+        alert("Erreur de connexion au serveur.");
       } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -884,10 +875,7 @@
             });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
             await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-          } catch (err) {
-            console.warn("Échec envoi tâche différée :", err);
-            break;
-          }
+          } catch (err) { break; }
         }
       }
 
@@ -938,7 +926,6 @@
           applyFilters();
         }
       } catch (err) {
-        console.warn("Actualisation monitoring en arrière-plan :", err);
       } finally {
         isSyncing = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
@@ -1053,7 +1040,8 @@
       
       closeManualAssignModal();
       manualSelectedCatalogSaps = [];
-      renderWallPlanning();
+      
+      applyFilters(); // Rafraichissement global
 
       if(navigator.onLine) {
          setTimeout(syncMonitoringData, 100);
@@ -1195,7 +1183,8 @@
       pendingSyncQueue.push({ _syncId: syncId, action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: bulkItems });
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
 
-      renderWallPlanning();
+      applyFilters(); // Rafraichissement global forcé
+
       if(navigator.onLine) setTimeout(syncMonitoringData, 100);
       alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
     }
@@ -1229,7 +1218,7 @@
       });
 
       await localforage.setItem("offline_tournees", cachedTournees);
-      renderWallPlanning();
+      applyFilters(); // Synchronise les compteurs globaux suite au drag&drop
       draggedPayload = null;
 
       if (itemsToUpdate.length > 0) {
@@ -1347,7 +1336,6 @@
         `;
       }).join('');
 
-      renderCompletionMetrics(cachedTournees || [], weekDays);
       lucide.createIcons();
     }
 
@@ -1378,9 +1366,23 @@
       lucide.createIcons();
     }
 
-    function renderCompletionMetrics(allTournees, weekDays) {
-      const weekDateStrs = weekDays ? weekDays.map(d => normalizeDateYMD(d)) : [];
-      const periodTournees = (allTournees || []).filter(t => weekDateStrs.length === 0 || weekDateStrs.includes(normalizeDateYMD(t.date)));
+    // --- NOUVEAU MOTEUR DE KPI DÉCORRÉLÉ DES 7 JOURS GLISSANTS ---
+    function getPeriodFilteredTournees() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      return (cachedTournees || []).filter(item => {
+        const itDate = parseItemDate(item.date);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
+      });
+    }
+
+    function renderCompletionMetrics() {
+      const periodTournees = getPeriodFilteredTournees();
       
       const total = periodTournees.length;
       const done = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
@@ -1396,7 +1398,7 @@
 
       const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
       if (activeAgentsThisPeriod.length === 0) {
-        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucun agent planifié cette semaine.</div>`;
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`;
         return;
       }
 
@@ -1430,7 +1432,7 @@
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
 
       closeTourneeDetailsModal();
-      renderWallPlanning();
+      applyFilters(); // Rafraichissement global
       if(navigator.onLine) setTimeout(syncMonitoringData, 100);
     }
 
@@ -1649,7 +1651,6 @@
       }
       updateWeekBadge(sInput.value);
       applyFilters();
-      renderWallPlanning();
     }
 
     function toggleActiveAgentsFilter() {
@@ -1711,6 +1712,10 @@
 
       const mapSourceList = mapFilterOnSelection ? filtered : periodData;
       renderMap(mapSourceList);
+
+      // Rafraichit aussi l'agenda et ses KPIs avec les nouveaux paramètres de dates !
+      renderWallPlanning();
+      renderCompletionMetrics(); 
     }
 
     function renderKPIs(list) {
