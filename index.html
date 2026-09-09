@@ -51,7 +51,7 @@
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL (Espace vide de sécurité augmenté à 70vh) -->
+  <!-- CONTENU PRINCIPAL -->
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[70vh]" id="mainScrollArea">
     
     <!-- ONGLET 1 : COMPTAGE -->
@@ -107,7 +107,6 @@
           </button>
         </div>
 
-        <!-- TICKET ARTICLE SÉLECTIONNÉ -->
         <div id="selectedArticleCard" class="hidden bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl shadow-sm space-y-2 mt-2 transition-all">
           <div class="flex items-start gap-3 border-b border-emerald-200 pb-3">
             <div class="bg-emerald-100 p-2 rounded-xl text-emerald-700 shadow-inner mt-0.5">
@@ -148,15 +147,14 @@
 
     <!-- ONGLET 3 : LA FILE D'ATTENTE -->
     <section id="tabTournee" class="hidden space-y-4">
-      <div class="flex justify-between items-center px-1">
-        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">File de travail Assignée</h2>
+      <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
+        <h2 id="tourneeDebugHeader" class="text-xs font-bold text-slate-500 uppercase tracking-wider">File de travail Assignée</h2>
       </div>
       <div id="tourneeListContainer" class="space-y-3 pb-8"></div>
     </section>
 
   </main>
 
-  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
@@ -208,10 +206,13 @@
         <button onclick="saveAgentConfig()" class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 font-bold text-white rounded-xl text-sm shadow-md transition cursor-pointer">Activer ce profil</button>
         <button onclick="logoutMobileAgentStep1()" class="w-full h-12 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold rounded-xl text-sm transition cursor-pointer">Se déconnecter</button>
       </div>
-      <div class="pt-4 border-t border-slate-100">
-        <button onclick="hardResetApp()" class="w-full h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
-          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Vider le cache et réparer
+      
+      <!-- NOUVEAU BOUTON RESET AGRESSIF -->
+      <div class="pt-4 border-t border-slate-100 mt-2">
+        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2">
+          <i data-lucide="trash-2" class="w-4 h-4"></i> Forcer la Réinitialisation
         </button>
+        <p class="text-[9px] text-slate-400 mt-2 leading-tight">À utiliser si la connexion tourne en boucle ou si les tâches refusent de s'afficher.</p>
       </div>
     </div>
   </div>
@@ -246,7 +247,7 @@
 
     async function safeSetStorage(key, data) {
       try { await localforage.setItem(key, data); } 
-      catch (e) { alert("⚠️ Stockage saturé ou erreur IndexedDB."); }
+      catch (e) { console.warn("Stockage saturé ou erreur IndexedDB."); }
     }
 
     let selectedArticle = null;
@@ -291,25 +292,44 @@
       await syncMobileData();
     });
 
+    // --- NOUVEAU BOUTON RESET AGRESSIF ---
     async function hardResetApp() {
-      if(confirm("Cela va forcer la mise à jour de l'application et vider la mémoire. Continuer ?")) {
-         await localforage.clear();
-         localStorage.clear();
-         sessionStorage.clear();
-         if('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            for(let r of regs) await r.unregister();
-         }
-         window.location.reload(true);
-      }
+      if(!confirm("⚠️ Attention : Cette action va vider le cache et forcer le retéléchargement complet de l'application. Continuer ?")) return;
+      
+      const btn = document.getElementById("btnHardReset");
+      if(btn) btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Nettoyage...';
+      
+      try {
+        await localforage.clear();
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          for (let k of keys) await caches.delete(k);
+        }
+        
+        if('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for(let r of regs) await r.unregister();
+        }
+      } catch(e) { console.warn(e); }
+      
+      // Force le rechargement absolu en ajoutant un paramètre unique à l'URL
+      window.location.href = window.location.pathname + '?reset=' + Date.now();
     }
 
     function initMobileDropdowns() {
       const agentSel = document.getElementById("configAgentSelect");
-      if (agentSel && availableAgents.length > 0) {
-        agentSel.innerHTML = '<option value="">-- Choisir votre profil --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-        if (currentAgent) agentSel.value = currentAgent;
+      if (agentSel) {
+        if (availableAgents.length > 0) {
+          agentSel.innerHTML = '<option value="">-- Choisir votre profil --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+          if (currentAgent) agentSel.value = currentAgent;
+        } else {
+          agentSel.innerHTML = '<option value="">⏳ Synchronisation en cours...</option>';
+        }
       }
+      
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
       if (cSel && availableContractors.length > 0) cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -365,19 +385,17 @@
       return str.split(' ')[0];
     }
 
-    // --- CORRECTION DU DEFILEMENT CLAVIER ---
     function handleQuantityFocus() {
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
         const qtySec = document.getElementById('quantitySection');
         if (mainArea && qtySec) {
-          // On force le scroll absolu pour coller le bloc en haut
           mainArea.scrollTo({
             top: qtySec.offsetTop - 15,
             behavior: 'smooth'
           });
         }
-      }, 400); // Délai de 400ms pour laisser le clavier natif iOS/Android se déployer entièrement
+      }, 400);
     }
 
     function closeQtyKeyboard() {
@@ -418,6 +436,7 @@
           if (item.action === "UPDATE_TOURNEE_STATUS") recentlyProcessedTourneeUpdates.push(item);
 
           try {
+            // Contournement du cache pour s'assurer que les envois passent
             await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(item) });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
             await safeSetStorage("offline_pending_sync", pendingSyncQueue);
@@ -427,7 +446,8 @@
       }
 
       try {
-        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
+        // Ajout de "cache: 'no-store'" pour forcer le bypass du Service Worker
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         
         if (data.status === "success") {
@@ -643,9 +663,18 @@
     }
 
     function renderTournee() {
-      const c = document.getElementById("tourneeListContainer"); if(!c) return; const tStr=normalizeDateYMD(new Date());
+      const c = document.getElementById("tourneeListContainer"); 
+      const tHeader = document.getElementById("tourneeDebugHeader");
+      if(!c) return; 
+      
+      const tStr = normalizeDateYMD(new Date());
       const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
       
+      // --- MOUCHARD DE DEBOGAGE (Affiche "x tâches pour vous / y totales sur le serveur") ---
+      if (tHeader) {
+        tHeader.innerText = `FILE DE TRAVAIL ASSIGNÉE (${agentTournees.length} / ${cachedTournees.length})`;
+      }
+
       const aTraiter = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) <= tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
       const aVenir = agentTournees.filter(t => String(t.statut).trim().toUpperCase() !== 'VALIDE' && normalizeDateYMD(t.date) > tStr).sort((a, b) => new Date(a.date) - new Date(b.date));
       const terminees = agentTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE' && normalizeDateYMD(t.date) === tStr);
