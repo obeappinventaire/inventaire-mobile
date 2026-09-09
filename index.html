@@ -13,7 +13,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
-  <!-- NOUVEAU : localForage pour IndexedDB -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <style>
@@ -230,10 +229,8 @@
     let cachedTournees = [];
     let pendingSyncQueue = [];
     let sessionHistory = [];
-    // NOUVEAU : Verrou de synchronisation
     let isSyncing = false; 
 
-    // NOUVEAU : Fonction de sauvegarde sécurisée via localForage (IndexedDB)
     async function safeSetStorage(key, data) {
       try {
         await localforage.setItem(key, data);
@@ -250,7 +247,6 @@
     let barcodeDetector = null;
     let scanLoopActive = false;
 
-    // NOUVEAU : Initialisation asynchrone des données
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       
@@ -342,19 +338,28 @@
       else { badge.classList.add("hidden"); }
     }
 
+    // FIX FUSEAUX HORAIRES : Normalisation de la date stricte
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
-      if (dateVal instanceof Date) return `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
+      if (dateVal instanceof Date) {
+        return `${dateVal.getFullYear()}-${String(dateVal.getMonth()+1).padStart(2,'0')}-${String(dateVal.getDate()).padStart(2,'0')}`;
+      }
       const str = String(dateVal).trim();
+      
+      // Priorité 1 : Format ISO avec 'T'
+      if (str.includes('T')) return str.split('T')[0];
+      
+      // Priorité 2 : Format JJ/MM/AAAA ou JJ-MM-AAAA
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (parts) return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
-      return str.split('T')[0];
+      if (parts) return `${parts[3]}-${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
+      
+      // Fallback
+      return str.split(' ')[0];
     }
 
-    // NOUVEAU : Synchronisation optimisée avec verrou et localForage
     async function syncMobileData() {
       if (!navigator.onLine) return;
-      if (isSyncing) return; // Mutex : évite les doublons de synchronisation
+      if (isSyncing) return;
       isSyncing = true;
 
       const dot = document.getElementById("syncDot");
@@ -391,7 +396,9 @@
           if (data.trades) { availableTrades = data.trades; await safeSetStorage("offline_trades", availableTrades); }
 
           if (data.tournees) {
-            const localValides = new Set(cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`));
+            const localValides = new Set(
+              cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`)
+            );
             cachedTournees = data.tournees.map(serverTask => {
               const key = `${serverTask.agent}_${serverTask.sapRef}`;
               if (localValides.has(key)) return { ...serverTask, statut: 'VALIDE' };
@@ -405,12 +412,15 @@
             sessionHistory = data.history.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
             await safeSetStorage("mob_session_history", sessionHistory);
           }
-          initMobileDropdowns(); renderTournee(); renderHistory();
+
+          initMobileDropdowns();
+          renderTournee();
+          renderHistory();
         }
       } catch (err) {
         console.warn("Sync fetch error :", err);
       } finally {
-        isSyncing = false; // Libération du verrou
+        isSyncing = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
@@ -420,6 +430,7 @@
       const task = cachedTournees.find(t => String(t.id).trim() === String(tourneeId).trim());
       if (!task) return;
       if (String(task.statut || '').trim().toUpperCase() === 'VALIDE') return;
+
       activeMissionContext = { id: task.id, sapRef: task.sapRef, designation: task.designation, contractor: task.contractor, trade: task.trade };
 
       setSelectValueWithFallback("selectContractor", task.contractor);
@@ -432,7 +443,10 @@
 
       const banner = document.getElementById("activeMissionBanner");
       const bannerInfo = document.getElementById("missionBannerInfo");
-      if (banner && bannerInfo) { bannerInfo.innerText = `${task.contractor} (${task.trade}) • Réf: ${task.sapRef}`; banner.classList.remove("hidden"); }
+      if (banner && bannerInfo) {
+        bannerInfo.innerText = `${task.contractor} (${task.trade}) • Réf: ${task.sapRef}`;
+        banner.classList.remove("hidden");
+      }
 
       const item = catalog.find(i => String(i.sapRef).trim() === String(task.sapRef).trim());
       selectArticleFromSearch(item || { sapRef: task.sapRef, designation: task.designation || 'Article assigné', supplierRef: '' });
@@ -495,7 +509,6 @@
       document.getElementById("scanModal").classList.add("hidden");
     }
 
-    // NOUVEAU : Tesseract utilise le dictionnaire français ('fra')
     async function captureAndOCR() {
       const video = document.getElementById("scanVideo");
       const canvas = document.getElementById("scanCanvas");
@@ -558,9 +571,14 @@
       const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
       const tourneeId = activeMissionContext ? activeMissionContext.id : null;
 
+      // FIX FUSEAUX HORAIRES : On calcule l'heure locale sans utiliser le "Z" (UTC) de ISOString
+      const now = new Date();
+      const localTimestamp = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, -1);
+
       const record = {
         id: "INV-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
-        timestamp: new Date().toISOString(), user: currentAgent, contractor: contractor, trade: trade, sapRef: selectedArticle.sapRef, designation: selectedArticle.designation,
+        timestamp: localTimestamp,
+        user: currentAgent, contractor: contractor, trade: trade, sapRef: selectedArticle.sapRef, designation: selectedArticle.designation,
         quantity: qty, lat: currentGpsCoords.lat, lng: currentGpsCoords.lng, tourneeId: tourneeId
       };
 
@@ -576,7 +594,9 @@
       await safeSetStorage("offline_tournees", cachedTournees);
 
       pendingSyncQueue.push({ action: "CREATE", ...record });
-      if (matchedTourneeId) pendingSyncQueue.push({ action: "UPDATE_TOURNEE_STATUS", id: matchedTourneeId, statut: 'VALIDE', user: currentAgent, sapRef: selectedArticle.sapRef });
+      if (matchedTourneeId) {
+        pendingSyncQueue.push({ action: "UPDATE_TOURNEE_STATUS", id: matchedTourneeId, statut: 'VALIDE', user: currentAgent, sapRef: selectedArticle.sapRef });
+      }
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
       
       updatePendingBadge();
