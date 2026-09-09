@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
-  <!-- NOUVEAU : localForage pour utiliser IndexedDB à la place de localStorage -->
+  <!-- NOUVEAU : localForage pour utiliser IndexedDB (Gros volumes) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <style>
@@ -140,7 +140,6 @@
           </button>
         </div>
 
-        <!-- SÉLECTEUR DE PÉRIODE -->
         <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -172,7 +171,6 @@
           </div>
         </div>
 
-        <!-- CRITÈRES D'ANOMALIES & AUDIT -->
         <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -509,7 +507,7 @@
     </main>
   </div>
 
-  <!-- MODALE ASSIGNATION MANUELLE AVEC VERROUILLAGES DES DATES -->
+  <!-- MODALE ASSIGNATION MANUELLE -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -561,7 +559,6 @@
           </div>
         </div>
 
-        <!-- CORRECTIF : RESTAURATION DU COMPTEUR POUR EVITER LE CRASH -->
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
             <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
@@ -644,8 +641,21 @@
     let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
     let mapFilterOnSelection = false;
 
+    // NOUVEAU : File d'attente sur le PC pour sécuriser les créations & glisser-déposer sans perte
+    let pendingSyncQueue = []; 
+    let isSyncing = false; 
+
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
+
+    async function safeSetStorage(key, data) {
+      try {
+        await localforage.setItem(key, data);
+      } catch (e) {
+        alert("⚠️ Stockage de l'appareil saturé ou erreur IndexedDB.");
+        console.warn("Erreur de stockage local :", e);
+      }
+    }
 
     function getISOWeekNumber(d) {
       const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -700,6 +710,7 @@
       return includeTime ? `${base} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : base;
     }
 
+    // --- ALGORITHME JOURS FERIES BELGES ---
     function getEaster(year) {
         const f = Math.floor, G = year % 19, C = f(year / 100),
         H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
@@ -752,7 +763,6 @@
         return true;
     }
 
-
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
 
@@ -763,6 +773,7 @@
       adminAgents = (await localforage.getItem("offline_admins")) || [];
       cachedHistory = (await localforage.getItem("offline_history")) || [];
       cachedTournees = (await localforage.getItem("offline_tournees")) || [];
+      pendingSyncQueue = (await localforage.getItem("offline_pending_sync")) || [];
 
       initMultiSelects();
       populateAdminDropdown();
@@ -857,11 +868,35 @@
 
     async function syncMonitoringData() {
       if (!navigator.onLine) return;
+      
+      if (isSyncing) return;
+      isSyncing = true;
+      
       const dot = document.getElementById("statusDot");
       const txt = document.getElementById("statusText");
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
       if (txt) { txt.innerText = "Synchronisation..."; txt.className = "text-xs font-bold text-amber-600"; }
 
+      // 1. DÉPILER LA FILE D'ATTENTE PC (Création / Drag & Drop)
+      if (pendingSyncQueue.length > 0) {
+        const queueCopy = [...pendingSyncQueue];
+        for (const item of queueCopy) {
+          try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify(item)
+            });
+            pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
+            await safeSetStorage("offline_pending_sync", pendingSyncQueue);
+          } catch (err) {
+            console.warn("Échec envoi tâche différée :", err);
+            break;
+          }
+        }
+      }
+
+      // 2. RÉCUPÉRATION DES DONNÉES DU SERVEUR
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
@@ -874,15 +909,33 @@
           if (data.catalog) { catalog = data.catalog; await localforage.setItem("offline_catalog", catalog); }
 
           if (data.tournees) {
+            // FIX SMART MERGE : Conserver les actions locales dans l'agenda qui ne sont pas encore sauvegardées
+            let pendingItemsToMerge = [];
+            pendingSyncQueue.forEach(q => {
+               if(q.action === "CREATE_TOURNEES_BULK" && q.items) {
+                   pendingItemsToMerge.push(...q.items);
+               }
+            });
+
             const localValides = new Set(
               cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => String(t.id))
             );
-            cachedTournees = data.tournees.map(serverTask => {
+
+            let finalTournees = data.tournees.map(serverTask => {
               if (localValides.has(String(serverTask.id))) {
                 return { ...serverTask, statut: 'VALIDE' };
               }
               return serverTask;
             });
+
+            // Réinjecte les tâches locales "fantômes"
+            pendingItemsToMerge.forEach(pt => {
+               if (!finalTournees.find(t => t.id === pt.id)) {
+                   finalTournees.push(pt);
+               }
+            });
+
+            cachedTournees = finalTournees;
             await localforage.setItem("offline_tournees", cachedTournees);
           }
 
@@ -895,6 +948,7 @@
       } catch (err) {
         console.warn("Actualisation monitoring en arrière-plan :", err);
       } finally {
+        isSyncing = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (txt) { txt.innerText = "Connecté"; txt.className = "text-xs font-bold text-emerald-600"; }
       }
@@ -1000,23 +1054,18 @@
 
       items.forEach(it => cachedTournees.push(it));
       await localforage.setItem("offline_tournees", cachedTournees);
+
+      // FIX : Ajout à la file d'attente
+      const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      pendingSyncQueue.push({ _syncId: syncId, action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: items });
+      await localforage.setItem("offline_pending_sync", pendingSyncQueue);
       
       closeManualAssignModal();
       manualSelectedCatalogSaps = [];
       renderWallPlanning();
 
-      try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: items })
-        });
-        const result = await response.json();
-        if (result.status !== "success") {
-          alert("Erreur retournée par Google Sheets : " + (result.message || "Échec d'enregistrement"));
-        }
-      } catch (err) {
-        console.warn("Avertissement : Enregistré localement, mais échec de synchronisation distante", err);
+      if(navigator.onLine) {
+         setTimeout(syncMonitoringData, 100);
       }
     }
 
@@ -1089,13 +1138,13 @@
         });
       });
       await localforage.setItem("offline_tournees", cachedTournees);
-      renderWallPlanning();
+      
+      const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      pendingSyncQueue.push({ _syncId: syncId, action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: bulkItems });
+      await localforage.setItem("offline_pending_sync", pendingSyncQueue);
 
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: bulkItems })
-      }).catch(err => console.warn("Erreur sync bulk distant:", err));
+      renderWallPlanning();
+      if(navigator.onLine) setTimeout(syncMonitoringData, 100);
       alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
     }
 
@@ -1133,11 +1182,10 @@
       draggedPayload = null;
 
       if (itemsToUpdate.length > 0) {
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken })
-        }).catch(err => console.warn("Erreur MAJ drag&drop:", err));
+        const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+        pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
+        await localforage.setItem("offline_pending_sync", pendingSyncQueue);
+        if(navigator.onLine) setTimeout(syncMonitoringData, 100);
       }
     }
 
@@ -1299,14 +1347,13 @@
       cachedTournees = cachedTournees.filter(t => t.id !== id);
       await localforage.setItem("offline_tournees", cachedTournees);
       
+      const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_TOURNEE", id: id, user: currentAdmin, token: adminToken });
+      await localforage.setItem("offline_pending_sync", pendingSyncQueue);
+
       closeTourneeDetailsModal();
       renderWallPlanning();
-
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "DELETE_TOURNEE", id: id, user: currentAdmin, token: adminToken })
-      }).catch(e => console.warn("Erreur suppression tournée :", e));
+      if(navigator.onLine) setTimeout(syncMonitoringData, 100);
     }
 
     function updateActiveAgentsButtonUI() {
@@ -1792,22 +1839,12 @@
         applyFilters();
       }
 
-      try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin, token: adminToken })
-        });
-        const res = await response.json();
-        if (res.status !== "success") throw new Error(res.message);
-      } catch (e) {
-        alert("Échec de synchronisation avec le serveur. La quantité initiale a été restaurée.");
-        if (item) {
-          item.quantity = oldQty;
-          await safeSetStorage("offline_history", cachedHistory);
-          applyFilters();
-        }
-      }
+      // Ajout de la modif en file d'attente pour le PC
+      const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin, token: adminToken });
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue);
+
+      if (navigator.onLine) setTimeout(syncMonitoringData, 100);
     }
 
     async function deleteTableItem(id) {
@@ -1820,24 +1857,12 @@
       await safeSetStorage("offline_history", cachedHistory);
       applyFilters();
 
-      try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "DELETE_INVENTORY", id: id, user: currentAdmin, token: adminToken })
-        });
-        const res = await response.json();
-        if (res && res.status !== "success") {
-          throw new Error(res.message);
-        }
-      } catch (e) {
-        alert("La suppression a échoué côté serveur. La ligne a été restaurée sur votre écran.");
-        if (itemToRestore) {
-          cachedHistory.splice(itemIndex, 0, itemToRestore);
-          await safeSetStorage("offline_history", cachedHistory);
-          applyFilters();
-        }
-      }
+      // Ajout de la suppression en file d'attente pour le PC
+      const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_INVENTORY", id: id, user: currentAdmin, token: adminToken });
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue);
+
+      if (navigator.onLine) setTimeout(syncMonitoringData, 100);
     }
 
     function switchView(v) {
