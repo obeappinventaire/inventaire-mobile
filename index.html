@@ -52,13 +52,15 @@
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[70vh]" id="mainScrollArea">
     
     <section id="tabComptage" class="space-y-4">
-      <div id="activeMissionBanner" class="hidden bg-amber-50 border-2 border-orange-500 p-3.5 rounded-2xl shadow-xs space-y-2">
+      
+      <!-- BANDEAU MISSION ACTIVE : DESIGN ÉPURÉ RACCORD -->
+      <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative">
         <div class="flex justify-between items-center">
-          <span class="text-[11px] font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="clipboard-check" class="w-4 h-4 text-orange-600"></i> Tâche Assignée
+          <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="target" class="w-3.5 h-3.5 text-orange-500"></i> Tâche Assignée
           </span>
-          <button onclick="cancelActiveMission()" class="text-[10px] font-bold text-rose-600 bg-white hover:bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-300 transition cursor-pointer">
-            Mode Libre ✕
+          <button onclick="cancelActiveMission()" class="text-[9px] font-bold text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 px-2 py-1 rounded-md transition cursor-pointer border border-slate-100">
+            ✕ Quitter
           </button>
         </div>
         <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
@@ -80,11 +82,8 @@
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
-          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" onblur="setTimeout(() => document.getElementById('closeKeyboardBtn').classList.add('hidden'), 200)" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
-          
-          <button id="closeKeyboardBtn" onmousedown="event.preventDefault(); closeKeyboard()" class="hidden absolute right-1.5 top-1.5 bottom-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg font-bold text-xs flex items-center gap-1 transition cursor-pointer">
-            <i data-lucide="keyboard" class="w-4 h-4"></i> OK
-          </button>
+          <!-- Suppression de onblur et du bouton OK pour la recherche -->
+          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
 
@@ -97,23 +96,21 @@
           </button>
         </div>
 
-        <!-- ZONE DE SÉLECTION -->
-        <div id="selectedArticleCard" class="hidden bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl shadow-sm space-y-2 mt-2 transition-all relative">
-          <button onclick="resetComptageForm()" class="absolute top-2 right-2 p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-full transition cursor-pointer" title="Annuler la sélection">
+        <!-- ZONE DE SÉLECTION COMPACTE, ÉPURÉE ET DIVISÉE PAR 2 EN HAUTEUR -->
+        <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-300 p-2 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-2.5">
+          <div class="bg-emerald-100 p-1.5 rounded-lg text-emerald-700 shrink-0">
+             <i data-lucide="check" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1 min-w-0 pr-6 flex flex-col justify-center">
+             <div class="flex items-center gap-2">
+               <span id="cardSapRef" class="font-mono font-bold text-emerald-800 text-sm">--</span>
+               <span id="cardSupplierRef" class="font-mono text-[9px] font-bold text-emerald-600 bg-emerald-100/50 px-1.5 py-0.5 rounded border border-emerald-200">--</span>
+             </div>
+             <p id="cardDesignation" class="text-[10px] text-slate-700 truncate leading-tight mt-0.5">--</p>
+          </div>
+          <button onclick="resetComptageForm()" class="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-full transition cursor-pointer" title="Annuler la sélection">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
-          <div class="flex items-start gap-3 border-b border-emerald-200 pb-3 pr-6">
-            <div class="bg-emerald-100 p-2 rounded-xl text-emerald-700 shadow-inner mt-0.5 shrink-0">
-               <i data-lucide="check-circle" class="w-6 h-6"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-               <div class="flex flex-col items-start gap-1">
-                 <span id="cardSapRef" class="font-mono font-black text-emerald-800 text-base">--</span>
-                 <span id="cardSupplierRef" class="font-mono text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-300 shadow-xs">Fourn: --</span>
-               </div>
-               <p id="cardDesignation" class="font-normal text-slate-700 text-xs leading-snug mt-2 whitespace-normal break-words">--</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -240,7 +237,7 @@
     let catalog = [], availableAgents = [], availableContractors = [], availableTrades = [];
     let cachedTournees = [], pendingSyncQueue = [], sessionHistory = [];
     let isSyncing = false; 
-    let openTourneeGroups = {}; // Mémorise l'état d'ouverture des groupes de tâches
+    let openTourneeGroups = {}; 
 
     async function safeSetStorage(key, data) { try { await localforage.setItem(key, data); } catch (e) { console.warn("Stockage saturé ou erreur IndexedDB."); } }
 
@@ -335,22 +332,22 @@
         const mainArea = document.getElementById('mainScrollArea');
         const searchSec = document.getElementById('searchSection');
         if (mainArea && searchSec) {
-          mainArea.scrollTo({ top: searchSec.offsetTop - 15, behavior: 'smooth' });
+          mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
         }
       }, 400);
     }
 
     function closeQtyKeyboard() { document.getElementById('inputQuantity').blur(); }
     
+    // --- CORRECTION DU SCROLL POUR LA RECHERCHE SAP ---
     function handleSearchFocus() {
-      document.getElementById('closeKeyboardBtn').classList.remove('hidden');
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection'), mainArea = document.getElementById('mainScrollArea');
-        if (mainArea && searchSec) mainArea.scrollTo({ top: searchSec.offsetTop - 15, behavior: 'smooth' });
+        if (mainArea && searchSec) mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
       }, 300);
     }
     
-    function closeKeyboard() { document.getElementById('sapSearchInput').blur(); document.getElementById('closeKeyboardBtn').classList.add('hidden'); }
+    function closeKeyboard() { document.getElementById('sapSearchInput').blur(); }
 
     async function syncMobileData() {
       if (!navigator.onLine || isSyncing) return;
@@ -473,6 +470,7 @@
     }
 
     async function submitInventoryEntry() {
+      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE AJOUTÉ
       if(!currentAgent){alert("Configurez l'agent");openConfigModal();return;} if(!selectedArticle){alert("Sélectionnez un article");return;}
       const qInputStr = document.getElementById("inputQuantity").value;
       const q = parseInt(qInputStr, 10) || 0;
@@ -520,6 +518,7 @@
       if(navigator.onLine) setTimeout(syncMobileData, 100);
     }
 
+    // --- CORRECTION DU BLOC D'AFFECTATION ---
     function renderHistory() {
       const c = document.getElementById("historyListContainer"); if(!c) return;
       const ag = String(currentAgent||"").trim().toLowerCase();
@@ -545,8 +544,8 @@
           <p class="font-bold text-slate-900 text-sm leading-tight break-words">${h.designation}</p>
           
           <div class="flex gap-3 pt-1 items-stretch">
-            <div class="bg-slate-100 text-slate-700 px-3 py-2 rounded-2xl text-sm font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center min-w-0">
-              <span class="block text-slate-500 font-bold uppercase text-[10px] mb-0.5">Affectation</span>
+            <!-- SUPPRESSION DU TEXTE "AFFECTATION" -->
+            <div class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-2xl text-sm font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center min-w-0">
               <span class="truncate text-slate-800">${h.contractor}</span>
               <span class="truncate text-slate-600 font-bold">${h.trade}</span>
             </div>
@@ -567,6 +566,7 @@
     }
 
     async function editHistoryItem(id) {
+      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE AJOUTÉ
       const it=sessionHistory.find(h=>h.id===id); if(!it) return; const q=prompt("Modifier la quantité :", it.quantity); if(q===null) return; const p=parseInt(q,10); if(isNaN(p)||p<0) return;
       it.quantity=p; await safeSetStorage("mob_session_history", sessionHistory);
       const pc=pendingSyncQueue.find(x=>x.id===id&&x.action==='CREATE'); if(pc) pc.quantity=p; else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"UPDATE_INVENTORY", id:id, quantity:p, user:currentAgent}); }
@@ -574,6 +574,7 @@
     }
 
     async function deleteHistoryItem(id) {
+      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE AJOUTÉ
       if(!confirm("Supprimer cette saisie ?")) return;
       const it=sessionHistory.find(h=>h.id===id); sessionHistory=sessionHistory.filter(h=>h.id!==id); await safeSetStorage("mob_session_history", sessionHistory);
       const pi=pendingSyncQueue.findIndex(x=>x.id===id&&x.action==='CREATE'); if(pi!==-1) pendingSyncQueue.splice(pi,1); else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"DELETE_INVENTORY", id:id, user:currentAgent}); }
@@ -593,27 +594,14 @@
       return dStr;
     }
 
-    // --- LOGIQUE D'ACCORDÉON POUR LES GROUPES DE MISSIONS ---
     function toggleTourneeGroup(groupId) {
       openTourneeGroups[groupId] = !openTourneeGroups[groupId];
       renderTournee();
     }
 
-    // --- REGROUPEMENT INTELLIGENT DES TÂCHES ---
-    function renderTournee() {
-      const c = document.getElementById("tourneeListContainer"); 
-      const tHeader = document.getElementById("tourneeDebugHeader");
-      if(!c) return; 
-      
-      const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
-      
-      if (tHeader) {
-        tHeader.innerHTML = `FILE DE TRAVAIL ASSIGNÉE <span class="text-orange-600 font-mono">(${agentTournees.length} à vous / ${cachedTournees.length} totales)</span>`;
-      }
-
-      // Groupement par Date + Entrepreneur + Métier + Tranche
+    function buildTourneeGroups(tourneesList) {
       const groupsMap = {};
-      agentTournees.forEach(t => {
+      tourneesList.forEach(t => {
         const key = `${t.date}_${t.contractor}_${t.trade}_${t.tranche}`;
         if (!groupsMap[key]) {
           groupsMap[key] = {
@@ -628,15 +616,29 @@
         groupsMap[key].items.push(t);
       });
 
-      const groupedTasks = Object.values(groupsMap);
-      groupedTasks.forEach(g => {
+      const list = Object.values(groupsMap);
+      list.forEach(g => {
         g.items.sort((a, b) => (Number(a.ordre) || 0) - (Number(b.ordre) || 0));
         g.total = g.items.length;
         g.done = g.items.filter(i => String(i.statut).trim().toUpperCase() === 'VALIDE').length;
         g.pending = g.total - g.done;
         g.statut = g.pending === 0 ? 'VALIDE' : 'A_FAIRE';
       });
+      return list;
+    }
 
+    function renderTournee() {
+      const c = document.getElementById("tourneeListContainer"); 
+      const tHeader = document.getElementById("tourneeDebugHeader");
+      if(!c) return; 
+      
+      const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
+      
+      if (tHeader) {
+        tHeader.innerHTML = `FILE DE TRAVAIL ASSIGNÉE <span class="text-orange-600 font-mono">(${agentTournees.length} à vous / ${cachedTournees.length} totales)</span>`;
+      }
+
+      const groupedTasks = buildTourneeGroups(agentTournees);
       const safeSort = (a, b) => normalizeDateYMD(a.date).localeCompare(normalizeDateYMD(b.date));
 
       const aTraiter = groupedTasks.filter(g => g.statut !== 'VALIDE').sort(safeSort);
