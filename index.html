@@ -23,7 +23,6 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100 overflow-hidden">
 
-  <!-- BANDEAU MISE À JOUR PWA -->
   <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
     <span class="font-bold">🔄 Mise à jour détectée !</span>
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
@@ -69,7 +68,6 @@
         <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
       </div>
 
-      <!-- PARAMÈTRES DE SAISIE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Paramètres de Saisie</h2>
         <div class="grid grid-cols-2 gap-3">
@@ -84,7 +82,6 @@
         </div>
       </div>
 
-      <!-- RECHERCHE ACTIVE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="flex justify-between items-center">
           <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Recherche active</h2>
@@ -110,7 +107,6 @@
           </button>
         </div>
 
-        <!-- TICKET ARTICLE SÉLECTIONNÉ -->
         <div id="selectedArticleCard" class="hidden bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl shadow-sm space-y-2 mt-2 transition-all">
           <div class="flex items-start gap-3 border-b border-emerald-200 pb-3">
             <div class="bg-emerald-100 p-2 rounded-xl text-emerald-700 shadow-inner mt-0.5">
@@ -127,7 +123,6 @@
         </div>
       </div>
 
-      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3" id="quantitySection">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quantité Comptée</h2>
         <div class="flex items-stretch gap-3 relative">
@@ -156,7 +151,7 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ONGLET 3 : LA FILE D'ATTENTE (NOUVEAU DESIGN BACKLOG) -->
+    <!-- ONGLET 3 : LA FILE D'ATTENTE (BACKLOG) -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="flex justify-between items-center px-1">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">File de travail Assignée</h2>
@@ -181,7 +176,6 @@
     </button>
   </nav>
 
-  <!-- MODALE SCAN CAMÉRA -->
   <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="w-full flex justify-between items-center text-white py-2 px-2">
       <span class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner Code-Barres / OCR</span>
@@ -202,7 +196,6 @@
     </div>
   </div>
 
-  <!-- MODALE CONFIGURATION PROFIL -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div>
@@ -383,14 +376,22 @@
       document.getElementById('closeKeyboardBtn').classList.add('hidden');
     }
 
+    // BOUCLIER TEMPOREL (Evite le bug de suppression par Google Sheets)
     async function syncMobileData() {
       if (!navigator.onLine || isSyncing) return;
       isSyncing = true;
       const dot = document.getElementById("syncDot"); const syncBtn = document.getElementById("syncBtn");
       if(dot) dot.className = "w-3 h-3 rounded-full bg-amber-500 animate-spin"; if(syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
+      let recentlyProcessedHistory = [];
+      let recentlyProcessedTourneeUpdates = [];
+
       if (pendingSyncQueue.length > 0) {
-        for (const item of [...pendingSyncQueue]) {
+        const queueCopy = [...pendingSyncQueue];
+        for (const item of queueCopy) {
+          if (item.action === "CREATE") recentlyProcessedHistory.push(item);
+          if (item.action === "UPDATE_TOURNEE_STATUS") recentlyProcessedTourneeUpdates.push(item);
+
           try {
             await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(item) });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
@@ -403,6 +404,7 @@
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
+        
         if (data.status === "success") {
           if(data.catalog){ catalog=data.catalog; await safeSetStorage("offline_catalog", catalog); }
           if(data.agents){ availableAgents=data.agents; await safeSetStorage("offline_agents", availableAgents); }
@@ -410,13 +412,30 @@
           if(data.trades){ availableTrades=data.trades; await safeSetStorage("offline_trades", availableTrades); }
           
           if(data.tournees){
-            const locVal = new Set(cachedTournees.filter(t=>String(t.statut).toUpperCase()==='VALIDE').map(t=>String(t.id)));
-            cachedTournees = data.tournees.map(s => locVal.has(String(s.id)) ? { ...s, statut: 'VALIDE' } : s);
+            let pendingUpdatesToMerge = [...recentlyProcessedTourneeUpdates];
+            pendingSyncQueue.forEach(q => { if(q.action === "UPDATE_TOURNEE_STATUS") pendingUpdatesToMerge.push(q); });
+
+            const localValides = new Set(cachedTournees.filter(t=>String(t.statut).toUpperCase()==='VALIDE').map(t=>String(t.id)));
+            pendingUpdatesToMerge.forEach(pu => { if(pu.statut === 'VALIDE') localValides.add(String(pu.id)); });
+
+            cachedTournees = data.tournees.map(s => localValides.has(String(s.id)) ? { ...s, statut: 'VALIDE' } : s);
             await safeSetStorage("offline_tournees", cachedTournees);
           }
+          
           if(data.history){
             const nA = String(currentAgent||"").trim().toLowerCase();
-            sessionHistory = data.history.filter(h => String(h.user||"").trim().toLowerCase() === nA);
+            let serverHistory = data.history.filter(h => String(h.user||"").trim().toLowerCase() === nA);
+
+            let pendingHistToMerge = [...recentlyProcessedHistory];
+            pendingSyncQueue.forEach(q => { if(q.action === "CREATE") pendingHistToMerge.push(q); });
+
+            pendingHistToMerge.forEach(ph => {
+                if (!serverHistory.find(sh => sh.id === ph.id)) {
+                    serverHistory.unshift(ph); 
+                }
+            });
+
+            sessionHistory = serverHistory;
             await safeSetStorage("mob_session_history", sessionHistory);
           }
           initMobileDropdowns(); renderTournee(); renderHistory();
@@ -430,18 +449,13 @@
     function selectTourneeTask(tourneeId) {
       const t = cachedTournees.find(x => String(x.id).trim() === String(tourneeId).trim());
       if (!t || String(t.statut||'').trim().toUpperCase() === 'VALIDE') return;
-      
       activeMissionContext = { id: t.id, sapRef: t.sapRef, designation: t.designation, contractor: t.contractor, trade: t.trade };
-      
       setSelectValueWithFallback("selectContractor", t.contractor); setSelectValueWithFallback("selectTrade", t.trade);
-      
       const cSel=document.getElementById("selectContractor"); const tSel=document.getElementById("selectTrade");
       if(cSel){cSel.setAttribute("disabled","disabled");cSel.classList.add("bg-slate-200","pointer-events-none");}
       if(tSel){tSel.setAttribute("disabled","disabled");tSel.classList.add("bg-slate-200","pointer-events-none");}
-      
       const b=document.getElementById("activeMissionBanner"); const bi=document.getElementById("missionBannerInfo");
       if(b&&bi){bi.innerText=`${t.contractor} (${t.trade}) • Réf: ${t.sapRef}`; b.classList.remove("hidden");}
-      
       const item=catalog.find(i=>String(i.sapRef).trim()===String(t.sapRef).trim());
       selectArticleFromSearch(item||{sapRef:t.sapRef,designation:t.designation||'Article assigné',supplierRef:''}); switchMobileTab('comptage');
     }
@@ -516,7 +530,6 @@
       
       let mT = tourneeId;
       cachedTournees.forEach(t=>{ 
-        // Validation exclusive par ID
         if(t.id === tourneeId) { t.statut='VALIDE'; mT=t.id; } 
       });
       await safeSetStorage("offline_tournees", cachedTournees);
@@ -600,7 +613,6 @@
       return `${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]} ${d.getDate()} ${['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][d.getMonth()]}`;
     }
 
-    // LISTE DES TACHES : NOUVEAU DESIGN "BACKLOG"
     function renderTournee() {
       const c = document.getElementById("tourneeListContainer"); if(!c) return; const tStr=normalizeDateYMD(new Date());
       const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
@@ -675,6 +687,7 @@
     }
 
     function switchMobileTab(t) { ['Comptage','Historique','Tournee'].forEach(x=>{ document.getElementById("tab"+x)?.classList.add("hidden"); const n=document.getElementById("nav"+x); if(n) n.className="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px]"; }); const a=t.charAt(0).toUpperCase()+t.slice(1); document.getElementById("tab"+a)?.classList.remove("hidden"); const aN=document.getElementById("nav"+a); if(aN) aN.className="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px]"; if(t==='historique') renderHistory(); if(t==='tournee') renderTournee(); lucide.createIcons(); }
+    
     function toggleVoiceSearch() { const S=window.SpeechRecognition||window.webkitSpeechRecognition; if(!S) return; const r=new S(); r.lang='fr-FR'; const btn=document.getElementById("micBtn"); btn.className="h-12 bg-rose-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700"; r.onresult=e=>{ const m=e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); const v=m?m[0]:e.results[0][0].transcript; document.getElementById("sapSearchInput").value=v; onSapSearchInput(v); }; r.onerror=r.onend=()=>{ btn.className="h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; }; r.start(); }
   </script>
 </body>
