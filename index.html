@@ -58,7 +58,7 @@
     
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
-      <!-- BANDEAU MISSION ACTIVE (VERROUILLAGE TOURNÉE) -->
+      <!-- BANDEAU MISSION ACTIVE -->
       <div id="activeMissionBanner" class="hidden bg-amber-50 border-2 border-orange-500 p-3.5 rounded-2xl shadow-xs space-y-2">
         <div class="flex justify-between items-center">
           <span class="text-[11px] font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -224,7 +224,6 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let currentAgent = localStorage.getItem("mob_current_agent") || "";
-    // NOUVEAU : Initialisation vide, remplie via IndexedDB ensuite
     let catalog = [];
     let availableAgents = [];
     let availableContractors = [];
@@ -233,10 +232,9 @@
     let pendingSyncQueue = [];
     let sessionHistory = [];
     
-    // NOUVEAU : Verrou de synchronisation pour empêcher les requêtes réseau simultanées
+    // CORRECTIF : Verrou pour empêcher les bugs de synchronisation en double
     let isSyncing = false; 
 
-    // NOUVEAU : Utilitaire de stockage asynchrone IndexedDB via localForage
     async function safeSetStorage(key, data) {
       try {
         await localforage.setItem(key, data);
@@ -253,10 +251,10 @@
     let barcodeDetector = null;
     let scanLoopActive = false;
 
-    // NOUVEAU : DOMContentLoaded asynchrone pour charger les données IndexedDB
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
       
+      // CORRECTIF : Chargement via IndexedDB
       catalog = (await localforage.getItem("offline_catalog")) || [];
       availableAgents = (await localforage.getItem("offline_agents")) || [];
       availableContractors = (await localforage.getItem("offline_contractors")) || [];
@@ -368,40 +366,31 @@
       }
     }
 
-    // NOUVEAU : Fonction de date stricte et robuste (Fix problème UTC/Jour décalé)
+    // CORRECTIF : Normalisation des dates pour éviter les décalages de fuseaux
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
       if (dateVal instanceof Date) {
         return `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
       }
       const str = String(dateVal).trim();
-      
-      // Priorité 1 : Si la date contient un 'T' (ex: 2026-09-08T22:00:00) on coupe proprement
       if (str.includes('T')) return str.split('T')[0];
-      
-      // Priorité 2 : Expressions régulières pour les formats JJ/MM/AAAA
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
       if (parts) {
         return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
       }
-      // Fallback
       return str.split(' ')[0];
     }
 
-    // NOUVEAU : Verrouillage isSyncing et écriture IndexedDB
     async function syncMobileData() {
       if (!navigator.onLine) return;
-      
-      // Verrou pour empêcher les requêtes réseau multiples
       if (isSyncing) return;
       isSyncing = true;
-      
+
       const dot = document.getElementById("syncDot");
       const syncBtn = document.getElementById("syncBtn");
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
       if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
-      // 1. Dépilement de la file d'attente hors ligne
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
@@ -421,34 +410,31 @@
         updatePendingBadge();
       }
 
-      // 2. Synchronisation descendante : Google Sheets est la source de vérité
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
+        
         if (data.status === "success") {
           if (data.catalog) { catalog = data.catalog; await safeSetStorage("offline_catalog", catalog); }
           if (data.agents) { availableAgents = data.agents; await safeSetStorage("offline_agents", availableAgents); }
           if (data.contractors) { availableContractors = data.contractors; await safeSetStorage("offline_contractors", availableContractors); }
           if (data.trades) { availableTrades = data.trades; await safeSetStorage("offline_trades", availableTrades); }
 
-          // Tournées : conservation des validations locales récentes
           if (data.tournees) {
+            // CORRECTIF : Validation basée uniquement sur l'ID de la tâche (empêche l'auto-validation par erreur)
             const localValides = new Set(
-              cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`)
+              cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => String(t.id))
             );
 
             cachedTournees = data.tournees.map(serverTask => {
-              const key = `${serverTask.agent}_${serverTask.sapRef}`;
-              if (localValides.has(key)) {
+              if (localValides.has(String(serverTask.id))) {
                 return { ...serverTask, statut: 'VALIDE' };
               }
               return serverTask;
             });
-
             await safeSetStorage("offline_tournees", cachedTournees);
           }
 
-          // HISTORIQUE : Purge immédiate des éléments supprimés
           if (data.history) {
             const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
             sessionHistory = data.history.filter(h => 
@@ -464,7 +450,7 @@
       } catch (err) {
         console.warn("Sync fetch error :", err);
       } finally {
-        isSyncing = false; // Libération du verrou
+        isSyncing = false;
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
@@ -590,7 +576,6 @@
       document.getElementById("scanModal").classList.add("hidden");
     }
 
-    // NOUVEAU : Amélioration de l'OCR Tesseract avec le langage français
     async function captureAndOCR() {
       const video = document.getElementById("scanVideo");
       const canvas = document.getElementById("scanCanvas");
@@ -603,7 +588,7 @@
 
       document.getElementById("ocrStatus").innerText = "Analyse OCR en cours...";
       try {
-        // Tesseract en français 'fra' est beaucoup plus robuste sur les étiquettes contenant des accents
+        // CORRECTIF : Langue Tesseract réglée sur 'fra'
         const result = await Tesseract.recognize(canvas, 'fra');
         const text = result.data.text;
         
@@ -669,7 +654,7 @@
       const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
       const tourneeId = activeMissionContext ? activeMissionContext.id : null;
 
-      // NOUVEAU : Calcul rigoureux de l'heure locale pour éviter le saut de jour (bug UTC)
+      // CORRECTIF : Calcul de l'heure locale pour empêcher le saut de jour (bug UTC)
       const now = new Date();
       const localTimestamp = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, -1);
 
@@ -687,23 +672,25 @@
         tourneeId: tourneeId
       };
 
-      // 1. Mise à jour locale
       sessionHistory.unshift({ ...record, isPending: !navigator.onLine });
       await safeSetStorage("mob_session_history", sessionHistory);
 
-      // 2. Validation ciblée
       let matchedTourneeId = tourneeId;
+      let foundSapMatch = false; 
+      
+      // CORRECTIF : Validation de la tâche de tournée sans auto-valider en boucle
       cachedTournees.forEach(t => {
         const matchById = tourneeId && String(t.id).trim() === String(tourneeId).trim();
-        const matchBySap = !tourneeId && String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim();
-        if (matchById || matchBySap) {
-          t.statut = 'VALIDE';
-          if (!matchedTourneeId) matchedTourneeId = t.id;
+        const matchBySap = !tourneeId && !foundSapMatch && String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim() && String(t.statut).toUpperCase() !== 'VALIDE';
+        
+        if (matchById || matchBySap) { 
+          t.statut = 'VALIDE'; 
+          if (!matchedTourneeId) matchedTourneeId = t.id; 
+          if (matchBySap) foundSapMatch = true;
         }
       });
       await safeSetStorage("offline_tournees", cachedTournees);
 
-      // 3. File d'attente
       pendingSyncQueue.push({ action: "CREATE", ...record });
       if (matchedTourneeId) {
         pendingSyncQueue.push({ 
@@ -722,7 +709,6 @@
       renderHistory();
       switchMobileTab('historique');
 
-      // 4. Envoi serveur
       if (navigator.onLine) {
         setTimeout(() => syncMobileData(), 100);
       }
@@ -809,21 +795,32 @@
       if (navigator.onLine) syncMobileData();
     }
 
+    // CORRECTIF : Suppression d'une ligne d'inventaire = Restauration de la tâche de tournée associée
     async function deleteHistoryItem(id) {
       if (!confirm("Supprimer cette saisie ?")) return;
+      
+      const itemToDel = sessionHistory.find(h => h.id === id);
       sessionHistory = sessionHistory.filter(h => h.id !== id);
       await safeSetStorage("mob_session_history", sessionHistory);
 
       const pendingIdx = pendingSyncQueue.findIndex(p => p.id === id && p.action === 'CREATE');
-      if (pendingIdx !== -1) {
-        pendingSyncQueue.splice(pendingIdx, 1);
-      } else {
-        pendingSyncQueue.push({ action: "DELETE_INVENTORY", id: id, user: currentAgent });
+      if (pendingIdx !== -1) { 
+        pendingSyncQueue.splice(pendingIdx, 1); 
+      } else { 
+        pendingSyncQueue.push({ action: "DELETE_INVENTORY", id: id, user: currentAgent }); 
+      }
+
+      if (itemToDel && itemToDel.tourneeId) {
+        pendingSyncQueue.push({ action: "UPDATE_TOURNEE_STATUS", id: itemToDel.tourneeId, statut: 'A_FAIRE', user: currentAgent });
+        const t = cachedTournees.find(x => x.id === itemToDel.tourneeId);
+        if (t) t.statut = 'A_FAIRE';
+        await safeSetStorage("offline_tournees", cachedTournees);
       }
 
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      updatePendingBadge();
-      renderHistory();
+      updatePendingBadge(); 
+      renderHistory(); 
+      renderTournee(); 
       if (navigator.onLine) syncMobileData();
     }
 
