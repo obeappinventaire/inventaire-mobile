@@ -120,7 +120,6 @@
         </div>
       </div>
 
-      <!-- SECTION QUANTITÉ AMÉLIORÉE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quantité Comptée</h2>
         <div class="flex items-center justify-center relative">
@@ -138,7 +137,6 @@
       </div>
     </section>
 
-    <!-- ONGLET 2 : HISTORIQUE -->
     <section id="tabHistorique" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
@@ -147,7 +145,6 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ONGLET 3 : MA TOURNÉE -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3">
         <div class="flex justify-between items-center">
@@ -299,8 +296,12 @@
       }
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
-      if (cSel && availableContractors.length > 0) cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (tSel && availableTrades.length > 0) tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      if (cSel && availableContractors.length > 0) {
+        cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      if (tSel && availableTrades.length > 0) {
+        tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
     }
 
     function setSelectValueWithFallback(selectId, val) {
@@ -309,14 +310,24 @@
       const targetVal = String(val).trim();
       let found = false;
       for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value.trim().toLowerCase() === targetVal.toLowerCase()) { sel.selectedIndex = i; found = true; break; }
+        if (sel.options[i].value.trim().toLowerCase() === targetVal.toLowerCase()) { 
+          sel.selectedIndex = i; 
+          found = true; 
+          break; 
+        }
       }
       if (!found) {
-        const opt = document.createElement("option"); opt.value = targetVal; opt.textContent = targetVal; opt.selected = true; sel.appendChild(opt);
+        const opt = document.createElement("option"); 
+        opt.value = targetVal; 
+        opt.textContent = targetVal; 
+        opt.selected = true; 
+        sel.appendChild(opt);
       }
     }
 
-    function openConfigModal() { document.getElementById("configModal").classList.remove("hidden"); }
+    function openConfigModal() { 
+      document.getElementById("configModal").classList.remove("hidden"); 
+    }
 
     function saveAgentConfig() {
       const sel = document.getElementById("configAgentSelect").value;
@@ -325,7 +336,9 @@
       localStorage.setItem("mob_current_agent", currentAgent);
       document.getElementById("headerAgentName").innerText = currentAgent;
       document.getElementById("configModal").classList.add("hidden");
-      cancelActiveMission(); renderTournee(); renderHistory();
+      cancelActiveMission(); 
+      renderTournee(); 
+      renderHistory();
     }
 
     function logoutMobileAgentStep1() {
@@ -338,21 +351,24 @@
     function updatePendingBadge() {
       const badge = document.getElementById("pendingBadge");
       if (!badge) return;
-      if (pendingSyncQueue.length > 0) { badge.innerText = pendingSyncQueue.length; badge.classList.remove("hidden"); } 
-      else { badge.classList.add("hidden"); }
+      if (pendingSyncQueue.length > 0) { 
+        badge.innerText = pendingSyncQueue.length; 
+        badge.classList.remove("hidden"); 
+      } else { 
+        badge.classList.add("hidden"); 
+      }
     }
 
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
-      if (dateVal instanceof Date) return `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
+      if (dateVal instanceof Date) return `${dateVal.getFullYear()}-${String(dateVal.getMonth()+1).padStart(2,'0')}-${String(dateVal.getDate()).padStart(2,'0')}`;
       const str = String(dateVal).trim();
       if (str.includes('T')) return str.split('T')[0];
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (parts) return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
+      if (parts) return `${parts[3]}-${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
       return str.split(' ')[0];
     }
 
-    // Gestion du Focus/Scroll pour la Quantité
     function handleQuantityFocus() {
       document.getElementById('closeQtyKeyboardBtn').classList.remove('hidden');
       setTimeout(() => {
@@ -368,7 +384,6 @@
       document.getElementById('closeQtyKeyboardBtn').classList.add('hidden');
     }
 
-    // Gestion du Focus/Scroll pour la Recherche
     function handleSearchFocus() {
       document.getElementById('closeKeyboardBtn').classList.remove('hidden');
       setTimeout(() => {
@@ -385,27 +400,25 @@
     }
 
     async function syncMobileData() {
-      if (!navigator.onLine) return;
-      if (isSyncing) return;
+      if (!navigator.onLine || isSyncing) return;
       isSyncing = true;
-
-      const dot = document.getElementById("syncDot");
+      const dot = document.getElementById("syncDot"); 
       const syncBtn = document.getElementById("syncBtn");
-      if (dot) dot.className = "w-3 h-3 rounded-full bg-amber-500 animate-spin";
-      if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
+      
+      if(dot) dot.className = "w-3 h-3 rounded-full bg-amber-500 animate-spin"; 
+      if(syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
       if (pendingSyncQueue.length > 0) {
-        const queueCopy = [...pendingSyncQueue];
-        for (const item of queueCopy) {
+        for (const item of [...pendingSyncQueue]) {
           try {
-            await fetch(GOOGLE_SCRIPT_URL, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" },
-              body: JSON.stringify(item)
+            await fetch(GOOGLE_SCRIPT_URL, { 
+              method: "POST", 
+              headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+              body: JSON.stringify(item) 
             });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
             await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-          } catch (err) {
+          } catch (err) { 
             break; 
           }
         }
@@ -417,354 +430,361 @@
         const data = await res.json();
         
         if (data.status === "success") {
-          if (data.catalog) { catalog = data.catalog; await safeSetStorage("offline_catalog", catalog); }
-          if (data.agents) { availableAgents = data.agents; await safeSetStorage("offline_agents", availableAgents); }
-          if (data.contractors) { availableContractors = data.contractors; await safeSetStorage("offline_contractors", availableContractors); }
-          if (data.trades) { availableTrades = data.trades; await safeSetStorage("offline_trades", availableTrades); }
-
-          if (data.tournees) {
-            const localValides = new Set(
-              cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => String(t.id))
-            );
-            cachedTournees = data.tournees.map(serverTask => {
-              if (localValides.has(String(serverTask.id))) {
-                return { ...serverTask, statut: 'VALIDE' };
+          if(data.catalog){ catalog=data.catalog; await safeSetStorage("offline_catalog", catalog); }
+          if(data.agents){ availableAgents=data.agents; await safeSetStorage("offline_agents", availableAgents); }
+          if(data.contractors){ availableContractors=data.contractors; await safeSetStorage("offline_contractors", availableContractors); }
+          if(data.trades){ availableTrades=data.trades; await safeSetStorage("offline_trades", availableTrades); }
+          
+          if(data.tournees){
+            const locVal = new Set(cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => String(t.id)));
+            cachedTournees = data.tournees.map(s => {
+              if (locVal.has(String(s.id))) {
+                return { ...s, statut: 'VALIDE' };
               }
-              return serverTask;
+              return s;
             });
             await safeSetStorage("offline_tournees", cachedTournees);
           }
-
-          if (data.history) {
-            const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
-            sessionHistory = data.history.filter(h => 
-              String(h.user || "").trim().toLowerCase() === activeAgentNorm
-            );
+          
+          if(data.history){
+            const nA = String(currentAgent||"").trim().toLowerCase();
+            sessionHistory = data.history.filter(h => String(h.user||"").trim().toLowerCase() === nA);
             await safeSetStorage("mob_session_history", sessionHistory);
           }
-
-          initMobileDropdowns();
-          renderTournee();
+          initMobileDropdowns(); 
+          renderTournee(); 
           renderHistory();
         }
-      } catch (err) {} finally {
+      } catch (err) {
+        console.warn("Sync error :", err);
+      } finally {
         isSyncing = false;
-        if (dot) dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
-        if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
+        if(dot) dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse"; 
+        if(syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
     }
 
     function selectTourneeTask(tourneeId) {
-      const task = cachedTournees.find(t => String(t.id).trim() === String(tourneeId).trim());
-      if (!task) return;
-      if (String(task.statut || '').trim().toUpperCase() === 'VALIDE') return;
-
-      activeMissionContext = { id: task.id, sapRef: task.sapRef, designation: task.designation, contractor: task.contractor, trade: task.trade };
-
-      setSelectValueWithFallback("selectContractor", task.contractor);
-      setSelectValueWithFallback("selectTrade", task.trade);
-
-      const cSel = document.getElementById("selectContractor");
-      const tSel = document.getElementById("selectTrade");
-      if (cSel) { cSel.setAttribute("disabled", "disabled"); cSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
-      if (tSel) { tSel.setAttribute("disabled", "disabled"); tSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
-
-      const banner = document.getElementById("activeMissionBanner");
-      const bannerInfo = document.getElementById("missionBannerInfo");
-      if (banner && bannerInfo) {
-        bannerInfo.innerText = `${task.contractor} (${task.trade}) • Réf: ${task.sapRef}`;
-        banner.classList.remove("hidden");
+      const t = cachedTournees.find(x => String(x.id).trim() === String(tourneeId).trim());
+      if (!t || String(t.statut||'').trim().toUpperCase() === 'VALIDE') return;
+      
+      activeMissionContext = { id: t.id, sapRef: t.sapRef, designation: t.designation, contractor: t.contractor, trade: t.trade };
+      
+      setSelectValueWithFallback("selectContractor", t.contractor); 
+      setSelectValueWithFallback("selectTrade", t.trade);
+      
+      const cSel=document.getElementById("selectContractor"); 
+      const tSel=document.getElementById("selectTrade");
+      if(cSel) { cSel.setAttribute("disabled","disabled"); cSel.classList.add("bg-slate-200","pointer-events-none"); }
+      if(tSel) { tSel.setAttribute("disabled","disabled"); tSel.classList.add("bg-slate-200","pointer-events-none"); }
+      
+      const b = document.getElementById("activeMissionBanner"); 
+      const bi = document.getElementById("missionBannerInfo");
+      if(b && bi){
+        bi.innerText = `${t.contractor} (${t.trade}) • Réf: ${t.sapRef}`; 
+        b.classList.remove("hidden");
       }
-
-      const item = catalog.find(i => String(i.sapRef).trim() === String(task.sapRef).trim());
-      selectArticleFromSearch(item || { sapRef: task.sapRef, designation: task.designation || 'Article assigné', supplierRef: '' });
+      
+      const item = catalog.find(i => String(i.sapRef).trim() === String(t.sapRef).trim());
+      selectArticleFromSearch(item || {sapRef: t.sapRef, designation: t.designation || 'Article assigné', supplierRef: ''}); 
+      
       switchMobileTab('comptage');
     }
 
     function cancelActiveMission() {
       activeMissionContext = null;
-      const cSel = document.getElementById("selectContractor");
-      const tSel = document.getElementById("selectTrade");
-      if (cSel) { cSel.removeAttribute("disabled"); cSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
-      if (tSel) { tSel.removeAttribute("disabled"); tSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
-      const banner = document.getElementById("activeMissionBanner");
-      if (banner) banner.classList.add("hidden");
+      const c = document.getElementById("selectContractor"); 
+      const t = document.getElementById("selectTrade");
+      if(c) { c.removeAttribute("disabled"); c.classList.remove("bg-slate-200","pointer-events-none"); }
+      if(t) { t.removeAttribute("disabled"); t.classList.remove("bg-slate-200","pointer-events-none"); }
+      const b = document.getElementById("activeMissionBanner");
+      if (b) b.classList.add("hidden"); 
       resetComptageForm();
     }
 
-    function resetComptageForm() {
-      selectedArticle = null;
-      document.getElementById("sapSearchInput").value = "";
-      document.getElementById("selectedArticleCard").classList.add("hidden");
-      document.getElementById("inputQuantity").value = "";
-      closeKeyboard();
-      closeQtyKeyboard();
+    function resetComptageForm() { 
+      selectedArticle = null; 
+      document.getElementById("sapSearchInput").value = ""; 
+      document.getElementById("selectedArticleCard").classList.add("hidden"); 
+      document.getElementById("inputQuantity").value = ""; 
+      closeKeyboard(); 
+      closeQtyKeyboard(); 
     }
 
     async function openScanModal() {
-      document.getElementById("scanModal").classList.remove("hidden");
-      document.getElementById("ocrStatus").innerText = "Initialisation caméra...";
-      try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } } });
-        const video = document.getElementById("scanVideo");
-        video.srcObject = mediaStream;
-        await video.play();
-        document.getElementById("ocrStatus").innerText = barcodeDetector ? "Scan automatique actif..." : "Cadrez le code";
-        scanLoopActive = true;
-        if (barcodeDetector) requestAnimationFrame(detectBarcodeLoop);
-      } catch (err) {
-        document.getElementById("ocrStatus").innerText = "Erreur caméra : " + err.message;
+      document.getElementById("scanModal").classList.remove("hidden"); 
+      document.getElementById("ocrStatus").innerText = "Initialisation...";
+      try { 
+        mediaStream = await navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal:'environment'}}}); 
+        document.getElementById("scanVideo").srcObject = mediaStream; 
+        document.getElementById("ocrStatus").innerText = barcodeDetector ? "Scan automatique..." : "Cadrez"; 
+        scanLoopActive = true; 
+        if(barcodeDetector) requestAnimationFrame(detectBarcodeLoop); 
+      } catch (err) { 
+        document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; 
       }
     }
 
     async function detectBarcodeLoop() {
-      if (!scanLoopActive) return;
-      const video = document.getElementById("scanVideo");
-      if (video.readyState === video.HAVE_ENOUGH_DATA && barcodeDetector) {
-        try {
-          const barcodes = await barcodeDetector.detect(video);
-          if (barcodes.length > 0) {
-            const rawVal = barcodes[0].rawValue;
-            const item = catalog.find(i => String(i.sapRef).trim() === rawVal || String(i.ean).trim() === rawVal);
-            if (item) { selectArticleFromSearch(item); closeScanModal(); return; }
-          }
-        } catch (e) {}
+      if(!scanLoopActive) return; 
+      const v = document.getElementById("scanVideo");
+      if(v.readyState === v.HAVE_ENOUGH_DATA && barcodeDetector){ 
+        try { 
+          const b = await barcodeDetector.detect(v); 
+          if(b.length > 0){ 
+            const i = catalog.find(x => String(x.sapRef).trim() === b[0].rawValue || String(x.ean).trim() === b[0].rawValue); 
+            if(i) { selectArticleFromSearch(i); closeScanModal(); return; } 
+          } 
+        } catch(e) {} 
       }
       requestAnimationFrame(detectBarcodeLoop);
     }
 
-    function closeScanModal() {
-      scanLoopActive = false;
-      if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; }
-      document.getElementById("scanModal").classList.add("hidden");
+    function closeScanModal() { 
+      scanLoopActive = false; 
+      if(mediaStream){ mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; } 
+      document.getElementById("scanModal").classList.add("hidden"); 
     }
 
     async function captureAndOCR() {
-      const video = document.getElementById("scanVideo");
-      const canvas = document.getElementById("scanCanvas");
-      if (!video.srcObject) return;
-
-      canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      document.getElementById("ocrStatus").innerText = "Analyse OCR en cours...";
+      const v = document.getElementById("scanVideo"); 
+      const c = document.getElementById("scanCanvas"); 
+      if(!v.srcObject) return;
+      
+      c.width = v.videoWidth || 640; 
+      c.height = v.videoHeight || 480; 
+      c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); 
+      document.getElementById("ocrStatus").innerText = "OCR en cours...";
+      
       try {
-        const result = await Tesseract.recognize(canvas, 'fra');
-        const text = result.data.text;
-        const matches = text.match(/\b[A-Z0-9]{4,12}\b/gi);
-
-        if (matches && matches.length > 0) {
-          const foundRef = matches[0].toUpperCase();
-          const item = catalog.find(i => String(i.sapRef).trim().toUpperCase() === foundRef);
-          if (item) { selectArticleFromSearch(item); closeScanModal(); }
-          else { document.getElementById("ocrStatus").innerText = `Réf ${foundRef} introuvable.`; }
+        const res = await Tesseract.recognize(c, 'fra'); 
+        const m = res.data.text.match(/\b[A-Z0-9]{4,12}\b/gi);
+        if(m && m.length > 0){ 
+          const i = catalog.find(x => String(x.sapRef).trim().toUpperCase() === m[0].toUpperCase()); 
+          if(i) { selectArticleFromSearch(i); closeScanModal(); } 
+          else document.getElementById("ocrStatus").innerText = "Introuvable"; 
         } else {
-          document.getElementById("ocrStatus").innerText = "Aucun code détecté.";
+          document.getElementById("ocrStatus").innerText = "Aucun code";
         }
-      } catch (err) {
-        document.getElementById("ocrStatus").innerText = "Erreur OCR : " + err.message;
+      } catch (err) { 
+        document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; 
       }
     }
 
     function onSapSearchInput(val) {
-      const q = String(val || "").trim().toLowerCase();
+      const q = String(val||"").trim().toLowerCase(); 
       const dd = document.getElementById("sapSuggestions");
-      if (!q) { dd.classList.add("hidden"); return; }
-      const filtered = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 30);
-      if (filtered.length === 0) {
-        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé</div>`;
-        dd.classList.remove("hidden"); return;
+      if(!q) { dd.classList.add("hidden"); return; }
+      
+      const f = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0,30);
+      
+      if(f.length === 0){ 
+        dd.innerHTML = `<div class="p-3 text-xs italic text-center">Aucun article trouvé</div>`; 
+        dd.classList.remove("hidden"); 
+        return; 
       }
-      dd.innerHTML = filtered.map(item => `
-        <div onclick='selectArticleFromSearch(${JSON.stringify(item)})' class="p-3 hover:bg-emerald-50 rounded-xl cursor-pointer text-sm flex justify-between items-center border-b border-slate-100 last:border-0 transition-colors">
-          <div><span class="font-mono font-bold text-emerald-700">${item.sapRef}</span><span class="text-slate-700 ml-2 font-semibold">${item.designation}</span></div>
-        </div>`).join('');
+      
+      dd.innerHTML = f.map(i => `
+        <div onclick='selectArticleFromSearch(${JSON.stringify(i)})' class="p-3 hover:bg-emerald-50 border-b cursor-pointer flex justify-between items-center text-sm transition-colors">
+          <div><span class="font-mono font-bold text-emerald-700">${i.sapRef}</span><span class="ml-2 font-semibold text-slate-800">${i.designation}</span></div>
+        </div>
+      `).join('');
       dd.classList.remove("hidden");
     }
 
-    function selectArticleFromSearch(item) {
-      selectedArticle = item;
-      document.getElementById("sapSearchInput").value = item.sapRef;
-      document.getElementById("sapSuggestions").classList.add("hidden");
-      document.getElementById("cardSapRef").innerText = item.sapRef;
-      document.getElementById("cardSupplierRef").innerText = `Fourn: ${item.supplierRef || 'N/C'}`;
-      document.getElementById("cardDesignation").innerText = item.designation;
-      document.getElementById("selectedArticleCard").classList.remove("hidden");
+    function selectArticleFromSearch(i) {
+      selectedArticle = i; 
+      document.getElementById("sapSearchInput").value = i.sapRef; 
+      document.getElementById("sapSuggestions").classList.add("hidden"); 
+      document.getElementById("cardSapRef").innerText = i.sapRef; 
+      document.getElementById("cardSupplierRef").innerText = `Fourn: ${i.supplierRef||'N/C'}`; 
+      document.getElementById("cardDesignation").innerText = i.designation; 
+      document.getElementById("selectedArticleCard").classList.remove("hidden"); 
       closeKeyboard();
     }
 
     async function submitInventoryEntry() {
-      if (!currentAgent) { alert("Veuillez configurer votre nom d'agent."); openConfigModal(); return; }
-      if (!selectedArticle) { alert("Veuillez sélectionner un article SAP."); return; }
-
-      const qtyInputStr = document.getElementById("inputQuantity").value;
-      const qty = parseInt(qtyInputStr, 10) || 0; // Si vide, sera évalué à 0
-
+      if(!currentAgent) { alert("Configurez l'agent"); openConfigModal(); return; } 
+      if(!selectedArticle) { alert("Sélectionnez un article"); return; }
+      
+      const qInputStr = document.getElementById("inputQuantity").value;
+      const q = parseInt(qInputStr, 10) || 0;
+      
       const contractor = activeMissionContext ? activeMissionContext.contractor : document.getElementById("selectContractor").value;
       const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
       const tourneeId = activeMissionContext ? activeMissionContext.id : null;
 
-      const now = new Date();
-      const localTimestamp = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, -1);
-
-      const record = {
-        id: "INV-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
-        timestamp: localTimestamp, user: currentAgent, contractor: contractor, trade: trade, sapRef: selectedArticle.sapRef, designation: selectedArticle.designation,
-        quantity: qty, lat: currentGpsCoords.lat, lng: currentGpsCoords.lng, tourneeId: tourneeId
+      const n = new Date(); 
+      const localT = new Date(n.getTime() - (n.getTimezoneOffset() * 60000)).toISOString().slice(0, -1);
+      
+      const r = {
+        id: "INV-" + Date.now().toString(36), 
+        timestamp: localT, 
+        user: currentAgent,
+        contractor: contractor, 
+        trade: trade, 
+        sapRef: selectedArticle.sapRef, 
+        designation: selectedArticle.designation,
+        supplierRef: selectedArticle.supplierRef || "", 
+        ean: selectedArticle.ean || "", 
+        qr: selectedArticle.qr || "",
+        quantity: q, 
+        lat: currentGpsCoords.lat || "", 
+        lng: currentGpsCoords.lng || "", 
+        tourneeId: tourneeId
       };
 
-      sessionHistory.unshift({ ...record, isPending: !navigator.onLine });
+      sessionHistory.unshift({...r, isPending:true}); 
       await safeSetStorage("mob_session_history", sessionHistory);
-
-      let matchedTourneeId = tourneeId;
-      let foundSapMatch = false; 
       
-      cachedTournees.forEach(t => {
-        const matchById = tourneeId && String(t.id).trim() === String(tourneeId).trim();
-        const matchBySap = !tourneeId && !foundSapMatch && String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim() && String(t.statut).toUpperCase() !== 'VALIDE';
-        
-        if (matchById || matchBySap) { 
+      let mT = tourneeId;
+      cachedTournees.forEach(t => { 
+        if(t.id === tourneeId) { 
           t.statut = 'VALIDE'; 
-          if (!matchedTourneeId) matchedTourneeId = t.id; 
-          if (matchBySap) foundSapMatch = true;
-        }
+          mT = t.id; 
+        } 
       });
       await safeSetStorage("offline_tournees", cachedTournees);
 
-      const syncId1 = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-      pendingSyncQueue.push({ _syncId: syncId1, action: "CREATE", ...record });
+      const sId1 = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      pendingSyncQueue.push({_syncId: sId1, action:"CREATE", ...r});
       
-      if (matchedTourneeId) {
-        const syncId2 = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-        pendingSyncQueue.push({ _syncId: syncId2, action: "UPDATE_TOURNEE_STATUS", id: matchedTourneeId, statut: 'VALIDE', user: currentAgent, sapRef: selectedArticle.sapRef });
+      if(mT) {
+        const sId2 = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+        pendingSyncQueue.push({_syncId: sId2, action:"UPDATE_TOURNEE_STATUS", id:mT, statut:'VALIDE', user:currentAgent, sapRef:r.sapRef});
       }
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      
-      updatePendingBadge();
-      cancelActiveMission();
-      renderTournee();
-      renderHistory();
-      switchMobileTab('historique');
 
-      if (navigator.onLine) { setTimeout(() => syncMobileData(), 100); }
+      updatePendingBadge(); 
+      cancelActiveMission(); 
+      renderTournee(); 
+      renderHistory(); 
+      switchMobileTab('historique');
+      
+      if(navigator.onLine) {
+        setTimeout(syncMobileData, 100);
+      }
     }
 
     function renderHistory() {
-      const container = document.getElementById("historyListContainer");
-      if (!container) return;
-      const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
+      const c = document.getElementById("historyListContainer"); 
+      if(!c) return;
       
-      const now = new Date();
-      const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000));
-      const todayStr = normalizeDateYMD(now);
-
-      const serverHistory = sessionHistory.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
-      const pendingIds = new Set(serverHistory.map(h => h.id));
-      const pendingItems = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && String(p.user || '').trim().toLowerCase() === activeAgentNorm && !pendingIds.has(p.id))
-        .map(p => ({ ...p, isPending: true }));
-
-      const fullHistory = [...pendingItems, ...serverHistory].filter(h => {
-        const hDate = new Date(h.timestamp);
-        return normalizeDateYMD(h.timestamp) === todayStr || hDate >= threeHoursAgo;
+      const ag = String(currentAgent||"").trim().toLowerCase();
+      const n = new Date(); 
+      const tH = new Date(n.getTime() - (3 * 60 * 60 * 1000)); 
+      const tStr = normalizeDateYMD(n);
+      
+      const sH = sessionHistory.filter(h => String(h.user).toLowerCase() === ag); 
+      const pIds = new Set(sH.map(h => h.id));
+      
+      const fH = [
+        ...pendingSyncQueue.filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === ag && !pIds.has(p.id)).map(p => ({...p, isPending: true})), 
+        ...sH
+      ].filter(h => { 
+        const hd = new Date(h.timestamp); 
+        return normalizeDateYMD(h.timestamp) === tStr || hd >= tH; 
       });
-
-      document.getElementById("historyCount").innerText = `${fullHistory.length} ligne(s)`;
-
-      if (fullHistory.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-sm bg-white border border-slate-200 rounded-2xl space-y-1"><p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p><p class="text-xs">L'historique se vide au bout de 3 heures passé minuit.</p></div>`;
-        return;
+      
+      document.getElementById("historyCount").innerText = `${fH.length} ligne(s)`;
+      
+      if(fH.length === 0) { 
+        c.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-sm bg-white rounded-2xl"><p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p><p class="text-xs mt-1">L'historique se vide au bout de 3 heures passé minuit.</p></div>`; 
+        return; 
       }
-
-      container.innerHTML = fullHistory.map(h => {
-        const isPending = !!h.isPending;
-        return `
-          <div class="bg-white border ${isPending ? 'border-amber-400 bg-amber-50/50' : 'border-slate-200'} p-4 rounded-2xl shadow-sm space-y-2 text-xs cursor-default select-none transition-all">
-            <div class="flex justify-between items-start">
-              <div class="space-y-1.5 flex-1 pr-2">
-                <div class="flex items-center space-x-2">
-                  <span class="font-mono font-black text-orange-800 text-sm">${h.sapRef}</span>
-                  ${isPending ? '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-xs">⏳ EN ATTENTE</span>' : '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ ENREGISTRÉ</span>'}
-                </div>
-                <p class="font-bold text-slate-900 text-sm leading-tight break-words">${h.designation}</p>
-              </div>
-              <div class="flex flex-col items-end space-y-2">
-                <div class="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-xl text-sm font-black font-mono shadow-inner border border-emerald-200">
-                  ${h.quantity} PCS
-                </div>
-              </div>
-            </div>
-            
-            <div class="flex justify-between items-end pt-2 border-t border-slate-100 mt-2">
-              <div class="flex flex-col space-y-1">
-                <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 inline-block w-max">
-                  ${h.contractor} <span class="text-slate-400 font-normal">|</span> ${h.trade}
-                </span>
-                <span class="font-mono text-[10px] text-slate-400 pl-1">${new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-              </div>
+      
+      c.innerHTML = fH.map(h => `
+        <div class="bg-white border ${h.isPending ? 'border-amber-400 bg-amber-50' : 'border-slate-200'} p-4 rounded-2xl shadow-sm space-y-2 text-xs transition-all">
+          <div class="flex justify-between items-start">
+            <div class="space-y-1.5 flex-1 pr-2">
               <div class="flex items-center space-x-2">
-                <button onclick="editHistoryItem('${h.id}')" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm border border-slate-200 transition active:scale-95" title="Modifier">
-                  <i data-lucide="edit-3" class="w-5 h-5"></i>
-                </button>
-                <button onclick="deleteHistoryItem('${h.id}')" class="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 transition active:scale-95" title="Supprimer">
-                  <i data-lucide="trash-2" class="w-5 h-5"></i>
-                </button>
+                <span class="font-mono font-black text-orange-800 text-sm">${h.sapRef}</span>
+                ${h.isPending ? '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">⏳ EN ATTENTE</span>' : '<span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">✓ ENREGISTRÉ</span>'}
               </div>
+              <p class="font-bold text-slate-900 text-sm leading-tight break-words">${h.designation}</p>
+            </div>
+            <div class="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-xl text-sm font-black font-mono shadow-inner border border-emerald-200">
+              ${h.quantity} PCS
             </div>
           </div>
-        `;
-      }).join('');
+          <div class="flex justify-between items-end pt-2 border-t border-slate-100 mt-2">
+            <div class="flex flex-col space-y-1">
+              <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 inline-block w-max">
+                ${h.contractor} <span class="text-slate-400 font-normal">|</span> ${h.trade}
+              </span>
+              <span class="font-mono text-[10px] text-slate-400 pl-1">${new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editHistoryItem('${h.id}')" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform"><i data-lucide="edit-3" class="w-5 h-5"></i></button>
+              <button onclick="deleteHistoryItem('${h.id}')" class="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+            </div>
+          </div>
+        </div>
+      `).join('');
       lucide.createIcons();
     }
 
     async function editHistoryItem(id) {
-      const item = sessionHistory.find(h => h.id === id);
-      if (!item) return;
-      const newQty = prompt("Modifier la quantité :", item.quantity);
-      if (newQty === null) return;
-      const parsed = parseInt(newQty, 10);
-      if (isNaN(parsed) || parsed < 0) { alert("Quantité invalide."); return; }
-
-      item.quantity = parsed;
+      const it = sessionHistory.find(h => h.id === id); 
+      if(!it) return; 
+      
+      const q = prompt("Modifier la quantité :", it.quantity); 
+      if(q === null) return; 
+      
+      const p = parseInt(q, 10); 
+      if(isNaN(p) || p < 0) return;
+      
+      it.quantity = p; 
       await safeSetStorage("mob_session_history", sessionHistory);
-
-      const pendingCreate = pendingSyncQueue.find(p => p.id === id && p.action === 'CREATE');
-      if (pendingCreate) { pendingCreate.quantity = parsed; } 
-      else { const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAgent }); }
-
-      await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      updatePendingBadge(); renderHistory();
-      if (navigator.onLine) syncMobileData();
+      
+      const pc = pendingSyncQueue.find(x => x.id === id && x.action === 'CREATE'); 
+      if(pc) {
+        pc.quantity = p; 
+      } else { 
+        const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); 
+        pendingSyncQueue.push({_syncId: sId, action: "UPDATE_INVENTORY", id: id, quantity: p, user: currentAgent}); 
+      }
+      
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue); 
+      updatePendingBadge(); 
+      renderHistory(); 
+      if(navigator.onLine) syncMobileData();
     }
 
     async function deleteHistoryItem(id) {
-      if (!confirm("Supprimer cette saisie ?")) return;
+      if(!confirm("Supprimer cette saisie ?")) return;
       
-      const itemToDel = sessionHistory.find(h => h.id === id);
-      sessionHistory = sessionHistory.filter(h => h.id !== id);
+      const it = sessionHistory.find(h => h.id === id); 
+      sessionHistory = sessionHistory.filter(h => h.id !== id); 
       await safeSetStorage("mob_session_history", sessionHistory);
-
-      const pendingIdx = pendingSyncQueue.findIndex(p => p.id === id && p.action === 'CREATE');
-      if (pendingIdx !== -1) { pendingSyncQueue.splice(pendingIdx, 1); } 
-      else { const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_INVENTORY", id: id, user: currentAgent }); }
-
-      if (itemToDel && itemToDel.tourneeId) {
-        const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-        pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEE_STATUS", id: itemToDel.tourneeId, statut: 'A_FAIRE', user: currentAgent });
-        const t = cachedTournees.find(x => x.id === itemToDel.tourneeId);
-        if (t) t.statut = 'A_FAIRE';
-        await safeSetStorage("offline_tournees", cachedTournees);
+      
+      const pi = pendingSyncQueue.findIndex(x => x.id === id && x.action === 'CREATE'); 
+      if(pi !== -1) {
+        pendingSyncQueue.splice(pi, 1); 
+      } else { 
+        const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); 
+        pendingSyncQueue.push({_syncId: sId, action: "DELETE_INVENTORY", id: id, user: currentAgent}); 
       }
-
-      await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      updatePendingBadge(); renderHistory(); renderTournee(); 
-      if (navigator.onLine) syncMobileData();
+      
+      if (it && it.tourneeId) { 
+        const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); 
+        pendingSyncQueue.push({_syncId: sId, action: "UPDATE_TOURNEE_STATUS", id: it.tourneeId, statut: 'A_FAIRE', user: currentAgent}); 
+        
+        const t = cachedTournees.find(x => x.id === it.tourneeId); 
+        if(t) t.statut = 'A_FAIRE'; 
+        
+        await safeSetStorage("offline_tournees", cachedTournees); 
+      }
+      
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue); 
+      updatePendingBadge(); 
+      renderHistory(); 
+      renderTournee(); 
+      if(navigator.onLine) syncMobileData();
     }
 
-    // AFFICHER LE JOUR EN FRANCAIS
     function formatTourneeDate(dStr) {
-      const d = parseItemDate(dStr);
+      const d = parseItemDate(dStr); 
       if (isNaN(d.getTime())) return dStr;
       const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
       const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -772,87 +792,89 @@
     }
 
     function renderTournee() {
-      const container = document.getElementById("tourneeListContainer");
-      if (!container) return;
-
-      const todayStr = normalizeDateYMD(new Date());
-      const agentTournees = (cachedTournees || []).filter(t => {
-        const matchAgent = String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase();
-        return matchAgent && normalizeDateYMD(t.date) >= todayStr;
-      }).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      if (agentTournees.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune tâche assignée. Travail libre !</div>`;
-        return;
+      const c = document.getElementById("tourneeListContainer"); 
+      if(!c) return; 
+      
+      const tStr = normalizeDateYMD(new Date());
+      const tk = cachedTournees.filter(t => t.agent.toLowerCase() === currentAgent.toLowerCase() && normalizeDateYMD(t.date) >= tStr).sort((a,b) => new Date(a.date) - new Date(b.date));
+      
+      if(tk.length === 0){ 
+        c.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-xs bg-white rounded-2xl">Aucune tâche assignée. Travail libre !</div>`; 
+        return; 
       }
-
-      container.innerHTML = agentTournees.map(t => {
-        const isDone = String(t.statut || '').trim().toUpperCase() === 'VALIDE';
-        const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
+      
+      c.innerHTML = tk.map(t => {
+        const d = t.statut === 'VALIDE'; 
+        const cl = d ? 'bg-emerald-50 opacity-80 pointer-events-none' : 'cursor-pointer hover:border-orange-300';
         
-        const clickAttr = isDone ? '' : `onclick="selectTourneeTask('${t.id}')"`;
-        const styleClass = isDone 
-          ? 'border-emerald-300 bg-emerald-50/70 opacity-85 cursor-default pointer-events-none select-none' 
-          : 'border-slate-200 hover:border-orange-300 cursor-pointer';
-
         return `
-          <div ${clickAttr} class="bg-white border ${styleClass} p-4 rounded-2xl shadow-xs transition space-y-2">
+          <div ${d ? '' : `onclick="selectTourneeTask('${t.id}')"`} class="bg-white border ${cl} p-4 rounded-2xl shadow-xs transition space-y-2">
             <div class="flex justify-between items-center text-xs">
               <span class="font-mono font-black text-orange-800 text-sm">${t.sapRef}</span>
               <div class="flex items-center space-x-2">
                 <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200">${formatTourneeDate(t.date)}</span>
-                <span class="px-2 py-1 rounded-md text-[10px] font-bold shadow-xs ${isDone ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">${isDone ? '✓ VALIDÉ' : 'À FAIRE'}</span>
+                <span class="px-2 py-1 rounded-md text-[10px] font-bold shadow-xs ${d ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}">${d ? '✓ VALIDÉ' : 'À FAIRE'}</span>
               </div>
             </div>
             <p class="text-sm font-bold text-slate-900 leading-tight">${t.designation || 'Sans libellé'}</p>
             <div class="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-slate-100">
               <span class="font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${t.contractor} <span class="text-slate-400 font-normal">|</span> ${t.trade}</span>
-              <span class="font-mono text-orange-700 font-bold bg-orange-50 px-2 py-0.5 rounded border border-orange-200">${trancheLabel}</span>
+              <span class="font-mono text-orange-700 font-bold bg-orange-50 px-2 py-0.5 rounded border border-orange-200">${t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin'}</span>
             </div>
           </div>
         `;
-      }).join('');
+      }).join(''); 
       lucide.createIcons();
     }
 
-    function switchMobileTab(tab) {
-      ['Comptage', 'Historique', 'Tournee'].forEach(t => {
-        const elTab = document.getElementById("tab" + t);
-        const elNav = document.getElementById("nav" + t);
-        if (elTab) elTab.classList.add("hidden");
-        if (elNav) elNav.className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer";
-      });
-
-      const activeName = tab.charAt(0).toUpperCase() + tab.slice(1);
-      const targetTab = document.getElementById("tab" + activeName);
-      const targetNav = document.getElementById("nav" + activeName);
-      if (targetTab) targetTab.classList.remove("hidden");
-      if (targetNav) targetNav.className = "flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer";
-
-      if (tab === 'historique') renderHistory();
-      if (tab === 'tournee') renderTournee();
-      lucide.createIcons();
+    function switchMobileTab(t) { 
+      ['Comptage', 'Historique', 'Tournee'].forEach(x => { 
+        const tabEl = document.getElementById("tab" + x);
+        if (tabEl) tabEl.classList.add("hidden"); 
+        
+        const navEl = document.getElementById("nav" + x); 
+        if (navEl) navEl.className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px]"; 
+      }); 
+      
+      const a = t.charAt(0).toUpperCase() + t.slice(1); 
+      const targetTab = document.getElementById("tab" + a);
+      if (targetTab) targetTab.classList.remove("hidden"); 
+      
+      const aN = document.getElementById("nav" + a); 
+      if (aN) aN.className = "flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px]"; 
+      
+      if (t === 'historique') renderHistory(); 
+      if (t === 'tournee') renderTournee(); 
+      lucide.createIcons(); 
     }
 
-    function toggleVoiceSearch() {
-      const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!Speech) { alert("Reconnaissance vocale non supportée par ce navigateur."); return; }
-      const recognition = new Speech();
-      recognition.lang = 'fr-FR';
-      const btn = document.getElementById("micBtn");
-      btn.className = "h-12 bg-rose-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700";
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.replace(/\s+/g, '');
-        const match = transcript.match(/\d{6}/) || transcript.match(/\d{5,8}/);
-        const finalVal = match ? match[0] : transcript;
-        document.getElementById("sapSearchInput").value = finalVal;
-        onSapSearchInput(finalVal);
-      };
-      recognition.onerror = recognition.onend = () => {
-        btn.className = "h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm";
-      };
-      recognition.start();
+    function toggleVoiceSearch() { 
+      const Speech = window.SpeechRecognition || window.webkitSpeechRecognition; 
+      if (!Speech) { 
+        alert("Reconnaissance vocale non supportée par ce navigateur."); 
+        return; 
+      } 
+      
+      const recognition = new Speech(); 
+      recognition.lang = 'fr-FR'; 
+      
+      const btn = document.getElementById("micBtn"); 
+      btn.className = "h-12 bg-rose-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700"; 
+      
+      recognition.onresult = e => { 
+        const transcript = e.results[0][0].transcript.replace(/\s+/g, '');
+        const match = transcript.match(/\d{5,8}/); 
+        const v = match ? match[0] : transcript; 
+        
+        document.getElementById("sapSearchInput").value = v; 
+        onSapSearchInput(v); 
+      }; 
+      
+      recognition.onerror = recognition.onend = () => { 
+        btn.className = "h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; 
+      }; 
+      
+      recognition.start(); 
     }
   </script>
 </body>
