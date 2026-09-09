@@ -413,7 +413,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (MODE BACKLOG) ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -452,7 +452,6 @@
                 <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- ZONE DES RETARDS -->
               <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-rose-200 pb-2 text-xs">
                   <span class="font-black text-rose-700 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="alert-octagon" class="w-4 h-4"></i> Tâches en retard (À replanifier ou traiter d'urgence)</span>
@@ -460,7 +459,6 @@
                 <div id="overdueTasksContainer" class="flex flex-wrap gap-2 min-h-[60px]"></div>
               </div>
 
-              <!-- GRILLE 7 JOURS GLISSANTE -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda interactif (7 prochains jours)</span>
@@ -508,7 +506,6 @@
     </main>
   </div>
 
-  <!-- MODALE ASSIGNATION MANUELLE AVEC VERROUILLAGES DES DATES -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -576,7 +573,6 @@
     </div>
   </div>
 
-  <!-- MODALE DÉTAILS TOURNÉE -->
   <div id="tourneeDetailsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -1066,12 +1062,34 @@
 
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
+      
       const planningData = [
-        ["date_previsionnelle", "tranche_horaire", "agent", "contractor", "trade", "sapRef", "ordre"],
-        ["2026-09-09", "MATIN", availableAgents[0] || "Agent 1", availableContractors[0] || "ENTREPRENEUR A", availableTrades[0] || "Electricite", catalog[0] ? catalog[0].sapRef : "106626", 1]
+        ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"],
+        [
+          "15/09/2026", 
+          "MATIN", 
+          availableAgents[0] || "Ex: Thomas", 
+          availableContractors[0] || "Ex: Demol", 
+          availableTrades[0] || "Ex: OBE VSTR", 
+          catalog[0] ? catalog[0].sapRef : "106468", 
+          1
+        ],
+        [
+          "15/09/2026", 
+          "APRES_MIDI", 
+          availableAgents[0] || "Ex: Thomas", 
+          availableContractors[0] || "Ex: Demol", 
+          availableTrades[0] || "Ex: OBE VSTR", 
+          catalog[1] ? catalog[1].sapRef : "118626", 
+          2
+        ]
       ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(planningData), "Planning_Tournees");
-      XLSX.writeFile(wb, "Modele_Planning_Tournees.xlsx");
+      
+      const ws = XLSX.utils.aoa_to_sheet(planningData);
+      ws['!cols'] = [{wch: 18}, {wch: 28}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 18}];
+      
+      XLSX.utils.book_append_sheet(wb, ws, "Import_Masse");
+      XLSX.writeFile(wb, "Modele_Import_Masse_Tournees.xlsx");
     }
 
     function handleExcelFileSelect(e) {
@@ -1084,44 +1102,83 @@
       reader.onload = function(e) {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheetName = workbook.SheetNames.includes("Planning_Tournees") ? "Planning_Tournees" : workbook.SheetNames[0];
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const sheetName = workbook.SheetNames[0]; 
           const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
-          if (jsonRows.length <= 1) { alert("Le fichier Excel ne contient pas de données."); return; }
+          
+          if (jsonRows.length <= 1) { alert("Le fichier Excel est vide ou invalide."); return; }
 
-          const headers = jsonRows[0].map(h => String(h).trim().toLowerCase());
+          const headers = jsonRows[0].map(h => String(h || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
           const dateIdx = headers.findIndex(h => h.includes('date'));
           const trancheIdx = headers.findIndex(h => h.includes('tranche'));
           const agentIdx = headers.findIndex(h => h.includes('agent'));
-          const contractorIdx = headers.findIndex(h => h.includes('contractor') || h.includes('entrepreneur'));
-          const tradeIdx = headers.findIndex(h => h.includes('trade') || h.includes('metier'));
+          const contractorIdx = headers.findIndex(h => h.includes('entrepreneur') || h.includes('contractor'));
+          const tradeIdx = headers.findIndex(h => h.includes('metier') || h.includes('trade'));
           const sapIdx = headers.findIndex(h => h.includes('sap') || h.includes('ref'));
           const ordreIdx = headers.findIndex(h => h.includes('ordre') || h.includes('seq'));
 
           const bulkItems = [];
+          let missingAgents = new Set();
+          let missingSaps = new Set();
+
           for (let i = 1; i < jsonRows.length; i++) {
             const row = jsonRows[i];
-            if (!row || row.length === 0) continue;
+            
+            if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) continue;
+            
             const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
+            const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
+            
+            if (!sapRef || !agent) continue; 
+
             const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
+            const agentExists = availableAgents.includes(agent);
+
+            if (!catItem) missingSaps.add(sapRef);
+            if (!agentExists) missingAgents.add(agent);
+
+            let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
+            let formattedDate = normalizeDateYMD(rawDate || new Date());
+            
+            let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) {
+                rawTranche = 'APRES_MIDI';
+            } else {
+                rawTranche = 'MATIN';
+            }
 
             bulkItems.push({
-              date: normalizeDateYMD(row[dateIdx !== -1 ? dateIdx : 0] || new Date()),
-              tranche: String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase(),
-              agent: String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim(),
+              date: formattedDate,
+              tranche: rawTranche,
+              agent: agent,
               contractor: String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim(),
               trade: String(row[tradeIdx !== -1 ? tradeIdx : 4] || '').trim(),
               sapRef: sapRef,
-              designation: catItem ? catItem.designation : 'Article importé',
+              designation: catItem ? catItem.designation : 'Article inconnu (Forcé via Import)',
               ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
             });
           }
-          uploadBulkTournees(bulkItems);
+
+          if (bulkItems.length === 0) {
+             alert("Aucune ligne valide trouvée dans le fichier.");
+             return;
+          }
+
+          let confirmMsg = `Préparation de l'import : ${bulkItems.length} tâche(s) détectée(s).\n\n`;
+          if (missingAgents.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
+          if (missingSaps.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
+          confirmMsg += `\nCes tâches seront forcées dans le système. Voulez-vous continuer l'importation de masse ?`;
+          
+          if(confirm(confirmMsg)) {
+             uploadBulkTournees(bulkItems);
+          }
+
         } catch (err) {
-          alert("Erreur fichier Excel : " + err);
+          alert("Erreur critique lors de la lecture du fichier Excel : " + err);
         }
       };
       reader.readAsArrayBuffer(file);
+      document.getElementById('excelFileInput').value = '';
     }
 
     async function uploadBulkTournees(bulkItems) {
