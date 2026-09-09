@@ -29,7 +29,7 @@
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
-  <!-- EN-TÊTE MOBILE (Nom Agent en grand) -->
+  <!-- EN-TÊTE MOBILE -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs z-20">
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
@@ -51,8 +51,8 @@
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24" id="mainScrollArea">
+  <!-- CONTENU PRINCIPAL (Espace vide ajouté : pb-[50vh]) -->
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[50vh]" id="mainScrollArea">
     
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
@@ -85,12 +85,16 @@
         </div>
       </div>
 
-      <!-- RECHERCHE ACTIVE (Bouton OK supprimé) -->
+      <!-- RECHERCHE ACTIVE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
-          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
+          <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" onblur="setTimeout(() => document.getElementById('closeKeyboardBtn').classList.add('hidden'), 200)" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
           
+          <button id="closeKeyboardBtn" onmousedown="event.preventDefault(); closeKeyboard()" class="hidden absolute right-1.5 top-1.5 bottom-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg font-bold text-xs flex items-center gap-1 transition cursor-pointer">
+            <i data-lucide="keyboard" class="w-4 h-4"></i> OK
+          </button>
+
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
 
@@ -120,7 +124,7 @@
         </div>
       </div>
 
-      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT (Nouvelle ergonomie XXL) -->
+      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
         <div class="relative w-full">
           <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-500 focus:bg-emerald-50 focus:text-emerald-700 font-mono shadow-inner transition-all">
@@ -142,7 +146,7 @@
       <div id="historyListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ONGLET 3 : LA FILE D'ATTENTE (BACKLOG) -->
+    <!-- ONGLET 3 : LA FILE D'ATTENTE -->
     <section id="tabTournee" class="hidden space-y-4">
       <div class="flex justify-between items-center px-1">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">File de travail Assignée</h2>
@@ -361,19 +365,31 @@
       return str.split(' ')[0];
     }
 
-    // Gestion du Focus pour faire glisser l'écran vers le haut
+    // Fonction améliorée pour monter tout le bloc en haut lors de la saisie
     function handleQuantityFocus() {
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
-        if (qtySec) qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
+        if (qtySec) {
+          qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+
+    function closeQtyKeyboard() {
+      document.getElementById('inputQuantity').blur();
     }
 
     function handleSearchFocus() {
+      document.getElementById('closeKeyboardBtn').classList.remove('hidden');
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection');
         if (searchSec) searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
+      }, 300);
+    }
+
+    function closeKeyboard() {
+      document.getElementById('sapSearchInput').blur();
+      document.getElementById('closeKeyboardBtn').classList.add('hidden');
     }
 
     async function syncMobileData() {
