@@ -14,8 +14,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <!-- NOUVEAU : localForage pour utiliser IndexedDB (Gros volumes) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <style>
@@ -140,6 +138,7 @@
           </button>
         </div>
 
+        <!-- SÉLECTEUR DE PÉRIODE -->
         <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -171,6 +170,7 @@
           </div>
         </div>
 
+        <!-- CRITÈRES D'ANOMALIES & AUDIT -->
         <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -421,7 +421,7 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (MODE BACKLOG) ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -429,7 +429,7 @@
                 <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
                 Planning Semaine & Suivi des Tournées
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Vue agenda mural interactif (cliquez sur les zones Matin/Après-midi pour ajouter une tâche, glissez pour déplacer)</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vue agenda interactif avec gestion des retards (Glissez pour modifier la date)</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
@@ -460,9 +460,18 @@
                 <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
               </div>
 
+              <!-- ZONE DES RETARDS -->
+              <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl shadow-xs p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-rose-200 pb-2 text-xs">
+                  <span class="font-black text-rose-700 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="alert-octagon" class="w-4 h-4"></i> Tâches en retard (À replanifier ou traiter d'urgence)</span>
+                </div>
+                <div id="overdueTasksContainer" class="flex flex-wrap gap-2 min-h-[60px]"></div>
+              </div>
+
+              <!-- GRILLE 7 JOURS GLISSANTE -->
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
-                  <span class="font-bold text-slate-700 uppercase tracking-wide">Vue murale interactive (Partie haute: Matin | Partie basse: Après-midi)</span>
+                  <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda interactif (7 prochains jours)</span>
                 </div>
                 <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[380px]"></div>
               </div>
@@ -507,7 +516,7 @@
     </main>
   </div>
 
-  <!-- MODALE ASSIGNATION MANUELLE -->
+  <!-- MODALE ASSIGNATION MANUELLE AVEC VERROUILLAGES DES DATES -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -559,6 +568,7 @@
           </div>
         </div>
 
+        <!-- CORRECTIF : RESTAURATION DU COMPTEUR POUR EVITER LE CRASH -->
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
             <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
@@ -641,7 +651,7 @@
     let customMaxQty = localStorage.getItem("mon_cfg_max_qty") !== null ? Number(localStorage.getItem("mon_cfg_max_qty")) : null;
     let mapFilterOnSelection = false;
 
-    // NOUVEAU : File d'attente sur le PC pour sécuriser les créations & glisser-déposer sans perte
+    // File d'attente pour sécuriser les créations & glisser-déposer sans perte
     let pendingSyncQueue = []; 
     let isSyncing = false; 
 
@@ -1055,7 +1065,6 @@
       items.forEach(it => cachedTournees.push(it));
       await localforage.setItem("offline_tournees", cachedTournees);
 
-      // FIX : Ajout à la file d'attente
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
       pendingSyncQueue.push({ _syncId: syncId, action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: items });
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
@@ -1150,14 +1159,15 @@
 
     let draggedPayload = null;
 
-    function handleDragStart(e, agent, dateStr, tranche) {
-      draggedPayload = { agent, dateStr, tranche };
+    function handleDragStart(e, agent, dateStr, tranche, taskId) {
+      draggedPayload = { agent, dateStr, tranche, id: taskId };
       e.dataTransfer.setData('text/plain', JSON.stringify(draggedPayload));
     }
 
+    // FIX : Drag and Drop met à jour l'ID exact de la tâche
     async function handleDropOnDay(e, targetDateStr, targetTranche) {
       e.preventDefault();
-      if (!draggedPayload) return;
+      if (!draggedPayload || !draggedPayload.id) return;
 
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
       const today = new Date(); today.setHours(0,0,0,0);
@@ -1169,8 +1179,7 @@
       const itemsToUpdate = [];
 
       cachedTournees.forEach(t => {
-        const matchTranche = (!t.tranche && draggedPayload.tranche === 'MATIN') || t.tranche === draggedPayload.tranche;
-        if (t.agent === draggedPayload.agent && normalizeDateYMD(t.date) === draggedPayload.dateStr && matchTranche) {
+        if (t.id === draggedPayload.id) {
           t.date = targetDateStr;
           t.tranche = targetTranche;
           itemsToUpdate.push({ id: t.id, date: targetDateStr, tranche: targetTranche });
@@ -1191,22 +1200,50 @@
 
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
+      const overdueContainer = document.getElementById("overdueTasksContainer");
       const filterAgent = document.getElementById("agendaFilterAgent").value;
-      const sInputVal = document.getElementById("filterStartDate").value;
-      if (!gridContainer) return;
+      
+      if (!gridContainer || !overdueContainer) return;
 
-      const baseDate = sInputVal ? parseItemDate(sInputVal) : new Date();
-      const dayOfWeek = baseDate.getDay() || 7;
-      const monday = new Date(baseDate);
-      monday.setDate(baseDate.getDate() - dayOfWeek + 1);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const todayStr = normalizeDateYMD(today);
 
+      // --- ZONE DES RETARDS ---
+      let overdueTasks = (cachedTournees || []).filter(t => t.statut !== 'VALIDE' && normalizeDateYMD(t.date) < todayStr);
+      if (filterAgent) overdueTasks = overdueTasks.filter(t => t.agent === filterAgent);
+
+      if (overdueTasks.length === 0) {
+        overdueContainer.innerHTML = `<span class="text-xs text-rose-400 italic">Aucune tâche en retard.</span>`;
+      } else {
+        const overdueGroups = {};
+        overdueTasks.forEach(t => { if (!overdueGroups[t.agent]) overdueGroups[t.agent] = []; overdueGroups[t.agent].push(t); });
+        
+        overdueContainer.innerHTML = Object.entries(overdueGroups).map(([agent, tList]) => {
+          return tList.map(t => `
+            <div draggable="true" 
+                 ondragstart="handleDragStart(event, '${t.agent}', '${normalizeDateYMD(t.date)}', '${t.tranche}', '${t.id}')"
+                 onclick="openTourneeDetailsForDay('${normalizeDateYMD(t.date)}', '${agent}')" 
+                 class="p-1.5 rounded-lg border bg-rose-100 border-rose-300 text-rose-800 cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] min-w-[120px]">
+              <div class="flex justify-between items-center font-bold">
+                <span class="truncate">${agent}</span>
+                <span class="font-mono text-[9px] text-rose-600 bg-white px-1 rounded">${formatDateFrench(t.date).substring(0,6)}</span>
+              </div>
+              <div class="text-[9px] font-mono text-rose-900 truncate mt-0.5">${t.sapRef}</div>
+              <div class="text-[8px] text-rose-600 truncate">${t.contractor || 'Divers'}</div>
+            </div>
+          `).join('');
+        }).join('');
+      }
+
+      // --- GRILLE GLISSANTE 7 JOURS ---
       const weekDays = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
         return d;
       });
 
-      const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+      const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
       gridContainer.innerHTML = weekDays.map((dayObj, idx) => {
         const dateStr = normalizeDateYMD(dayObj);
@@ -1230,30 +1267,30 @@
             const isFullDone = done === total && total > 0;
             const badgeColor = isFullDone ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-orange-100 text-orange-800 border-orange-300";
 
-            return `
+            return tList.map(t => `
               <div draggable="true" 
-                   ondragstart="handleDragStart(event, '${agent}', '${dateStr}', '${trancheName}')"
+                   ondragstart="handleDragStart(event, '${agent}', '${dateStr}', '${trancheName}', '${t.id}')"
                    onclick="openTourneeDetailsForDay('${dateStr}', '${agent}')" 
-                   class="p-1 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition text-[10px]">
+                   class="p-1 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition text-[10px] mb-1">
                 <div class="flex justify-between items-center font-bold">
                   <span class="truncate">${agent}</span>
-                  <span class="font-mono text-[9px] ${isFullDone ? 'text-emerald-700 font-black' : ''}">${done}/${total}</span>
+                  <span class="font-mono text-[9px] ${isFullDone ? 'text-emerald-700 font-black' : ''}">${t.statut === 'VALIDE' ? '✓' : ''}</span>
                 </div>
-                <div class="text-[8px] text-slate-600 truncate">${tList[0].contractor || 'Divers'}</div>
+                <div class="text-[9px] font-mono opacity-80 truncate">${t.sapRef}</div>
               </div>
-            `;
+            `).join('');
           }).join('');
         };
 
-        const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj) || dayObj < (new Date(new Date().setHours(0,0,0,0)));
+        const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
         const bgClassMatin = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-white/70 hover:bg-orange-50/40 cursor-pointer';
         const bgClassAprem = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-white/70 hover:bg-orange-50/40 cursor-pointer';
 
         return `
           <div class="bg-slate-50 border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[380px]">
-            <div class="text-center pb-1 border-b border-slate-200">
-              <span class="text-[11px] font-black text-slate-800 uppercase block">${dayNames[idx]}</span>
-              <span class="text-[9px] font-mono text-slate-500 font-bold">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+            <div class="text-center pb-1 border-b border-slate-200 ${idx === 0 ? 'bg-orange-100 text-orange-800 rounded-t-lg' : ''}">
+              <span class="text-[11px] font-black uppercase block ${idx === 0 ? 'text-orange-700' : 'text-slate-800'}">${idx === 0 ? "Aujourd'hui" : dayNames[dayObj.getDay()]}</span>
+              <span class="text-[9px] font-mono font-bold ${idx === 0 ? 'text-orange-600' : 'text-slate-500'}">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
             </div>
 
             <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'MATIN')" class="relative flex-1 border border-dashed border-slate-200 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar transition ${bgClassMatin}">
@@ -1839,7 +1876,6 @@
         applyFilters();
       }
 
-      // Ajout de la modif en file d'attente pour le PC
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
       pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin, token: adminToken });
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
@@ -1857,7 +1893,6 @@
       await safeSetStorage("offline_history", cachedHistory);
       applyFilters();
 
-      // Ajout de la suppression en file d'attente pour le PC
       const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
       pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_INVENTORY", id: id, user: currentAdmin, token: adminToken });
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
