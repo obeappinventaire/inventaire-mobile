@@ -13,6 +13,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
+  <!-- NOUVEAU : localForage pour IndexedDB -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
@@ -56,7 +58,6 @@
     
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
-      <!-- BANDEAU MISSION ACTIVE (VERROUILLAGE TOURNÉE) -->
       <div id="activeMissionBanner" class="hidden bg-amber-50 border-2 border-orange-500 p-3.5 rounded-2xl shadow-xs space-y-2">
         <div class="flex justify-between items-center">
           <span class="text-[11px] font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -222,23 +223,23 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let currentAgent = localStorage.getItem("mob_current_agent") || "";
-    let catalog = JSON.parse(localStorage.getItem("offline_catalog") || "[]");
-    let availableAgents = JSON.parse(localStorage.getItem("offline_agents") || "[]");
-    let availableContractors = JSON.parse(localStorage.getItem("offline_contractors") || "[]");
-    let availableTrades = JSON.parse(localStorage.getItem("offline_trades") || "[]");
-    let cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
-    let pendingSyncQueue = JSON.parse(localStorage.getItem("offline_pending_sync") || "[]");
+    let catalog = [];
+    let availableAgents = [];
+    let availableContractors = [];
+    let availableTrades = [];
+    let cachedTournees = [];
+    let pendingSyncQueue = [];
+    let sessionHistory = [];
+    // NOUVEAU : Verrou de synchronisation
+    let isSyncing = false; 
 
-    // --- UTILITAIRE DE STOCKAGE SÉCURISÉ ---
-    function safeSetStorage(key, data) {
+    // NOUVEAU : Fonction de sauvegarde sécurisée via localForage (IndexedDB)
+    async function safeSetStorage(key, data) {
       try {
-        localStorage.setItem(key, typeof data === 'string' ? data : JSON.stringify(data));
+        await localforage.setItem(key, data);
       } catch (e) {
-        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-          alert("⚠️ Stockage de l'appareil saturé (catalogue très volumineux). Veuillez purger le cache du navigateur pour garantir la sauvegarde des données.");
-        } else {
-          console.warn("Erreur de stockage local :", e);
-        }
+        alert("⚠️ Stockage de l'appareil saturé ou erreur IndexedDB.");
+        console.warn("Erreur de stockage local :", e);
       }
     }
 
@@ -249,8 +250,19 @@
     let barcodeDetector = null;
     let scanLoopActive = false;
 
+    // NOUVEAU : Initialisation asynchrone des données
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
+      
+      // Load from IndexedDB
+      catalog = (await localforage.getItem("offline_catalog")) || [];
+      availableAgents = (await localforage.getItem("offline_agents")) || [];
+      availableContractors = (await localforage.getItem("offline_contractors")) || [];
+      availableTrades = (await localforage.getItem("offline_trades")) || [];
+      cachedTournees = (await localforage.getItem("offline_tournees")) || [];
+      pendingSyncQueue = (await localforage.getItem("offline_pending_sync")) || [];
+      sessionHistory = (await localforage.getItem("mob_session_history")) || [];
+
       initMobileDropdowns();
       updatePendingBadge();
 
@@ -285,15 +297,10 @@
         agentSel.innerHTML = '<option value="">-- Choisir votre profil --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
         if (currentAgent) agentSel.value = currentAgent;
       }
-
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
-      if (cSel && availableContractors.length > 0) {
-        cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      }
-      if (tSel && availableTrades.length > 0) {
-        tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
-      }
+      if (cSel && availableContractors.length > 0) cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (tSel && availableTrades.length > 0) tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
     function setSelectValueWithFallback(selectId, val) {
@@ -301,27 +308,15 @@
       if (!sel || !val) return;
       const targetVal = String(val).trim();
       let found = false;
-
       for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value.trim().toLowerCase() === targetVal.toLowerCase()) {
-          sel.selectedIndex = i;
-          found = true;
-          break;
-        }
+        if (sel.options[i].value.trim().toLowerCase() === targetVal.toLowerCase()) { sel.selectedIndex = i; found = true; break; }
       }
-
       if (!found) {
-        const opt = document.createElement("option");
-        opt.value = targetVal;
-        opt.textContent = targetVal;
-        opt.selected = true;
-        sel.appendChild(opt);
+        const opt = document.createElement("option"); opt.value = targetVal; opt.textContent = targetVal; opt.selected = true; sel.appendChild(opt);
       }
     }
 
-    function openConfigModal() {
-      document.getElementById("configModal").classList.remove("hidden");
-    }
+    function openConfigModal() { document.getElementById("configModal").classList.remove("hidden"); }
 
     function saveAgentConfig() {
       const sel = document.getElementById("configAgentSelect").value;
@@ -330,10 +325,7 @@
       localStorage.setItem("mob_current_agent", currentAgent);
       document.getElementById("headerAgentName").innerText = currentAgent;
       document.getElementById("configModal").classList.add("hidden");
-
-      cancelActiveMission();
-      renderTournee();
-      renderHistory();
+      cancelActiveMission(); renderTournee(); renderHistory();
     }
 
     function logoutMobileAgentStep1() {
@@ -346,38 +338,30 @@
     function updatePendingBadge() {
       const badge = document.getElementById("pendingBadge");
       if (!badge) return;
-      if (pendingSyncQueue.length > 0) {
-        badge.innerText = pendingSyncQueue.length;
-        badge.classList.remove("hidden");
-      } else {
-        badge.classList.add("hidden");
-      }
+      if (pendingSyncQueue.length > 0) { badge.innerText = pendingSyncQueue.length; badge.classList.remove("hidden"); } 
+      else { badge.classList.add("hidden"); }
     }
 
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
-      if (dateVal instanceof Date) {
-        const y = dateVal.getFullYear();
-        const m = String(dateVal.getMonth() + 1).padStart(2, '0');
-        const d = String(dateVal.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-      }
+      if (dateVal instanceof Date) return `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
       const str = String(dateVal).trim();
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (parts) {
-        return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
-      }
+      if (parts) return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
       return str.split('T')[0];
     }
 
+    // NOUVEAU : Synchronisation optimisée avec verrou et localForage
     async function syncMobileData() {
       if (!navigator.onLine) return;
+      if (isSyncing) return; // Mutex : évite les doublons de synchronisation
+      isSyncing = true;
+
       const dot = document.getElementById("syncDot");
       const syncBtn = document.getElementById("syncBtn");
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
       if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
-      // 1. Dépilement de la file d'attente hors ligne
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
@@ -388,7 +372,7 @@
               body: JSON.stringify(item)
             });
             pendingSyncQueue = pendingSyncQueue.filter(q => q.id !== item.id);
-            safeSetStorage("offline_pending_sync", pendingSyncQueue);
+            await safeSetStorage("offline_pending_sync", pendingSyncQueue);
           } catch (err) {
             console.warn("Échec envoi tâche différée :", err);
             break;
@@ -397,109 +381,61 @@
         updatePendingBadge();
       }
 
-      // 2. Synchronisation descendante : Google Sheets est la source de vérité
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
         const data = await res.json();
         if (data.status === "success") {
-          if (data.catalog) { catalog = data.catalog; safeSetStorage("offline_catalog", catalog); }
-          if (data.agents) { availableAgents = data.agents; safeSetStorage("offline_agents", availableAgents); }
-          if (data.contractors) { availableContractors = data.contractors; safeSetStorage("offline_contractors", availableContractors); }
-          if (data.trades) { availableTrades = data.trades; safeSetStorage("offline_trades", availableTrades); }
+          if (data.catalog) { catalog = data.catalog; await safeSetStorage("offline_catalog", catalog); }
+          if (data.agents) { availableAgents = data.agents; await safeSetStorage("offline_agents", availableAgents); }
+          if (data.contractors) { availableContractors = data.contractors; await safeSetStorage("offline_contractors", availableContractors); }
+          if (data.trades) { availableTrades = data.trades; await safeSetStorage("offline_trades", availableTrades); }
 
-          // Tournées : conservation des validations locales récentes
           if (data.tournees) {
-            const currentLocal = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
-            const localValides = new Set(
-              currentLocal.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`)
-            );
-
+            const localValides = new Set(cachedTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').map(t => `${t.agent}_${t.sapRef}`));
             cachedTournees = data.tournees.map(serverTask => {
               const key = `${serverTask.agent}_${serverTask.sapRef}`;
-              if (localValides.has(key)) {
-                return { ...serverTask, statut: 'VALIDE' };
-              }
+              if (localValides.has(key)) return { ...serverTask, statut: 'VALIDE' };
               return serverTask;
             });
-
-            safeSetStorage("offline_tournees", cachedTournees);
+            await safeSetStorage("offline_tournees", cachedTournees);
           }
 
-          // HISTORIQUE : Purge immédiate des éléments supprimés dans Google Sheets
           if (data.history) {
-            safeSetStorage("offline_history", data.history);
-            
-            // On reconstruit mob_session_history à partir de la réponse serveur exacte
             const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
-            const serverAgentHistory = data.history.filter(h => 
-              String(h.user || "").trim().toLowerCase() === activeAgentNorm
-            );
-            safeSetStorage("mob_session_history", serverAgentHistory);
+            sessionHistory = data.history.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
+            await safeSetStorage("mob_session_history", sessionHistory);
           }
-
-          initMobileDropdowns();
-          renderTournee();
-          renderHistory();
+          initMobileDropdowns(); renderTournee(); renderHistory();
         }
       } catch (err) {
         console.warn("Sync fetch error :", err);
       } finally {
+        isSyncing = false; // Libération du verrou
         if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
         if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
     }
 
-    // Gestion du verrouillage de mission
     function selectTourneeTask(tourneeId) {
-      cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
       const task = cachedTournees.find(t => String(t.id).trim() === String(tourneeId).trim());
       if (!task) return;
+      if (String(task.statut || '').trim().toUpperCase() === 'VALIDE') return;
+      activeMissionContext = { id: task.id, sapRef: task.sapRef, designation: task.designation, contractor: task.contractor, trade: task.trade };
 
-      // Garde-fou strict anti-réactivation
-      if (String(task.statut || '').trim().toUpperCase() === 'VALIDE') {
-        return;
-      }
-
-      activeMissionContext = {
-        id: task.id,
-        sapRef: task.sapRef,
-        designation: task.designation,
-        contractor: task.contractor,
-        trade: task.trade
-      };
-
-      // 1. Affectation des listes déroulantes
       setSelectValueWithFallback("selectContractor", task.contractor);
       setSelectValueWithFallback("selectTrade", task.trade);
 
-      // 2. Verrouillage effectif des sélecteurs
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
-      if (cSel) {
-        cSel.setAttribute("disabled", "disabled");
-        cSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
-      }
-      if (tSel) {
-        tSel.setAttribute("disabled", "disabled");
-        tSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
-      }
+      if (cSel) { cSel.setAttribute("disabled", "disabled"); cSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
+      if (tSel) { tSel.setAttribute("disabled", "disabled"); tSel.classList.add("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
 
-      // 3. Affichage obligatoire du bandeau de mission
       const banner = document.getElementById("activeMissionBanner");
       const bannerInfo = document.getElementById("missionBannerInfo");
-      if (banner && bannerInfo) {
-        bannerInfo.innerText = `${task.contractor} (${task.trade}) • Réf: ${task.sapRef}`;
-        banner.classList.remove("hidden");
-      }
+      if (banner && bannerInfo) { bannerInfo.innerText = `${task.contractor} (${task.trade}) • Réf: ${task.sapRef}`; banner.classList.remove("hidden"); }
 
-      // 4. Sélection de l'article
       const item = catalog.find(i => String(i.sapRef).trim() === String(task.sapRef).trim());
-      selectArticleFromSearch(item || {
-        sapRef: task.sapRef,
-        designation: task.designation || 'Article assigné',
-        supplierRef: ''
-      });
-
+      selectArticleFromSearch(item || { sapRef: task.sapRef, designation: task.designation || 'Article assigné', supplierRef: '' });
       switchMobileTab('comptage');
     }
 
@@ -507,18 +443,10 @@
       activeMissionContext = null;
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
-      if (cSel) {
-        cSel.removeAttribute("disabled");
-        cSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
-      }
-      if (tSel) {
-        tSel.removeAttribute("disabled");
-        tSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none");
-      }
-
+      if (cSel) { cSel.removeAttribute("disabled"); cSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
+      if (tSel) { tSel.removeAttribute("disabled"); tSel.classList.remove("bg-slate-200", "text-slate-600", "cursor-not-allowed", "pointer-events-none"); }
       const banner = document.getElementById("activeMissionBanner");
       if (banner) banner.classList.add("hidden");
-
       resetComptageForm();
     }
 
@@ -533,9 +461,7 @@
       document.getElementById("scanModal").classList.remove("hidden");
       document.getElementById("ocrStatus").innerText = "Initialisation caméra...";
       try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } } 
-        });
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } } });
         const video = document.getElementById("scanVideo");
         video.srcObject = mediaStream;
         await video.play();
@@ -556,11 +482,7 @@
           if (barcodes.length > 0) {
             const rawVal = barcodes[0].rawValue;
             const item = catalog.find(i => String(i.sapRef).trim() === rawVal || String(i.ean).trim() === rawVal);
-            if (item) {
-              selectArticleFromSearch(item);
-              closeScanModal();
-              return;
-            }
+            if (item) { selectArticleFromSearch(item); closeScanModal(); return; }
           }
         } catch (e) {}
       }
@@ -569,40 +491,31 @@
 
     function closeScanModal() {
       scanLoopActive = false;
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-        mediaStream = null;
-      }
+      if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; }
       document.getElementById("scanModal").classList.add("hidden");
     }
 
+    // NOUVEAU : Tesseract utilise le dictionnaire français ('fra')
     async function captureAndOCR() {
       const video = document.getElementById("scanVideo");
       const canvas = document.getElementById("scanCanvas");
       if (!video.srcObject) return;
 
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
+      canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       document.getElementById("ocrStatus").innerText = "Analyse OCR en cours...";
       try {
-        const result = await Tesseract.recognize(canvas, 'eng');
+        const result = await Tesseract.recognize(canvas, 'fra');
         const text = result.data.text;
-        
-        // Regex élargie pour capter les suites alphanumériques de 4 à 12 caractères
         const matches = text.match(/\b[A-Z0-9]{4,12}\b/gi);
 
         if (matches && matches.length > 0) {
           const foundRef = matches[0].toUpperCase();
           const item = catalog.find(i => String(i.sapRef).trim().toUpperCase() === foundRef);
-          if (item) {
-            selectArticleFromSearch(item);
-            closeScanModal();
-          } else {
-            document.getElementById("ocrStatus").innerText = `Réf ${foundRef} introuvable.`;
-          }
+          if (item) { selectArticleFromSearch(item); closeScanModal(); }
+          else { document.getElementById("ocrStatus").innerText = `Réf ${foundRef} introuvable.`; }
         } else {
           document.getElementById("ocrStatus").innerText = "Aucun code détecté.";
         }
@@ -615,22 +528,15 @@
       const q = String(val || "").trim().toLowerCase();
       const dd = document.getElementById("sapSuggestions");
       if (!q) { dd.classList.add("hidden"); return; }
-
       const filtered = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 30);
       if (filtered.length === 0) {
         dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé</div>`;
-        dd.classList.remove("hidden");
-        return;
+        dd.classList.remove("hidden"); return;
       }
-
       dd.innerHTML = filtered.map(item => `
         <div onclick='selectArticleFromSearch(${JSON.stringify(item)})' class="p-3 hover:bg-orange-50 rounded-xl cursor-pointer text-xs flex justify-between items-center border-b border-slate-100 last:border-0">
-          <div>
-            <span class="font-mono font-bold text-orange-800 text-sm">${item.sapRef}</span>
-            <span class="text-slate-700 ml-2 font-medium">${item.designation}</span>
-          </div>
-        </div>
-      `).join('');
+          <div><span class="font-mono font-bold text-orange-800 text-sm">${item.sapRef}</span><span class="text-slate-700 ml-2 font-medium">${item.designation}</span></div>
+        </div>`).join('');
       dd.classList.remove("hidden");
     }
 
@@ -647,100 +553,56 @@
     async function submitInventoryEntry() {
       if (!currentAgent) { alert("Veuillez configurer votre nom d'agent."); openConfigModal(); return; }
       if (!selectedArticle) { alert("Veuillez sélectionner un article SAP."); return; }
-
       const qty = parseInt(document.getElementById("inputQuantity").value, 10) || 0;
-
-      // Verrouillage contextuel strict
       const contractor = activeMissionContext ? activeMissionContext.contractor : document.getElementById("selectContractor").value;
       const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
       const tourneeId = activeMissionContext ? activeMissionContext.id : null;
 
       const record = {
         id: "INV-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
-        timestamp: new Date().toISOString(),
-        user: currentAgent,
-        contractor: contractor,
-        trade: trade,
-        sapRef: selectedArticle.sapRef,
-        designation: selectedArticle.designation,
-        quantity: qty,
-        lat: currentGpsCoords.lat,
-        lng: currentGpsCoords.lng,
-        tourneeId: tourneeId
+        timestamp: new Date().toISOString(), user: currentAgent, contractor: contractor, trade: trade, sapRef: selectedArticle.sapRef, designation: selectedArticle.designation,
+        quantity: qty, lat: currentGpsCoords.lat, lng: currentGpsCoords.lng, tourneeId: tourneeId
       };
 
-      // 1. Mise à jour locale immédiate de l'historique
-      let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       sessionHistory.unshift({ ...record, isPending: !navigator.onLine });
-      safeSetStorage("mob_session_history", sessionHistory);
+      await safeSetStorage("mob_session_history", sessionHistory);
 
-      // 2. Validation ciblée de la tournée
       let matchedTourneeId = tourneeId;
-      cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
       cachedTournees.forEach(t => {
         const matchById = tourneeId && String(t.id).trim() === String(tourneeId).trim();
         const matchBySap = !tourneeId && String(t.agent || '').trim().toLowerCase() === String(currentAgent || '').trim().toLowerCase() && String(t.sapRef).trim() === String(selectedArticle.sapRef).trim();
-        if (matchById || matchBySap) {
-          t.statut = 'VALIDE';
-          if (!matchedTourneeId) matchedTourneeId = t.id;
-        }
+        if (matchById || matchBySap) { t.statut = 'VALIDE'; if (!matchedTourneeId) matchedTourneeId = t.id; }
       });
-      safeSetStorage("offline_tournees", cachedTournees);
+      await safeSetStorage("offline_tournees", cachedTournees);
 
-      // 3. Mise en file d'attente
       pendingSyncQueue.push({ action: "CREATE", ...record });
-      if (matchedTourneeId) {
-        pendingSyncQueue.push({ 
-          action: "UPDATE_TOURNEE_STATUS", 
-          id: matchedTourneeId, 
-          statut: 'VALIDE', 
-          user: currentAgent, 
-          sapRef: selectedArticle.sapRef 
-        });
-      }
-      safeSetStorage("offline_pending_sync", pendingSyncQueue);
+      if (matchedTourneeId) pendingSyncQueue.push({ action: "UPDATE_TOURNEE_STATUS", id: matchedTourneeId, statut: 'VALIDE', user: currentAgent, sapRef: selectedArticle.sapRef });
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue);
+      
       updatePendingBadge();
-
-      // 4. Nettoyage et basculement garanti vers l'onglet Historique
-      cancelActiveMission();
-      renderTournee();
-      renderHistory();
+      cancelActiveMission(); renderTournee(); renderHistory();
       switchMobileTab('historique');
 
-      // 5. Envoi serveur asynchrone non-bloquant
-      if (navigator.onLine) {
-        setTimeout(() => syncMobileData(), 100);
-      }
+      if (navigator.onLine) { setTimeout(() => syncMobileData(), 100); }
     }
 
     function renderHistory() {
       const container = document.getElementById("historyListContainer");
       if (!container) return;
-
       const activeAgentNorm = String(currentAgent || "").trim().toLowerCase();
       const todayStr = normalizeDateYMD(new Date());
 
-      // 1. Éléments validés par Google Sheets
-      const serverHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]")
-        .filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
-
-      // 2. Éléments saisis hors-ligne encore non synchronisés
+      const serverHistory = sessionHistory.filter(h => String(h.user || "").trim().toLowerCase() === activeAgentNorm);
       const pendingIds = new Set(serverHistory.map(h => h.id));
-      const pendingItems = (JSON.parse(localStorage.getItem("offline_pending_sync") || "[]"))
+      const pendingItems = pendingSyncQueue
         .filter(p => p.action === 'CREATE' && String(p.user || '').trim().toLowerCase() === activeAgentNorm && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
       const fullHistory = [...pendingItems, ...serverHistory].filter(h => normalizeDateYMD(h.timestamp) === todayStr);
 
       document.getElementById("historyCount").innerText = `${fullHistory.length} ligne(s)`;
-
       if (fullHistory.length === 0) {
-        container.innerHTML = `
-          <div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl space-y-1">
-            <p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p>
-            <p class="text-[10px]">Toute ligne supprimée dans Google Sheets disparaît automatiquement d'ici.</p>
-          </div>
-        `;
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl space-y-1"><p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p></div>`;
         return;
       }
 
@@ -751,10 +613,7 @@
             <div class="flex justify-between items-center">
               <div class="flex items-center space-x-2">
                 <span class="font-mono font-bold text-orange-800">${h.sapRef}</span>
-                ${isPending 
-                  ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">⏳ EN ATTENTE</span>' 
-                  : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">✓ ENREGISTRÉ</span>'
-                }
+                ${isPending ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">⏳ EN ATTENTE</span>' : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">✓ ENREGISTRÉ</span>'}
               </div>
               <div class="flex items-center space-x-2">
                 <span class="font-mono font-black text-emerald-700 text-sm">Qté : ${h.quantity}</span>
@@ -767,14 +626,12 @@
               <span>${h.contractor} (${h.trade})</span>
               <span class="font-mono">${new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
       lucide.createIcons();
     }
 
-    function editHistoryItem(id) {
-      let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
+    async function editHistoryItem(id) {
       const item = sessionHistory.find(h => h.id === id);
       if (!item) return;
       const newQty = prompt("Modifier la quantité :", item.quantity);
@@ -783,45 +640,34 @@
       if (isNaN(parsed) || parsed < 0) { alert("Quantité invalide."); return; }
 
       item.quantity = parsed;
-      safeSetStorage("mob_session_history", sessionHistory);
+      await safeSetStorage("mob_session_history", sessionHistory);
 
       const pendingCreate = pendingSyncQueue.find(p => p.id === id && p.action === 'CREATE');
-      if (pendingCreate) {
-        pendingCreate.quantity = parsed;
-      } else {
-        pendingSyncQueue.push({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAgent });
-      }
+      if (pendingCreate) { pendingCreate.quantity = parsed; } 
+      else { pendingSyncQueue.push({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAgent }); }
 
-      safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      updatePendingBadge();
-      renderHistory();
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue);
+      updatePendingBadge(); renderHistory();
       if (navigator.onLine) syncMobileData();
     }
 
-    function deleteHistoryItem(id) {
+    async function deleteHistoryItem(id) {
       if (!confirm("Supprimer cette saisie ?")) return;
-      let sessionHistory = JSON.parse(localStorage.getItem("mob_session_history") || "[]");
       sessionHistory = sessionHistory.filter(h => h.id !== id);
-      safeSetStorage("mob_session_history", sessionHistory);
+      await safeSetStorage("mob_session_history", sessionHistory);
 
       const pendingIdx = pendingSyncQueue.findIndex(p => p.id === id && p.action === 'CREATE');
-      if (pendingIdx !== -1) {
-        pendingSyncQueue.splice(pendingIdx, 1);
-      } else {
-        pendingSyncQueue.push({ action: "DELETE_INVENTORY", id: id, user: currentAgent });
-      }
+      if (pendingIdx !== -1) { pendingSyncQueue.splice(pendingIdx, 1); } 
+      else { pendingSyncQueue.push({ action: "DELETE_INVENTORY", id: id, user: currentAgent }); }
 
-      safeSetStorage("offline_pending_sync", pendingSyncQueue);
-      updatePendingBadge();
-      renderHistory();
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue);
+      updatePendingBadge(); renderHistory();
       if (navigator.onLine) syncMobileData();
     }
 
     function renderTournee() {
-      cachedTournees = JSON.parse(localStorage.getItem("offline_tournees") || "[]");
       const container = document.getElementById("tourneeListContainer");
       if (!container) return;
-
       const todayStr = normalizeDateYMD(new Date());
       const agentTournees = (cachedTournees || []).filter(t => {
         const matchAgent = String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase();
@@ -832,16 +678,11 @@
         container.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-xs bg-white border border-slate-200 rounded-2xl">Aucune tâche assignée. Travail libre !</div>`;
         return;
       }
-
       container.innerHTML = agentTournees.map(t => {
         const isDone = String(t.statut || '').trim().toUpperCase() === 'VALIDE';
         const trancheLabel = t.tranche === 'APRES_MIDI' ? '🌇 Après-midi' : '☀️ Matin';
-        
-        // Verrouillage total et suppression d'événement si validé
         const clickAttr = isDone ? '' : `onclick="selectTourneeTask('${t.id}')"`;
-        const styleClass = isDone 
-          ? 'border-emerald-300 bg-emerald-50/70 opacity-85 cursor-default pointer-events-none select-none' 
-          : 'border-slate-200 hover:border-orange-300 cursor-pointer';
+        const styleClass = isDone ? 'border-emerald-300 bg-emerald-50/70 opacity-85 cursor-default pointer-events-none select-none' : 'border-slate-200 hover:border-orange-300 cursor-pointer';
 
         return `
           <div ${clickAttr} class="bg-white border ${styleClass} p-3.5 rounded-2xl shadow-xs transition space-y-1.5">
@@ -857,8 +698,7 @@
               <span>${t.contractor} (${t.trade})</span>
               <span class="font-mono text-orange-700 font-semibold">${trancheLabel}</span>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
       lucide.createIcons();
     }
@@ -870,13 +710,11 @@
         if (elTab) elTab.classList.add("hidden");
         if (elNav) elNav.className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer";
       });
-
       const activeName = tab.charAt(0).toUpperCase() + tab.slice(1);
       const targetTab = document.getElementById("tab" + activeName);
       const targetNav = document.getElementById("nav" + activeName);
       if (targetTab) targetTab.classList.remove("hidden");
       if (targetNav) targetNav.className = "flex flex-col items-center space-y-1 text-orange-600 font-bold text-[10px] transition cursor-pointer";
-
       if (tab === 'historique') renderHistory();
       if (tab === 'tournee') renderTournee();
       lucide.createIcons();
@@ -885,17 +723,14 @@
     function toggleVoiceSearch() {
       const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Speech) { alert("Reconnaissance vocale non supportée par ce navigateur."); return; }
-      const recognition = new Speech();
-      recognition.lang = 'fr-FR';
+      const recognition = new Speech(); recognition.lang = 'fr-FR';
       const btn = document.getElementById("micBtn");
       btn.className = "h-10 bg-rose-600 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 animate-pulse";
-
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.replace(/\s+/g, '');
         const match = transcript.match(/\d{6}/) || transcript.match(/\d{5,8}/);
         const finalVal = match ? match[0] : transcript;
-        document.getElementById("sapSearchInput").value = finalVal;
-        onSapSearchInput(finalVal);
+        document.getElementById("sapSearchInput").value = finalVal; onSapSearchInput(finalVal);
       };
       recognition.onerror = recognition.onend = () => {
         btn.className = "h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2";
