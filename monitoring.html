@@ -19,29 +19,21 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
     
-    .leaflet-popup-content-wrapper {
-      border-radius: 16px;
-      box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.15), 0 6px 12px -4px rgba(15, 23, 42, 0.08);
-      padding: 6px;
-      border: 1px solid #e2e8f0;
-      background: #ffffff;
-      max-width: 380px !important;
-    }
-    .leaflet-popup-content { 
-      margin: 10px 14px; 
-      line-height: 1.4;
-      word-break: break-word;
-    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
+    .leaflet-popup-content-wrapper { border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); padding: 6px; }
+    .leaflet-popup-content { margin: 10px 14px; line-height: 1.4; word-break: break-word; }
   </style>
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-50">
 
-  <!-- MODALE D'AUTHENTIFICATION ADMIN -->
+  <!-- MODALE D'AUTHENTIFICATION -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto shadow-sm overflow-hidden">
@@ -105,12 +97,10 @@
     </div>
   </header>
 
-  <!-- STRUCTURE CENTRALE -->
   <div class="flex-1 flex overflow-hidden">
-    
     <!-- BARRE LATÉRALE -->
-    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col justify-between shrink-0 text-slate-100">
-      <div class="p-4 space-y-5 overflow-y-auto custom-scrollbar">
+    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0 text-slate-100 relative">
+      <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
         
         <div class="space-y-1">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">Vues Principales</span>
@@ -118,88 +108,88 @@
             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
             <span>Activité Globale</span>
           </button>
-          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer">
+          <button id="btnNavAgents" onclick="switchView('agents')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>Suivi Terrain & Agents</span>
           </button>
-          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer">
+          <button id="btnNavMap" onclick="switchView('map')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer">
             <i data-lucide="map" class="w-4 h-4"></i>
             <span>Carte & Géolocalisation</span>
           </button>
-          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer">
+          <button id="btnNavTournees" onclick="switchView('tournees')" class="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer">
             <i data-lucide="calendar-range" class="w-4 h-4"></i>
             <span>Agenda & Tournées</span>
           </button>
         </div>
 
-        <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
-            </span>
-            <span id="weekBadgeLabel" class="text-[10px] font-mono font-bold bg-orange-950 text-orange-300 px-2 py-0.5 rounded border border-orange-800">--</span>
-          </div>
-
-          <div class="relative">
-            <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
-              <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
-              <option value="PREV_WEEK">◀ Semaine précédente</option>
-              <option value="TODAY">☀️ Aujourd'hui</option>
-              <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
-              <option value="ALL">🌐 Tout l'historique</option>
-              <option value="CUSTOM">⚙️ Période personnalisée...</option>
-            </select>
-          </div>
-
-          <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-700">
-            <div>
-              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Du :</label>
-              <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-orange-500">
+        <div class="mt-auto pt-6 space-y-4">
+          <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
+              </span>
+              <span id="weekBadgeLabel" class="text-[9px] font-mono font-bold bg-slate-800 text-orange-300 px-2 py-0.5 rounded border border-slate-600">--</span>
             </div>
-            <div>
-              <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Au :</label>
-              <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-orange-500">
+
+            <div class="relative">
+              <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+                <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
+                <option value="PREV_WEEK">◀ Semaine précédente</option>
+                <option value="TODAY">☀️ Aujourd'hui</option>
+                <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
+                <option value="ALL">🌐 Tout l'historique</option>
+                <option value="CUSTOM">⚙️ Période personnalisée...</option>
+              </select>
             </div>
-          </div>
-        </div>
 
-        <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères d'Anomalies
-            </span>
-            <span class="text-[9px] bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
-          </div>
-
-          <div class="space-y-2 text-xs pt-1">
-            <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer hover:border-slate-600 transition shadow-xs">
-              <span class="text-[11px] text-slate-300 font-medium">Alerter Rupture (Stock = 0)</span>
-              <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-600 border-slate-700 bg-slate-900 focus:ring-0">
-            </label>
-
-            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700 space-y-1.5 shadow-xs">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] text-slate-300 font-medium">Seuil volume atypique</span>
-                <span class="text-[11px] font-mono text-amber-400 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
+            <div id="customDateRangeBox" class="hidden space-y-2 pt-2 border-t border-slate-700">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Du :</label>
+                <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-orange-500">
               </div>
-              <input type="number" id="cfgMaxQty" value="" placeholder="Libre (ex: 50)" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-200 font-mono text-center">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Au :</label>
+                <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-orange-500">
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i> Critères
+              </span>
+              <span class="text-[9px] bg-amber-950/50 text-amber-400 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
+            </div>
+
+            <div class="space-y-2 text-xs pt-1">
+              <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800 border border-slate-600 cursor-pointer hover:border-slate-500 transition shadow-xs">
+                <span class="text-[11px] text-slate-200 font-medium">Alerter Ruptures</span>
+                <input type="checkbox" id="cfgAlertZero" checked onchange="applyFilters()" class="w-4 h-4 rounded text-orange-500 border-slate-500 bg-slate-900 focus:ring-0">
+              </label>
+
+              <div class="p-2.5 rounded-xl bg-slate-800 border border-slate-600 space-y-1.5 shadow-xs">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] text-slate-200 font-medium">Seuil volume atypique</span>
+                  <span class="text-[11px] font-mono text-amber-400 font-bold">> <span id="cfgMaxQtyDisplay">--</span> pcs</span>
+                </div>
+                <input type="number" id="cfgMaxQty" value="" placeholder="Ex: 50" min="1" oninput="updateMaxQtyThreshold(this.value)" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-1.5 text-xs text-slate-200 font-mono text-center">
+              </div>
             </div>
           </div>
         </div>
-
       </div>
 
-      <div class="p-4 border-t border-slate-700 text-center bg-slate-900 shrink-0">
-        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
-          &copy; made by CO2H2O srlu
+      <div class="p-3 border-t border-slate-700/50 text-center bg-slate-900/30 shrink-0">
+        <span class="text-[9px] font-medium text-slate-500 tracking-widest uppercase">
+          &copy; CO2H2O srlu
         </span>
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col justify-between bg-slate-50">
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-50">
       
-      <div class="space-y-6">
+      <div class="space-y-6 flex-1">
         
         <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
         <section id="viewGlobal" class="space-y-6">
@@ -218,21 +208,19 @@
                 <span class="text-[11px] font-bold text-slate-500 uppercase block">Total Pièces</span>
                 <span id="kpiTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
               </div>
-
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures (Qté 0)</span>
-                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs">
+                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition shadow-2xs">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                   </div>
                 </div>
                 <span id="kpiZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
               </div>
-
               <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Atypiques</span>
-                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs">
+                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition shadow-2xs">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                   </div>
                 </div>
@@ -251,16 +239,13 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                  <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer">
-                    Effacer filtres
-                  </button>
+                  <button onclick="resetFiltersToAll()" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer">Effacer filtres</button>
                   <button onclick="exportTableToCSV()" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center space-x-2 transition shadow-xs cursor-pointer">
                     <i data-lucide="download" class="w-4 h-4"></i>
                     <span>Exporter CSV</span>
                   </button>
                 </div>
               </div>
-
               <div id="selectedArticleTagsContainer" class="flex flex-wrap gap-1.5 empty:hidden pt-1"></div>
             </div>
 
@@ -279,7 +264,6 @@
                   <div id="checkboxesAgents" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
                 </div>
               </div>
-
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneurs</label>
                 <button type="button" onclick="toggleFilterDropdown('dropdownContractors')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
@@ -294,7 +278,6 @@
                   <div id="checkboxesContractors" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
                 </div>
               </div>
-
               <div class="relative" onclick="event.stopPropagation()">
                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métiers</label>
                 <button type="button" onclick="toggleFilterDropdown('dropdownTrades')" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-left text-slate-800 flex justify-between items-center focus:outline-none focus:border-orange-500 cursor-pointer">
@@ -312,14 +295,14 @@
             </div>
           </div>
 
-          <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs">
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden flex-1 flex flex-col min-h-[400px]">
+            <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center text-xs bg-slate-50">
               <span id="tableCountLabel" class="font-bold text-slate-700">0 résultat(s)</span>
               <span class="text-slate-400 text-[11px]">Format Date : Jour/Mois/Année</span>
             </div>
-            <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
+            <div class="overflow-auto custom-scrollbar flex-1">
               <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200">
+                <thead class="bg-white text-slate-500 uppercase font-bold sticky top-0 border-b border-slate-200 z-10 shadow-sm">
                   <tr>
                     <th class="p-3">Horodatage</th>
                     <th class="p-3">Agent</th>
@@ -331,79 +314,46 @@
                     <th class="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="supervisionTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                <tbody id="supervisionTableBody" class="divide-y divide-slate-100 text-slate-700 bg-white"></tbody>
               </table>
             </div>
           </div>
         </section>
 
-        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS ================= -->
+        <!-- ================= ONGLET 2 : SUIVI SCORECARD AGENTS ================= -->
         <section id="viewAgents" class="hidden space-y-6">
-          <div>
-            <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cumul Flotte Opérationnelle</span>
-                <span id="periodBadgeAgents" class="text-xs text-orange-700 font-mono font-bold bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-xs">--</span>
-              </div>
-              <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer">
-                <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
-                <span id="btnFilterActiveText">En cours uniquement</span>
-              </button>
+          <div class="flex justify-between items-center mb-2 px-1">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="users-round" class="w-4 h-4 text-orange-600"></i> Scorecard & Activité Agents
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">Performance consolidée basée sur la période sélectionnée à gauche.</p>
             </div>
-            
-            <div class="grid grid-cols-4 gap-3 max-w-5xl">
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
-                <span class="text-[11px] font-bold text-slate-500 uppercase block">Lignes Cumulées</span>
-                <span id="kpiAgentsTotalRows" class="text-xl font-black text-slate-900 mt-0.5 block">0</span>
-              </div>
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
-                <span class="text-[11px] font-bold text-slate-500 uppercase block">Pièces Totales</span>
-                <span id="kpiAgentsTotalPieces" class="text-xl font-black text-orange-600 mt-0.5 block">0</span>
-              </div>
-
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-rose-300 transition" onclick="filterByKpi('ZERO')">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-rose-600 uppercase">Ruptures Déclarées</span>
-                  <div class="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs">
-                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </div>
-                </div>
-                <span id="kpiAgentsZeroStock" class="text-xl font-black text-rose-600 mt-0.5 block">0</span>
-              </div>
-
-              <div class="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs relative group cursor-pointer hover:border-amber-300 transition" onclick="filterByKpi('HIGH')">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-amber-600 uppercase">Alertes Flotte</span>
-                  <div class="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition shadow-2xs">
-                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
-                  </div>
-                </div>
-                <span id="kpiAgentsAtypicalStock" class="text-xl font-black text-amber-600 mt-0.5 block">0</span>
-              </div>
-            </div>
+            <button id="btnFilterActiveAgentsOnly" onclick="toggleActiveAgentsFilter()" class="px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer bg-white border border-slate-200 hover:bg-slate-50">
+              <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+              <span id="btnFilterActiveText">Afficher toute la flotte</span>
+            </button>
           </div>
-
-          <div id="agentsAccordionContainer" class="space-y-3"></div>
+          
+          <div id="agentsAccordionContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE ================= -->
+        <!-- ================= ONGLET 3 : MAP ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i>
-                Cartographie Interactive du Terrain (Belgique)
+                <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i> Cartographie Interactive (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique • Bouton d'affichage ciblé sur la sélection active</p>
+              <p class="text-xs text-slate-500 mt-0.5">Visualisation géographique ciblée sur la période active.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                 <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
-                <span id="mapFilterBtnText">Afficher toute la période</span>
+                <span id="mapFilterBtnText">Toute la période</span>
               </button>
               <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer">
-                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
-                <span>Recentrer Belgique</span>
+                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i><span>Recentrer Belgique</span>
               </button>
               <span class="text-xs font-mono text-orange-700 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-xs" id="mapPointsCountLabel">0 point(s) GPS</span>
             </div>
@@ -413,34 +363,32 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES (NOUVELLE LOGIQUE GROUPEE & COCKPIT) ================= -->
+        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i>
-                Planning Semaine & Missions Chantiers
+                <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Missions regroupées par Entrepreneur & Métier • Glissez une mission pour replanifier l'ensemble des articles</p>
+              <p class="text-xs text-slate-500 mt-0.5">Missions regroupées par Entrepreneur & Métier • Glissez-déposez pour replanifier.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
-                <span>Modèle Excel Multi-Onglets (.xlsx)</span>
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i><span>Modèle Excel (.xlsx)</span>
               </button>
               <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
               <button type="button" onclick="document.getElementById('excelFileInput').click()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
-                <span>Importer Planning</span>
+                <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i><span>Importer Planning</span>
               </button>
               <button onclick="openManualAssignModal()" class="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-3.5 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Nouvelle Tâche</span>
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Nouvelle Tâche</span>
               </button>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- AGENDA GAUCHE -->
             <div class="lg:col-span-8 space-y-4">
               <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center space-x-2">
@@ -452,42 +400,41 @@
                 <div class="text-xs font-mono text-orange-700 font-bold bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs" id="wallPlanningWeekLabel">--</div>
               </div>
 
-              <!-- ZONE DES RETARDS (REGROUPÉE PAR MISSION) -->
-              <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl shadow-xs p-4 space-y-3">
-                <div class="flex items-center justify-between border-b border-rose-200 pb-2 text-xs">
-                  <span class="font-black text-rose-700 uppercase tracking-wide flex items-center gap-1.5">
-                    <i data-lucide="alert-octagon" class="w-4 h-4"></i> 
-                    Missions en retard ou non clôturées (Buffer opérationnel)
+              <!-- ZONE DES RETARDS (CARROUSEL HORIZONTAL) -->
+              <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-xs p-4 flex flex-col">
+                <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 text-xs shrink-0">
+                  <span class="font-bold text-amber-800 uppercase tracking-wide flex items-center gap-1.5">
+                    <i data-lucide="clock-4" class="w-4 h-4"></i> Buffer Opérationnel (En retard / À replanifier)
                   </span>
                 </div>
-                <div id="overdueTasksContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 min-h-[60px]"></div>
+                <!-- Flex avec défilement horizontal -->
+                <div id="overdueTasksContainer" class="flex overflow-x-auto hide-scrollbar gap-3 pb-1 min-h-[60px]"></div>
               </div>
 
-              <!-- AGENDA 7 JOURS (REGROUPÉ PAR MISSION) -->
-              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
+              <!-- GRILLE 7 JOURS -->
+              <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs mb-3">
                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (7 prochains jours)</span>
                 </div>
                 <div id="wallPlanningGrid" class="grid grid-cols-1 md:grid-cols-7 gap-2 min-h-[420px]"></div>
               </div>
             </div>
 
-            <!-- COCKPIT DE COMPLÉTION DATA-DRIVEN REPENSÉ -->
-            <div class="lg:col-span-4 space-y-4">
-              <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4">
+            <!-- COCKPIT DE COMPLÉTION DROITE -->
+            <div class="lg:col-span-4 space-y-4 sticky top-6">
+              <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pilotage Réalisation</span>
                   <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Période Active</span>
                 </div>
 
-                <!-- 1. Taux Macro : Missions Chantiers -->
                 <div class="space-y-1.5">
                   <div class="flex justify-between items-center text-xs">
-                    <span class="font-bold text-slate-700">Missions Chantiers Auditées</span>
+                    <span class="font-bold text-slate-700">Missions Chantiers (Macro)</span>
                     <span id="kpiMissionsPct" class="font-mono font-black text-orange-600 text-sm">0%</span>
                   </div>
                   <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                    <div id="kpiMissionsBar" class="bg-orange-500 h-full transition-all duration-300 rounded-full" style="width: 0%"></div>
+                    <div id="kpiMissionsBar" class="bg-orange-500 h-full transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
                   </div>
                   <div class="flex justify-between text-[10px] text-slate-400 font-mono">
                     <span>Clôturées : <b id="kpiMissionsDone" class="text-slate-700">0</b></span>
@@ -495,26 +442,24 @@
                   </div>
                 </div>
 
-                <!-- 2. Taux Micro : Lignes Articles Comptées -->
-                <div class="space-y-1.5 pt-2 border-t border-slate-100">
+                <div class="space-y-1.5 pt-3 border-t border-slate-100">
                   <div class="flex justify-between items-center text-xs">
-                    <span class="font-bold text-slate-700">Lignes Articles Contrôlées</span>
+                    <span class="font-bold text-slate-700">Lignes Articles (Micro)</span>
                     <span id="globalCompletionPct" class="font-mono font-black text-emerald-600 text-sm">0%</span>
                   </div>
                   <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                    <div id="globalCompletionBar" class="bg-emerald-500 h-full transition-all duration-300 rounded-full" style="width: 0%"></div>
+                    <div id="globalCompletionBar" class="bg-emerald-500 h-full transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
                   </div>
                   <div class="flex justify-between text-[10px] text-slate-400 font-mono">
-                    <span>Validées : <b id="kpiDoneTasks" class="text-slate-700">0</b></span>
+                    <span>Comptées : <b id="kpiDoneTasks" class="text-slate-700">0</b></span>
                     <span>Restantes : <b id="kpiPendingTasks" class="text-slate-700">0</b></span>
                   </div>
                 </div>
 
-                <!-- 3. Santé opérationnelle & Risques -->
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-center text-xs">
-                  <div class="bg-rose-50 border border-rose-200 p-2.5 rounded-xl">
-                    <span class="text-[9px] text-rose-600 block uppercase font-bold">Missions en Retard</span>
-                    <strong id="kpiOverdueMissionsCount" class="text-base font-black text-rose-700 font-mono">0</strong>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-center text-xs">
+                  <div class="bg-amber-50/50 border border-amber-200 p-2.5 rounded-xl">
+                    <span class="text-[9px] text-amber-700 block uppercase font-bold">Missions Retardées</span>
+                    <strong id="kpiOverdueMissionsCount" class="text-base font-black text-amber-800 font-mono">0</strong>
                   </div>
                   <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
                     <span class="text-[9px] text-emerald-600 block uppercase font-bold">Conformité Délais</span>
@@ -522,35 +467,23 @@
                   </div>
                 </div>
               </div>
-
-              <!-- État de charge par collaborateur -->
-              <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Avancement par Collaborateur</span>
-                <div id="agentCompletionList" class="space-y-2.5 max-h-[260px] overflow-y-auto custom-scrollbar pr-1"></div>
-              </div>
             </div>
           </div>
         </section>
 
       </div>
-
-      <div class="text-center pt-8 pb-6 border-t border-slate-200 shrink-0">
-        <span class="text-[11px] font-medium text-slate-400 tracking-wider">&copy; made by CO2H2O srlu</span>
-      </div>
     </main>
   </div>
 
-  <!-- MODALE CREATION MANUELLE -->
+  <!-- MODALES ADMIN -->
   <div id="manualAssignModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
         <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="plus-circle" class="w-4 h-4 text-orange-600"></i>
-          Nouvelle Affectation de Tâche
+          <i data-lucide="plus-circle" class="w-4 h-4 text-orange-600"></i> Nouvelle Affectation
         </h3>
         <button onclick="closeManualAssignModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-
       <div class="space-y-2.5 text-xs">
         <div class="grid grid-cols-3 gap-2">
           <div>
@@ -572,14 +505,12 @@
             </select>
           </div>
         </div>
-
         <div class="flex items-center justify-between pt-1">
-          <label class="font-bold text-slate-700 uppercase tracking-wide">Date & Tranche de planification :</label>
+          <label class="font-bold text-slate-700 uppercase tracking-wide">Date & Tranche :</label>
           <button onclick="submitManualTourneeAssignment()" class="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg text-xs shadow-2xs transition cursor-pointer flex items-center gap-1">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Enregistrer
           </button>
         </div>
-
         <div class="grid grid-cols-2 gap-2">
           <div>
             <input type="date" id="adminAssignDate" onchange="validateAssignDate(this)" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
@@ -591,26 +522,20 @@
             </select>
           </div>
         </div>
-
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
-            <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
+            <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets :</label>
             <span id="adminCatalogCount" class="text-[10px] font-mono text-orange-700 font-bold">0 article(s)</span>
           </div>
-          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Recherche multicritères (ex: vis bois, 106626)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 font-medium">
+          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Recherche multicritères..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 font-medium">
           <div id="adminCatalogPickerList" class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
         </div>
-      </div>
-
-      <div class="pt-2 border-t border-slate-100 flex gap-2">
-        <button onclick="closeManualAssignModal()" class="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Fermer</button>
       </div>
     </div>
   </div>
 
-  <!-- MODALE DÉTAILS DE LA MISSION (LISTE DES ARTICLES) -->
   <div id="tourneeDetailsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
-    <div class="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-3">
+    <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
         <div>
           <h3 id="modalTourneeTitle" class="text-sm font-bold text-slate-900 uppercase">Détails de la Mission</h3>
@@ -618,25 +543,20 @@
         </div>
         <button onclick="closeTourneeDetailsModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-
-      <div id="modalTourneeContent" class="max-h-72 overflow-y-auto custom-scrollbar space-y-2 text-xs"></div>
-
-      <div class="pt-2 border-t border-slate-100 flex justify-end">
-        <button onclick="closeTourneeDetailsModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Fermer</button>
-      </div>
+      <div id="modalTourneeContent" class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 text-xs"></div>
     </div>
   </div>
 
+  <!-- JAVASCRIPT PRINCIPAL -->
   <script>
     if ('serviceWorker' in navigator) {
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
+        if (!refreshing) { 
+          refreshing = true; 
+          window.location.reload(); 
         }
       });
-
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
           .then(reg => reg.update())
@@ -684,7 +604,7 @@
       try {
         await localforage.setItem(key, data);
       } catch (e) {
-        alert("⚠️ Stockage de l'appareil saturé ou erreur IndexedDB.");
+        console.warn("Stockage saturé ou erreur IndexedDB.");
       }
     }
 
@@ -699,18 +619,24 @@
     function updateWeekBadge(startDateStr) {
       const targetDate = startDateStr ? parseItemDate(startDateStr) : new Date();
       const iso = getISOWeekNumber(targetDate);
-      const weekStr = String(iso.week).padStart(2, '0');
+      const badgeText = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
+      
       const badge = document.getElementById("weekBadgeLabel");
       const wallBadge = document.getElementById("wallPlanningWeekLabel");
-      const badgeText = `S${weekStr} ${iso.year}`;
-      if (badge) badge.innerText = badgeText;
-      if (wallBadge) wallBadge.innerText = badgeText;
+      if (badge) {
+        badge.innerText = badgeText;
+      }
+      if (wallBadge) {
+        wallBadge.innerText = badgeText;
+      }
     }
 
     function parseItemDate(str) {
       if (!str) return new Date(0);
       const parts = String(str).match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (parts) return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
+      if (parts) {
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4] || 0, parts[5] || 0, parts[6] || 0);
+      }
       const iso = new Date(str);
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
@@ -731,23 +657,25 @@
 
     function formatDateFrench(dateInput) {
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
-      return isNaN(d.getTime()) ? String(dateInput) : d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+      if (isNaN(d.getTime())) return String(dateInput);
+      return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
     }
 
     function formatDateDMY(dateInput, includeTime = false) {
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
       if (isNaN(d.getTime())) return String(dateInput);
       const base = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-      return includeTime ? `${base} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : base;
+      if (includeTime) {
+        return `${base} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      }
+      return base;
     }
 
-    function getEaster(year) {
-        const f = Math.floor, G = year % 19, C = f(year / 100),
-        H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
-        I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
-        J = (year + f(year / 4) + I + 2 - C + f(C / 4)) % 7,
-        L = I - J, month = 3 + f((L + 40) / 44), day = L + 28 - 31 * f(month / 4);
-        return new Date(year, month - 1, day);
+    function getEaster(y) {
+        const f = Math.floor, G = y % 19, C = f(y / 100), H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
+        I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)), J = (y + f(y / 4) + I + 2 - C + f(C / 4)) % 7,
+        L = I - J, m = 3 + f((L + 40) / 44), d = L + 28 - 31 * f(m / 4);
+        return new Date(y, m - 1, d);
     }
 
     function isBelgianHoliday(dateObj) {
@@ -757,9 +685,10 @@
         const dateStr = `${y}-${m}-${d}`;
 
         const easter = getEaster(y);
-        const addDays = (date, days) => {
-            const result = new Date(date); result.setDate(result.getDate() + days);
-            return `${result.getFullYear()}-${String(result.getMonth() + 1).padStart(2, '0')}-${String(result.getDate()).padStart(2, '0')}`;
+        const addDays = (dt, days) => { 
+          const r = new Date(dt); 
+          r.setDate(r.getDate() + days); 
+          return `${r.getFullYear()}-${String(r.getMonth() + 1).padStart(2, '0')}-${String(r.getDate()).padStart(2, '0')}`; 
         };
 
         const holidays = [
@@ -773,22 +702,23 @@
         const val = inputElem.value;
         if (!val) return true;
         const d = new Date(val + "T00:00:00");
-        const today = new Date(); today.setHours(0,0,0,0);
+        const today = new Date(); 
+        today.setHours(0,0,0,0);
 
         if (d < today) { 
-            alert("Impossible de créer une tâche dans le passé."); 
-            inputElem.value = ""; 
-            return false; 
+          alert("Impossible de créer une tâche dans le passé."); 
+          inputElem.value = ""; 
+          return false; 
         }
         if (d.getDay() === 0 || d.getDay() === 6) { 
-            alert("Impossible d'assigner une tâche un week-end (Samedi/Dimanche)."); 
-            inputElem.value = ""; 
-            return false; 
+          alert("Impossible d'assigner une tâche un week-end (Samedi/Dimanche)."); 
+          inputElem.value = ""; 
+          return false; 
         }
         if (isBelgianHoliday(d)) { 
-            alert("Impossible d'assigner une tâche un jour férié belge."); 
-            inputElem.value = ""; 
-            return false; 
+          alert("Impossible d'assigner une tâche un jour férié belge."); 
+          inputElem.value = ""; 
+          return false; 
         }
         return true;
     }
@@ -897,13 +827,21 @@
     }
 
     async function syncMonitoringData() {
-      if (!navigator.onLine || isSyncing) return;
+      if (!navigator.onLine) return;
+      
+      if (isSyncing) return;
       isSyncing = true;
       
       const dot = document.getElementById("statusDot");
       const txt = document.getElementById("statusText");
-      if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
-      if (txt) { txt.innerText = "Synchronisation..."; txt.className = "text-xs font-bold text-amber-600"; }
+      
+      if (dot) {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
+      }
+      if (txt) { 
+        txt.innerText = "Synchronisation..."; 
+        txt.className = "text-xs font-bold text-amber-600"; 
+      }
 
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
@@ -916,13 +854,16 @@
             });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
             await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-          } catch (err) { break; }
+          } catch (err) { 
+            break; 
+          }
         }
       }
 
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
+        
         if (data.status === "success") {
           if (data.agents) { availableAgents = data.agents; await localforage.setItem("offline_agents", availableAgents); }
           if (data.contractors) { availableContractors = data.contractors; await localforage.setItem("offline_contractors", availableContractors); }
@@ -934,7 +875,7 @@
           if (data.tournees) {
             let pendingItemsToMerge = [];
             pendingSyncQueue.forEach(q => {
-               if(q.action === "CREATE_TOURNEES_BULK" && q.items) {
+               if (q.action === "CREATE_TOURNEES_BULK" && q.items) {
                    pendingItemsToMerge.push(...q.items);
                }
             });
@@ -967,19 +908,28 @@
           applyFilters();
         }
       } catch (err) {
+        // Silently handle offline/error state during background sync
       } finally {
         isSyncing = false;
-        if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-        if (txt) { txt.innerText = "Connecté"; txt.className = "text-xs font-bold text-emerald-600"; }
+        if (dot) {
+          dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        }
+        if (txt) { 
+          txt.innerText = "Connecté"; 
+          txt.className = "text-xs font-bold text-emerald-600"; 
+        }
       }
     }
 
     function openManualAssignModal(defaultDate = null, defaultTranche = 'MATIN') {
       const dateInput = document.getElementById("adminAssignDate");
-      if (defaultDate) dateInput.value = defaultDate;
-      if (defaultTranche) document.getElementById("adminAssignTranche").value = defaultTranche;
-      
-      if(!validateAssignDate(dateInput)) {
+      if (defaultDate) {
+        dateInput.value = defaultDate;
+      }
+      if (defaultTranche) {
+        document.getElementById("adminAssignTranche").value = defaultTranche;
+      }
+      if (!validateAssignDate(dateInput)) {
          dateInput.value = new Date().toISOString().split('T')[0]; 
       }
       
@@ -1001,10 +951,18 @@
       const tradeSel = document.getElementById("adminAssignTrade");
       const filterAgentSel = document.getElementById("agendaFilterAgent");
 
-      if (agentSel) agentSel.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      if (filterAgentSel) filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-      if (contractorSel) contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (tradeSel) tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      if (agentSel) {
+        agentSel.innerHTML = '<option value="">-- Agent --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+      if (filterAgentSel) {
+        filterAgentSel.innerHTML = '<option value="">Tous les agents</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+      if (contractorSel) {
+        contractorSel.innerHTML = '<option value="">-- Entrepreneur --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      if (tradeSel) {
+        tradeSel.innerHTML = '<option value="">-- Métier --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
     }
 
     function renderAdminCatalogPicker(filterText) {
@@ -1018,7 +976,9 @@
         return searchTerms.every(term => textTarget.includes(term));
       });
 
-      if (countLabel) countLabel.innerText = `${filtered.length} article(s) trouvé(s)`;
+      if (countLabel) {
+        countLabel.innerText = `${filtered.length} article(s) trouvé(s)`;
+      }
       
       if (filtered.length === 0) {
         container.innerHTML = `<div class="p-2 text-center text-slate-400 text-xs italic">Aucun article trouvé.</div>`;
@@ -1041,9 +1001,11 @@
 
     function toggleManualCatalogSelection(sapRef) {
       const ref = String(sapRef).trim();
-      manualSelectedCatalogSaps = manualSelectedCatalogSaps.includes(ref) 
-        ? manualSelectedCatalogSaps.filter(r => r !== ref) 
-        : [...manualSelectedCatalogSaps, ref];
+      if (manualSelectedCatalogSaps.includes(ref)) {
+        manualSelectedCatalogSaps = manualSelectedCatalogSaps.filter(r => r !== ref);
+      } else {
+        manualSelectedCatalogSaps.push(ref);
+      }
     }
 
     async function submitManualTourneeAssignment() {
@@ -1053,8 +1015,14 @@
       const trade = document.getElementById("adminAssignTrade").value;
       const date = document.getElementById("adminAssignDate").value;
 
-      if (!agent) { alert("Veuillez sélectionner un agent."); return; }
-      if (manualSelectedCatalogSaps.length === 0) { alert("Veuillez cocher au moins un article."); return; }
+      if (!agent) { 
+        alert("Veuillez sélectionner un agent."); 
+        return; 
+      }
+      if (manualSelectedCatalogSaps.length === 0) { 
+        alert("Veuillez cocher au moins un article."); 
+        return; 
+      }
 
       const items = manualSelectedCatalogSaps.map((sapRef, idx) => {
         const catItem = catalog.find(i => String(i.sapRef).trim() === sapRef);
@@ -1084,16 +1052,14 @@
       
       applyFilters();
 
-      if(navigator.onLine) {
+      if (navigator.onLine) {
          setTimeout(syncMonitoringData, 100);
       }
     }
 
-    // EXPORT DU MODELE AVEC ONGLET DONNEES_REFERENCE
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
       
-      // Onglet 1 : Modèle
       const planningData = [
         ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"],
         [
@@ -1111,7 +1077,6 @@
       ws1['!cols'] = [{wch: 18}, {wch: 28}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 18}];
       XLSX.utils.book_append_sheet(wb, ws1, "Import_Masse");
 
-      // Onglet 2 : Références
       const maxRows = Math.max(availableAgents.length, availableContractors.length, availableTrades.length, catalog.length);
       const masterData = [["AGENTS DISPONIBLES", "ENTREPRENEURS", "METIERS", "CATALOGUE (REF SAP)", "DESIGNATION"]];
 
@@ -1134,10 +1099,11 @@
 
     function handleExcelFileSelect(e) {
       const files = e.target.files;
-      if (files.length > 0) processExcelFile(files[0]);
+      if (files.length > 0) {
+        processExcelFile(files[0]);
+      }
     }
 
-    // IMPORT EXCEL AVEC DÉTECTION DU NUMÉRO DE SÉRIE 46275
     function processExcelFile(file) {
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -1147,7 +1113,10 @@
           const sheetName = workbook.SheetNames[0]; 
           const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
           
-          if (jsonRows.length <= 1) { alert("Le fichier Excel est vide ou invalide."); return; }
+          if (jsonRows.length <= 1) { 
+            alert("Le fichier Excel est vide ou invalide."); 
+            return; 
+          }
 
           const headers = jsonRows[0].map(h => String(h || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
           const dateIdx = headers.findIndex(h => h.includes('date'));
@@ -1164,7 +1133,10 @@
 
           for (let i = 1; i < jsonRows.length; i++) {
             const row = jsonRows[i];
-            if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) continue;
+            
+            if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) {
+              continue;
+            }
             
             const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
             const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
@@ -1179,7 +1151,6 @@
 
             let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
             
-            // Correction mathématique si Excel envoie un nombre de série (ex: 46275)
             if (typeof rawDate === 'number') {
                 const utc_days  = Math.floor(rawDate - 25569);
                 const utc_value = utc_days * 86400;
@@ -1213,8 +1184,12 @@
           }
 
           let confirmMsg = `Préparation de l'import : ${bulkItems.length} tâche(s) détectée(s).\n\n`;
-          if (missingAgents.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
-          if (missingSaps.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
+          if (missingAgents.size > 0) {
+            confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
+          }
+          if (missingSaps.size > 0) {
+            confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
+          }
           confirmMsg += `\nVoulez-vous continuer l'importation de masse ?`;
           
           if(confirm(confirmMsg)) {
@@ -1245,13 +1220,14 @@
 
       applyFilters();
 
-      if(navigator.onLine) setTimeout(syncMonitoringData, 100);
+      if(navigator.onLine) {
+        setTimeout(syncMonitoringData, 100);
+      }
       alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
     }
 
-    // NOUVELLE LOGIQUE DRAG & DROP PAR LOT DE MISSION
     let draggedGroupPayload = null;
-
+    
     function handleGroupDragStart(e, groupId) {
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
@@ -1262,11 +1238,24 @@
       if (!draggedGroupPayload) return;
 
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
-      const today = new Date(); today.setHours(0,0,0,0);
+      const today = new Date(); 
+      today.setHours(0,0,0,0);
 
-      if (targetDateObj < today) { alert("Impossible de déplacer une mission dans le passé."); draggedGroupPayload = null; return; }
-      if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { alert("Impossible de déplacer sur un week-end."); draggedGroupPayload = null; return; }
-      if (isBelgianHoliday(targetDateObj)) { alert("Impossible de déplacer sur un jour férié."); draggedGroupPayload = null; return; }
+      if (targetDateObj < today) { 
+        alert("Impossible de déplacer une mission dans le passé."); 
+        draggedGroupPayload = null; 
+        return; 
+      }
+      if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { 
+        alert("Impossible de déplacer sur un week-end."); 
+        draggedGroupPayload = null; 
+        return; 
+      }
+      if (isBelgianHoliday(targetDateObj)) { 
+        alert("Impossible de déplacer sur un jour férié."); 
+        draggedGroupPayload = null; 
+        return; 
+      }
 
       const itemsToUpdate = [];
 
@@ -1287,11 +1276,12 @@
         const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
         pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
         await localforage.setItem("offline_pending_sync", pendingSyncQueue);
-        if(navigator.onLine) setTimeout(syncMonitoringData, 100);
+        if(navigator.onLine) {
+          setTimeout(syncMonitoringData, 100);
+        }
       }
     }
 
-    // NOUVELLE PRÉSENTATION DES TÂCHES PAR MISSION (ENTREPRENEUR + MÉTIER)
     function buildTourneeGroups(tourneesList) {
       const groupsMap = {};
       tourneesList.forEach(t => {
@@ -1337,38 +1327,44 @@
       const todayStr = normalizeDateYMD(today);
 
       let allTournees = cachedTournees || [];
-      if (filterAgent) allTournees = allTournees.filter(t => t.agent === filterAgent);
+      if (filterAgent) {
+        allTournees = allTournees.filter(t => t.agent === filterAgent);
+      }
 
       const allGroups = buildTourneeGroups(allTournees);
 
-      // 1. GESTION DES MISSIONS EN RETARD (Buffer)
+      // 1. CARROUSEL HORIZONTAL DES RETARDS
       const overdueGroups = allGroups.filter(g => !g.isDone && g.date < todayStr);
 
       if (overdueGroups.length === 0) {
-        overdueContainer.innerHTML = `<span class="col-span-full text-xs text-rose-400 italic font-semibold text-center py-2">Aucune mission en retard. Flux opérationnel sous contrôle ! 🎉</span>`;
+        overdueContainer.innerHTML = `
+          <div class="w-full text-xs text-amber-700/70 italic font-semibold text-center py-2 flex items-center justify-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> Aucun retard opérationnel détecté.
+          </div>
+        `;
       } else {
         overdueContainer.innerHTML = overdueGroups.map(g => `
           <div draggable="true" 
                ondragstart="handleGroupDragStart(event, '${g.id}')"
                onclick="openTourneeGroupModal('${g.id}')" 
-               class="p-2.5 rounded-xl border bg-rose-100/70 border-rose-300 text-rose-900 cursor-grab active:cursor-grabbing shadow-sm hover:border-rose-400 transition text-xs space-y-1.5">
-            <div class="flex justify-between items-center border-b border-rose-200 pb-1">
-              <span class="font-black text-[11px] truncate max-w-[120px]">${g.agent}</span>
-              <span class="font-mono text-[9px] bg-rose-200 text-rose-800 px-1.5 py-0.2 rounded font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
-            </div>
+               class="min-w-[200px] max-w-[220px] shrink-0 p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between">
             <div>
-              <strong class="block text-slate-900 truncate leading-tight">${g.contractor}</strong>
-              <span class="text-[10px] text-slate-600 block truncate">${g.trade}</span>
+              <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1.5">
+                <span class="font-bold text-[11px] truncate max-w-[110px]">${g.agent}</span>
+                <span class="font-mono text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
+              </div>
+              <strong class="block truncate leading-tight">${g.contractor}</strong>
+              <span class="text-[9px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded mt-1 inline-block truncate max-w-full border border-orange-100">${g.trade}</span>
             </div>
-            <div class="flex justify-between items-center text-[10px] pt-1 border-t border-rose-200 font-mono">
-              <span class="text-rose-700 font-bold">${g.pending} restant(s)</span>
-              <span class="text-slate-500">${g.total} art.</span>
+            <div class="flex justify-between items-center text-[10px] pt-2 mt-2 border-t border-amber-50 font-mono">
+              <span class="text-rose-600 font-bold">${g.pending} restant(s)</span>
+              <span class="text-slate-400">${g.total} art.</span>
             </div>
           </div>
         `).join('');
       }
 
-      // 2. AGENDA DES 7 JOURS GLISSANTS
+      // 2. GRILLE DE L'AGENDA 7 JOURS
       const weekDays = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
@@ -1387,21 +1383,22 @@
         const renderGroupCards = (groups) => {
           return groups.map(g => {
             const badgeColor = g.isDone 
-              ? "bg-emerald-100 text-emerald-800 border-emerald-300" 
-              : "bg-orange-50 text-orange-900 border-orange-200 hover:border-orange-300";
+              ? "bg-emerald-50 border-emerald-300" 
+              : "bg-white border-slate-200 hover:border-orange-300";
 
             return `
               <div draggable="true" 
                    ondragstart="handleGroupDragStart(event, '${g.id}')"
                    onclick="openTourneeGroupModal('${g.id}')" 
-                   class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-2xs transition text-[10px] space-y-1 mb-1.5">
-                <div class="flex justify-between items-center font-bold">
-                  <span class="truncate text-slate-900">${g.agent}</span>
-                  <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-orange-700'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
+                   class="p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] space-y-1 mb-2">
+                
+                <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
+                  <span class="font-bold text-slate-700 truncate">${g.agent}</span>
+                  <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
                 </div>
-                <div class="leading-tight">
-                  <span class="font-black text-slate-800 block truncate">${g.contractor}</span>
-                  <span class="text-slate-500 text-[9px] block truncate">${g.trade}</span>
+                <div class="leading-tight space-y-1">
+                  <strong class="block text-slate-800 truncate">${g.contractor}</strong>
+                  <span class="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded inline-block truncate max-w-full border border-indigo-100">${g.trade}</span>
                 </div>
               </div>
             `;
@@ -1409,22 +1406,26 @@
         };
 
         const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
-        const bgClass = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-white/70 hover:bg-orange-50/40 cursor-pointer';
+        const bgClass = isBlocked ? 'bg-slate-100 opacity-60' : 'bg-slate-50/50 hover:bg-orange-50/50 cursor-pointer';
 
         return `
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px]">
-            <div class="text-center pb-1 border-b border-slate-200 ${idx === 0 ? 'bg-orange-100 text-orange-800 rounded-t-lg border-orange-200' : ''}">
-              <span class="text-[11px] font-black uppercase block ${idx === 0 ? 'text-orange-700' : 'text-slate-800'}">${idx === 0 ? "Aujourd'hui" : dayNames[dayObj.getDay()]}</span>
-              <span class="text-[9px] font-mono font-bold ${idx === 0 ? 'text-orange-600' : 'text-slate-500'}">${dayObj.getDate()} ${dayObj.toLocaleString('fr-FR', { month: 'short' })}</span>
+          <div class="bg-white border border-slate-200 rounded-xl p-1.5 flex flex-col space-y-2 min-h-[420px] shadow-sm">
+            <div class="text-center pb-2 pt-1 border-b border-slate-100">
+              <span class="text-[11px] font-bold uppercase tracking-widest block ${idx === 0 ? 'text-orange-600' : 'text-slate-500'}">
+                ${idx === 0 ? "Aujourd'hui" : dayNames[dayObj.getDay()]}
+              </span>
+              <span class="text-[9px] font-mono font-medium ${idx === 0 ? 'text-orange-500' : 'text-slate-400'}">
+                ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
+              </span>
             </div>
 
-            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'MATIN')" class="relative flex-1 border border-dashed border-slate-200 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar transition ${bgClass}">
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Matin</span>
+            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 rounded-lg p-1.5 flex flex-col transition ${bgClass}">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Matin</span>
               <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
             </div>
 
-            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="relative flex-1 border border-dashed border-slate-200 rounded-lg p-1.5 flex flex-col space-y-1 overflow-y-auto custom-scrollbar transition ${bgClass}">
-              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Après-midi</span>
+            <div onclick="if(!${isBlocked}) openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="if(!${isBlocked}) handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 rounded-lg p-1.5 flex flex-col transition ${bgClass}">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Après-midi</span>
               <div class="space-y-1" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
             </div>
           </div>
@@ -1434,7 +1435,6 @@
       lucide.createIcons();
     }
 
-    // MODALE DÉTAILS DE MISSION AVEC GESTION DES ARTICLES
     function openTourneeGroupModal(groupId) {
       const allGroups = buildTourneeGroups(cachedTournees || []);
       const g = allGroups.find(x => x.id === groupId);
@@ -1478,13 +1478,120 @@
       });
     }
 
-    // NOUVEAU CALCUL DATA-DRIVEN : MICRO VS MACRO
+    function renderAgentsView(periodHistory) {
+      const container = document.getElementById("agentsAccordionContainer");
+      if (!container) return;
+
+      let agentsToDisplay = availableAgents;
+      if (filterOnlyActiveAgents) {
+        agentsToDisplay = availableAgents.filter(a => periodHistory.some(r => r.user === a) || getPeriodFilteredTournees().some(t => t.agent === a));
+      }
+
+      if (agentsToDisplay.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-2xl">Aucun agent actif sur cette période.</div>`;
+        return;
+      }
+
+      const periodTournees = getPeriodFilteredTournees();
+      const periodGroups = buildTourneeGroups(periodTournees);
+
+      container.innerHTML = agentsToDisplay.map(agent => {
+        const aHist = periodHistory.filter(r => r.user === agent);
+        const aPcs = aHist.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+        const aZero = aHist.filter(r => Number(r.quantity) === 0).length;
+        
+        const aGrp = periodGroups.filter(g => g.agent === agent);
+        const aGrpTotal = aGrp.length;
+        const aGrpDone = aGrp.filter(g => g.isDone).length;
+        const aGrpPct = aGrpTotal > 0 ? Math.round((aGrpDone / aGrpTotal) * 100) : 0;
+        
+        const isOpen = !!openDrawers[agent];
+
+        let missionsHtml = '';
+        if (aGrpTotal === 0) {
+          missionsHtml = '<div class="text-[10px] text-slate-400 italic">Aucune mission assignée.</div>';
+        } else {
+          missionsHtml = aGrp.map(g => `
+            <div class="mb-2 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2 py-0.5">
+              <span class="block text-[10px] font-bold text-slate-800 truncate">${g.contractor}</span>
+              <span class="block text-[9px] text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
+            </div>
+          `).join('');
+        }
+
+        let historyHtml = '';
+        if (aHist.length === 0) {
+          historyHtml = '<div class="text-[10px] text-slate-400 italic">Aucun enregistrement.</div>';
+        } else {
+          historyHtml = aHist.map(r => `
+            <div class="mb-2 flex justify-between items-start gap-1">
+              <div class="min-w-0">
+                <span class="block font-mono text-[9px] font-bold text-amber-700">${r.sapRef}</span>
+                <span class="block text-[9px] text-slate-600 truncate">${r.contractor}</span>
+              </div>
+              <span class="font-mono text-[10px] font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'} bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                ${r.quantity}
+              </span>
+            </div>
+          `).join('');
+        }
+
+        return `
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs h-fit transition-all">
+            <div onclick="toggleAgentDrawer('${agent}')" class="p-4 cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-sm border border-orange-200">
+                    ${agent.substring(0, 2).toUpperCase()}
+                  </div>
+                  <h4 class="font-bold text-slate-900 text-sm tracking-wide">${agent}</h4>
+                </div>
+                <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5 text-slate-300"></i>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center flex flex-col justify-center">
+                  <span class="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Missions</span>
+                  <span class="font-mono text-xs font-black ${aGrpPct === 100 ? 'text-emerald-600' : 'text-slate-700'}">${aGrpDone}/${aGrpTotal}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center flex flex-col justify-center">
+                  <span class="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Saisies</span>
+                  <span class="font-mono text-xs font-black text-orange-600">${aPcs} pcs</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center flex flex-col justify-center">
+                  <span class="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Ruptures</span>
+                  <span class="font-mono text-xs font-black ${aZero > 0 ? 'text-rose-600' : 'text-slate-400'}">${aZero}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50">
+              <div class="grid grid-cols-2 divide-x divide-slate-100">
+                <div class="p-3 max-h-60 overflow-y-auto custom-scrollbar">
+                  <span class="block text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-2">Plan de Tournée</span>
+                  ${missionsHtml}
+                </div>
+                <div class="p-3 max-h-60 overflow-y-auto custom-scrollbar">
+                  <span class="block text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-2">Dernières Saisies</span>
+                  ${historyHtml}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function toggleAgentDrawer(agent) {
+      openDrawers[agent] = !openDrawers[agent];
+      applyFilters();
+    }
+
     function renderCompletionMetrics() {
       const periodTournees = getPeriodFilteredTournees();
       const periodGroups = buildTourneeGroups(periodTournees);
       const todayStr = normalizeDateYMD(new Date());
 
-      // 1. Métriques Macro (Missions Chantiers)
       const totalMissions = periodGroups.length;
       const doneMissions = periodGroups.filter(g => g.isDone).length;
       const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
@@ -1494,7 +1601,6 @@
       document.getElementById("kpiMissionsDone").innerText = doneMissions;
       document.getElementById("kpiMissionsTotal").innerText = totalMissions;
 
-      // 2. Métriques Micro (Lignes d'articles)
       const totalLines = periodTournees.length;
       const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
       const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
@@ -1504,14 +1610,12 @@
       document.getElementById("kpiDoneTasks").innerText = doneLines;
       document.getElementById("kpiPendingTasks").innerText = totalLines - doneLines;
 
-      // 3. Risque & Santé Opérationnelle
       const overdueMissions = periodGroups.filter(g => !g.isDone && g.date < todayStr).length;
       const slaScore = totalMissions > 0 ? Math.round(((totalMissions - overdueMissions) / totalMissions) * 100) : 100;
 
       document.getElementById("kpiOverdueMissionsCount").innerText = overdueMissions;
       document.getElementById("kpiSlaScore").innerText = `${slaScore}%`;
 
-      // 4. Détail par Collaborateur
       const agentListContainer = document.getElementById("agentCompletionList");
       if (!agentListContainer) return;
 
@@ -1541,28 +1645,52 @@
       }).join('');
     }
 
-    async function deleteTourneeAdminItem(id) {
-      if (!confirm("Supprimer cet article de la mission ?")) return;
-      cachedTournees = cachedTournees.filter(t => t.id !== id);
-      await localforage.setItem("offline_tournees", cachedTournees);
+    function applyFilters() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
       
-      const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_TOURNEE", id: id, user: currentAdmin, token: adminToken });
-      await localforage.setItem("offline_pending_sync", pendingSyncQueue);
+      let periodLabel = "Tout l'historique";
+      if (sDateVal && eDateVal) {
+        periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
+      } else if (sDateVal) {
+        periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
+      } else if (eDateVal) {
+        periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
+      }
 
-      closeTourneeDetailsModal();
-      applyFilters(); 
-      if(navigator.onLine) setTimeout(syncMonitoringData, 100);
+      document.getElementById("periodBadgeGlobal").innerText = periodLabel;
+      document.getElementById("periodBadgeAgents").innerText = periodLabel;
+
+      const periodData = getPeriodFilteredHistory();
+      const filtered = getFilteredHistory();
+
+      renderKPIs(periodData);
+      renderTable(filtered);
+      renderAgentsView(periodData);
+
+      const mapSourceList = mapFilterOnSelection ? filtered : periodData;
+      renderMap(mapSourceList);
+
+      renderWallPlanning();
+      renderCompletionMetrics(); 
     }
 
-    function updateActiveAgentsButtonUI() {
+    function toggleActiveAgentsFilter() {
+      filterOnlyActiveAgents = !filterOnlyActiveAgents;
       const btnText = document.getElementById("btnFilterActiveText");
       const btn = document.getElementById("btnFilterActiveAgentsOnly");
       if (!btn || !btnText) return;
+
       btn.className = filterOnlyActiveAgents 
-        ? "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white border border-orange-700 flex items-center gap-2 transition shadow-xs cursor-pointer"
-        : "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center gap-2 transition shadow-xs cursor-pointer";
-      btnText.innerText = filterOnlyActiveAgents ? "🟢 En cours uniquement" : "⚪ Flotte complète";
+        ? "px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 flex items-center gap-2 transition shadow-sm cursor-pointer" 
+        : "px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-900 flex items-center gap-2 transition shadow-sm cursor-pointer";
+      
+      btnText.innerText = filterOnlyActiveAgents ? "Afficher toute la flotte" : "En cours uniquement";
+      btn.querySelector('span:first-child').className = filterOnlyActiveAgents 
+        ? "w-2 h-2 rounded-full bg-slate-300" 
+        : "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+      
+      applyFilters();
     }
 
     function updateMaxQtyThreshold(val) {
@@ -1597,7 +1725,9 @@
         }
       });
       const target = document.getElementById(id);
-      if (target) target.classList.toggle("hidden");
+      if (target) {
+        target.classList.toggle("hidden");
+      }
     }
 
     function initMultiSelects() {
@@ -1647,11 +1777,7 @@
         if (!ref) continue;
         
         if (!mapArticles.has(ref)) {
-          mapArticles.set(ref, {
-            sapRef: ref,
-            designation: item.designation || 'Sans désignation',
-            count: 1
-          });
+          mapArticles.set(ref, { sapRef: ref, designation: item.designation || 'Sans désignation', count: 1 });
         } else {
           mapArticles.get(ref).count++;
         }
@@ -1667,6 +1793,7 @@
     function onArticleTagInput(query) {
       const dd = document.getElementById("articleDropdownList");
       if (!dd) return;
+      
       const q = String(query || "").trim().toLowerCase();
       const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
 
@@ -1689,11 +1816,14 @@
     }
 
     function toggleArticleTag(sapRef) {
-      selectedArticleTags = selectedArticleTags.includes(sapRef) 
-        ? selectedArticleTags.filter(r => r !== sapRef) 
-        : [...selectedArticleTags, sapRef];
+      if (selectedArticleTags.includes(sapRef)) {
+        selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      } else {
+        selectedArticleTags.push(sapRef);
+      }
       renderArticleTagsUI();
       applyFilters();
+      
       const input = document.getElementById("articleTagInput");
       if (input) input.value = ""; 
       
@@ -1713,7 +1843,9 @@
       container.innerHTML = selectedArticleTags.map(ref => `
         <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
           <span class="truncate max-w-[260px]">${ref}</span>
-          <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+          <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
         </span>
       `).join('');
       lucide.createIcons();
@@ -1748,20 +1880,26 @@
       customBox.classList.add("hidden");
 
       if (mode === 'ALL') {
-        sInput.value = ""; eInput.value = "";
+        sInput.value = "";
+        eInput.value = "";
       } else if (mode === 'TODAY') {
         const dStr = normalizeDateYMD(now);
-        sInput.value = dStr; eInput.value = dStr;
+        sInput.value = dStr;
+        eInput.value = dStr;
       } else if (mode === 'CURRENT_WEEK') {
         const day = now.getDay() || 7;
-        const monday = new Date(now); monday.setDate(now.getDate() - day + 1);
-        const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(sunday.getDate() + 6);
         sInput.value = normalizeDateYMD(monday);
         eInput.value = normalizeDateYMD(sunday);
       } else if (mode === 'PREV_WEEK') {
         const day = now.getDay() || 7;
-        const prevMonday = new Date(now); prevMonday.setDate(now.getDate() - day - 6);
-        const prevSunday = new Date(prevMonday); prevSunday.setDate(prevMonday.getDate() + 6);
+        const prevMonday = new Date(now);
+        prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday);
+        prevSunday.setDate(prevMonday.getDate() + 6);
         sInput.value = normalizeDateYMD(prevMonday);
         eInput.value = normalizeDateYMD(prevSunday);
       } else if (mode === 'CURRENT_MONTH') {
@@ -1772,68 +1910,10 @@
       applyFilters();
     }
 
-    function toggleActiveAgentsFilter() {
-      filterOnlyActiveAgents = !filterOnlyActiveAgents;
-      updateActiveAgentsButtonUI();
-      renderAgentsView(getPeriodFilteredHistory());
-    }
-
     function toggleMapSelectionFilter() {
       mapFilterOnSelection = !mapFilterOnSelection;
-      const btnText = document.getElementById("mapFilterBtnText");
-      btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
+      document.getElementById("mapFilterBtnText").innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
       applyFilters();
-    }
-
-    function getPeriodFilteredHistory() {
-      const sDateVal = document.getElementById("filterStartDate").value;
-      const eDateVal = document.getElementById("filterEndDate").value;
-      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
-      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
-
-      return (cachedHistory || []).filter(item => {
-        const itDate = parseItemDate(item.timestamp);
-        if (sDate && itDate && itDate < sDate) return false;
-        if (eDate && itDate && itDate > eDate) return false;
-        return true;
-      });
-    }
-
-    function getFilteredHistory() {
-      return getPeriodFilteredHistory().filter(item => {
-        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) return false;
-        if (activeKpiFilter === 'ZERO' && Number(item.quantity) !== 0) return false;
-        if (activeKpiFilter === 'HIGH' && (customMaxQty === null || Number(item.quantity) <= customMaxQty)) return false;
-        return true;
-      });
-    }
-
-    function applyFilters() {
-      const sDateVal = document.getElementById("filterStartDate").value;
-      const eDateVal = document.getElementById("filterEndDate").value;
-      let periodLabel = "Tout l'historique";
-      if (sDateVal && eDateVal) periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
-      else if (sDateVal) periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
-      else if (eDateVal) periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
-
-      document.getElementById("periodBadgeGlobal").innerText = periodLabel;
-      document.getElementById("periodBadgeAgents").innerText = periodLabel;
-
-      const periodData = getPeriodFilteredHistory();
-      const filtered = getFilteredHistory();
-
-      renderKPIs(periodData);
-      renderTable(filtered);
-      renderAgentsView(periodData);
-
-      const mapSourceList = mapFilterOnSelection ? filtered : periodData;
-      renderMap(mapSourceList);
-
-      renderWallPlanning();
-      renderCompletionMetrics(); 
     }
 
     function renderKPIs(list) {
@@ -1841,12 +1921,12 @@
       const totalP = list.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
       const zeroS = list.filter(r => Number(r.quantity) === 0).length;
       const atypS = customMaxQty !== null ? list.filter(r => Number(r.quantity) > customMaxQty).length : 0;
-
+      
       document.getElementById("kpiTotalRows").innerText = totalR;
       document.getElementById("kpiTotalPieces").innerText = totalP;
       document.getElementById("kpiZeroStock").innerText = zeroS;
       document.getElementById("kpiAtypicalStock").innerText = atypS;
-
+      
       document.getElementById("kpiAgentsTotalRows").innerText = totalR;
       document.getElementById("kpiAgentsTotalPieces").innerText = totalP;
       document.getElementById("kpiAgentsZeroStock").innerText = zeroS;
@@ -1856,6 +1936,7 @@
     function renderTable(list) {
       const tbody = document.getElementById("supervisionTableBody");
       const alertZero = document.getElementById("cfgAlertZero").checked;
+      
       document.getElementById("tableCountLabel").innerText = `${list.length} saisie(s) répertoriée(s)`;
 
       if (list.length === 0) {
@@ -1885,83 +1966,13 @@
       lucide.createIcons();
     }
 
-    function renderAgentsView(periodList) {
-      const container = document.getElementById("agentsAccordionContainer");
-      if (!container) return;
-
-      let agentsToDisplay = availableAgents;
-      if (filterOnlyActiveAgents) {
-        agentsToDisplay = availableAgents.filter(agent => periodList.some(r => r.user === agent));
-      }
-
-      if (agentsToDisplay.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-2xl">Aucun agent actif sur cette période.</div>`;
-        return;
-      }
-
-      container.innerHTML = agentsToDisplay.map(agent => {
-        const agentRecords = periodList.filter(r => r.user === agent);
-        const totalRows = agentRecords.length;
-        const totalPieces = agentRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
-        const zeroStock = agentRecords.filter(r => Number(r.quantity) === 0).length;
-        const isOpen = !!openDrawers[agent];
-
-        return `
-          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-            <div onclick="toggleAgentDrawer('${agent}')" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition">
-              <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl ${totalRows > 0 ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-400'} flex items-center justify-center font-bold text-sm">
-                  ${agent.substring(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h4 class="font-bold text-slate-900 text-sm">${agent}</h4>
-                  <span class="text-[11px] text-slate-400">${totalRows > 0 ? 'Activité enregistrée' : 'Aucune saisie'}</span>
-                </div>
-              </div>
-
-              <div class="flex items-center space-x-4">
-                <div class="flex items-center space-x-3 text-xs font-mono">
-                  <span class="text-slate-600"><strong>${totalRows}</strong> lignes</span>
-                  <span class="text-orange-600"><strong>${totalPieces}</strong> pcs</span>
-                  ${zeroStock > 0 ? `<span class="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded">${zeroStock} rupture(s)</span>` : ''}
-                </div>
-                <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>
-              </div>
-            </div>
-
-            <div class="${isOpen ? '' : 'hidden'} border-t border-slate-100 p-3 bg-slate-50/50 space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar text-xs">
-              ${totalRows === 0 ? '<div class="text-slate-400 italic text-center py-2">Aucune ligne disponible.</div>' : agentRecords.map(r => `
-                <div class="p-2 bg-white border border-slate-200 rounded-xl flex justify-between items-center">
-                  <div class="min-w-0 pr-2">
-                    <span class="font-mono font-bold text-amber-700">${r.sapRef}</span>
-                    <span class="text-slate-700 ml-1 truncate">${r.designation}</span>
-                    <span class="text-[10px] text-slate-400 block">${r.contractor} (${r.trade})</span>
-                  </div>
-                  <span class="font-mono font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'}">${r.quantity} pcs</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      }).join('');
-      lucide.createIcons();
-    }
-
-    function toggleAgentDrawer(agent) {
-      openDrawers[agent] = !openDrawers[agent];
-      renderAgentsView(getPeriodFilteredHistory());
-    }
-
     function renderMap(list) {
       const mapDiv = document.getElementById("mapContainer");
       if (!mapDiv) return;
 
       if (!map) {
         map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
         markersLayer = L.layerGroup().addTo(map);
       }
 
@@ -1998,7 +2009,10 @@
 
     function exportTableToCSV() {
       const data = getFilteredHistory();
-      if (data.length === 0) { alert("Aucune donnée à exporter."); return; }
+      if (data.length === 0) { 
+        alert("Aucune donnée à exporter."); 
+        return; 
+      }
 
       const headers = ["ID", "Horodatage", "Agent", "Entrepreneur", "Metier", "Ref_SAP", "Designation", "Quantite", "Latitude", "Longitude"];
       const rows = data.map(r => [
@@ -2028,12 +2042,14 @@
     async function editTableItem(id, currentQty) {
       const input = prompt("Nouvelle quantité comptée :", currentQty);
       if (input === null) return;
+      
       const parsed = parseInt(input, 10);
-      if (isNaN(parsed) || parsed < 0) { alert("Quantité invalide."); return; }
+      if (isNaN(parsed) || parsed < 0) { 
+        alert("Quantité invalide."); 
+        return; 
+      }
 
       const item = cachedHistory.find(h => h.id === id);
-      const oldQty = item ? item.quantity : currentQty; 
-      
       if (item) {
         item.quantity = parsed;
         await safeSetStorage("offline_history", cachedHistory);
@@ -2044,14 +2060,13 @@
       pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin, token: adminToken });
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
 
-      if (navigator.onLine) setTimeout(syncMonitoringData, 100);
+      if (navigator.onLine) {
+        setTimeout(syncMonitoringData, 100);
+      }
     }
 
     async function deleteTableItem(id) {
       if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
-
-      const itemIndex = cachedHistory.findIndex(h => h.id === id);
-      const itemToRestore = cachedHistory[itemIndex];
 
       cachedHistory = cachedHistory.filter(h => h.id !== id);
       await safeSetStorage("offline_history", cachedHistory);
@@ -2061,19 +2076,40 @@
       pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_INVENTORY", id: id, user: currentAdmin, token: adminToken });
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
 
-      if (navigator.onLine) setTimeout(syncMonitoringData, 100);
+      if (navigator.onLine) {
+        setTimeout(syncMonitoringData, 100);
+      }
+    }
+
+    async function deleteTourneeAdminItem(id) {
+      if (!confirm("Supprimer cet article de la mission ?")) return;
+
+      cachedTournees = cachedTournees.filter(t => t.id !== id);
+      await localforage.setItem("offline_tournees", cachedTournees);
+      
+      const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+      pendingSyncQueue.push({ _syncId: syncId, action: "DELETE_TOURNEE", id: id, user: currentAdmin, token: adminToken });
+      await localforage.setItem("offline_pending_sync", pendingSyncQueue);
+
+      closeTourneeDetailsModal();
+      applyFilters(); 
+      if(navigator.onLine) {
+        setTimeout(syncMonitoringData, 100);
+      }
     }
 
     function switchView(v) {
       activeView = v;
       localStorage.setItem("mon_active_view", v);
+      
       ['Global', 'Agents', 'Map', 'TourneesAdmin'].forEach(id => {
         const el = document.getElementById("view" + id);
         if (el) el.classList.add("hidden");
       });
+      
       ['Global', 'Agents', 'Map', 'Tournees'].forEach(id => {
         const el = document.getElementById("btnNav" + id);
-        if (el) el.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer";
+        if (el) el.className = "w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition cursor-pointer";
       });
 
       if (v === 'global') {
