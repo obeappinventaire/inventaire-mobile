@@ -14,7 +14,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- NOUVEAU : localForage pour utiliser IndexedDB à la place de localStorage -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <style>
@@ -560,7 +559,6 @@
           </div>
         </div>
 
-        <!-- LE COMPTEUR A ETE RESTAURE ICI CORRECTEMENT -->
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
             <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
@@ -615,7 +613,6 @@
 
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
-    // NOUVEAU : Variables globales initialisées vides
     let availableAgents = [];
     let availableContractors = [];
     let availableTrades = [];
@@ -625,7 +622,7 @@
     let catalog = [];
 
     let currentAdmin = sessionStorage.getItem("mon_current_admin") || "";
-    let adminToken = sessionStorage.getItem("mon_auth_token") || ""; // NOUVEAU : Token
+    let adminToken = sessionStorage.getItem("mon_auth_token") || ""; 
 
     let activeView = localStorage.getItem("mon_active_view") || 'global';
     let map = null;
@@ -674,23 +671,17 @@
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
 
-    // NOUVEAU : Fix Fuseaux horaires (Date robuste)
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
       if (dateVal instanceof Date) {
         return `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
       }
       const str = String(dateVal).trim();
-      
-      // Priorité 1 : Format ISO robuste envoyé par le nouveau Code.gs
       if (str.includes('T')) return str.split('T')[0];
-      
-      // Priorité 2 : Format JJ/MM/AAAA ou JJ-MM-AAAA
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
       if (parts) {
         return `${parts[3]}-${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
       }
-      // Fallback
       return str.split(' ')[0];
     }
 
@@ -706,7 +697,6 @@
       return includeTime ? `${base} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : base;
     }
 
-    // NOUVEAU : Initialisation IndexedDB asynchrone complète
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
 
@@ -754,7 +744,6 @@
       await syncMonitoringData();
     });
 
-    // NOUVEAU : Authentification côté serveur
     async function authenticateAdmin() {
       const adminSel = document.getElementById("authAdminSelect");
       const selected = adminSel ? adminSel.value : "";
@@ -885,12 +874,13 @@
         return;
       }
 
+      // FIX ROBUSTESSE: this.value pour prévenir l'échappement problématique des apostrophes
       container.innerHTML = filtered.slice(0, 60).map(item => {
         const isChecked = manualSelectedCatalogSaps.includes(String(item.sapRef).trim());
         return `
           <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer text-xs text-slate-700 border-b border-slate-100">
             <div class="flex items-center space-x-2 min-w-0 pr-2">
-              <input type="checkbox" value="${item.sapRef}" onchange="toggleManualCatalogSelection('${item.sapRef}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+              <input type="checkbox" value="${item.sapRef.replace(/"/g, '&quot;')}" onchange="toggleManualCatalogSelection(this.value)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
               <span class="font-mono font-bold text-amber-700">${item.sapRef}</span>
               <span class="truncate max-w-[280px]">${item.designation}</span>
             </div>
@@ -1303,19 +1293,26 @@
       onCheckboxChange(type);
     }
 
+    // FIX PERFORMANCE: Complexité O(N) au lieu de O(N²) - Évite de faire planter le navigateur
     function getDistinctArticlesOnPeriod() {
       const periodList = getPeriodFilteredHistory() || [];
       const mapArticles = new Map();
-      periodList.forEach(item => {
+      
+      for (let i = 0; i < periodList.length; i++) {
+        const item = periodList[i];
         const ref = String(item.sapRef || "").trim();
-        if (ref && !mapArticles.has(ref)) {
+        if (!ref) continue;
+        
+        if (!mapArticles.has(ref)) {
           mapArticles.set(ref, {
             sapRef: ref,
             designation: item.designation || 'Sans désignation',
-            count: periodList.filter(i => String(i.sapRef).trim() === ref).length
+            count: 1
           });
+        } else {
+          mapArticles.get(ref).count++;
         }
-      });
+      }
       return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
     }
 
@@ -1336,8 +1333,9 @@
         return;
       }
 
+      // FIX ROBUSTESSE: this.dataset au lieu de guillemets instables
       dd.innerHTML = filtered.map(a => `
-        <div onclick="toggleArticleTag('${a.sapRef}')" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
+        <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
           <div class="min-w-0 pr-2">
             <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
             <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
@@ -1348,6 +1346,7 @@
       dd.classList.remove("hidden");
     }
 
+    // FIX UI: La liste déroulante se ferme enfin proprement
     function toggleArticleTag(sapRef) {
       selectedArticleTags = selectedArticleTags.includes(sapRef) 
         ? selectedArticleTags.filter(r => r !== sapRef) 
@@ -1355,7 +1354,10 @@
       renderArticleTagsUI();
       applyFilters();
       const input = document.getElementById("articleTagInput");
-      if (input) { input.value = ""; onArticleTagInput(""); }
+      if (input) input.value = ""; 
+      
+      const dd = document.getElementById("articleDropdownList");
+      if (dd) dd.classList.add("hidden");
     }
 
     function removeArticleTag(sapRef) {
@@ -1680,7 +1682,6 @@
       document.body.removeChild(link);
     }
 
-    // NOUVEAU : Modifications sécurisées avec le Token + IndexedDB
     async function editTableItem(id, currentQty) {
       const input = prompt("Nouvelle quantité comptée :", currentQty);
       if (input === null) return;
