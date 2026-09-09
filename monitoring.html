@@ -188,12 +188,6 @@
         </div>
 
       </div>
-
-      <div class="p-4 border-t border-slate-700 text-center bg-slate-900 shrink-0">
-        <span class="text-[10px] font-medium text-slate-400 tracking-wider">
-          &copy; made by CO2H2O srlu
-        </span>
-      </div>
     </aside>
 
     <!-- ZONE PRINCIPALE -->
@@ -523,21 +517,18 @@
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Agent :</label>
-            <!-- L'AGENT PEUT BIEN ETRE SELECTIONNE ICI -->
             <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Agent --</option>
             </select>
           </div>
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Entr. :</label>
-            <!-- L'ENTREPRENEUR PEUT BIEN ETRE SELECTIONNE ICI -->
             <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Entrepreneur --</option>
             </select>
           </div>
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Métier :</label>
-            <!-- LE METIER PEUT BIEN ETRE SELECTIONNE ICI -->
             <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Métier --</option>
             </select>
@@ -563,7 +554,6 @@
           </div>
         </div>
 
-        <!-- RESTAURATION DU COMPTEUR -->
         <div class="space-y-1 pt-1">
           <div class="flex justify-between items-center">
             <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets Global :</label>
@@ -616,6 +606,7 @@
       });
     }
 
+    // --- REMPLACEZ CETTE URL PAR VOTRE DERNIER DÉPLOIEMENT ---
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let availableAgents = [];
@@ -854,7 +845,8 @@
           alert("Mot de passe incorrect.");
         }
       } catch (err) {
-        alert("Erreur de connexion au serveur.");
+        alert("Erreur de connexion au serveur. Vérifiez l'URL de votre script.");
+        console.error(err);
       } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -881,7 +873,6 @@
       if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
       if (txt) { txt.innerText = "Synchronisation..."; txt.className = "text-xs font-bold text-amber-600"; }
 
-      // 1. DÉPILER LA FILE D'ATTENTE PC (Création / Drag & Drop)
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
@@ -900,7 +891,6 @@
         }
       }
 
-      // 2. RÉCUPÉRATION DES DONNÉES DU SERVEUR
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
@@ -913,7 +903,6 @@
           if (data.catalog) { catalog = data.catalog; await localforage.setItem("offline_catalog", catalog); }
 
           if (data.tournees) {
-            // FIX SMART MERGE : Conserver les actions locales dans l'agenda qui ne sont pas encore sauvegardées sur le cloud
             let pendingItemsToMerge = [];
             pendingSyncQueue.forEach(q => {
                if(q.action === "CREATE_TOURNEES_BULK" && q.items) {
@@ -932,7 +921,6 @@
               return serverTask;
             });
 
-            // Réinjecte les tâches locales "fantômes" qui n'ont pas encore eu le temps de s'écrire sur Google Sheets
             pendingItemsToMerge.forEach(pt => {
                if (!finalTournees.find(t => t.id === pt.id)) {
                    finalTournees.push(pt);
@@ -1031,7 +1019,6 @@
     }
 
     async function submitManualTourneeAssignment() {
-      // Les données sont bien récoltées depuis les options sélectionnées (Voir la capture d'écran de l'utilisateur)
       const agent = document.getElementById("adminAssignAgent").value;
       const tranche = document.getElementById("adminAssignTranche").value;
       const contractor = document.getElementById("adminAssignContractor").value;
@@ -1159,7 +1146,6 @@
       e.dataTransfer.setData('text/plain', JSON.stringify(draggedPayload));
     }
 
-    // Le Drag and Drop utilise maintenant l'ID exact de la tâche
     async function handleDropOnDay(e, targetDateStr, targetTranche) {
       e.preventDefault();
       if (!draggedPayload || !draggedPayload.id) return;
@@ -1193,9 +1179,6 @@
       }
     }
 
-    // ==========================================
-    // NOUVELLE VUE AGENDA (Backlog & Retards)
-    // ==========================================
     function renderWallPlanning() {
       const gridContainer = document.getElementById("wallPlanningGrid");
       const overdueContainer = document.getElementById("overdueTasksContainer");
@@ -1207,7 +1190,6 @@
       today.setHours(0,0,0,0);
       const todayStr = normalizeDateYMD(today);
 
-      // --- ZONE DES RETARDS ---
       let overdueTasks = (cachedTournees || []).filter(t => t.statut !== 'VALIDE' && normalizeDateYMD(t.date) < todayStr);
       if (filterAgent) overdueTasks = overdueTasks.filter(t => t.agent === filterAgent);
 
@@ -1222,7 +1204,7 @@
             <div draggable="true" 
                  ondragstart="handleDragStart(event, '${t.agent}', '${normalizeDateYMD(t.date)}', '${t.tranche}', '${t.id}')"
                  onclick="openTourneeDetailsForDay('${normalizeDateYMD(t.date)}', '${agent}')" 
-                 class="p-1.5 rounded-lg border bg-rose-50 border-rose-300 text-rose-800 cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] min-w-[130px]">
+                 class="p-1.5 rounded-lg border bg-rose-100 border-rose-300 text-rose-800 cursor-grab active:cursor-grabbing shadow-sm transition text-[10px] min-w-[130px]">
               <div class="flex justify-between items-center font-bold border-b border-rose-200 pb-1 mb-1">
                 <span class="truncate">${agent}</span>
                 <span class="font-mono text-[9px] text-rose-600 bg-white px-1 rounded border border-rose-200">${formatDateFrench(t.date).substring(0,6)}</span>
@@ -1234,7 +1216,6 @@
         }).join('');
       }
 
-      // --- GRILLE GLISSANTE 7 JOURS ---
       const weekDays = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
@@ -1275,7 +1256,6 @@
                   <span class="font-mono text-[9px] ${isFullDone ? 'text-emerald-700 font-black' : ''}">${t.statut === 'VALIDE' ? '✓' : ''}</span>
                 </div>
                 <div class="text-[9px] font-mono font-bold opacity-80 truncate text-slate-700 mt-0.5">${t.sapRef}</div>
-                <!-- FIX : LE CONTRACTOR ET LE METIER SONT REAFFICHES ICI SUR LA CASE -->
                 <div class="text-[8px] text-slate-500 truncate leading-tight">${t.contractor || '-'} • ${t.trade || '-'}</div>
               </div>
             `).join('');
