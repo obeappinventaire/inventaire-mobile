@@ -23,18 +23,20 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100 overflow-hidden">
 
+  <!-- BANDEAU MISE À JOUR PWA -->
   <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
     <span class="font-bold">🔄 Mise à jour détectée !</span>
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
+  <!-- EN-TÊTE MOBILE (Nom Agent en grand) -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs z-20">
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
         <img src="app_icon_co2h2o.png" alt="Logo" class="w-7 h-7 object-contain">
       </div>
       <div>
-        <h1 class="text-sm font-black text-slate-900 tracking-tight">Inventaire / <span id="headerAgentName" class="text-orange-600">--</span></h1>
+        <h1 id="headerAgentName" class="text-xl font-black text-slate-800 tracking-tight truncate max-w-[150px]">--</h1>
       </div>
     </div>
     <div class="flex items-center space-x-3">
@@ -49,6 +51,7 @@
     </div>
   </header>
 
+  <!-- CONTENU PRINCIPAL -->
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24">
     
     <!-- ONGLET 1 : COMPTAGE -->
@@ -59,7 +62,7 @@
         <div class="flex justify-between items-center">
           <span class="text-[11px] font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="clipboard-check" class="w-4 h-4 text-orange-600"></i>
-            Tâche de Tournée Assignée
+            Tâche Assignée
           </span>
           <button onclick="cancelActiveMission()" class="text-[10px] font-bold text-rose-600 bg-white hover:bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-300 transition cursor-pointer">
             Mode Libre ✕
@@ -68,8 +71,8 @@
         <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
       </div>
 
+      <!-- PARAMÈTRES DE SAISIE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
-        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Paramètres de Saisie</h2>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
@@ -82,11 +85,8 @@
         </div>
       </div>
 
+      <!-- RECHERCHE ACTIVE (Sans titre) -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
-        <div class="flex justify-between items-center">
-          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Recherche active</h2>
-        </div>
-
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
           <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" onblur="setTimeout(() => document.getElementById('closeKeyboardBtn').classList.add('hidden'), 200)" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-14 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
@@ -98,15 +98,17 @@
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
 
+        <!-- BOUTONS AGRANDIS (Taille identique à "Enregistrer") -->
         <div class="grid grid-cols-2 gap-3 pt-1">
-          <button onclick="toggleVoiceSearch()" id="micBtn" class="h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm">
-            <i data-lucide="mic" class="w-5 h-5 text-orange-600"></i> Vocale
+          <button onclick="toggleVoiceSearch()" id="micBtn" class="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm">
+            <i data-lucide="mic" class="w-6 h-6 text-orange-600"></i> Vocale
           </button>
-          <button onclick="openScanModal()" class="h-12 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-md">
-            <i data-lucide="camera" class="w-5 h-5"></i> Scanner
+          <button onclick="openScanModal()" class="h-16 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer shadow-md">
+            <i data-lucide="camera" class="w-6 h-6"></i> Scanner
           </button>
         </div>
 
+        <!-- TICKET ARTICLE SÉLECTIONNÉ -->
         <div id="selectedArticleCard" class="hidden bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl shadow-sm space-y-2 mt-2 transition-all">
           <div class="flex items-start gap-3 border-b border-emerald-200 pb-3">
             <div class="bg-emerald-100 p-2 rounded-xl text-emerald-700 shadow-inner mt-0.5">
@@ -123,8 +125,8 @@
         </div>
       </div>
 
+      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT (Sans titre) -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3" id="quantitySection">
-        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quantité Comptée</h2>
         <div class="flex items-stretch gap-3 relative">
           <div class="relative flex-1">
             <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" onblur="setTimeout(() => document.getElementById('closeQtyKeyboardBtn').classList.add('hidden'), 200)" class="w-full h-16 text-center font-black text-3xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-white font-mono shadow-sm transition-all">
@@ -134,7 +136,7 @@
             </button>
           </div>
 
-          <button onclick="submitInventoryEntry()" class="h-16 px-4 bg-emerald-500/80 hover:bg-emerald-500 active:bg-emerald-600 font-bold text-white rounded-2xl shadow-sm flex items-center justify-center gap-2 text-sm transition cursor-pointer backdrop-blur-sm shrink-0">
+          <button onclick="submitInventoryEntry()" class="h-16 px-5 bg-emerald-500/80 hover:bg-emerald-500 active:bg-emerald-600 font-bold text-white rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base transition cursor-pointer backdrop-blur-sm shrink-0">
             <i data-lucide="check-square" class="w-6 h-6"></i>
             <span>Enregistrer</span>
           </button>
@@ -161,6 +163,7 @@
 
   </main>
 
+  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
@@ -176,6 +179,7 @@
     </button>
   </nav>
 
+  <!-- MODALE SCAN CAMÉRA (Boutons ajustés) -->
   <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="w-full flex justify-between items-center text-white py-2 px-2">
       <span class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner Code-Barres / OCR</span>
@@ -189,13 +193,15 @@
     </div>
     <canvas id="scanCanvas" class="hidden"></canvas>
     <div class="w-full max-w-xs py-4 space-y-2">
-      <button onclick="captureAndOCR()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
-        <i data-lucide="camera" class="w-4 h-4"></i> Déclencher Reconnaissance Texte
+      <!-- Bouton OCR reprenant la taille et couleur du bouton Scanner -->
+      <button onclick="captureAndOCR()" class="w-full h-16 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl text-base shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+        <i data-lucide="camera" class="w-6 h-6"></i> Déclencher
       </button>
-      <div id="ocrStatus" class="text-center text-xs text-white/80 font-mono">Prêt pour la capture</div>
+      <div id="ocrStatus" class="text-center text-xs text-white/80 font-mono pt-2">Prêt pour la capture</div>
     </div>
   </div>
 
+  <!-- MODALE CONFIGURATION PROFIL -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4 text-center">
       <div>
@@ -246,6 +252,7 @@
         await localforage.setItem(key, data);
       } catch (e) {
         alert("⚠️ Stockage de l'appareil saturé ou erreur IndexedDB.");
+        console.warn("Erreur de stockage local :", e);
       }
     }
 
@@ -279,7 +286,7 @@
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(pos => {
           currentGpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        }, err => {}, { enableHighAccuracy: true });
+        }, err => console.warn("GPS warning:", err), { enableHighAccuracy: true });
       }
 
       if ('BarcodeDetector' in window) {
@@ -359,6 +366,7 @@
         if (qtySec) qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
     }
+
     function closeQtyKeyboard() {
       document.getElementById('inputQuantity').blur();
       document.getElementById('closeQtyKeyboardBtn').classList.add('hidden');
@@ -371,12 +379,12 @@
         if (searchSec) searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 300);
     }
+
     function closeKeyboard() {
       document.getElementById('sapSearchInput').blur();
       document.getElementById('closeKeyboardBtn').classList.add('hidden');
     }
 
-    // BOUCLIER TEMPOREL (Evite le bug de suppression par Google Sheets)
     async function syncMobileData() {
       if (!navigator.onLine || isSyncing) return;
       isSyncing = true;
@@ -599,7 +607,6 @@
       const pc=pendingSyncQueue.find(x=>x.id===id&&x.action==='CREATE'); if(pc) pc.quantity=p; else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"UPDATE_INVENTORY", id:id, quantity:p, user:currentAgent}); }
       await safeSetStorage("offline_pending_sync", pendingSyncQueue); updatePendingBadge(); renderHistory(); if(navigator.onLine) syncMobileData();
     }
-
     async function deleteHistoryItem(id) {
       if(!confirm("Supprimer cette saisie ?")) return;
       const it=sessionHistory.find(h=>h.id===id); sessionHistory=sessionHistory.filter(h=>h.id!==id); await safeSetStorage("mob_session_history", sessionHistory);
@@ -686,9 +693,9 @@
       lucide.createIcons();
     }
 
-    function switchMobileTab(t) { ['Comptage','Historique','Tournee'].forEach(x=>{ document.getElementById("tab"+x)?.classList.add("hidden"); const n=document.getElementById("nav"+x); if(n) n.className="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px]"; }); const a=t.charAt(0).toUpperCase()+t.slice(1); document.getElementById("tab"+a)?.classList.remove("hidden"); const aN=document.getElementById("nav"+a); if(aN) aN.className="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px]"; if(t==='historique') renderHistory(); if(t==='tournee') renderTournee(); lucide.createIcons(); }
+    function switchMobileTab(t) { ['Comptage','Historique','Tournee'].forEach(x=>{ document.getElementById("tab"+x)?.classList.add("hidden"); const n=document.getElementById("nav"+x); if(n) n.className="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer"; }); const a=t.charAt(0).toUpperCase()+t.slice(1); document.getElementById("tab"+a)?.classList.remove("hidden"); const aN=document.getElementById("nav"+a); if(aN) aN.className="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer"; if(t==='historique') renderHistory(); if(t==='tournee') renderTournee(); lucide.createIcons(); }
     
-    function toggleVoiceSearch() { const S=window.SpeechRecognition||window.webkitSpeechRecognition; if(!S) return; const r=new S(); r.lang='fr-FR'; const btn=document.getElementById("micBtn"); btn.className="h-12 bg-rose-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700"; r.onresult=e=>{ const m=e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); const v=m?m[0]:e.results[0][0].transcript; document.getElementById("sapSearchInput").value=v; onSapSearchInput(v); }; r.onerror=r.onend=()=>{ btn.className="h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; }; r.start(); }
+    function toggleVoiceSearch() { const S=window.SpeechRecognition||window.webkitSpeechRecognition; if(!S) return; const r=new S(); r.lang='fr-FR'; const btn=document.getElementById("micBtn"); btn.className="h-16 bg-rose-600 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700"; r.onresult=e=>{ const m=e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); const v=m?m[0]:e.results[0][0].transcript; document.getElementById("sapSearchInput").value=v; onSapSearchInput(v); }; r.onerror=r.onend=()=>{ btn.className="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; }; r.start(); }
   </script>
 </body>
 </html>
