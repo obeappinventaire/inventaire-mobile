@@ -330,7 +330,6 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 2 : SUIVI TERRAIN & AGENTS ================= -->
         <section id="viewAgents" class="hidden space-y-6">
           <div>
             <div class="flex justify-between items-center mb-2 px-1 max-w-5xl">
@@ -379,7 +378,6 @@
           <div id="agentsAccordionContainer" class="space-y-3"></div>
         </section>
 
-        <!-- ================= ONGLET 3 : CARTE ================= -->
         <section id="viewMap" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <div>
@@ -406,7 +404,6 @@
           </div>
         </section>
 
-        <!-- ================= ONGLET 4 : AGENDA & TOURNÉES ================= -->
         <section id="viewTourneesAdmin" class="hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -1041,16 +1038,18 @@
       closeManualAssignModal();
       manualSelectedCatalogSaps = [];
       
-      applyFilters(); // Rafraichissement global
+      applyFilters();
 
       if(navigator.onLine) {
          setTimeout(syncMonitoringData, 100);
       }
     }
 
+    // NOUVEAU MOTEUR EXCEL MASSE - EXPORT
     function downloadMasterdataExcelTemplate() {
       const wb = XLSX.utils.book_new();
       
+      // Onglet 1 : Le Modèle
       const planningData = [
         ["DATE (JJ/MM/AAAA)", "TRANCHE (MATIN / APRES_MIDI)", "AGENT", "ENTREPRENEUR", "METIER", "REF_SAP", "ORDRE (Optionnel)"],
         [
@@ -1061,22 +1060,31 @@
           availableTrades[0] || "Ex: OBE VSTR", 
           catalog[0] ? catalog[0].sapRef : "106468", 
           1
-        ],
-        [
-          "15/09/2026", 
-          "APRES_MIDI", 
-          availableAgents[0] || "Ex: Thomas", 
-          availableContractors[0] || "Ex: Demol", 
-          availableTrades[0] || "Ex: OBE VSTR", 
-          catalog[1] ? catalog[1].sapRef : "118626", 
-          2
         ]
       ];
       
-      const ws = XLSX.utils.aoa_to_sheet(planningData);
-      ws['!cols'] = [{wch: 18}, {wch: 28}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 18}];
-      
-      XLSX.utils.book_append_sheet(wb, ws, "Import_Masse");
+      const ws1 = XLSX.utils.aoa_to_sheet(planningData);
+      ws1['!cols'] = [{wch: 18}, {wch: 28}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 18}];
+      XLSX.utils.book_append_sheet(wb, ws1, "Import_Masse");
+
+      // Onglet 2 : Les Données de Références
+      const maxRows = Math.max(availableAgents.length, availableContractors.length, availableTrades.length, catalog.length);
+      const masterData = [["AGENTS DISPONIBLES", "ENTREPRENEURS", "METIERS", "CATALOGUE (REF SAP)", "DESIGNATION"]];
+
+      for (let i = 0; i < maxRows; i++) {
+        masterData.push([
+          availableAgents[i] || "",
+          availableContractors[i] || "",
+          availableTrades[i] || "",
+          catalog[i] ? catalog[i].sapRef : "",
+          catalog[i] ? catalog[i].designation : ""
+        ]);
+      }
+
+      const ws2 = XLSX.utils.aoa_to_sheet(masterData);
+      ws2['!cols'] = [{wch: 25}, {wch: 25}, {wch: 25}, {wch: 20}, {wch: 50}];
+      XLSX.utils.book_append_sheet(wb, ws2, "Donnees_Reference");
+
       XLSX.writeFile(wb, "Modele_Import_Masse_Tournees.xlsx");
     }
 
@@ -1085,11 +1093,13 @@
       if (files.length > 0) processExcelFile(files[0]);
     }
 
+    // NOUVEAU MOTEUR EXCEL MASSE - IMPORT ET NETTOYAGE
     function processExcelFile(file) {
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
           const data = new Uint8Array(e.target.result);
+          // Paramètre crucial : cellDates true permet d'éviter que le format de date devienne un int (ex: 46275)
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0]; 
           const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
@@ -1112,6 +1122,7 @@
           for (let i = 1; i < jsonRows.length; i++) {
             const row = jsonRows[i];
             
+            // Ignorer les lignes fantômes
             if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) continue;
             
             const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
@@ -1126,6 +1137,14 @@
             if (!agentExists) missingAgents.add(agent);
 
             let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
+            
+            // AUTO-CORRECTION DATE : Conversion des numéros de série Excel si la librairie a échoué (46275 -> 2026-09-10)
+            if (typeof rawDate === 'number') {
+                const utc_days  = Math.floor(rawDate - 25569);
+                const utc_value = utc_days * 86400;
+                rawDate = new Date(utc_value * 1000);
+            }
+            
             let formattedDate = normalizeDateYMD(rawDate || new Date());
             
             let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1183,7 +1202,7 @@
       pendingSyncQueue.push({ _syncId: syncId, action: "CREATE_TOURNEES_BULK", user: currentAdmin, token: adminToken, items: bulkItems });
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
 
-      applyFilters(); // Rafraichissement global forcé
+      applyFilters();
 
       if(navigator.onLine) setTimeout(syncMonitoringData, 100);
       alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
@@ -1218,7 +1237,7 @@
       });
 
       await localforage.setItem("offline_tournees", cachedTournees);
-      applyFilters(); // Synchronise les compteurs globaux suite au drag&drop
+      applyFilters(); 
       draggedPayload = null;
 
       if (itemsToUpdate.length > 0) {
@@ -1366,7 +1385,6 @@
       lucide.createIcons();
     }
 
-    // --- NOUVEAU MOTEUR DE KPI DÉCORRÉLÉ DES 7 JOURS GLISSANTS ---
     function getPeriodFilteredTournees() {
       const sDateVal = document.getElementById("filterStartDate").value;
       const eDateVal = document.getElementById("filterEndDate").value;
@@ -1432,7 +1450,7 @@
       await localforage.setItem("offline_pending_sync", pendingSyncQueue);
 
       closeTourneeDetailsModal();
-      applyFilters(); // Rafraichissement global
+      applyFilters(); 
       if(navigator.onLine) setTimeout(syncMonitoringData, 100);
     }
 
@@ -1713,7 +1731,6 @@
       const mapSourceList = mapFilterOnSelection ? filtered : periodData;
       renderMap(mapSourceList);
 
-      // Rafraichit aussi l'agenda et ses KPIs avec les nouveaux paramètres de dates !
       renderWallPlanning();
       renderCompletionMetrics(); 
     }
