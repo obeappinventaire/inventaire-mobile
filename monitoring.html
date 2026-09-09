@@ -14,7 +14,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- NOUVEAU : localForage pour IndexedDB -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <style>
@@ -256,7 +255,6 @@
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
-    // Helpers dates non touches
     function getISOWeekNumber(d) {
       const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
       date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -281,14 +279,18 @@
       const iso = new Date(str);
       return isNaN(iso.getTime()) ? new Date(0) : iso;
     }
+    
+    // FIX FUSEAUX HORAIRES : Normalisation robuste
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
       if (dateVal instanceof Date) {
         return `${dateVal.getFullYear()}-${String(dateVal.getMonth()+1).padStart(2,'0')}-${String(dateVal.getDate()).padStart(2,'0')}`;
       }
-      const parts = String(dateVal).trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      const str = String(dateVal).trim();
+      if (str.includes('T')) return str.split('T')[0];
+      const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
       if (parts) return `${parts[3]}-${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
-      return String(dateVal).split('T')[0];
+      return str.split(' ')[0];
     }
     function formatDateFrench(dateInput) {
       const d = (dateInput instanceof Date) ? dateInput : parseItemDate(dateInput);
@@ -301,11 +303,9 @@
       return includeTime ? `${base} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` : base;
     }
 
-    // NOUVEAU : Chargement au DOMContentLoaded asynchrone pour utiliser localforage (IndexedDB)
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
 
-      // Remplacement de tous les localStorage synchrones bloquants
       availableAgents = (await localforage.getItem("offline_agents")) || [];
       availableContractors = (await localforage.getItem("offline_contractors")) || [];
       availableTrades = (await localforage.getItem("offline_trades")) || [];
@@ -341,7 +341,6 @@
       await syncMonitoringData();
     });
 
-    // NOUVEAU : Sécurisation de l'authentification côté Serveur 
     async function authenticateAdmin() {
       const adminSel = document.getElementById("authAdminSelect");
       const selected = adminSel ? adminSel.value : "";
