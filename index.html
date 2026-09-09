@@ -23,11 +23,13 @@
 </head>
 <body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100 overflow-hidden">
 
+  <!-- BANDEAU MISE À JOUR PWA -->
   <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
     <span class="font-bold">🔄 Mise à jour détectée !</span>
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
+  <!-- EN-TÊTE MOBILE -->
   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs z-20">
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shadow-xs">
@@ -49,12 +51,13 @@
     </div>
   </header>
 
+  <!-- CONTENU PRINCIPAL -->
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-[70vh]" id="mainScrollArea">
     
     <!-- ONGLET 1 : COMPTAGE -->
     <section id="tabComptage" class="space-y-4">
       
-      <!-- BANDEAU MISSION ACTIVE : DESIGN ÉPURÉ -->
+      <!-- BANDEAU MISSION ACTIVE : DESIGN ÉPURÉ RACCORD -->
       <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative">
         <div class="flex justify-between items-center">
           <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -67,6 +70,7 @@
         <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
       </div>
 
+      <!-- PARAMÈTRES DE SAISIE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -80,10 +84,13 @@
         </div>
       </div>
 
+      <!-- RECHERCHE ACTIVE -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
         <div class="relative" id="searchContainer">
           <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
+          <!-- Suppression de onblur et du bouton OK pour la recherche -->
           <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-4 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
+          
           <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
         </div>
 
@@ -96,7 +103,7 @@
           </button>
         </div>
 
-        <!-- ZONE DE SÉLECTION COMPACTE (Hauteur divisée par 2) -->
+        <!-- ZONE DE SÉLECTION COMPACTE, ÉPURÉE ET DIVISÉE PAR 2 EN HAUTEUR -->
         <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-300 p-2 rounded-xl shadow-sm mt-2 transition-all relative flex items-center gap-2.5">
           <div class="bg-emerald-100 p-1.5 rounded-lg text-emerald-700 shrink-0">
              <i data-lucide="check" class="w-4 h-4"></i>
@@ -114,6 +121,7 @@
         </div>
       </div>
 
+      <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
       <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
         <div class="relative w-full">
           <input type="number" id="inputQuantity" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-24 text-center font-black text-5xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-500 focus:bg-emerald-50 focus:text-emerald-700 font-mono shadow-inner transition-all">
@@ -145,6 +153,7 @@
 
   </main>
 
+  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
@@ -219,6 +228,7 @@
     </div>
   </div>
 
+  <!-- JAVASCRIPT PRINCIPAL DÉCOMPRESSÉ -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -231,28 +241,43 @@
               }
             };
           };
-        }).catch(err => console.warn('SW error:', err));
+        }).catch(err => {
+          console.warn('SW error:', err);
+        });
       });
     }
 
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysSqcdAtUIWYj9YUmxKTt2W9PvcsoLBig2SikCANNQL1Sr3wkn0qbNn9GYQugM1uje/exec";
 
     let currentAgent = localStorage.getItem("mob_current_agent") || "";
-    let catalog = [], availableAgents = [], availableContractors = [], availableTrades = [];
-    let cachedTournees = [], pendingSyncQueue = [], sessionHistory = [];
+    let catalog = [];
+    let availableAgents = [];
+    let availableContractors = [];
+    let availableTrades = [];
+    let cachedTournees = [];
+    let pendingSyncQueue = [];
+    let sessionHistory = [];
     let isSyncing = false; 
     let openTourneeGroups = {}; 
 
     async function safeSetStorage(key, data) { 
-      try { await localforage.setItem(key, data); } 
-      catch (e) { console.warn("Stockage saturé ou erreur IndexedDB."); } 
+      try { 
+        await localforage.setItem(key, data); 
+      } catch (e) { 
+        console.warn("Stockage saturé ou erreur IndexedDB."); 
+      } 
     }
 
-    let selectedArticle = null, activeMissionContext = null, currentGpsCoords = { lat: null, lng: null };
-    let mediaStream = null, barcodeDetector = null, scanLoopActive = false;
+    let selectedArticle = null;
+    let activeMissionContext = null;
+    let currentGpsCoords = { lat: null, lng: null };
+    let mediaStream = null;
+    let barcodeDetector = null;
+    let scanLoopActive = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
       lucide.createIcons();
+      
       catalog = (await localforage.getItem("offline_catalog")) || [];
       availableAgents = (await localforage.getItem("offline_agents")) || [];
       availableContractors = (await localforage.getItem("offline_contractors")) || [];
@@ -261,26 +286,58 @@
       pendingSyncQueue = (await localforage.getItem("offline_pending_sync")) || [];
       sessionHistory = (await localforage.getItem("mob_session_history")) || [];
 
-      initMobileDropdowns(); updatePendingBadge();
-      if (!currentAgent) document.getElementById("configModal").classList.remove("hidden");
-      else document.getElementById("headerAgentName").innerText = currentAgent;
+      initMobileDropdowns();
+      updatePendingBadge();
+      
+      if (!currentAgent) {
+        document.getElementById("configModal").classList.remove("hidden");
+      } else {
+        document.getElementById("headerAgentName").innerText = currentAgent;
+      }
 
       if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(pos => { currentGpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude }; }, err => {}, { enableHighAccuracy: true });
+        navigator.geolocation.watchPosition(pos => { 
+          currentGpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude }; 
+        }, err => {}, { enableHighAccuracy: true });
       }
-      if ('BarcodeDetector' in window) { try { barcodeDetector = new BarcodeDetector({ formats: ['code_128', 'ean_13', 'ean_8', 'qr_code'] }); } catch (e) {} }
+      
+      if ('BarcodeDetector' in window) { 
+        try { 
+          barcodeDetector = new BarcodeDetector({ formats: ['code_128', 'ean_13', 'ean_8', 'qr_code'] }); 
+        } catch (e) {
+          // Non supporté sur ce navigateur
+        } 
+      }
 
-      renderHistory(); renderTournee(); await syncMobileData();
+      renderHistory(); 
+      renderTournee(); 
+      await syncMobileData();
     });
 
     async function hardResetApp() {
-      if(!confirm("⚠️ Attention : Cette action va vider le cache et forcer le retéléchargement complet de l'application. Continuer ?")) return;
+      if (!confirm("⚠️ Attention : Cette action va vider le cache et forcer le retéléchargement complet de l'application. Continuer ?")) {
+        return;
+      }
       document.getElementById("btnHardReset").innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Nettoyage...';
       try {
-        await localforage.clear(); localStorage.clear(); sessionStorage.clear();
-        if ('caches' in window) { const keys = await caches.keys(); for (let k of keys) await caches.delete(k); }
-        if('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); for(let r of regs) await r.unregister(); }
-      } catch(e) {}
+        await localforage.clear(); 
+        localStorage.clear(); 
+        sessionStorage.clear();
+        if ('caches' in window) { 
+          const keys = await caches.keys(); 
+          for (let k of keys) {
+            await caches.delete(k);
+          }
+        }
+        if ('serviceWorker' in navigator) { 
+          const regs = await navigator.serviceWorker.getRegistrations(); 
+          for (let r of regs) {
+            await r.unregister();
+          }
+        }
+      } catch (e) {
+        console.warn(e);
+      }
       window.location.href = window.location.pathname + '?reset=' + Date.now();
     }
 
@@ -289,52 +346,98 @@
       if (agentSel) {
         if (availableAgents.length > 0) {
           agentSel.innerHTML = '<option value="">-- Choisir votre profil --</option>' + availableAgents.map(a => `<option value="${a}">${a}</option>`).join('');
-          if (currentAgent) agentSel.value = currentAgent;
-        } else agentSel.innerHTML = '<option value="">⏳ Synchronisation en cours...</option>';
+          if (currentAgent) {
+            agentSel.value = currentAgent;
+          }
+        } else {
+          agentSel.innerHTML = '<option value="">⏳ Synchronisation en cours...</option>';
+        }
       }
-      const cSel = document.getElementById("selectContractor"), tSel = document.getElementById("selectTrade");
-      if (cSel && availableContractors.length > 0) cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (tSel && availableTrades.length > 0) tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      
+      const cSel = document.getElementById("selectContractor");
+      const tSel = document.getElementById("selectTrade");
+      if (cSel && availableContractors.length > 0) {
+        cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      if (tSel && availableTrades.length > 0) {
+        tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
     }
 
     function setSelectValueWithFallback(selectId, val) {
-      const sel = document.getElementById(selectId); if (!sel || !val) return;
-      const targetVal = String(val).trim(); let found = false;
-      for (let i = 0; i < sel.options.length; i++) { if (sel.options[i].value.trim().toLowerCase() === targetVal.toLowerCase()) { sel.selectedIndex = i; found = true; break; } }
-      if (!found) { const opt = document.createElement("option"); opt.value = targetVal; opt.textContent = targetVal; opt.selected = true; sel.appendChild(opt); }
+      const sel = document.getElementById(selectId); 
+      if (!sel || !val) return;
+      const targetVal = String(val).trim(); 
+      let found = false;
+      for (let i = 0; i < sel.options.length; i++) { 
+        if (sel.options[i].value.trim().toLowerCase() === targetVal.toLowerCase()) { 
+          sel.selectedIndex = i; 
+          found = true; 
+          break; 
+        } 
+      }
+      if (!found) { 
+        const opt = document.createElement("option"); 
+        opt.value = targetVal; 
+        opt.textContent = targetVal; 
+        opt.selected = true; 
+        sel.appendChild(opt); 
+      }
     }
 
-    function openConfigModal() { document.getElementById("configModal").classList.remove("hidden"); }
+    function openConfigModal() { 
+      document.getElementById("configModal").classList.remove("hidden"); 
+    }
 
     function saveAgentConfig() {
       const sel = document.getElementById("configAgentSelect").value;
-      if (!sel) { alert("Sélectionnez un profil."); return; }
-      currentAgent = sel; localStorage.setItem("mob_current_agent", currentAgent);
+      if (!sel) { 
+        alert("Sélectionnez un profil."); 
+        return; 
+      }
+      currentAgent = sel; 
+      localStorage.setItem("mob_current_agent", currentAgent);
       document.getElementById("headerAgentName").innerText = currentAgent;
       document.getElementById("configModal").classList.add("hidden");
-      cancelActiveMission(); renderTournee(); renderHistory();
+      cancelActiveMission(); 
+      renderTournee(); 
+      renderHistory();
     }
 
     function logoutMobileAgentStep1() {
-      if (confirm("Se déconnecter ? Les saisies non envoyées resteront en mémoire.")) { localStorage.removeItem("mob_current_agent"); window.location.reload(true); }
+      if (confirm("Se déconnecter ? Les saisies non envoyées resteront en mémoire.")) { 
+        localStorage.removeItem("mob_current_agent"); 
+        window.location.reload(true); 
+      }
     }
 
     function updatePendingBadge() {
-      const badge = document.getElementById("pendingBadge"); if (!badge) return;
-      if (pendingSyncQueue.length > 0) { badge.innerText = pendingSyncQueue.length; badge.classList.remove("hidden"); } else badge.classList.add("hidden");
+      const badge = document.getElementById("pendingBadge"); 
+      if (!badge) return;
+      if (pendingSyncQueue.length > 0) { 
+        badge.innerText = pendingSyncQueue.length; 
+        badge.classList.remove("hidden"); 
+      } else {
+        badge.classList.add("hidden");
+      }
     }
 
     function normalizeDateYMD(dateVal) {
       if (!dateVal) return "";
-      if (dateVal instanceof Date) return `${dateVal.getFullYear()}-${String(dateVal.getMonth()+1).padStart(2,'0')}-${String(dateVal.getDate()).padStart(2,'0')}`;
+      if (dateVal instanceof Date) {
+        return `${dateVal.getFullYear()}-${String(dateVal.getMonth()+1).padStart(2,'0')}-${String(dateVal.getDate()).padStart(2,'0')}`;
+      }
       const str = String(dateVal).trim().replace(/['"]/g, ''); 
-      if (str.includes('T')) return str.split('T')[0];
+      if (str.includes('T')) {
+        return str.split('T')[0];
+      }
       const parts = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (parts) return `${parts[3]}-${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
+      if (parts) {
+        return `${parts[3]}-${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
+      }
       return str.split(' ')[0];
     }
 
-    // --- CORRECTION DU SCROLL POUR NE PAS CACHER LA RECHERCHE SOUS LE HEADER (-70px) ---
     function handleQuantityFocus() {
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
@@ -342,171 +445,370 @@
         if (mainArea && searchSec) {
           mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
         }
-      }, 400);
+      }, 300);
     }
 
-    function closeQtyKeyboard() { document.getElementById('inputQuantity').blur(); }
+    function closeQtyKeyboard() { 
+      document.getElementById('inputQuantity').blur(); 
+    }
     
     function handleSearchFocus() {
       setTimeout(() => {
-        const searchSec = document.getElementById('searchSection'), mainArea = document.getElementById('mainScrollArea');
-        if (mainArea && searchSec) mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
+        const searchSec = document.getElementById('searchSection');
+        const mainArea = document.getElementById('mainScrollArea');
+        if (mainArea && searchSec) {
+          mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
+        }
       }, 300);
     }
     
-    function closeKeyboard() { document.getElementById('sapSearchInput').blur(); }
+    function closeKeyboard() { 
+      document.getElementById('sapSearchInput').blur(); 
+    }
 
     async function syncMobileData() {
       if (!navigator.onLine || isSyncing) return;
       isSyncing = true;
-      const dot = document.getElementById("syncDot"), syncBtn = document.getElementById("syncBtn");
-      if(dot) dot.className = "w-3 h-3 rounded-full bg-amber-500 animate-spin"; if(syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
+      const dot = document.getElementById("syncDot");
+      const syncBtn = document.getElementById("syncBtn");
+      
+      if (dot) dot.className = "w-3 h-3 rounded-full bg-amber-500 animate-spin"; 
+      if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
-      let recentlyProcessedHistory = [], recentlyProcessedTourneeUpdates = [];
+      let recentlyProcessedHistory = [];
+      let recentlyProcessedTourneeUpdates = [];
 
       if (pendingSyncQueue.length > 0) {
         const queueCopy = [...pendingSyncQueue];
         for (const item of queueCopy) {
-          if (item.action === "CREATE") recentlyProcessedHistory.push(item);
-          if (item.action === "UPDATE_TOURNEE_STATUS") recentlyProcessedTourneeUpdates.push(item);
+          if (item.action === "CREATE") {
+            recentlyProcessedHistory.push(item);
+          }
+          if (item.action === "UPDATE_TOURNEE_STATUS") {
+            recentlyProcessedTourneeUpdates.push(item);
+          }
           try {
-            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(item) });
+            await fetch(GOOGLE_SCRIPT_URL, { 
+              method: "POST", 
+              headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+              body: JSON.stringify(item) 
+            });
             pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
             await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-          } catch (err) { break; }
+          } catch (err) { 
+            break; 
+          }
         }
         updatePendingBadge();
       }
 
       try {
-        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" }); const data = await res.json();
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" }); 
+        const data = await res.json();
+        
         if (data.status === "success") {
-          if(data.catalog){ catalog=data.catalog; await safeSetStorage("offline_catalog", catalog); }
-          if(data.agents){ availableAgents=data.agents; await safeSetStorage("offline_agents", availableAgents); }
-          if(data.contractors){ availableContractors=data.contractors; await safeSetStorage("offline_contractors", availableContractors); }
-          if(data.trades){ availableTrades=data.trades; await safeSetStorage("offline_trades", availableTrades); }
+          if (data.catalog) { 
+            catalog = data.catalog; 
+            await safeSetStorage("offline_catalog", catalog); 
+          }
+          if (data.agents) { 
+            availableAgents = data.agents; 
+            await safeSetStorage("offline_agents", availableAgents); 
+          }
+          if (data.contractors) { 
+            availableContractors = data.contractors; 
+            await safeSetStorage("offline_contractors", availableContractors); 
+          }
+          if (data.trades) { 
+            availableTrades = data.trades; 
+            await safeSetStorage("offline_trades", availableTrades); 
+          }
           
-          if(data.tournees){
+          if (data.tournees) {
             let pendingUpdatesToMerge = [...recentlyProcessedTourneeUpdates];
-            pendingSyncQueue.forEach(q => { if(q.action === "UPDATE_TOURNEE_STATUS") pendingUpdatesToMerge.push(q); });
-            const localValides = new Set(cachedTournees.filter(t=>String(t.statut).trim().toUpperCase()==='VALIDE').map(t=>String(t.id)));
-            pendingUpdatesToMerge.forEach(pu => { if(String(pu.statut).trim().toUpperCase() === 'VALIDE') localValides.add(String(pu.id)); });
+            pendingSyncQueue.forEach(q => { 
+              if (q.action === "UPDATE_TOURNEE_STATUS") pendingUpdatesToMerge.push(q); 
+            });
+            
+            const localValides = new Set(cachedTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE').map(t => String(t.id)));
+            
+            pendingUpdatesToMerge.forEach(pu => { 
+              if (String(pu.statut).trim().toUpperCase() === 'VALIDE') localValides.add(String(pu.id)); 
+            });
+            
             cachedTournees = data.tournees.map(s => localValides.has(String(s.id)) ? { ...s, statut: 'VALIDE' } : s);
             await safeSetStorage("offline_tournees", cachedTournees);
           }
           
-          if(data.history){
-            const nA = String(currentAgent||"").trim().toLowerCase();
-            let serverHistory = data.history.filter(h => String(h.user||"").trim().toLowerCase() === nA);
+          if (data.history) {
+            const nA = String(currentAgent || "").trim().toLowerCase();
+            let serverHistory = data.history.filter(h => String(h.user || "").trim().toLowerCase() === nA);
             let pendingHistToMerge = [...recentlyProcessedHistory];
-            pendingSyncQueue.forEach(q => { if(q.action === "CREATE") pendingHistToMerge.push(q); });
-            pendingHistToMerge.forEach(ph => { if (!serverHistory.find(sh => sh.id === ph.id)) serverHistory.unshift(ph); });
-            sessionHistory = serverHistory; await safeSetStorage("mob_session_history", sessionHistory);
+            pendingSyncQueue.forEach(q => { 
+              if (q.action === "CREATE") pendingHistToMerge.push(q); 
+            });
+            pendingHistToMerge.forEach(ph => { 
+              if (!serverHistory.find(sh => sh.id === ph.id)) {
+                serverHistory.unshift(ph);
+              }
+            });
+            sessionHistory = serverHistory; 
+            await safeSetStorage("mob_session_history", sessionHistory);
           }
-          initMobileDropdowns(); renderTournee(); renderHistory();
+          initMobileDropdowns(); 
+          renderTournee(); 
+          renderHistory();
         }
-      } catch (err) {} finally {
+      } catch (err) {
+        console.warn("Background sync error", err);
+      } finally {
         isSyncing = false;
-        if(dot) dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse"; if(syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
+        if (dot) dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse"; 
+        if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
     }
 
     function selectTourneeTask(tourneeId) {
       const t = cachedTournees.find(x => String(x.id).trim() === String(tourneeId).trim());
-      if (!t || String(t.statut||'').trim().toUpperCase() === 'VALIDE') return;
-      activeMissionContext = { id: t.id, sapRef: t.sapRef, designation: t.designation, contractor: t.contractor, trade: t.trade };
-      setSelectValueWithFallback("selectContractor", t.contractor); setSelectValueWithFallback("selectTrade", t.trade);
-      const cSel=document.getElementById("selectContractor"), tSel=document.getElementById("selectTrade");
-      if(cSel){cSel.setAttribute("disabled","disabled");cSel.classList.add("bg-slate-200","pointer-events-none");}
-      if(tSel){tSel.setAttribute("disabled","disabled");tSel.classList.add("bg-slate-200","pointer-events-none");}
-      const b=document.getElementById("activeMissionBanner"), bi=document.getElementById("missionBannerInfo");
-      if(b&&bi){bi.innerText=`${t.contractor} (${t.trade}) • Réf: ${t.sapRef}`; b.classList.remove("hidden");}
-      const item=catalog.find(i=>String(i.sapRef).trim()===String(t.sapRef).trim());
-      selectArticleFromSearch(item||{sapRef:t.sapRef,designation:t.designation||'Article assigné',supplierRef:''}); switchMobileTab('comptage');
+      if (!t || String(t.statut || '').trim().toUpperCase() === 'VALIDE') return;
+      
+      activeMissionContext = { 
+        id: t.id, 
+        sapRef: t.sapRef, 
+        designation: t.designation, 
+        contractor: t.contractor, 
+        trade: t.trade 
+      };
+      
+      setSelectValueWithFallback("selectContractor", t.contractor); 
+      setSelectValueWithFallback("selectTrade", t.trade);
+      
+      const cSel = document.getElementById("selectContractor");
+      const tSel = document.getElementById("selectTrade");
+      if (cSel) {
+        cSel.setAttribute("disabled", "disabled");
+        cSel.classList.add("bg-slate-200", "pointer-events-none");
+      }
+      if (tSel) {
+        tSel.setAttribute("disabled", "disabled");
+        tSel.classList.add("bg-slate-200", "pointer-events-none");
+      }
+      
+      const b = document.getElementById("activeMissionBanner");
+      const bi = document.getElementById("missionBannerInfo");
+      if (b && bi) {
+        bi.innerText = `${t.contractor} (${t.trade}) • Réf: ${t.sapRef}`; 
+        b.classList.remove("hidden");
+      }
+      
+      const item = catalog.find(i => String(i.sapRef).trim() === String(t.sapRef).trim());
+      selectArticleFromSearch(item || { sapRef: t.sapRef, designation: t.designation || 'Article assigné', supplierRef: '' }); 
+      switchMobileTab('comptage');
     }
 
     function cancelActiveMission() {
       activeMissionContext = null;
-      const c=document.getElementById("selectContractor"), t=document.getElementById("selectTrade");
-      if(c){c.removeAttribute("disabled");c.classList.remove("bg-slate-200","pointer-events-none");}
-      if(t){t.removeAttribute("disabled");t.classList.remove("bg-slate-200","pointer-events-none");}
-      document.getElementById("activeMissionBanner")?.classList.add("hidden"); resetComptageForm();
+      const c = document.getElementById("selectContractor");
+      const t = document.getElementById("selectTrade");
+      if (c) {
+        c.removeAttribute("disabled");
+        c.classList.remove("bg-slate-200", "pointer-events-none");
+      }
+      if (t) {
+        t.removeAttribute("disabled");
+        t.classList.remove("bg-slate-200", "pointer-events-none");
+      }
+      const banner = document.getElementById("activeMissionBanner");
+      if (banner) banner.classList.add("hidden");
+      resetComptageForm();
     }
 
     function resetComptageForm() { 
-      selectedArticle=null; document.getElementById("sapSearchInput").value=""; document.getElementById("selectedArticleCard").classList.add("hidden"); 
-      document.getElementById("inputQuantity").value=""; document.getElementById("inputQuantity").blur();
+      selectedArticle = null; 
+      const sapInput = document.getElementById("sapSearchInput");
+      if (sapInput) sapInput.value = ""; 
+      const card = document.getElementById("selectedArticleCard");
+      if (card) card.classList.add("hidden"); 
+      const qtyInput = document.getElementById("inputQuantity");
+      if (qtyInput) {
+        qtyInput.value = ""; 
+        qtyInput.blur();
+      }
     }
 
     async function openScanModal() {
-      document.getElementById("scanModal").classList.remove("hidden"); document.getElementById("ocrStatus").innerText = "Initialisation...";
-      try { mediaStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}}); document.getElementById("scanVideo").srcObject = mediaStream; document.getElementById("ocrStatus").innerText = barcodeDetector?"Scan automatique...":"Cadrez"; scanLoopActive = true; if(barcodeDetector) requestAnimationFrame(detectBarcodeLoop); } catch (err) { document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; }
+      document.getElementById("scanModal").classList.remove("hidden"); 
+      document.getElementById("ocrStatus").innerText = "Initialisation...";
+      try { 
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } }); 
+        document.getElementById("scanVideo").srcObject = mediaStream; 
+        document.getElementById("ocrStatus").innerText = barcodeDetector ? "Scan automatique..." : "Cadrez"; 
+        scanLoopActive = true; 
+        if (barcodeDetector) {
+          requestAnimationFrame(detectBarcodeLoop);
+        }
+      } catch (err) { 
+        document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; 
+      }
     }
     
     async function detectBarcodeLoop() {
-      if(!scanLoopActive) return; const v=document.getElementById("scanVideo");
-      if(v.readyState===v.HAVE_ENOUGH_DATA && barcodeDetector){ try{ const b=await barcodeDetector.detect(v); if(b.length>0){ const i=catalog.find(x=>String(x.sapRef).trim()===b[0].rawValue || String(x.ean).trim()===b[0].rawValue); if(i){selectArticleFromSearch(i);closeScanModal();return;} } }catch(e){} }
+      if (!scanLoopActive) return; 
+      const v = document.getElementById("scanVideo");
+      if (v.readyState === v.HAVE_ENOUGH_DATA && barcodeDetector) { 
+        try { 
+          const b = await barcodeDetector.detect(v); 
+          if (b.length > 0) { 
+            const i = catalog.find(x => String(x.sapRef).trim() === b[0].rawValue || String(x.ean).trim() === b[0].rawValue); 
+            if (i) {
+              selectArticleFromSearch(i);
+              closeScanModal();
+              return;
+            } 
+          } 
+        } catch (e) {
+          // handle detection error silently
+        } 
+      }
       requestAnimationFrame(detectBarcodeLoop);
     }
     
-    function closeScanModal() { scanLoopActive=false; if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;} document.getElementById("scanModal").classList.add("hidden"); }
+    function closeScanModal() { 
+      scanLoopActive = false; 
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+      } 
+      document.getElementById("scanModal").classList.add("hidden"); 
+    }
 
     async function captureAndOCR() {
-      const v=document.getElementById("scanVideo"), c=document.getElementById("scanCanvas"); if(!v.srcObject) return;
-      c.width=v.videoWidth||640; c.height=v.videoHeight||480; c.getContext('2d').drawImage(v,0,0,c.width,c.height); document.getElementById("ocrStatus").innerText="OCR en cours...";
+      const v = document.getElementById("scanVideo");
+      const c = document.getElementById("scanCanvas"); 
+      if (!v.srcObject) return;
+      
+      c.width = v.videoWidth || 640; 
+      c.height = v.videoHeight || 480; 
+      c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); 
+      document.getElementById("ocrStatus").innerText = "OCR en cours...";
+      
       try {
-        const res = await Tesseract.recognize(c, 'fra'); const m = res.data.text.match(/\b[A-Z0-9]{4,12}\b/gi);
-        if(m&&m.length>0){ const i=catalog.find(x=>String(x.sapRef).trim().toUpperCase()===m[0].toUpperCase()); if(i){selectArticleFromSearch(i);closeScanModal();}else document.getElementById("ocrStatus").innerText="Introuvable"; } else document.getElementById("ocrStatus").innerText="Aucun code";
-      } catch (err) { document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; }
+        const res = await Tesseract.recognize(c, 'fra'); 
+        const m = res.data.text.match(/\b[A-Z0-9]{4,12}\b/gi);
+        if (m && m.length > 0) { 
+          const i = catalog.find(x => String(x.sapRef).trim().toUpperCase() === m[0].toUpperCase()); 
+          if (i) {
+            selectArticleFromSearch(i);
+            closeScanModal();
+          } else {
+            document.getElementById("ocrStatus").innerText = "Introuvable";
+          }
+        } else {
+          document.getElementById("ocrStatus").innerText = "Aucun code";
+        }
+      } catch (err) { 
+        document.getElementById("ocrStatus").innerText = "Erreur: " + err.message; 
+      }
     }
 
     function onSapSearchInput(val) {
-      const q = String(val||"").trim().toLowerCase(); const dd = document.getElementById("sapSuggestions");
-      if(!q){ dd.classList.add("hidden"); return; }
-      const f = catalog.filter(i=>String(i.sapRef).toLowerCase().includes(q)||String(i.designation).toLowerCase().includes(q)).slice(0,30);
-      if(f.length===0){ dd.innerHTML=`<div class="p-3 text-xs italic text-center">Aucun article trouvé</div>`; dd.classList.remove("hidden"); return; }
-      dd.innerHTML = f.map(i=>`<div onclick='selectArticleFromSearch(${JSON.stringify(i)})' class="p-3 hover:bg-emerald-50 border-b cursor-pointer flex justify-between items-center text-sm transition-colors"><div><span class="font-mono font-bold text-emerald-700">${i.sapRef}</span><span class="ml-2 font-semibold text-slate-800">${i.designation}</span></div></div>`).join('');
+      const q = String(val || "").trim().toLowerCase(); 
+      const dd = document.getElementById("sapSuggestions");
+      if (!q) { 
+        dd.classList.add("hidden"); 
+        return; 
+      }
+      
+      const f = catalog.filter(i => String(i.sapRef).toLowerCase().includes(q) || String(i.designation).toLowerCase().includes(q)).slice(0, 30);
+      if (f.length === 0) { 
+        dd.innerHTML = `<div class="p-3 text-xs italic text-center">Aucun article trouvé</div>`; 
+        dd.classList.remove("hidden"); 
+        return; 
+      }
+      
+      dd.innerHTML = f.map(i => `
+        <div onclick='selectArticleFromSearch(${JSON.stringify(i)})' class="p-3 hover:bg-emerald-50 border-b cursor-pointer flex justify-between items-center text-sm transition-colors">
+          <div>
+            <span class="font-mono font-bold text-emerald-700">${i.sapRef}</span>
+            <span class="ml-2 font-semibold text-slate-800">${i.designation}</span>
+          </div>
+        </div>
+      `).join('');
       dd.classList.remove("hidden");
     }
 
     function selectArticleFromSearch(i) {
-      selectedArticle=i; document.getElementById("sapSearchInput").value=i.sapRef; document.getElementById("sapSuggestions").classList.add("hidden"); 
-      document.getElementById("cardSapRef").innerText=i.sapRef; document.getElementById("cardSupplierRef").innerText=`Fourn: ${i.supplierRef||'N/C'}`; 
-      document.getElementById("cardDesignation").innerText=i.designation; document.getElementById("selectedArticleCard").classList.remove("hidden");
+      selectedArticle = i; 
+      document.getElementById("sapSearchInput").value = i.sapRef; 
+      document.getElementById("sapSuggestions").classList.add("hidden"); 
+      document.getElementById("cardSapRef").innerText = i.sapRef; 
+      document.getElementById("cardSupplierRef").innerText = `Fourn: ${i.supplierRef || 'N/C'}`; 
+      document.getElementById("cardDesignation").innerText = i.designation; 
+      document.getElementById("selectedArticleCard").classList.remove("hidden");
       document.getElementById("sapSearchInput").blur();
     }
 
     async function submitInventoryEntry() {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
+      // HAPTIC FEEDBACK (Légère vibration)
+      if (navigator.vibrate) {
+        navigator.vibrate(40);
+      }
       
-      if(!currentAgent){alert("Configurez l'agent");openConfigModal();return;} if(!selectedArticle){alert("Sélectionnez un article");return;}
+      if (!currentAgent) {
+        alert("Configurez l'agent");
+        openConfigModal();
+        return;
+      } 
+      if (!selectedArticle) {
+        alert("Sélectionnez un article");
+        return;
+      }
+      
       const qInputStr = document.getElementById("inputQuantity").value;
       const q = parseInt(qInputStr, 10) || 0;
       
-      const contractor = activeMissionContext?activeMissionContext.contractor:document.getElementById("selectContractor").value;
-      const trade = activeMissionContext?activeMissionContext.trade:document.getElementById("selectTrade").value;
-      const tourneeId = activeMissionContext?activeMissionContext.id:null;
+      const contractor = activeMissionContext ? activeMissionContext.contractor : document.getElementById("selectContractor").value;
+      const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
+      const tourneeId = activeMissionContext ? activeMissionContext.id : null;
 
-      const n = new Date(); const localT = new Date(n.getTime() - (n.getTimezoneOffset() * 60000)).toISOString().slice(0, -1);
+      const n = new Date(); 
+      const localT = new Date(n.getTime() - (n.getTimezoneOffset() * 60000)).toISOString().slice(0, -1);
       
       const r = {
-        id: "INV-"+Date.now().toString(36), timestamp: localT, user: currentAgent,
-        contractor: contractor, trade: trade, sapRef: selectedArticle.sapRef, designation: selectedArticle.designation,
-        supplierRef: selectedArticle.supplierRef||"", ean: selectedArticle.ean||"", qr: selectedArticle.qr||"",
-        quantity: q, lat: currentGpsCoords.lat||"", lng: currentGpsCoords.lng||"", tourneeId: tourneeId
+        id: "INV-" + Date.now().toString(36), 
+        timestamp: localT, 
+        user: currentAgent,
+        contractor: contractor, 
+        trade: trade, 
+        sapRef: selectedArticle.sapRef, 
+        designation: selectedArticle.designation,
+        supplierRef: selectedArticle.supplierRef || "", 
+        ean: selectedArticle.ean || "", 
+        qr: selectedArticle.qr || "",
+        quantity: q, 
+        lat: currentGpsCoords.lat || "", 
+        lng: currentGpsCoords.lng || "", 
+        tourneeId: tourneeId
       };
 
-      sessionHistory.unshift({...r, isPending:true}); await safeSetStorage("mob_session_history", sessionHistory);
+      sessionHistory.unshift({ ...r, isPending: true }); 
+      await safeSetStorage("mob_session_history", sessionHistory);
       
       let mT = tourneeId;
-      cachedTournees.forEach(t=>{ if(t.id === tourneeId) { t.statut='VALIDE'; mT=t.id; } });
+      cachedTournees.forEach(t => { 
+        if (t.id === tourneeId) { 
+          t.statut = 'VALIDE'; 
+          mT = t.id; 
+        } 
+      });
       await safeSetStorage("offline_tournees", cachedTournees);
 
       const sId1 = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-      pendingSyncQueue.push({_syncId: sId1, action:"CREATE", ...r});
-      if(mT) {
+      pendingSyncQueue.push({ _syncId: sId1, action: "CREATE", ...r });
+      
+      if (mT) {
         const sId2 = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-        pendingSyncQueue.push({_syncId: sId2, action:"UPDATE_TOURNEE_STATUS", id:mT, statut:'VALIDE', user:currentAgent, sapRef:r.sapRef});
+        pendingSyncQueue.push({ _syncId: sId2, action: "UPDATE_TOURNEE_STATUS", id: mT, statut: 'VALIDE', user: currentAgent, sapRef: r.sapRef });
       }
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
 
@@ -523,26 +825,41 @@
         document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
       }
 
-      if(navigator.onLine) setTimeout(syncMobileData, 100);
+      if (navigator.onLine) {
+        setTimeout(syncMobileData, 100);
+      }
     }
 
+    // --- HISTORIQUE SANS LE TEXTE "AFFECTATION" ---
     function renderHistory() {
-      const c = document.getElementById("historyListContainer"); if(!c) return;
-      const ag = String(currentAgent||"").trim().toLowerCase();
+      const c = document.getElementById("historyListContainer"); 
+      if (!c) return;
       
-      const n = new Date(); const tH = new Date(n.getTime() - (3*60*60*1000));
-      const sH = sessionHistory.filter(h=>String(h.user).toLowerCase()===ag); const pIds = new Set(sH.map(h=>h.id));
-      const fH = [...pendingSyncQueue.filter(p=>p.action==='CREATE'&&String(p.user).toLowerCase()===ag&&!pIds.has(p.id)).map(p=>({...p,isPending:true})), ...sH].filter(h=>{ const hd = new Date(h.timestamp); return hd>=tH; });
+      const ag = String(currentAgent || "").trim().toLowerCase();
       
-      document.getElementById("historyCount").innerText=`${fH.length} ligne(s)`;
-      if(fH.length===0){ c.innerHTML=`<div class="p-8 text-center text-slate-400 italic text-sm bg-white rounded-2xl"><p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p></div>`; return; }
+      const n = new Date(); 
+      const tH = new Date(n.getTime() - (3 * 60 * 60 * 1000));
       
-      c.innerHTML = fH.map(h=>`
-        <div class="bg-white border ${h.isPending?'border-amber-400 bg-amber-50/50':'border-slate-200'} p-4 rounded-3xl shadow-sm space-y-3 text-xs cursor-default select-none transition-all">
+      const sH = sessionHistory.filter(h => String(h.user).toLowerCase() === ag); 
+      const pIds = new Set(sH.map(h => h.id));
+      
+      const fH = [...pendingSyncQueue.filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === ag && !pIds.has(p.id)).map(p => ({...p, isPending: true})), ...sH].filter(h => { 
+        const hd = new Date(h.timestamp); 
+        return hd >= tH; 
+      });
+      
+      document.getElementById("historyCount").innerText = `${fH.length} ligne(s)`;
+      if (fH.length === 0) { 
+        c.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-sm bg-white rounded-2xl"><p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p></div>`; 
+        return; 
+      }
+      
+      c.innerHTML = fH.map(h => `
+        <div class="bg-white border ${h.isPending ? 'border-amber-400 bg-amber-50/50' : 'border-slate-200'} p-4 rounded-3xl shadow-sm space-y-3 text-xs cursor-default select-none transition-all">
           <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
             <div class="flex items-center gap-2">
               <span class="font-mono font-black text-orange-800 text-sm">${h.sapRef}</span>
-              ${h.isPending?'<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-xs">⏳ ATTENTE</span>':'<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ ENREGISTRÉ</span>'}
+              ${h.isPending ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-xs">⏳ ATTENTE</span>' : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ ENREGISTRÉ</span>'}
             </div>
             <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1 shrink-0">
               <i data-lucide="clock" class="w-3 h-3"></i> ${new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -572,27 +889,77 @@
     }
 
     async function editHistoryItem(id) {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
-      const it=sessionHistory.find(h=>h.id===id); if(!it) return; const q=prompt("Modifier la quantité :", it.quantity); if(q===null) return; const p=parseInt(q,10); if(isNaN(p)||p<0) return;
-      it.quantity=p; await safeSetStorage("mob_session_history", sessionHistory);
-      const pc=pendingSyncQueue.find(x=>x.id===id&&x.action==='CREATE'); if(pc) pc.quantity=p; else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"UPDATE_INVENTORY", id:id, quantity:p, user:currentAgent}); }
-      await safeSetStorage("offline_pending_sync", pendingSyncQueue); updatePendingBadge(); renderHistory(); if(navigator.onLine) syncMobileData();
+      if (navigator.vibrate) navigator.vibrate(40);
+      
+      const it = sessionHistory.find(h => h.id === id); 
+      if (!it) return; 
+      
+      const q = prompt("Modifier la quantité :", it.quantity); 
+      if (q === null) return; 
+      
+      const p = parseInt(q, 10); 
+      if (isNaN(p) || p < 0) return;
+      
+      it.quantity = p; 
+      await safeSetStorage("mob_session_history", sessionHistory);
+      
+      const pc = pendingSyncQueue.find(x => x.id === id && x.action === 'CREATE'); 
+      if (pc) {
+        pc.quantity = p; 
+      } else { 
+        const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); 
+        pendingSyncQueue.push({ _syncId: sId, action: "UPDATE_INVENTORY", id: id, quantity: p, user: currentAgent }); 
+      }
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue); 
+      updatePendingBadge(); 
+      renderHistory(); 
+      
+      if (navigator.onLine) {
+        syncMobileData();
+      }
     }
 
     async function deleteHistoryItem(id) {
-      if (navigator.vibrate) navigator.vibrate(40); // RETOUR HAPTIQUE
-      if(!confirm("Supprimer cette saisie ?")) return;
-      const it=sessionHistory.find(h=>h.id===id); sessionHistory=sessionHistory.filter(h=>h.id!==id); await safeSetStorage("mob_session_history", sessionHistory);
-      const pi=pendingSyncQueue.findIndex(x=>x.id===id&&x.action==='CREATE'); if(pi!==-1) pendingSyncQueue.splice(pi,1); else { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"DELETE_INVENTORY", id:id, user:currentAgent}); }
-      if (it && it.tourneeId) { const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); pendingSyncQueue.push({_syncId: sId, action:"UPDATE_TOURNEE_STATUS", id:it.tourneeId, statut:'A_FAIRE', user:currentAgent}); const t=cachedTournees.find(x=>x.id===it.tourneeId); if(t) t.statut='A_FAIRE'; await safeSetStorage("offline_tournees", cachedTournees); }
-      await safeSetStorage("offline_pending_sync", pendingSyncQueue); updatePendingBadge(); renderHistory(); renderTournee(); if(navigator.onLine) syncMobileData();
+      if (navigator.vibrate) navigator.vibrate(40);
+      
+      if (!confirm("Supprimer cette saisie ?")) return;
+      
+      const it = sessionHistory.find(h => h.id === id); 
+      sessionHistory = sessionHistory.filter(h => h.id !== id); 
+      await safeSetStorage("mob_session_history", sessionHistory);
+      
+      const pi = pendingSyncQueue.findIndex(x => x.id === id && x.action === 'CREATE'); 
+      if (pi !== -1) {
+        pendingSyncQueue.splice(pi, 1); 
+      } else { 
+        const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); 
+        pendingSyncQueue.push({ _syncId: sId, action: "DELETE_INVENTORY", id: id, user: currentAgent }); 
+      }
+      
+      if (it && it.tourneeId) { 
+        const sId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2); 
+        pendingSyncQueue.push({ _syncId: sId, action: "UPDATE_TOURNEE_STATUS", id: it.tourneeId, statut: 'A_FAIRE', user: currentAgent }); 
+        const t = cachedTournees.find(x => x.id === it.tourneeId); 
+        if (t) {
+          t.statut = 'A_FAIRE'; 
+        }
+        await safeSetStorage("offline_tournees", cachedTournees); 
+      }
+      await safeSetStorage("offline_pending_sync", pendingSyncQueue); 
+      updatePendingBadge(); 
+      renderHistory(); 
+      renderTournee(); 
+      
+      if (navigator.onLine) {
+        syncMobileData();
+      }
     }
 
     function formatTourneeDate(dStr) {
       if (!dStr) return "Aucune date";
       const parts = dStr.split('-');
       if (parts.length === 3) {
-        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
         if (!isNaN(d.getTime())) {
           return `${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][d.getDay()]} ${d.getDate()} ${['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][d.getMonth()]}`;
         }
@@ -636,7 +1003,7 @@
     function renderTournee() {
       const c = document.getElementById("tourneeListContainer"); 
       const tHeader = document.getElementById("tourneeDebugHeader");
-      if(!c) return; 
+      if (!c) return; 
       
       const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
       
@@ -660,8 +1027,12 @@
           <div class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200'} rounded-2xl shadow-sm mb-4 overflow-hidden transition-all">
             
             <div class="px-4 py-3 flex justify-between items-center border-b border-slate-100 ${isDone ? 'bg-emerald-50' : 'bg-slate-50'}">
-              <span class="font-bold text-[11px] text-slate-600 uppercase flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr} - ${g.tranche||'MATIN'}</span>
-              <span class="px-2 py-0.5 rounded-md text-[9px] font-bold shadow-xs ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? '✓ TERMINÉ' : 'À FAIRE'}</span>
+              <span class="font-bold text-[11px] text-slate-600 uppercase flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr} - ${g.tranche || 'MATIN'}
+              </span>
+              <span class="px-2 py-0.5 rounded-md text-[9px] font-bold shadow-xs ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${isDone ? '✓ TERMINÉ' : 'À FAIRE'}
+              </span>
             </div>
 
             <div class="p-4 space-y-3">
@@ -729,9 +1100,50 @@
       lucide.createIcons();
     }
 
-    function switchMobileTab(t) { ['Comptage','Historique','Tournee'].forEach(x=>{ document.getElementById("tab"+x)?.classList.add("hidden"); const n=document.getElementById("nav"+x); if(n) n.className="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer"; }); const a=t.charAt(0).toUpperCase()+t.slice(1); document.getElementById("tab"+a)?.classList.remove("hidden"); const aN=document.getElementById("nav"+a); if(aN) aN.className="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer"; if(t==='historique') renderHistory(); if(t==='tournee') renderTournee(); lucide.createIcons(); }
+    function switchMobileTab(t) { 
+      ['Comptage','Historique','Tournee'].forEach(x => { 
+        document.getElementById("tab"+x)?.classList.add("hidden"); 
+        const n = document.getElementById("nav"+x); 
+        if(n) n.className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer"; 
+      }); 
+      
+      const a = t.charAt(0).toUpperCase() + t.slice(1); 
+      document.getElementById("tab"+a)?.classList.remove("hidden"); 
+      
+      const aN = document.getElementById("nav"+a); 
+      if(aN) aN.className = "flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer"; 
+      
+      if (t === 'historique') {
+        renderHistory(); 
+      }
+      if (t === 'tournee') {
+        renderTournee(); 
+      }
+      lucide.createIcons(); 
+    }
     
-    function toggleVoiceSearch() { const S=window.SpeechRecognition||window.webkitSpeechRecognition; if(!S) return; const r=new S(); r.lang='fr-FR'; const btn=document.getElementById("micBtn"); btn.className="h-16 bg-rose-600 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700"; r.onresult=e=>{ const m=e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); const v=m?m[0]:e.results[0][0].transcript; document.getElementById("sapSearchInput").value=v; onSapSearchInput(v); }; r.onerror=r.onend=()=>{ btn.className="h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; }; r.start(); }
+    function toggleVoiceSearch() { 
+      const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
+      if (!S) return; 
+      
+      const r = new S(); 
+      r.lang = 'fr-FR'; 
+      const btn = document.getElementById("micBtn"); 
+      btn.className = "h-16 bg-rose-600 text-white font-bold rounded-2xl text-base flex items-center justify-center gap-2 animate-pulse shadow-md border border-rose-700"; 
+      
+      r.onresult = e => { 
+        const m = e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); 
+        const v = m ? m[0] : e.results[0][0].transcript; 
+        document.getElementById("sapSearchInput").value = v; 
+        onSapSearchInput(v); 
+      }; 
+      
+      r.onerror = r.onend = () => { 
+        btn.className = "h-16 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-base flex items-center justify-center gap-2 transition cursor-pointer border border-slate-200 shadow-sm"; 
+      }; 
+      
+      r.start(); 
+    }
   </script>
 </body>
 </html>
