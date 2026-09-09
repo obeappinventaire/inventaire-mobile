@@ -1649,21 +1649,40 @@
       if (isNaN(parsed) || parsed < 0) { alert("Quantité invalide."); return; }
 
       const item = cachedHistory.find(h => h.id === id);
+      const oldQty = item ? item.quantity : currentQty; // État initial sauvegardé
+      
       if (item) {
         item.quantity = parsed;
         localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
         applyFilters();
       }
 
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin })
-      }).catch(e => console.warn("Erreur mise à jour serveur :", e));
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "UPDATE_INVENTORY", id: id, quantity: parsed, user: currentAdmin })
+        });
+        const res = await response.json();
+        if (res.status !== "success") throw new Error(res.message);
+      } catch (e) {
+        console.warn("Erreur mise à jour serveur :", e);
+        alert("Échec de synchronisation avec le serveur. La quantité initiale a été restaurée.");
+        // Rollback
+        if (item) {
+          item.quantity = oldQty;
+          localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+          applyFilters();
+        }
+      }
     }
 
     async function deleteTableItem(id) {
       if (!confirm("Supprimer cette ligne d'inventaire ?")) return;
+
+      // Sauvegarde de l'élément pour un éventuel rollback
+      const itemIndex = cachedHistory.findIndex(h => h.id === id);
+      const itemToRestore = cachedHistory[itemIndex];
 
       // Suppression optimiste locale immédiate
       cachedHistory = cachedHistory.filter(h => h.id !== id);
@@ -1679,10 +1698,17 @@
         });
         const res = await response.json();
         if (res && res.status !== "success") {
-          console.warn("Avertissement suppression distant :", res.message);
+          throw new Error(res.message);
         }
       } catch (e) {
         console.warn("Erreur suppression inventaire :", e);
+        alert("La suppression a échoué côté serveur. La ligne a été restaurée sur votre écran.");
+        // Rollback
+        if (itemToRestore) {
+          cachedHistory.splice(itemIndex, 0, itemToRestore);
+          localStorage.setItem("offline_history", JSON.stringify(cachedHistory));
+          applyFilters();
+        }
       }
     }
 
