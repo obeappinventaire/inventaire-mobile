@@ -42,9 +42,10 @@
       <h1 id="headerAgentName" class="text-lg font-black text-black tracking-wide truncate max-w-[150px] leading-none pb-0.5">--</h1>
     </div>
     <div class="flex items-center space-x-4">
-      <div id="syncDot" class="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse" title="Statut réseau"></div>
-      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-2 rounded-xl text-orange-500 hover:bg-slate-200 transition cursor-pointer relative flex items-center justify-center">
-        <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+      <!-- Fusion du bouton actualiser et du statut réseau -->
+      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-2 rounded-xl hover:bg-slate-200 transition cursor-pointer relative flex items-center justify-center">
+        <!-- L'icône est verte par défaut, et deviendra orange/tournante lors du sync -->
+        <i id="syncIcon" data-lucide="refresh-cw" class="w-6 h-6 text-emerald-600 transition-colors"></i>
         <span id="pendingBadge" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white font-mono font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-100">0</span>
       </button>
       <button onclick="openConfigModal()" title="Paramètres" class="p-2 rounded-xl text-slate-500 hover:bg-slate-200 transition cursor-pointer flex items-center justify-center">
@@ -53,14 +54,15 @@
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL (ESPACEMENT pb-[50vh] POUR PERMETTRE LA REMONTÉE DU CLAVIER SANS GÊNE) -->
+  <!-- CONTENU PRINCIPAL -->
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[50vh]" id="mainScrollArea">
     
-    <div class="space-y-4">
-      <!-- ONGLET 1 : COMPTAGE -->
-      <section id="tabComptage" class="space-y-4">
+    <div class="space-y-4 h-full">
+      <!-- ONGLET 1 : COMPTAGE (MIN-HEIGHT ET JUSTIFY CENTER POUR CENTRER L'ECRAN) -->
+      <section id="tabComptage" class="flex flex-col justify-center min-h-[calc(100dvh-150px)] space-y-4">
         
-        <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative">
+        <!-- BANDEAU MISSION ACTIVE -->
+        <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative shrink-0">
           <div class="flex justify-between items-center">
             <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="target" class="w-3.5 h-3.5 text-orange-500"></i> Tâche Assignée
@@ -72,7 +74,8 @@
           <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 break-words whitespace-normal line-clamp-2">--</p>
         </div>
 
-        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
+        <!-- PARAMÈTRES DE SAISIE -->
+        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3 shrink-0">
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-[11px] text-center font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
@@ -85,7 +88,8 @@
           </div>
         </div>
 
-        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
+        <!-- RECHERCHE ACTIVE -->
+        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4 shrink-0" id="searchSection">
           <div class="relative" id="searchContainer">
             <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
             
@@ -98,6 +102,7 @@
             <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
           </div>
 
+          <!-- ZONE DE SÉLECTION COMPACTE -->
           <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-200 p-3 rounded-xl shadow-sm transition-all relative flex items-start gap-2.5 mt-2">
             <div class="bg-emerald-200 p-1.5 rounded-lg text-emerald-800 shrink-0 mt-0.5">
                <i data-lucide="check" class="w-4 h-4"></i>
@@ -114,6 +119,7 @@
             </button>
           </div>
 
+          <!-- BOUTONS SANS TEXTE -->
           <div class="grid grid-cols-2 gap-3 pt-2">
             <button onclick="toggleVoiceSearch()" id="micBtn" class="h-16 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm">
               <i data-lucide="mic" class="w-7 h-7 text-indigo-500"></i>
@@ -124,9 +130,9 @@
           </div>
         </div>
 
-        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
+        <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
+        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4 shrink-0" id="quantitySection">
           <div class="relative w-full">
-            <!-- HAUTEUR REDUITE A h-16 POUR LAISSER PLUS DE PLACE -->
             <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-16 text-center font-black text-3xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-emerald-50 focus:text-emerald-800 font-mono shadow-inner transition-all">
           </div>
 
@@ -154,11 +160,6 @@
       </section>
     </div>
 
-    <!-- COPYRIGHT DISCRET TOUT EN BAS -->
-    <div class="mt-8 mb-4 text-center shrink-0">
-      <span class="text-[9px] font-medium text-slate-400 tracking-widest uppercase">&copy; made by CO2H2O srlu</span>
-    </div>
-
   </main>
 
   <!-- BARRE DE NAVIGATION INFÉRIEURE -->
@@ -177,7 +178,7 @@
     </button>
   </nav>
 
-  <!-- MODALE SCAN CAMÉRA (ERGONOMIE MOBILE REVISITÉE POUR GAUCHER/DROITIER) -->
+  <!-- MODALE SCAN CAMÉRA -->
   <div id="scanModal" class="fixed inset-0 bg-black z-50 flex flex-col hidden">
     <!-- Vidéo plein écran -->
     <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden bg-black">
@@ -188,23 +189,20 @@
     
     <!-- Dock de contrôle inférieur -->
     <div class="h-32 bg-slate-950 pb-8 pt-4 px-8 flex items-center justify-between shrink-0">
-      <!-- Bouton Fermer (En bas à gauche) -->
       <button onclick="closeScanModal()" class="w-14 h-14 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-white active:scale-95 transition shadow-lg cursor-pointer">
         <i data-lucide="x" class="w-6 h-6"></i>
       </button>
       
-      <!-- Bouton Capture (Au centre, ambidextre) -->
       <button onclick="captureAndOCR()" class="w-20 h-20 bg-orange-500 hover:bg-orange-400 active:scale-95 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] border-4 border-orange-200 transition flex items-center justify-center cursor-pointer">
         <i data-lucide="camera" class="w-8 h-8 text-white"></i>
       </button>
       
-      <!-- Espace vide pour symétrie -->
       <div class="w-14 h-14"></div>
     </div>
     <canvas id="scanCanvas" class="hidden"></canvas>
   </div>
 
-  <!-- MODALE CONFIGURATION PROFIL -->
+  <!-- MODALE CONFIGURATION PROFIL & SUPPORT -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-[32px] p-6 shadow-2xl text-center flex flex-col gap-5">
       <div>
@@ -229,7 +227,20 @@
           <i data-lucide="log-out" class="w-4 h-4 text-slate-400"></i> Se déconnecter
         </button>
       </div>
-      <div class="mt-2 p-4 bg-rose-50/30 border border-slate-200 rounded-2xl text-left">
+
+      <!-- NOUVELLE SECTION SUPPORT MAILTO -->
+      <div class="mt-2 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl text-left">
+        <div class="flex items-center gap-2 mb-1.5">
+          <i data-lucide="life-buoy" class="w-4 h-4 text-indigo-500"></i>
+          <span class="text-[10px] font-black uppercase tracking-wider text-indigo-700">Support & Feedback</span>
+        </div>
+        <p class="text-[10px] text-slate-500 mb-3 leading-relaxed">Un bug ? Une idée d'amélioration ? Envoyez-nous un email directement.</p>
+        <button onclick="sendSupportEmail()" class="w-full h-10 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 active:scale-95 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+          <i data-lucide="mail" class="w-4 h-4"></i> Contacter le support
+        </button>
+      </div>
+
+      <div class="p-4 bg-rose-50/30 border border-slate-200 rounded-2xl text-left">
         <div class="flex items-center gap-2 mb-1.5">
           <i data-lucide="settings-2" class="w-4 h-4 text-slate-500"></i>
           <span class="text-[10px] font-black uppercase tracking-wider text-slate-600">Dépannage système</span>
@@ -273,10 +284,30 @@
     let isSyncing = false; 
     let openTourneeGroups = {}; 
 
+    // --- ENVOI D'EMAIL SUPPORT NATIF ---
+    function sendSupportEmail() {
+      const agent = currentAgent || "Non_renseigne";
+      const subject = encodeURIComponent(`[Support] Application Inventaire - Agent: ${agent}`);
+      const body = encodeURIComponent(
+`Bonjour l'équipe,
+
+Voici ma demande (Bug / Amélioration) :
+
+
+
+---
+Infos techniques (ne pas modifier) :
+Agent : ${agent}
+Date : ${new Date().toLocaleString('fr-FR')}
+Version Web App : v4.0`
+      );
+      window.location.href = `mailto:support@votredomaine.com?subject=${subject}&body=${body}`;
+    }
+
     // --- DÉTECTEUR DOUBLE TAP GLOBAL POUR RETOUR À ZERO ---
     let lastTouchTime = 0;
     document.body.addEventListener('touchstart', function(e) {
-      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.closest('button') || e.target.closest('.custom-scrollbar')) {
         return;
       }
       const currentTime = new Date().getTime();
@@ -481,7 +512,6 @@
       return str.split(' ')[0];
     }
 
-    // Centrage sécurisé du champ quantité au dessus du clavier
     function handleQuantityFocus() {
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
@@ -520,10 +550,15 @@
     async function syncMobileData() {
       if (!navigator.onLine || isSyncing) return;
       isSyncing = true;
-      const dot = document.getElementById("syncDot");
+      
+      const syncIcon = document.getElementById("syncIcon");
       const syncBtn = document.getElementById("syncBtn");
       
-      if (dot) dot.className = "w-3.5 h-3.5 rounded-full bg-amber-500 animate-spin"; 
+      // ANIMATION DE L'ICONE PRINCIPALE (FIN DU POINT VERT/ORANGE)
+      if (syncIcon) {
+         syncIcon.classList.remove("text-emerald-600");
+         syncIcon.classList.add("text-orange-500", "animate-spin");
+      }
       if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
       let recentlyProcessedHistory = [];
@@ -614,7 +649,11 @@
         console.warn("Background sync error", err);
       } finally {
         isSyncing = false;
-        if (dot) dot.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse"; 
+        
+        if (syncIcon) {
+           syncIcon.classList.remove("text-orange-500", "animate-spin");
+           syncIcon.classList.add("text-emerald-600");
+        }
         if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
     }
@@ -1014,7 +1053,6 @@
            archiveText = `Archivage dans ${remainingMins} min`;
         }
 
-        // TEXTE DYNAMIQUE (Accessibilité)
         html += `
           <div class="bg-white border ${borderClass} p-4 rounded-3xl shadow-sm space-y-3 text-xs cursor-default select-none transition-all">
             <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -1231,7 +1269,6 @@
               
               <div class="flex items-center justify-between mb-3">
                 <div class="flex-1 min-w-0 flex flex-col justify-center">
-                  <!-- TEXTE DYNAMIQUE (Accessibilité) -->
                   <p class="font-black text-slate-900 text-sm leading-tight break-words line-clamp-2">${g.contractor}</p>
                   <p class="text-[11px] font-bold text-orange-600 break-words whitespace-normal mt-0.5">${g.trade}</p>
                 </div>
@@ -1264,7 +1301,6 @@
                      <span class="font-mono font-black text-[11px] text-orange-600">${t.sapRef}</span>
                      ${isItemDone ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>' : ''}
                    </div>
-                   <!-- TEXTE DYNAMIQUE (Accessibilité) -->
                    <div class="text-[10px] font-medium text-slate-600 break-words whitespace-normal leading-snug line-clamp-2">${t.designation}</div>
                 </div>
                 ${!isItemDone ? '<div class="shrink-0 bg-orange-50 p-1.5 rounded-lg text-orange-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></div>' : ''}
