@@ -1438,14 +1438,16 @@
         let overdueHtml = '';
         overdueGroups.forEach(g => {
           overdueHtml += `
-            <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-1.5 rounded-lg border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition flex flex-col gap-1">
-              <div class="flex justify-between items-center">
-                <span class="font-black text-[11px] text-slate-800 truncate pr-1">${g.agent}</span>
-                <span class="font-mono text-[9px] bg-amber-100 text-amber-800 border-amber-200 px-1.5 py-0.5 rounded border shadow-xs font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
-              </div>
-              <div class="flex items-center gap-1.5 text-[10px] leading-tight truncate">
-                <strong class="text-slate-700 truncate">${g.contractor}</strong>
-                <span class="font-medium text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200 shrink-0">${g.trade}</span>
+            <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
+              <div>
+                <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1">
+                  <span class="font-bold text-[11px] truncate">${g.agent}</span>
+                  <span class="font-mono text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <strong class="truncate leading-tight flex-1 text-[10px]">${g.contractor}</strong>
+                  <span class="text-[9px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded truncate border border-orange-100">${g.trade}</span>
+                </div>
               </div>
             </div>
           `;
@@ -1478,13 +1480,13 @@
           groups.forEach(g => {
             const badgeColor = g.isDone ? "bg-emerald-50 border-emerald-300" : "bg-white border-slate-200 hover:border-orange-300";
             cardsHtml += `
-              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-1.5 rounded-lg border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition w-full max-w-full flex-shrink-0 flex flex-col gap-1">
-                <div class="flex justify-between items-center">
+              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition w-full flex flex-col justify-between h-[68px]">
+                <div class="flex justify-between items-center mb-1 border-b border-slate-100/50 pb-1">
                   <span class="font-black text-[11px] text-slate-800 truncate pr-1">${g.agent}</span>
-                  <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black bg-emerald-100 border-emerald-200' : 'text-slate-600 font-bold bg-slate-100 border-slate-200'} px-1.5 py-0.5 rounded border shadow-xs">${g.isDone ? '✓ Terminé' : `${g.done}/${g.total} art.`}</span>
+                  <span class="font-mono text-[9px] ${g.isDone ? 'text-emerald-700 font-black bg-emerald-100 border-emerald-200' : 'text-slate-600 font-bold bg-slate-100 border-slate-200'} px-1.5 py-0.5 rounded border shadow-xs">${g.isDone ? '✓ Terminé' : `${g.done}/${g.total}`}</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-[10px] leading-tight truncate">
-                  <strong class="text-slate-700 truncate">${g.contractor}</strong>
+                <div class="flex items-center justify-between text-[10px] leading-tight truncate gap-2">
+                  <strong class="text-slate-700 truncate flex-1">${g.contractor}</strong>
                   <span class="font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 shrink-0">${g.trade}</span>
                 </div>
               </div>
@@ -2049,9 +2051,11 @@
       
       const todayStr = normalizeDateYMD(new Date());
       
+      // EXCLUSIVEMENT AUJOURD'HUI
       const todaysTournees = cachedTournees.filter(t => normalizeDateYMD(t.date) === todayStr);
       const todaysHistory = cachedHistory.filter(h => normalizeDateYMD(h.timestamp) === todayStr);
       
+      // Dictionnaire de géocodage
       const coordsDict = {};
       cachedHistory.forEach(h => {
           if (h.contractor && h.lat && h.lng && !isNaN(h.lat) && !isNaN(h.lng)) {
@@ -2477,7 +2481,7 @@
       renderKPIs(filtered); 
       renderTable(filtered); 
       renderAgentsView(periodData); 
-      renderMap(); // APPEL MODIFIÉ POUR FORCER LE LIVE TRACKING DU JOUR J
+      renderMap(); 
       renderWallPlanning(); 
       renderCompletionMetrics(); 
     }
