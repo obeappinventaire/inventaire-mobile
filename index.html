@@ -97,7 +97,6 @@
               <i data-lucide="x" class="w-4 h-4"></i>
             </button>
 
-            <!-- Ajustement max-h-56 pour visibilité avec clavier -->
             <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-56 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
           </div>
 
@@ -238,6 +237,7 @@
         </button>
       </div>
       
+      <!-- COPYRIGHT DÉPLACÉ ICI -->
       <div class="mt-2 text-center">
         <span class="text-[8px] font-medium text-slate-300 tracking-widest uppercase">&copy; made by CO2H2O srlu</span>
       </div>
@@ -548,43 +548,50 @@ Version Web App : v4.0`
       }
       if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
-      let recentlyProcessedHistory = [];
-      let recentlyProcessedTourneeUpdates = [];
+      try {
+        // Validation stricte des tableaux pour éviter le crash spread operator (TypeError)
+        if (!Array.isArray(pendingSyncQueue)) pendingSyncQueue = [];
+        if (!Array.isArray(cachedTournees)) cachedTournees = [];
 
-      // 1. Vidange Sécurisée de la File d'Attente (POST)
-      if (pendingSyncQueue.length > 0) {
-        const queueCopy = [...pendingSyncQueue];
-        for (const item of queueCopy) {
-          try {
-            const response = await fetch(GOOGLE_SCRIPT_URL, { 
-              method: "POST", 
-              headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-              body: JSON.stringify(item) 
-            });
-            
-            const result = await response.json();
-            
-            // On s'assure que le serveur a vraiment traité la demande avant d'oublier la tâche locale
-            if (result && result.status === "success") {
-              if (item.action === "CREATE") recentlyProcessedHistory.push(item);
-              if (item.action === "UPDATE_TOURNEE_STATUS") recentlyProcessedTourneeUpdates.push(item);
+        let recentlyProcessedHistory = [];
+        let recentlyProcessedTourneeUpdates = [];
+
+        // 1. Vidange Sécurisée de la File d'Attente (POST)
+        if (pendingSyncQueue.length > 0) {
+          const queueCopy = [...pendingSyncQueue];
+          for (const item of queueCopy) {
+            if (item.action === "CREATE") {
+              recentlyProcessedHistory.push(item);
+            }
+            if (item.action === "UPDATE_TOURNEE_STATUS") {
+              recentlyProcessedTourneeUpdates.push(item);
+            }
+            try {
+              const response = await fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+                body: JSON.stringify(item) 
+              });
               
-              pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
-              await safeSetStorage("offline_pending_sync", pendingSyncQueue);
-            } else {
-              console.warn("Refus du serveur (erreur de format ou backend), on stoppe la file pour ne pas perdre de données.");
+              const result = await response.json();
+              
+              // On attend impérativement un succès du serveur avant de vider la file
+              if (result && result.status === "success") {
+                pendingSyncQueue = pendingSyncQueue.filter(q => q._syncId !== item._syncId);
+                await safeSetStorage("offline_pending_sync", pendingSyncQueue);
+              } else {
+                console.warn("Traitement serveur non abouti. Arrêt de la vidange.");
+                break;
+              }
+            } catch (err) { 
+              console.warn("Coupure réseau ou timeout. Arrêt de la vidange.", err);
               break; 
             }
-          } catch (err) { 
-            console.warn("Erreur réseau ou réponse invalide, on stoppe la file.", err);
-            break; 
           }
+          updatePendingBadge();
         }
-        updatePendingBadge();
-      }
 
-      // 2. Téléchargement et Fusion Intelligente (GET)
-      try {
+        // 2. Téléchargement et Fusion Intelligente (GET)
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" }); 
         const data = await res.json();
         
@@ -612,33 +619,13 @@ Version Web App : v4.0`
               if (q.action === "UPDATE_TOURNEE_STATUS") pendingUpdatesToMerge.push(q); 
             });
             
-            const localValides = new Set();
-            const localAFaire = new Set();
+            const localValides = new Set(cachedTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE').map(t => String(t.id)));
             
-            // Récupère l'état actuel de la mémoire locale
-            cachedTournees.forEach(t => {
-               if (String(t.statut).trim().toUpperCase() === 'VALIDE') localValides.add(String(t.id));
-            });
-            
-            // Priorité absolue aux mises à jour en file d'attente (VALIDE et A_FAIRE)
             pendingUpdatesToMerge.forEach(pu => { 
-              const idStr = String(pu.id);
-              if (String(pu.statut).trim().toUpperCase() === 'VALIDE') {
-                 localValides.add(idStr);
-                 localAFaire.delete(idStr);
-              } else if (String(pu.statut).trim().toUpperCase() === 'A_FAIRE') {
-                 localAFaire.add(idStr);
-                 localValides.delete(idStr);
-              }
+              if (String(pu.statut).trim().toUpperCase() === 'VALIDE') localValides.add(String(pu.id)); 
             });
             
-            // Fusion protégée avec le serveur
-            cachedTournees = data.tournees.map(s => {
-              const idStr = String(s.id);
-              if (localAFaire.has(idStr)) return { ...s, statut: 'A_FAIRE' };
-              if (localValides.has(idStr)) return { ...s, statut: 'VALIDE' };
-              return s;
-            });
+            cachedTournees = data.tournees.map(s => localValides.has(String(s.id)) ? { ...s, statut: 'VALIDE' } : s);
             await safeSetStorage("offline_tournees", cachedTournees);
           }
           
@@ -661,11 +648,10 @@ Version Web App : v4.0`
           renderTournee(); 
           renderHistory();
         }
-      } catch (err) {
-        console.warn("Background sync error", err);
+      } catch (globalErr) {
+        console.warn("Synchronisation interrompue :", globalErr);
       } finally {
         isSyncing = false;
-        
         if (syncIcon) {
            syncIcon.classList.remove("text-orange-500", "animate-spin");
            syncIcon.classList.add("text-emerald-600");
