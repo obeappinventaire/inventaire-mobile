@@ -2034,6 +2034,25 @@
         const isRupture = qty === 0;
         const markerColor = isRupture ? "#e11d48" : "#f97316";
 
+        const tDate = normalizeDateYMD(p.timestamp);
+        const groupTasks = cachedTournees.filter(t => t.agent === p.user && t.contractor === p.contractor && t.trade === p.trade && t.date === tDate);
+        const totalMissions = groupTasks.length;
+        const doneMissions = groupTasks.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
+        const pendingMissions = totalMissions - doneMissions;
+        const isAllDone = totalMissions > 0 && pendingMissions === 0;
+
+        let pendingText = 'Hors Plan';
+        if (totalMissions > 0) {
+           pendingText = pendingMissions === 0 ? 'Terminé ✓' : `${pendingMissions} à faire`;
+        }
+
+        let iconHtml = '<i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-400"></i>';
+        if (totalMissions > 0) {
+           iconHtml = isAllDone 
+              ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>'
+              : '<i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>';
+        }
+
         const marker = L.circleMarker([p.lat, p.lng], {
           radius: 8,
           fillColor: markerColor,
@@ -2044,7 +2063,7 @@
         });
 
         const tooltipHtml = `
-          <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[230px] overflow-hidden border border-slate-200 p-2.5">
+          <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[240px] overflow-hidden border border-slate-200 p-2.5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
               <div class="flex items-center gap-1 min-w-0">
                 <span class="font-black text-slate-800 text-[11px] uppercase truncate">👤 ${p.user}</span>
@@ -2054,17 +2073,23 @@
             
             <div class="mb-2 leading-tight">
               <p class="font-bold text-slate-900 text-xs truncate">${p.contractor}</p>
-              <p class="text-[9px] font-semibold text-slate-500 truncate">${p.trade} • 📅 ${formatDateDMY(p.timestamp)}</p>
+              <p class="text-[10px] font-semibold text-slate-600 truncate">${p.trade} • <span class="font-mono text-orange-600 font-bold">${p.sapRef}</span></p>
             </div>
             
             <div class="flex gap-1.5 items-stretch">
               <div class="bg-slate-50 text-slate-700 px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center items-center">
-                <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Mission</span>
-                <span class="truncate max-w-[80px] text-orange-600">${p.sapRef}</span>
+                <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Missions</span>
+                <div class="flex items-center gap-1 text-xs">
+                  <span>${totalMissions}</span>
+                  ${iconHtml}
+                </div>
               </div>
-              <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border flex-1 flex flex-col justify-center items-center">
-                <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">${isRupture ? 'À Traiter' : 'Compté'}</span>
-                <span>${qty}</span>
+              <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl shadow-inner border flex-[1.2] flex flex-col justify-center items-center">
+                <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Qté Comptée</span>
+                <div class="flex flex-col items-center leading-none">
+                  <span class="text-xs font-black">${qty}</span>
+                  <span class="text-[8px] font-bold opacity-75 mt-1">${pendingText}</span>
+                </div>
               </div>
             </div>
           </div>
