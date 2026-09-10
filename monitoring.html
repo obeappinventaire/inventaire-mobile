@@ -19,8 +19,8 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     
     #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
@@ -39,9 +39,17 @@
       display: none !important;
     }
 
-    /* FIX STABILITE DRAG & DROP */
+    /* FIX STABILITE DRAG & DROP : Bloque les conflits avec les cartes enfants */
     body.is-dragging .task-card {
       pointer-events: none !important;
+    }
+    .dropzone-active {
+      background-color: #e0f2fe !important;
+      border-color: #7dd3fc !important;
+    }
+    .dropzone-active-pm {
+      background-color: #fef3c7 !important;
+      border-color: #fcd34d !important;
     }
   </style>
 </head>
@@ -116,7 +124,7 @@
   <div class="flex-1 flex overflow-hidden">
     
     <!-- BARRE LATÉRALE GAUCHE -->
-    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0 text-slate-100 relative">
+    <aside class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col shrink-0 text-slate-100 relative shadow-xl z-10">
       <div class="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
         
         <div class="space-y-1">
@@ -140,18 +148,18 @@
         </div>
 
         <div class="mt-auto pt-6 space-y-4">
-          <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
+          <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
               </span>
-              <span id="weekBadgeLabel" class="text-sm font-bold bg-orange-100 text-orange-800 px-3 py-0.5 rounded border border-orange-300 shadow-sm">--</span>
+              <span id="weekBadgeLabel" class="text-sm font-black bg-orange-500 text-white px-2 py-0.5 rounded shadow-sm">--</span>
             </div>
 
             <div class="relative">
               <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
-                <option value="TODAY" selected>☀️ Aujourd'hui</option>
-                <option value="CURRENT_WEEK">📆 Cette semaine</option>
+                <option value="TODAY">☀️ Aujourd'hui</option>
+                <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
                 <option value="NEXT_WEEK">▶ Semaine prochaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
                 <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
@@ -172,12 +180,12 @@
             </div>
           </div>
 
-          <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-2.5">
+          <div class="bg-slate-900/60 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Critères
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Critères d'Anomalies
               </span>
-              <span class="text-[9px] bg-amber-950/50 text-amber-400 border border-amber-800/50 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
+              <span class="text-[9px] bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.2 rounded font-mono font-bold">Audit</span>
             </div>
 
             <div class="space-y-2 text-xs pt-1">
@@ -205,7 +213,7 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE DE DROITE (FOND GRIS CLAIR bg-slate-100) -->
+    <!-- ZONE PRINCIPALE DE DROITE -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-100">
       
       <div class="space-y-6 flex-1">
@@ -485,6 +493,7 @@
                    <span id="agendaWeekBadge" class="ml-3 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded"></span>
                 </div>
               </div>
+              <!-- ZONE ELASTIQUE DE L'AGENDA (Défilement Horizontal) -->
               <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
             </div>
 
@@ -684,7 +693,7 @@
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
-    // ÉCOUTEUR GLOBAL POUR SÉCURISER LE DRAG & DROP
+    // SECURITE GLOBALE : Supprime toujours l'état de glissement en cas de lâcher hors zone
     document.addEventListener('dragend', () => {
       document.body.classList.remove('is-dragging');
     });
@@ -1305,20 +1314,22 @@
     function handleGroupDragStart(e, groupId) {
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
+      e.dataTransfer.effectAllowed = 'move';
+      // Bloque les événements de pointage sur les enfants pour ne pas perturber les zones de drop
       document.body.classList.add('is-dragging');
     }
 
-    function handleDropOnDay(e, targetDateStr, targetTranche) {
-      if (e) {
-         e.preventDefault();
-         e.stopPropagation();
-      }
+    async function handleDropOnDay(e, targetDateStr, targetTranche) {
+      e.preventDefault();
+      e.stopPropagation();
       document.body.classList.remove('is-dragging');
+
       if (!draggedGroupPayload) return;
 
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
       const today = new Date(); today.setHours(0,0,0,0);
 
+      // Verrouillages stricts de sécurité : impossible de glisser dans le passé ou jours non ouvrés
       if (targetDateObj < today) { alert("Impossible de déplacer une mission dans le passé."); draggedGroupPayload = null; return; }
       if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { alert("Impossible de déplacer sur un week-end."); draggedGroupPayload = null; return; }
       if (isBelgianHoliday(targetDateObj)) { alert("Impossible de déplacer sur un jour férié."); draggedGroupPayload = null; return; }
@@ -1334,17 +1345,16 @@
         }
       });
 
-      localforage.setItem("offline_tournees", cachedTournees).then(() => {
-        applyFilters(); 
-        draggedGroupPayload = null;
-        if (itemsToUpdate.length > 0) {
-          const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-          pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
-          localforage.setItem("offline_pending_sync", pendingSyncQueue).then(() => {
-             if(navigator.onLine) setTimeout(syncMonitoringData, 100);
-          });
-        }
-      });
+      await localforage.setItem("offline_tournees", cachedTournees);
+      applyFilters(); 
+      draggedGroupPayload = null;
+
+      if (itemsToUpdate.length > 0) {
+        const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+        pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
+        await localforage.setItem("offline_pending_sync", pendingSyncQueue);
+        if(navigator.onLine) setTimeout(syncMonitoringData, 100);
+      }
     }
 
     function buildTourneeGroups(tourneesList) {
@@ -1479,7 +1489,7 @@
           groups.forEach(g => {
             const badgeColor = g.isDone ? "bg-emerald-50 border-emerald-300" : "bg-white border-slate-200 hover:border-orange-300";
             cardsHtml += `
-              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[9px] space-y-1 w-fit min-w-[130px] max-w-full flex-shrink-0">
+              <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2 rounded-xl border ${badgeColor} cursor-grab active:cursor-grabbing shadow-sm transition text-[9px] space-y-1 w-full max-w-full flex-shrink-0">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
                   <span class="font-bold text-slate-700 truncate pr-1">${g.agent}</span>
                   <span class="font-mono text-[8px] ${g.isDone ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'}">${g.isDone ? '✓' : `${g.done}/${g.total}`}</span>
@@ -1497,17 +1507,21 @@
         const isHoliday = isBelgianHoliday(dayObj);
         const isWeekend = dayObj.getDay() === 0 || dayObj.getDay() === 6;
         const isBlocked = isHoliday || isWeekend;
+        
+        // C'est ce calcul qui détermine si l'on bloque les actions Drag & Drop sur la colonne
         const isPast = dayObj < today;
 
         const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'min-w-[280px] flex-1 shrink-0';
         
         let innerContentHtml = '';
         if (isBlocked) {
-           innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
+           innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
-           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('bg-sky-100')" ondragleave="this.classList.remove('bg-sky-100')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('bg-sky-100'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
-           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('bg-amber-100')" ondragleave="this.classList.remove('bg-amber-100')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('bg-amber-100'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
+           // On n'injecte les attributs ondragover et ondrop QUE si ce n'est pas un jour passé.
+           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
+           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
+           // Opacité réduite pour les jours passés, pour bien montrer qu'ils sont inactifs
            const styleMatin = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60' : 'bg-sky-50/50 border-sky-200 border-dashed';
            const styleAprem = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60 mt-2' : 'bg-amber-50/50 border-amber-200 border-dashed mt-2';
 
@@ -1515,22 +1529,22 @@
            const btnAprem = isPast ? '' : `<button onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" class="text-amber-500 hover:text-amber-700 p-0.5 transition cursor-pointer bg-white rounded-md shadow-sm border border-amber-100" title="Ajouter une tâche"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>`;
 
            innerContentHtml = `
-            <div class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition ${styleMatin}" ${dropAttrsMatin}>
+            <div class="h-max min-h-[140px] rounded-xl p-2 flex flex-col transition ${styleMatin}" ${dropAttrsMatin}>
               <div class="flex items-center justify-between border-b ${isPast ? 'border-slate-200' : 'border-sky-200/50'} pb-1 mb-2">
                  <span class="text-[9px] font-black ${isPast ? 'text-slate-400' : 'text-sky-600'} uppercase tracking-wider">Matin</span>
                  ${btnMatin}
               </div>
-              <div class="flex flex-wrap gap-1.5 flex-1 content-start">
+              <div class="grid grid-cols-1 2xl:grid-cols-2 gap-1.5 w-full content-start">
                  ${renderGroupCards(matinGroups)}
               </div>
             </div>
 
-            <div class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition ${styleAprem}" ${dropAttrsAprem}>
+            <div class="h-max min-h-[140px] rounded-xl p-2 flex flex-col transition ${styleAprem}" ${dropAttrsAprem}>
               <div class="flex items-center justify-between border-b ${isPast ? 'border-slate-200' : 'border-amber-200/50'} pb-1 mb-2">
                  <span class="text-[9px] font-black ${isPast ? 'text-slate-400' : 'text-amber-600'} uppercase tracking-wider">Après-midi</span>
                  ${btnAprem}
               </div>
-              <div class="flex flex-wrap gap-1.5 flex-1 content-start">
+              <div class="grid grid-cols-1 2xl:grid-cols-2 gap-1.5 w-full content-start">
                  ${renderGroupCards(apresMidiGroups)}
               </div>
             </div>
@@ -1551,7 +1565,7 @@
                 </span>
               </div>
             </div>
-            <div class="flex flex-col flex-1 gap-2">
+            <div class="flex flex-col h-full gap-2">
               ${innerContentHtml}
             </div>
           </div>
