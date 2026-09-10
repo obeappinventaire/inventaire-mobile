@@ -38,7 +38,7 @@
   <!-- EN-TÊTE MOBILE -->
   <header class="bg-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0 z-20 relative">
     <div class="absolute inset-x-0 top-1 flex justify-center pointer-events-none">
-      <span class="text-[6px] font-medium text-slate-400 tracking-widest uppercase leading-none">&copy; made by CO2H2O srlu</span>
+      <span class="text-[6px] font-medium text-slate-400 tracking-widest uppercase leading-none">CO2H2O 2026 copyright</span>
     </div>
     <div class="flex items-end space-x-2.5 h-7 relative z-10">
       <img src="app_icon_co2h2o.png" alt="Logo" class="w-8 h-8 object-contain drop-shadow-sm">
@@ -56,7 +56,7 @@
   </header>
 
   <!-- CONTENU PRINCIPAL -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[70vh]" id="mainScrollArea">
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[85vh]" id="mainScrollArea">
     
     <div class="space-y-4 h-full">
       <!-- ONGLET 1 : COMPTAGE -->
@@ -115,13 +115,13 @@
             </button>
           </div>
 
-          <!-- BOUTONS SANS TEXTE -->
+          <!-- BOUTONS ACTIONS (THEME FLUX COGNITIF) -->
           <div class="grid grid-cols-2 gap-3 pt-1">
-            <button onclick="toggleVoiceSearch()" id="micBtn" class="h-14 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm">
-              <i data-lucide="mic" class="w-8 h-8 text-indigo-500"></i>
+            <button onclick="toggleVoiceSearch()" id="micBtn" class="h-14 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm">
+              <i data-lucide="mic" class="w-8 h-8 text-indigo-600"></i>
             </button>
-            <button onclick="openScanModal()" class="h-14 bg-orange-300 border border-orange-400 hover:bg-orange-400 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-md">
-              <i data-lucide="camera" class="w-8 h-8 text-orange-900"></i>
+            <button onclick="openScanModal()" class="h-14 bg-amber-100 border border-amber-300 hover:bg-amber-200 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm">
+              <i data-lucide="camera" class="w-8 h-8 text-amber-700"></i>
             </button>
           </div>
         </div>
@@ -132,7 +132,7 @@
             <div class="relative flex-1">
               <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-20 text-center font-black text-4xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 focus:bg-orange-50 focus:text-orange-900 font-mono shadow-inner transition-all">
             </div>
-            <button onclick="submitInventoryEntry()" class="w-20 h-20 bg-emerald-400 hover:bg-emerald-500 active:bg-emerald-600 rounded-2xl shadow-md flex items-center justify-center transition cursor-pointer border border-emerald-500 shrink-0">
+            <button onclick="submitInventoryEntry()" class="w-20 h-20 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-2xl shadow-[0_4px_20px_rgba(16,185,129,0.3)] flex items-center justify-center transition cursor-pointer border border-emerald-600 shrink-0">
               <i data-lucide="check-square" class="w-10 h-10 text-white"></i>
             </button>
           </div>
@@ -140,18 +140,21 @@
       </section>
 
       <!-- ONGLET 2 : HISTORIQUE -->
-      <section id="tabHistorique" class="hidden flex-col justify-center min-h-[calc(100dvh-130px)] space-y-3">
-        <div class="flex justify-between items-center px-1 shrink-0">
+      <section id="tabHistorique" class="hidden space-y-3">
+        <div class="flex justify-between items-center px-1">
           <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
           <span id="historyCount" class="text-xs font-mono font-bold text-emerald-700">0 ligne(s)</span>
         </div>
-        <div id="historyListContainer" class="space-y-3 shrink-0"></div>
+        <div id="historyListContainer" class="space-y-3"></div>
       </section>
 
       <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
-      <section id="tabTournee" class="hidden flex-col justify-center min-h-[calc(100dvh-130px)] space-y-4">
-        <div id="tourneeDebugHeader" class="pb-2 shrink-0"></div>
-        <div id="tourneeListContainer" class="space-y-3 pb-8 shrink-0"></div>
+      <section id="tabTournee" class="hidden space-y-4">
+        <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
+          <h2 class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Comptages Assignés</h2>
+        </div>
+        <div id="tourneeDebugHeader" class="pb-2"></div>
+        <div id="tourneeListContainer" class="space-y-3 pb-8"></div>
       </section>
     </div>
 
@@ -186,7 +189,7 @@
         <i data-lucide="x" class="w-6 h-6"></i>
       </button>
       
-      <button onclick="captureAndOCR()" class="w-20 h-20 bg-orange-500 hover:bg-orange-400 active:scale-95 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] border-4 border-orange-200 transition flex items-center justify-center cursor-pointer">
+      <button onclick="captureAndOCR()" class="w-20 h-20 bg-amber-500 hover:bg-amber-400 active:scale-95 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)] border-4 border-amber-200 transition flex items-center justify-center cursor-pointer">
         <i data-lucide="camera" class="w-8 h-8 text-white"></i>
       </button>
       
@@ -221,16 +224,16 @@
 
       <hr class="border-slate-100 my-1">
 
-      <div class="space-y-2.5 p-3 rounded-2xl border border-slate-100">
-        <button onclick="sendSupportEmail()" class="w-full h-12 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+      <div class="space-y-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+        <button onclick="sendSupportEmail()" class="w-full h-12 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="mail" class="w-5 h-5 text-slate-400"></i> Support Technique
         </button>
-        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
-          <i data-lucide="rotate-cw" class="w-5 h-5 text-rose-400"></i> Vider cache & réparer
+        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+          <i data-lucide="rotate-cw" class="w-5 h-5 text-slate-400"></i> Vider cache & réparer
         </button>
       </div>
-      <div class="mt-1 text-center">
-        <span class="text-[8px] font-medium text-slate-300 tracking-widest uppercase">&copy; made by CO2H2O srlu</span>
+      <div class="mt-2 text-center">
+        <span class="text-[8px] font-medium text-slate-300 tracking-widest uppercase">CO2H2O 2026 copyright</span>
       </div>
     </div>
   </div>
@@ -521,8 +524,9 @@ Version Web App : v4.0`
     function handleSearchFocus() {
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection');
-        if (searchSec) {
-          searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const mainArea = document.getElementById('mainScrollArea');
+        if (mainArea && searchSec) {
+          mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
         }
       }, 300);
     }
@@ -766,6 +770,7 @@ Version Web App : v4.0`
           if (b.length > 0) { 
             const i = catalog.find(x => String(x.sapRef).trim() === b[0].rawValue || String(x.ean).trim() === b[0].rawValue); 
             if (i) {
+              if (navigator.vibrate) navigator.vibrate(40);
               selectArticleFromSearch(i);
               closeScanModal();
               return;
@@ -825,7 +830,7 @@ Version Web App : v4.0`
       const r = new S(); 
       r.lang = 'fr-FR'; 
       const btn = document.getElementById("micBtn"); 
-      btn.className = "h-14 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
+      btn.className = "h-14 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
       
       r.onresult = e => { 
         const m = e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); 
@@ -854,7 +859,7 @@ Version Web App : v4.0`
       }; 
       
       r.onerror = r.onend = () => { 
-        btn.className = "h-14 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm"; 
+        btn.className = "h-14 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm"; 
       }; 
       
       r.start(); 
@@ -1021,7 +1026,6 @@ Version Web App : v4.0`
 
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
-      const threeHoursAgo = new Date(now.getTime() - ARCHIVE_LIMIT_MS);
       
       const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
@@ -1031,9 +1035,8 @@ Version Web App : v4.0`
         .map(p => ({ ...p, isPending: true }));
 
       let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
-        if (isAdmin) return true;
         const histDate = new Date(h.timestamp); 
-        return histDate >= threeHoursAgo; 
+        return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
       });
 
       fullHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -1062,9 +1065,7 @@ Version Web App : v4.0`
         const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
         let archiveText = "";
         
-        if (isAdmin) {
-            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
-        } else if (remainingMins > 60) {
+        if (remainingMins > 60) {
            archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
         } else {
            archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
@@ -1087,12 +1088,13 @@ Version Web App : v4.0`
             <p class="font-bold text-slate-900 text-sm leading-tight break-words whitespace-normal">${h.designation}</p>
             
             <div class="flex gap-2 pt-1 items-stretch flex-wrap">
-              <div class="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl shadow-inner border border-slate-200 flex flex-col justify-center w-[40%] shrink-0">
-                <span class="text-xs font-bold text-slate-800 break-words whitespace-normal truncate">${h.contractor}</span>
-                <span class="text-[10px] font-semibold text-slate-500 break-words whitespace-normal truncate">${h.trade}</span>
+              <div class="bg-slate-50 text-slate-700 px-3 py-2 rounded-xl shadow-inner border border-slate-200 flex flex-col justify-center flex-1 min-w-[150px]">
+                <span class="text-[10px] font-bold text-slate-700 text-center uppercase tracking-wide leading-snug">
+                  ${h.contractor} <span class="text-orange-500 mx-0.5">•</span> ${h.trade} <span class="text-orange-500 mx-0.5">•</span> ${String(h.user).toUpperCase()}
+                </span>
               </div>
               
-              <div class="flex gap-2 flex-1 justify-end">
+              <div class="flex gap-2 shrink-0 ml-auto">
                 <div class="bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center flex-1">
                   ${h.quantity} <span class="text-[10px] ml-1 opacity-70">PCS</span>
                 </div>
