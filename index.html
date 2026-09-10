@@ -115,7 +115,7 @@
             </button>
           </div>
 
-          <!-- BOUTONS ACTIONS (THEME FLUX COGNITIF) -->
+          <!-- BOUTONS ACTIONS -->
           <div class="grid grid-cols-2 gap-3 pt-1">
             <button onclick="toggleVoiceSearch()" id="micBtn" class="h-14 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm">
               <i data-lucide="mic" class="w-8 h-8 text-indigo-600"></i>
@@ -695,8 +695,13 @@ Version Web App : v4.0`
       }
       
       const item = catalog.find(i => String(i.sapRef).trim() === String(t.sapRef).trim());
-      selectArticleFromSearch(item || { sapRef: t.sapRef, designation: t.designation || 'Article assigné', supplierRef: '' }); 
+      selectArticleFromSearch(item || { sapRef: t.sapRef, designation: t.designation || 'Article assigné', supplierRef: '' }, true); 
       switchMobileTab('comptage');
+      
+      setTimeout(() => {
+        const mainArea = document.getElementById('mainScrollArea');
+        if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
     }
 
     function cancelActiveMission() {
@@ -732,6 +737,9 @@ Version Web App : v4.0`
       
       const clearBtn = document.getElementById("clearSearchBtn");
       if (clearBtn) clearBtn.classList.add("hidden");
+
+      const suggestions = document.getElementById("sapSuggestions");
+      if (suggestions) suggestions.classList.add("hidden");
       
       const qtyInput = document.getElementById("inputQuantity");
       if (qtyInput) {
@@ -902,7 +910,7 @@ Version Web App : v4.0`
       dd.classList.remove("hidden");
     }
 
-    function selectArticleFromSearch(i) {
+    function selectArticleFromSearch(i, skipScroll = false) {
       if (navigator.vibrate) navigator.vibrate(40);
       selectedArticle = i; 
       const inputSap = document.getElementById("sapSearchInput");
@@ -923,12 +931,14 @@ Version Web App : v4.0`
       
       if (inputSap) inputSap.blur();
 
-      setTimeout(() => {
-        const searchSec = document.getElementById('searchSection');
-        if (searchSec) {
-          searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 150);
+      if (!skipScroll) {
+        setTimeout(() => {
+          const searchSec = document.getElementById('searchSection');
+          if (searchSec) {
+            searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+      }
     }
 
     async function submitInventoryEntry() {
@@ -1019,22 +1029,24 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
-      
-      // Sécurité : les admins voient TOUT, mais la condition ARCHIVE_LIMIT s'applique désormais pour GARANTIR la disparition visuelle après 3h sur cet onglet.
+      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
+
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => {
-        const histDate = new Date(h.timestamp); 
-        return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS;
-      });
-      
+      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
+      
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
-      let fullHistory = [...pendingFiltered, ...sessionHist];
+      let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
+        if (isAdmin) return true;
+        const histDate = new Date(h.timestamp); 
+        return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
+      });
+
       fullHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       
       const countLabel = document.getElementById("historyCount");
@@ -1059,9 +1071,11 @@ Version Web App : v4.0`
         const ageMs = now.getTime() - histDate.getTime();
         const remainingMs = ARCHIVE_LIMIT_MS - ageMs;
         const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
-        
         let archiveText = "";
-        if (remainingMins > 60) {
+        
+        if (isAdmin) {
+            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
+        } else if (remainingMins > 60) {
            archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
         } else {
            archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
@@ -1082,26 +1096,26 @@ Version Web App : v4.0`
               </div>
             </div>
             
-            <p class="font-medium text-slate-500 text-[10px] truncate leading-relaxed">${h.designation}</p>
+            <p class="font-medium text-slate-500 text-[10px] leading-relaxed truncate">${h.designation}</p>
             
-            <div class="flex gap-2 pt-1 items-stretch flex-nowrap w-full overflow-hidden">
-              <div class="flex flex-row items-center gap-1.5 flex-1 min-w-0">
+            <div class="flex flex-row items-center gap-1.5 w-full overflow-hidden mt-1 mb-2">
                 <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.contractor}</span>
                 <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.trade}</span>
-                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%] inline-flex items-center gap-1"><i data-lucide="user" class="w-2.5 h-2.5 shrink-0"></i><span class="truncate">${String(h.user).toUpperCase()}</span></span>
-              </div>
-              
-              <div class="flex gap-2 shrink-0">
-                <div class="bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center">
+                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%] inline-flex items-center gap-1">
+                  <i data-lucide="user" class="w-2.5 h-2.5 shrink-0"></i><span class="truncate">${String(h.user).toUpperCase()}</span>
+                </span>
+            </div>
+            
+            <div class="flex gap-2 justify-end w-full pt-1">
+                <div class="bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center flex-1">
                   ${h.quantity} <span class="text-[10px] ml-1 opacity-70">PCS</span>
                 </div>
-                <button onclick="editHistoryItem('${h.id}')" class="px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
+                <button onclick="editHistoryItem('${h.id}')" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
                   <i data-lucide="edit-3" class="w-5 h-5"></i>
                 </button>
-                <button onclick="deleteHistoryItem('${h.id}')" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
+                <button onclick="deleteHistoryItem('${h.id}')" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
                   <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
-              </div>
             </div>
           </div>
         `;
