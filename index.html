@@ -36,13 +36,15 @@
   </div>
 
   <!-- EN-TÊTE MOBILE -->
-  <header class="bg-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0 z-20">
-    <div class="flex items-end space-x-2.5 h-7 relative">
+  <header class="bg-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0 z-20 relative">
+    <div class="absolute inset-x-0 top-1 flex justify-center pointer-events-none">
+      <span class="text-[6px] font-medium text-slate-400 tracking-widest uppercase leading-none">&copy; made by CO2H2O srlu</span>
+    </div>
+    <div class="flex items-end space-x-2.5 h-7 relative z-10">
       <img src="app_icon_co2h2o.png" alt="Logo" class="w-8 h-8 object-contain drop-shadow-sm">
-      <span class="absolute -top-1 left-9 text-[6px] font-medium text-slate-400 tracking-widest uppercase leading-none">&copy; made by CO2H2O srlu</span>
       <h1 id="headerAgentName" class="text-base font-bold text-orange-600 tracking-wide truncate max-w-[150px] leading-none pb-0.5">--</h1>
     </div>
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center space-x-3 relative z-10">
       <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-1.5 rounded-xl hover:bg-slate-200 transition cursor-pointer relative flex items-center justify-center">
         <i id="syncIcon" data-lucide="refresh-cw" class="w-6 h-6 text-emerald-600 transition-colors"></i>
         <span id="pendingBadge" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white font-mono font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-slate-100">0</span>
@@ -54,7 +56,7 @@
   </header>
 
   <!-- CONTENU PRINCIPAL -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[85vh]" id="mainScrollArea">
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[70vh]" id="mainScrollArea">
     
     <div class="space-y-4 h-full">
       <!-- ONGLET 1 : COMPTAGE -->
@@ -125,33 +127,31 @@
         </div>
 
         <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
-        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4 shrink-0" id="quantitySection">
-          <div class="relative w-full">
-            <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-20 text-center font-black text-4xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 focus:bg-orange-50 focus:text-orange-900 font-mono shadow-inner transition-all">
+        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs shrink-0" id="quantitySection">
+          <div class="flex items-center gap-3">
+            <div class="relative flex-1">
+              <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-20 text-center font-black text-4xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 focus:bg-orange-50 focus:text-orange-900 font-mono shadow-inner transition-all">
+            </div>
+            <button onclick="submitInventoryEntry()" class="w-20 h-20 bg-emerald-400 hover:bg-emerald-500 active:bg-emerald-600 rounded-2xl shadow-md flex items-center justify-center transition cursor-pointer border border-emerald-500 shrink-0">
+              <i data-lucide="check-square" class="w-10 h-10 text-white"></i>
+            </button>
           </div>
-
-          <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-200 hover:bg-emerald-300 active:bg-emerald-400 rounded-2xl shadow-md flex items-center justify-center transition cursor-pointer border border-emerald-300">
-            <i data-lucide="check-square" class="w-8 h-8 text-emerald-900"></i>
-          </button>
         </div>
       </section>
 
       <!-- ONGLET 2 : HISTORIQUE -->
-      <section id="tabHistorique" class="hidden space-y-3">
-        <div class="flex justify-between items-center px-1">
+      <section id="tabHistorique" class="hidden flex-col justify-center min-h-[calc(100dvh-130px)] space-y-3">
+        <div class="flex justify-between items-center px-1 shrink-0">
           <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
           <span id="historyCount" class="text-xs font-mono font-bold text-emerald-700">0 ligne(s)</span>
         </div>
-        <div id="historyListContainer" class="space-y-3"></div>
+        <div id="historyListContainer" class="space-y-3 shrink-0"></div>
       </section>
 
       <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
-      <section id="tabTournee" class="hidden space-y-4">
-        <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
-          <h2 class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Comptages Assignés</h2>
-        </div>
-        <div id="tourneeDebugHeader" class="pb-2"></div>
-        <div id="tourneeListContainer" class="space-y-3 pb-8"></div>
+      <section id="tabTournee" class="hidden flex-col justify-center min-h-[calc(100dvh-130px)] space-y-4">
+        <div id="tourneeDebugHeader" class="pb-2 shrink-0"></div>
+        <div id="tourneeListContainer" class="space-y-3 pb-8 shrink-0"></div>
       </section>
     </div>
 
@@ -221,15 +221,15 @@
 
       <hr class="border-slate-100 my-1">
 
-      <div class="space-y-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-        <button onclick="sendSupportEmail()" class="w-full h-12 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+      <div class="space-y-2.5 p-3 rounded-2xl border border-slate-100">
+        <button onclick="sendSupportEmail()" class="w-full h-12 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="mail" class="w-5 h-5 text-slate-400"></i> Support Technique
         </button>
-        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
-          <i data-lucide="rotate-cw" class="w-5 h-5 text-slate-400"></i> Vider cache & réparer
+        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+          <i data-lucide="rotate-cw" class="w-5 h-5 text-rose-400"></i> Vider cache & réparer
         </button>
       </div>
-      <div class="mt-2 text-center">
+      <div class="mt-1 text-center">
         <span class="text-[8px] font-medium text-slate-300 tracking-widest uppercase">&copy; made by CO2H2O srlu</span>
       </div>
     </div>
@@ -521,9 +521,8 @@ Version Web App : v4.0`
     function handleSearchFocus() {
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection');
-        const mainArea = document.getElementById('mainScrollArea');
-        if (mainArea && searchSec) {
-          mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
+        if (searchSec) {
+          searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 300);
     }
@@ -767,7 +766,6 @@ Version Web App : v4.0`
           if (b.length > 0) { 
             const i = catalog.find(x => String(x.sapRef).trim() === b[0].rawValue || String(x.ean).trim() === b[0].rawValue); 
             if (i) {
-              if (navigator.vibrate) navigator.vibrate(40);
               selectArticleFromSearch(i);
               closeScanModal();
               return;
@@ -903,6 +901,7 @@ Version Web App : v4.0`
     }
 
     function selectArticleFromSearch(i) {
+      if (navigator.vibrate) navigator.vibrate(40);
       selectedArticle = i; 
       const inputSap = document.getElementById("sapSearchInput");
       if(inputSap) {
@@ -923,15 +922,14 @@ Version Web App : v4.0`
       if (inputSap) inputSap.blur();
 
       setTimeout(() => {
-        const qtySec = document.getElementById('quantitySection');
-        if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const searchSec = document.getElementById('searchSection');
+        if (searchSec) {
+          searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 150);
     }
 
     async function submitInventoryEntry() {
-      if (navigator.vibrate) navigator.vibrate(40);
       
       if (!currentAgent) {
         alert("Configurez l'agent");
@@ -942,6 +940,8 @@ Version Web App : v4.0`
         alert("Sélectionnez un article");
         return;
       }
+      
+      if (navigator.vibrate) navigator.vibrate([40, 50, 40]);
       
       const qInputStr = document.getElementById("inputQuantity").value;
       const q = parseInt(qInputStr, 10) || 0;
@@ -1002,16 +1002,10 @@ Version Web App : v4.0`
       renderTournee(); 
       renderHistory(); 
 
-      const agentPendingTasks = cachedTournees.filter(t => String(t.agent).toLowerCase() === String(currentAgent).toLowerCase() && String(t.statut).toUpperCase() !== 'VALIDE');
-      
-      if (agentPendingTasks.length > 0) {
-        switchMobileTab('tournee');
-        setTimeout(() => {
-          document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
-        }, 50);
-      } else {
+      switchMobileTab('tournee');
+      setTimeout(() => {
         document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      }, 50);
 
       if (navigator.onLine) {
         setTimeout(syncMobileData, 100);
@@ -1326,11 +1320,7 @@ Version Web App : v4.0`
               
               <div class="flex items-center justify-between mb-3">
                 <div class="flex-1 min-w-0 flex flex-col justify-center">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-black text-slate-900 text-sm leading-tight break-words whitespace-normal">${g.contractor}</span>
-                    <span class="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100 break-words whitespace-normal">${g.trade}</span>
-                  </div>
-                  ${isAdmin ? `<div class="text-[10px] mt-1 font-bold text-slate-400">AGENT: ${String(g.items[0].agent).toUpperCase()}</div>` : ''}
+                  <span class="font-black text-slate-900 text-sm leading-tight break-words whitespace-normal">${g.contractor} <span class="text-orange-600 mx-1">/</span> ${g.trade} <span class="text-orange-600 mx-1">/</span> ${String(g.items[0].agent).toUpperCase()}</span>
                 </div>
                 <div class="shrink-0 ml-3 bg-slate-50 p-1.5 rounded-full text-slate-400 border border-slate-100 shadow-sm">
                    <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5"></i>
