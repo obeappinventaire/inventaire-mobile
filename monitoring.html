@@ -19,8 +19,8 @@
   <style>
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     
     #mapContainer { height: 580px; width: 100%; border-radius: 12px; z-index: 1; }
@@ -213,7 +213,7 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE DE DROITE -->
+    <!-- ZONE PRINCIPALE DE DROITE (FOND GRIS CLAIR bg-slate-100) -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-100">
       
       <div class="space-y-6 flex-1">
@@ -1329,7 +1329,7 @@
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
       const today = new Date(); today.setHours(0,0,0,0);
 
-      // Verrouillages stricts de sécurité : impossible de glisser dans le passé ou jours non ouvrés
+      // Verrouillages stricts de sécurité
       if (targetDateObj < today) { alert("Impossible de déplacer une mission dans le passé."); draggedGroupPayload = null; return; }
       if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { alert("Impossible de déplacer sur un week-end."); draggedGroupPayload = null; return; }
       if (isBelgianHoliday(targetDateObj)) { alert("Impossible de déplacer sur un jour férié."); draggedGroupPayload = null; return; }
@@ -1337,7 +1337,10 @@
       const itemsToUpdate = [];
 
       cachedTournees.forEach(t => {
-        const itemGroupId = "GRP_" + `${t.agent}_${normalizeDateYMD(t.date)}_${t.contractor}_${t.trade}_${t.tranche}`.replace(/[^a-zA-Z0-9]/g, '_');
+        // FIX : Uniformisation de la tranche par défaut pour faire correspondre l'ID lors du drop
+        const tTranche = t.tranche || 'MATIN';
+        const itemGroupId = "GRP_" + `${t.agent}_${normalizeDateYMD(t.date)}_${t.contractor}_${t.trade}_${tTranche}`.replace(/[^a-zA-Z0-9]/g, '_');
+        
         if (itemGroupId === draggedGroupPayload) {
           t.date = targetDateStr;
           t.tranche = targetTranche;
@@ -1508,7 +1511,7 @@
         const isWeekend = dayObj.getDay() === 0 || dayObj.getDay() === 6;
         const isBlocked = isHoliday || isWeekend;
         
-        // C'est ce calcul qui détermine si l'on bloque les actions Drag & Drop sur la colonne
+        // FIX : Calcule si la colonne est dans le passé pour bloquer les événements de dépôt
         const isPast = dayObj < today;
 
         const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'min-w-[280px] flex-1 shrink-0';
@@ -1517,11 +1520,10 @@
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
-           // On n'injecte les attributs ondragover et ondrop QUE si ce n'est pas un jour passé.
-           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
-           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
+           // FIX : On n'injecte les attributs de glisser-déposer QUE si ce n'est pas un jour passé.
+           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
+           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
-           // Opacité réduite pour les jours passés, pour bien montrer qu'ils sont inactifs
            const styleMatin = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60' : 'bg-sky-50/50 border-sky-200 border-dashed';
            const styleAprem = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60 mt-2' : 'bg-amber-50/50 border-amber-200 border-dashed mt-2';
 
