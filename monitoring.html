@@ -893,7 +893,7 @@
       const pwd = document.getElementById("authPassword").value;
       
       if (!selected || !pwd) { 
-        alert("Veuillez remplir tous les champs."); 
+        alert("Veuillez remplir tous champs."); 
         return; 
       }
       
@@ -1315,8 +1315,10 @@
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
       e.dataTransfer.effectAllowed = 'move';
-      // Bloque les événements de pointage sur les enfants pour ne pas perturber les zones de drop
-      document.body.classList.add('is-dragging');
+      // Le délai est OBLIGATOIRE pour ne pas annuler le drag natif de WebKit/Chrome
+      setTimeout(() => {
+        document.body.classList.add('is-dragging');
+      }, 10);
     }
 
     async function handleDropOnDay(e, targetDateStr, targetTranche) {
@@ -1337,7 +1339,6 @@
       const itemsToUpdate = [];
 
       cachedTournees.forEach(t => {
-        // FIX : Uniformisation de la tranche par défaut pour faire correspondre l'ID lors du drop
         const tTranche = t.tranche || 'MATIN';
         const itemGroupId = "GRP_" + `${t.agent}_${normalizeDateYMD(t.date)}_${t.contractor}_${t.trade}_${tTranche}`.replace(/[^a-zA-Z0-9]/g, '_');
         
@@ -1510,8 +1511,6 @@
         const isHoliday = isBelgianHoliday(dayObj);
         const isWeekend = dayObj.getDay() === 0 || dayObj.getDay() === 6;
         const isBlocked = isHoliday || isWeekend;
-        
-        // FIX : Calcule si la colonne est dans le passé pour bloquer les événements de dépôt
         const isPast = dayObj < today;
 
         const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'min-w-[280px] flex-1 shrink-0';
@@ -1520,9 +1519,9 @@
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
-           // FIX : On n'injecte les attributs de glisser-déposer QUE si ce n'est pas un jour passé.
-           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
-           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
+           // Suppression totale des attributs de drop si la date est dépassée
+           const dropAttrsMatin = isPast ? '' : `ondragenter="event.preventDefault(); this.classList.add('dropzone-active')" ondragover="event.preventDefault(); event.stopPropagation();" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
+           const dropAttrsAprem = isPast ? '' : `ondragenter="event.preventDefault(); this.classList.add('dropzone-active-pm')" ondragover="event.preventDefault(); event.stopPropagation();" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
            const styleMatin = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60' : 'bg-sky-50/50 border-sky-200 border-dashed';
            const styleAprem = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60 mt-2' : 'bg-amber-50/50 border-amber-200 border-dashed mt-2';
