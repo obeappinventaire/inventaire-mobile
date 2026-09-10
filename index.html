@@ -52,8 +52,8 @@
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL (ESPACEMENT pb-[65vh] POUR REMONTER LA QUANTITÉ TOUT EN HAUT) -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[65vh]" id="mainScrollArea">
+  <!-- CONTENU PRINCIPAL (ESPACEMENT pb-[85vh] POUR EVITER LE CLAVIER ET MENU BAS) -->
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[85vh]" id="mainScrollArea">
     
     <div class="space-y-4 h-full">
       <!-- ONGLET 1 : COMPTAGE -->
@@ -97,7 +97,8 @@
               <i data-lucide="x" class="w-4 h-4"></i>
             </button>
 
-            <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-80 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
+            <!-- Ajustement max-h-56 pour visibilité avec clavier -->
+            <div id="sapSuggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-56 overflow-y-auto custom-scrollbar p-1.5 space-y-1"></div>
           </div>
 
           <!-- ZONE DE SÉLECTION COMPACTE -->
@@ -503,11 +504,12 @@ Version Web App : v4.0`
       return str.split(' ')[0];
     }
 
+    // SCROLL ADAPTE POUR CLAVIER - CENTRAGE
     function handleQuantityFocus() {
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
         if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 300);
     }
@@ -516,12 +518,12 @@ Version Web App : v4.0`
       document.getElementById('inputQuantity').blur(); 
     }
     
+    // SCROLL RECHERCHE POUR CLAVIER
     function handleSearchFocus() {
       setTimeout(() => {
         const searchSec = document.getElementById('searchSection');
-        const mainArea = document.getElementById('mainScrollArea');
-        if (mainArea && searchSec) {
-          mainArea.scrollTo({ top: searchSec.offsetTop - 70, behavior: 'smooth' });
+        if (searchSec) {
+          searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 300);
     }
@@ -908,11 +910,11 @@ Version Web App : v4.0`
       
       if (inputSap) inputSap.blur();
 
-      // REMONTEE DE LA ZONE DE QUANTITE AU DESSUS DU CLAVIER
+      // REMONTEE DE LA ZONE DE QUANTITE AU DESSUS DU CLAVIER AU CENTRE DE LA VUE
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
         if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 150);
     }
@@ -1282,8 +1284,10 @@ Version Web App : v4.0`
               
               <div class="flex items-center justify-between mb-3">
                 <div class="flex-1 min-w-0 flex flex-col justify-center">
-                  <p class="font-black text-slate-900 text-sm leading-tight break-words whitespace-normal">${g.contractor}</p>
-                  <p class="text-[11px] font-bold text-orange-600 break-words whitespace-normal mt-0.5">${g.trade}</p>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-black text-slate-900 text-sm leading-tight break-words whitespace-normal">${g.contractor}</span>
+                    <span class="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100 break-words whitespace-normal">${g.trade}</span>
+                  </div>
                 </div>
                 <div class="shrink-0 ml-3 bg-slate-50 p-1.5 rounded-full text-slate-400 border border-slate-100 shadow-sm">
                    <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5"></i>
