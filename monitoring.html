@@ -39,7 +39,7 @@
       display: none !important;
     }
 
-    /* FIX STABILITE DRAG & DROP : Bloque les conflits avec les cartes enfants */
+    /* FIX STABILITE DRAG & DROP */
     body.is-dragging .task-card {
       pointer-events: none !important;
     }
@@ -484,75 +484,68 @@
 
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            <div class="lg:col-span-9 bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-                <div class="flex items-center">
-                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions</span>
-                   <span id="agendaWeekBadge" class="ml-3 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded"></span>
-                </div>
+          <!-- NOUVEAU TABLEAU DE BORD KPI HORIZONTAL (TOP) -->
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-2 relative">
+            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
+              <div class="flex justify-between items-center text-xs mb-3">
+                <span class="font-bold text-slate-500 uppercase">Missions (Macro)</span>
+                <span id="kpiMissionsPct" class="font-black text-orange-600 text-lg leading-none">0%</span>
               </div>
-              <!-- ZONE ELASTIQUE DE L'AGENDA (Défilement Horizontal) -->
-              <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
-            </div>
-
-            <div class="lg:col-span-3 space-y-4">
-              <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm space-y-5">
-                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pilotage Réalisation</span>
-                </div>
-                <div class="text-center rounded-lg">
-                  <span id="kpiPeriodLabel" class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg inline-block shadow-xs">--</span>
-                </div>
-
-                <div class="space-y-1.5">
-                  <div class="flex justify-between items-center text-[11px]">
-                    <span class="font-bold text-slate-700">Missions (Macro)</span>
-                    <span id="kpiMissionsPct" class="font-mono font-black text-orange-600 text-xs">0%</span>
-                  </div>
-                  <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                    <div id="kpiMissionsBar" class="bg-orange-500 h-full transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
-                  </div>
-                  <div class="flex justify-between text-[10px] text-slate-400 font-mono">
-                    <span>Clôturées: <b id="kpiMissionsDone" class="text-slate-700">0</b></span>
-                    <span>Total: <b id="kpiMissionsTotal" class="text-slate-700">0</b></span>
-                  </div>
-                </div>
-
-                <div class="space-y-1.5 pt-3 border-t border-slate-100">
-                  <div class="flex justify-between items-center text-[11px]">
-                    <span class="font-bold text-slate-700">Lignes (Micro)</span>
-                    <span id="globalCompletionPct" class="font-mono font-black text-emerald-600 text-xs">0%</span>
-                  </div>
-                  <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                    <div id="globalCompletionBar" class="bg-emerald-500 h-full transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
-                  </div>
-                  <div class="flex justify-between text-[10px] text-slate-400 font-mono">
-                    <span>Comptées: <b id="kpiDoneTasks" class="text-slate-700">0</b></span>
-                    <span>Restantes: <b id="kpiPendingTasks" class="text-slate-700">0</b></span>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-center text-xs">
-                  <div class="bg-amber-50/50 border border-amber-200 p-2.5 rounded-xl">
-                    <span class="text-[9px] text-amber-700 block uppercase font-bold">En Retard</span>
-                    <strong id="kpiOverdueMissionsCount" class="text-sm font-black text-amber-800 font-mono">0</strong>
-                  </div>
-                  <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
-                    <span class="text-[9px] text-emerald-600 block uppercase font-bold">Délais</span>
-                    <strong id="kpiSlaScore" class="text-sm font-black text-emerald-700 font-mono">100%</strong>
-                  </div>
-                </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 mb-2 border border-slate-200">
+                <div id="kpiMissionsBar" class="bg-orange-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
               </div>
-
-              <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm space-y-3">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-2">Avancement / Agent</span>
-                <div id="agentCompletionList" class="space-y-2.5 max-h-[180px] overflow-y-auto custom-scrollbar pr-1"></div>
+              <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                <span>Clôturées: <b id="kpiMissionsDone" class="text-slate-700">0</b></span>
+                <span>Total: <b id="kpiMissionsTotal" class="text-slate-700">0</b></span>
               </div>
             </div>
+
+            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
+              <div class="flex justify-between items-center text-xs mb-3">
+                <span class="font-bold text-slate-500 uppercase">Lignes (Micro)</span>
+                <span id="globalCompletionPct" class="font-black text-emerald-600 text-lg leading-none">0%</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 mb-2 border border-slate-200">
+                <div id="globalCompletionBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                <span>Comptées: <b id="kpiDoneTasks" class="text-slate-700">0</b></span>
+                <span>Restantes: <b id="kpiPendingTasks" class="text-slate-700">0</b></span>
+              </div>
+            </div>
+
+            <div class="bg-amber-50/50 border border-amber-200 p-4 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center">
+              <span class="text-[10px] text-amber-700 block uppercase font-bold tracking-widest mb-1">Missions en Retard</span>
+              <strong id="kpiOverdueMissionsCount" class="text-2xl font-black text-amber-800 font-mono">0</strong>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center">
+              <span class="text-[10px] text-emerald-600 block uppercase font-bold tracking-widest mb-1">Conformité Délais</span>
+              <strong id="kpiSlaScore" class="text-2xl font-black text-emerald-700 font-mono">100%</strong>
+            </div>
             
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span id="kpiPeriodLabel" class="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full shadow-xs">--</span>
+            </div>
           </div>
+
+          <!-- CALENDRIER PLEINE LARGEUR -->
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 w-full">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+              <div class="flex items-center">
+                 <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions</span>
+                 <span id="agendaWeekBadge" class="ml-3 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded"></span>
+              </div>
+            </div>
+            <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
+          </div>
+          
+          <!-- AVANCEMENT AGENT SOUS LE CALENDRIER -->
+          <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm space-y-3">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-2">Avancement par Collaborateur</span>
+            <div id="agentCompletionList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[180px] overflow-y-auto custom-scrollbar pr-1"></div>
+          </div>
+
         </section>
 
       </div>
@@ -693,7 +686,7 @@
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
-    // SECURITE GLOBALE : Supprime toujours l'état de glissement en cas de lâcher hors zone
+    // SECURITE GLOBALE DRAG & DROP
     document.addEventListener('dragend', () => {
       document.body.classList.remove('is-dragging');
     });
@@ -893,7 +886,7 @@
       const pwd = document.getElementById("authPassword").value;
       
       if (!selected || !pwd) { 
-        alert("Veuillez remplir tous champs."); 
+        alert("Veuillez remplir tous les champs."); 
         return; 
       }
       
@@ -1315,7 +1308,7 @@
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
       e.dataTransfer.effectAllowed = 'move';
-      // Le délai est OBLIGATOIRE pour ne pas annuler le drag natif de WebKit/Chrome
+      // FIX DRAG: Le délai permet au navigateur de "photographier" la carte avant de désactiver les clics
       setTimeout(() => {
         document.body.classList.add('is-dragging');
       }, 10);
@@ -1323,7 +1316,6 @@
 
     async function handleDropOnDay(e, targetDateStr, targetTranche) {
       e.preventDefault();
-      e.stopPropagation();
       document.body.classList.remove('is-dragging');
 
       if (!draggedGroupPayload) return;
@@ -1331,7 +1323,7 @@
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
       const today = new Date(); today.setHours(0,0,0,0);
 
-      // Verrouillages stricts de sécurité
+      // Sécurité : Interdit le glissement dans le passé
       if (targetDateObj < today) { alert("Impossible de déplacer une mission dans le passé."); draggedGroupPayload = null; return; }
       if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { alert("Impossible de déplacer sur un week-end."); draggedGroupPayload = null; return; }
       if (isBelgianHoliday(targetDateObj)) { alert("Impossible de déplacer sur un jour férié."); draggedGroupPayload = null; return; }
@@ -1511,6 +1503,8 @@
         const isHoliday = isBelgianHoliday(dayObj);
         const isWeekend = dayObj.getDay() === 0 || dayObj.getDay() === 6;
         const isBlocked = isHoliday || isWeekend;
+        
+        // FIX : Calcul de date révolue
         const isPast = dayObj < today;
 
         const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'min-w-[280px] flex-1 shrink-0';
@@ -1519,9 +1513,9 @@
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
-           // Suppression totale des attributs de drop si la date est dépassée
-           const dropAttrsMatin = isPast ? '' : `ondragenter="event.preventDefault(); this.classList.add('dropzone-active')" ondragover="event.preventDefault(); event.stopPropagation();" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
-           const dropAttrsAprem = isPast ? '' : `ondragenter="event.preventDefault(); this.classList.add('dropzone-active-pm')" ondragover="event.preventDefault(); event.stopPropagation();" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
+           // FIX : Sécurité d'injection des attributs de réception (uniquement sur futur/aujourd'hui)
+           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
+           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
            const styleMatin = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60' : 'bg-sky-50/50 border-sky-200 border-dashed';
            const styleAprem = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60 mt-2' : 'bg-amber-50/50 border-amber-200 border-dashed mt-2';
