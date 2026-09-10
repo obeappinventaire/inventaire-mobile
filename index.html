@@ -64,12 +64,12 @@
         
         <!-- BANDEAU MISSION ACTIVE -->
         <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative shrink-0">
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center mb-1">
             <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="target" class="w-3.5 h-3.5 text-orange-500"></i> Tâche Assignée
             </span>
-            <button onclick="cancelActiveMission()" class="text-[9px] font-bold text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 px-2 py-1 rounded-md transition cursor-pointer border border-slate-100">
-              ✕ Quitter
+            <button onclick="cancelActiveMission()" class="text-[10px] font-bold text-rose-700 bg-rose-100 hover:bg-rose-200 px-3 py-1.5 rounded-lg transition cursor-pointer border border-rose-300 flex items-center gap-1 shadow-sm">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Quitter
             </button>
           </div>
           <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 break-words whitespace-normal line-clamp-2">--</p>
@@ -793,20 +793,22 @@ Version Web App : v4.0`
       
       switchMobileTab('comptage');
       
-      // AUTO-FOCUS & SCROLL GESTION POUR LE CLAVIER
+      // AUTO-FOCUS SYNCHRONE DU CLAVIER
+      const qtyInput = document.getElementById("inputQuantity");
+      if (qtyInput) {
+          qtyInput.focus();
+      }
+      
+      // DOUBLE SCROLL : AVANT ET PENDANT L'OUVERTURE DU CLAVIER POUR ASSURER LA VISIBILITÉ
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
         if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'auto' });
-        
-        const qtyInput = document.getElementById("inputQuantity");
-        if (qtyInput) {
-            qtyInput.focus();
-            // Force le maintien de la vue en haut après la sortie du clavier
-            setTimeout(() => {
-                if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 300);
-        }
       }, 50);
+      
+      setTimeout(() => {
+        const mainArea = document.getElementById('mainScrollArea');
+        if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 300);
     }
 
     function showNextTaskModal(task) {
@@ -1401,6 +1403,29 @@ Version Web App : v4.0`
     function toggleTourneeGroup(groupId) {
       openTourneeGroups[groupId] = !openTourneeGroups[groupId];
       renderTournee();
+      
+      if (openTourneeGroups[groupId]) {
+         setTimeout(() => {
+            const el = document.getElementById('group-' + groupId);
+            if (el) {
+               const mainArea = document.getElementById('mainScrollArea');
+               if (mainArea) {
+                   mainArea.scrollTo({ top: el.offsetTop - 10, behavior: 'smooth' });
+               }
+            }
+         }, 100);
+      }
+    }
+
+    function closeTourneeGroupAndGoComptage(groupId, e) {
+        if(e) e.stopPropagation();
+        openTourneeGroups[groupId] = false;
+        renderTournee();
+        switchMobileTab('comptage');
+        setTimeout(() => {
+            const mainArea = document.getElementById('mainScrollArea');
+            if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
     }
 
     function buildTourneeGroups(tourneesList) {
@@ -1489,7 +1514,7 @@ Version Web App : v4.0`
         const dateStr = formatTourneeDate(g.date);
         
         let cardHtml = `
-          <div class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'} rounded-3xl shadow-sm flex flex-col transition-all overflow-hidden mb-4">
+          <div id="group-${g.id}" class="bg-white border ${isDone ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'} rounded-3xl shadow-sm flex flex-col transition-all overflow-hidden mb-4">
             
             <div onclick="toggleTourneeGroup('${g.id}')" class="p-4 cursor-pointer active:bg-slate-50 transition-colors">
               <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-3">
@@ -1524,27 +1549,40 @@ Version Web App : v4.0`
               </div>
             </div>
 
-            <div class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50 p-3 space-y-2">
+            <div class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50 p-3 space-y-2 relative">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Sélectionner un article</span>
+                    <button onclick="closeTourneeGroupAndGoComptage('${g.id}', event)" class="text-[9px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-md transition cursor-pointer border border-rose-200 flex items-center gap-1 shadow-sm">
+                        <i data-lucide="x" class="w-3 h-3"></i> Quitter
+                    </button>
+                </div>
         `;
 
+        let displayedCount = 0;
         g.items.forEach(t => {
            const isItemDone = String(t.statut).toUpperCase() === 'VALIDE';
+           if (isItemDone) return; 
+           
+           displayedCount++;
            const taskId = String(t.id || "");
            const taskSap = String(t.sapRef || "--");
            
            cardHtml += `
-             <div ${isItemDone ? '' : `onclick="selectTourneeTask('${taskId}')"`} class="flex items-center justify-between p-2.5 rounded-xl ${isItemDone ? 'bg-emerald-50 border border-emerald-100 opacity-60' : 'bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-orange-300 active:scale-95 transition'}">
+             <div onclick="selectTourneeTask('${taskId}')" class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-orange-300 active:scale-95 transition">
                 <div class="min-w-0 pr-2 flex-1">
                    <div class="flex items-center gap-2 mb-0.5 flex-wrap">
                      <span class="font-mono font-black text-[11px] text-orange-600">${taskSap}</span>
-                     ${isItemDone ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>' : ''}
                    </div>
                    <div class="text-[10px] font-medium text-slate-600 break-words whitespace-normal leading-snug">${t.designation}</div>
                 </div>
-                ${!isItemDone ? '<div class="shrink-0 bg-orange-50 p-1.5 rounded-lg text-orange-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></div>' : ''}
+                <div class="shrink-0 bg-orange-50 p-1.5 rounded-lg text-orange-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></div>
              </div>
            `;
         });
+        
+        if (displayedCount === 0) {
+            cardHtml += `<div class="text-[10px] italic text-slate-400 text-center py-2">Toutes les tâches de ce groupe sont terminées.</div>`;
+        }
 
         cardHtml += `</div></div>`;
         return cardHtml;
