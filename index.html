@@ -670,7 +670,9 @@ Version Web App : v4.0`
         sapRef: t.sapRef, 
         designation: t.designation, 
         contractor: t.contractor, 
-        trade: t.trade 
+        trade: t.trade,
+        tranche: t.tranche,
+        date: t.date
       };
       
       setSelectValueWithFallback("selectContractor", t.contractor); 
@@ -696,8 +698,8 @@ Version Web App : v4.0`
       
       const item = catalog.find(i => String(i.sapRef).trim() === String(t.sapRef).trim());
       selectArticleFromSearch(item || { sapRef: t.sapRef, designation: t.designation || 'Article assigné', supplierRef: '' }, true); 
-      switchMobileTab('comptage');
       
+      switchMobileTab('comptage');
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
         if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
@@ -835,7 +837,7 @@ Version Web App : v4.0`
       const r = new S(); 
       r.lang = 'fr-FR'; 
       const btn = document.getElementById("micBtn"); 
-      btn.className = "h-14 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
+      btn.className = "h-14 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
       
       r.onresult = e => { 
         const m = e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); 
@@ -987,6 +989,7 @@ Version Web App : v4.0`
       
       let mT = tourneeId;
       let foundSapMatch = false; 
+      let currentTaskContext = null;
 
       cachedTournees.forEach(t => { 
         const matchById = tourneeId && String(t.id).trim() === String(tourneeId).trim();
@@ -996,8 +999,10 @@ Version Web App : v4.0`
           t.statut = 'VALIDE'; 
           if (!mT) mT = t.id; 
           if (matchBySap) foundSapMatch = true;
+          currentTaskContext = t;
         } 
       });
+      
       await safeSetStorage("offline_tournees", cachedTournees);
 
       const sId1 = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
@@ -1010,14 +1015,46 @@ Version Web App : v4.0`
       await safeSetStorage("offline_pending_sync", pendingSyncQueue);
 
       updatePendingBadge(); 
-      cancelActiveMission(); 
       renderTournee(); 
       renderHistory(); 
 
-      switchMobileTab('tournee');
-      setTimeout(() => {
-        document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
-      }, 50);
+      // WORKFLOW D'ENCHAINEMENT INTELLIGENT DE TOURNEE
+      let nextTask = null;
+      if (currentTaskContext) {
+          const sameGroupTasks = cachedTournees.filter(t => 
+              t.contractor === currentTaskContext.contractor && 
+              t.trade === currentTaskContext.trade && 
+              t.tranche === currentTaskContext.tranche && 
+              t.date === currentTaskContext.date &&
+              String(t.agent).trim().toLowerCase() === String(currentAgent).trim().toLowerCase()
+          );
+          sameGroupTasks.sort((a, b) => (Number(a.ordre) || 0) - (Number(b.ordre) || 0));
+          nextTask = sameGroupTasks.find(t => String(t.statut).toUpperCase() !== 'VALIDE');
+      }
+
+      if (nextTask) {
+          setTimeout(() => {
+              if (confirm(`Article enregistré avec succès !\n\nVoulez-vous passer à l'article suivant à compter ?\n▶ Réf: ${nextTask.sapRef} \n▶ ${nextTask.designation}`)) {
+                  selectTourneeTask(nextTask.id);
+              } else {
+                  cancelActiveMission();
+                  switchMobileTab('historique');
+                  setTimeout(() => {
+                      document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+                  }, 50);
+              }
+          }, 100);
+      } else {
+          cancelActiveMission();
+          switchMobileTab('historique');
+          setTimeout(() => {
+              document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+          }, 50);
+          
+          if (currentTaskContext) {
+              setTimeout(() => alert("🎉 Super ! Vous avez terminé toutes les tâches de ce groupe."), 150);
+          }
+      }
 
       if (navigator.onLine) {
         setTimeout(syncMobileData, 100);
@@ -1029,24 +1066,21 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
-      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
 
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
-      const pendingIds = new Set(sessionHist.map(h => h.id));
+      const sessionHist = sessionHistory.filter(h => {
+        const histDate = new Date(h.timestamp); 
+        return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS;
+      });
       
+      const pendingIds = new Set(sessionHist.map(h => h.id));
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
-      let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
-        if (isAdmin) return true;
-        const histDate = new Date(h.timestamp); 
-        return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
-      });
-
+      let fullHistory = [...pendingFiltered, ...sessionHist];
       fullHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       
       const countLabel = document.getElementById("historyCount");
@@ -1073,12 +1107,10 @@ Version Web App : v4.0`
         const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
         let archiveText = "";
         
-        if (isAdmin) {
-            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
-        } else if (remainingMins > 60) {
-           archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
+        if (remainingMins > 60) {
+           archiveText = `${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
         } else {
-           archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
+           archiveText = `${remainingMins} MIN`;
         }
 
         html += `
@@ -1088,11 +1120,11 @@ Version Web App : v4.0`
                 <span class="font-mono font-black text-orange-800 text-sm break-words">${h.sapRef}</span>
                 ${statusBadge}
               </div>
-              <div class="flex flex-col items-end shrink-0">
-                <span class="text-[10px] font-bold text-slate-600 flex items-center gap-1">
-                  <i data-lucide="clock" class="w-3 h-3"></i> ${timeStr}
-                </span>
-                <span class="text-[8px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5 whitespace-nowrap">${archiveText}</span>
+              
+              <div class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                <span class="text-[8px] text-slate-500 font-bold tracking-wider uppercase whitespace-nowrap">${archiveText}</span>
+                <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
+                <span class="text-[10px] font-black text-slate-600">${timeStr}</span>
               </div>
             </div>
             
