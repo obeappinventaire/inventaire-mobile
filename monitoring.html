@@ -411,7 +411,7 @@
               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i> Cartographie Interactive (Belgique)
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Survolez un point pour voir la mission. Cliquez pour voir le détail de l'article.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Survolez un point pour voir la mission. Cliquez pour voir la liste complète à cet emplacement.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer">
@@ -1308,7 +1308,7 @@
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
       e.dataTransfer.effectAllowed = 'move';
-      // FIX DRAG: Le délai permet au navigateur de "photographier" la carte avant de désactiver les clics
+      // FIX DRAG: Le délai permet au navigateur de valider la cible de glissement avant de désactiver les clics
       setTimeout(() => {
         document.body.classList.add('is-dragging');
       }, 10);
@@ -1323,7 +1323,6 @@
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
       const today = new Date(); today.setHours(0,0,0,0);
 
-      // Sécurité : Interdit le glissement dans le passé
       if (targetDateObj < today) { alert("Impossible de déplacer une mission dans le passé."); draggedGroupPayload = null; return; }
       if (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6) { alert("Impossible de déplacer sur un week-end."); draggedGroupPayload = null; return; }
       if (isBelgianHoliday(targetDateObj)) { alert("Impossible de déplacer sur un jour férié."); draggedGroupPayload = null; return; }
@@ -1503,8 +1502,6 @@
         const isHoliday = isBelgianHoliday(dayObj);
         const isWeekend = dayObj.getDay() === 0 || dayObj.getDay() === 6;
         const isBlocked = isHoliday || isWeekend;
-        
-        // FIX : Calcul de date révolue
         const isPast = dayObj < today;
 
         const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'min-w-[280px] flex-1 shrink-0';
@@ -1513,9 +1510,9 @@
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
-           // FIX : Sécurité d'injection des attributs de réception (uniquement sur futur/aujourd'hui)
-           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
-           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
+           // FIX : Suppression totale des attributs si jour dépassé
+           const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
+           const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
            const styleMatin = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60' : 'bg-sky-50/50 border-sky-200 border-dashed';
            const styleAprem = isPast ? 'bg-slate-50/50 border-slate-200 opacity-60 mt-2' : 'bg-amber-50/50 border-amber-200 border-dashed mt-2';
@@ -1552,10 +1549,10 @@
           <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex flex-col shadow-sm transition-all h-auto ${colClass}">
             <div class="text-center pb-2 pt-1 border-b border-slate-100 ${isToday ? 'bg-orange-100 rounded-lg border-orange-200' : ''} mb-2 ${isBlocked?'hidden':''}">
               <div class="flex items-baseline justify-center gap-1.5">
-                <span class="text-xs font-bold uppercase tracking-widest ${isToday ? 'text-orange-700' : 'text-slate-500'}">
+                <span class="text-xs font-bold uppercase tracking-widest ${isToday ? 'text-orange-700' : 'text-slate-700'}">
                   ${isToday ? "Auj" : dayNames[dayObj.getDay()]}
                 </span>
-                <span class="text-xs font-mono font-medium ${isToday ? 'text-orange-600' : 'text-slate-400'}">
+                <span class="text-xs font-mono font-bold ${isToday ? 'text-orange-600' : 'text-slate-700'}">
                   ${dayObj.getDate()} ${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][dayObj.getMonth()]}
                 </span>
               </div>
@@ -1697,40 +1694,38 @@
       lucide.createIcons();
     }
 
-    function openMapListingDetail(idStr) {
-      const item = cachedHistory.find(h => h.id === idStr);
-      if (!item) return;
+    function openMapListingDetailByCoords(lat, lng) {
+      const items = cachedHistory.filter(h => h.lat === lat && h.lng === lng);
+      if (items.length === 0) return;
 
       const titleEl = document.getElementById("modalTourneeTitle");
-      if (titleEl) titleEl.innerText = `Détail Saisie : ${item.user}`;
+      if (titleEl) titleEl.innerText = `Point de Saisie : ${items[0].contractor}`;
       
       const subTitleEl = document.getElementById("modalTourneeSubtitle");
-      if (subTitleEl) subTitleEl.innerText = `${formatDateDMY(item.timestamp, true)} • Réf: ${item.sapRef}`;
+      if (subTitleEl) subTitleEl.innerText = `${items.length} article(s) traité(s) à cet emplacement`;
 
       const contentEl = document.getElementById("modalTourneeContent");
       if (contentEl) {
-        contentEl.innerHTML = `
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-200 pb-2">
-               <span class="font-black text-slate-800 text-sm">${item.contractor}</span>
-               <span class="text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">${item.trade}</span>
+        let html = '<div class="space-y-3">';
+        items.forEach(item => {
+          html += `
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="flex justify-between items-start mb-1">
+                 <span class="font-black text-slate-800 text-sm">${item.user}</span>
+                 <span class="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">${item.trade}</span>
+              </div>
+              <p class="text-xs text-slate-700 font-medium mb-2">${item.designation}</p>
+              <div class="flex justify-between items-center border-t border-slate-200 pt-2">
+                 <span class="text-xs font-mono font-bold text-orange-600">${item.sapRef}</span>
+                 <span class="px-2 py-1 rounded-lg ${Number(item.quantity) === 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'} text-xs font-mono font-black border ${Number(item.quantity) === 0 ? 'border-rose-300' : 'border-emerald-300'}">
+                   ${item.quantity} PCS
+                 </span>
+              </div>
             </div>
-            <p class="text-sm text-slate-700 font-medium">${item.designation}</p>
-            <div class="flex justify-between items-center pt-3 border-t border-slate-200">
-               <span class="px-3 py-1.5 rounded-lg ${Number(item.quantity) === 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'} text-sm font-mono font-black border ${Number(item.quantity) === 0 ? 'border-rose-300' : 'border-emerald-300'}">
-                 ${item.quantity} PCS
-               </span>
-               <div class="flex gap-2">
-                 <button onclick="editTableItem('${item.id}', ${item.quantity}); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-white border border-slate-300 shadow-sm rounded-lg hover:bg-slate-100 text-slate-600 font-bold flex items-center gap-1.5 transition">
-                   Modifier
-                 </button>
-                 <button onclick="deleteTableItem('${item.id}'); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-rose-50 border border-rose-200 shadow-sm rounded-lg hover:bg-rose-100 text-rose-600 font-bold flex items-center gap-1.5 transition">
-                   Supprimer
-                 </button>
-               </div>
-            </div>
-          </div>
-        `;
+          `;
+        });
+        html += '</div>';
+        contentEl.innerHTML = html;
       }
 
       const modalEl = document.getElementById("tourneeDetailsModal");
@@ -1825,30 +1820,32 @@
 
         let missionsHtml = '';
         if (aGrpTotal === 0) {
-          missionsHtml = '<div class="text-[10px] text-slate-400 italic">Aucune mission assignée.</div>';
+          missionsHtml = '<div class="text-xs text-slate-400 italic mt-2">Aucune mission assignée.</div>';
         } else {
           aGrp.forEach(g => {
             missionsHtml += `
-              <div class="mb-2 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2 py-0.5">
-                <span class="block text-[10px] font-bold text-slate-800 truncate">${g.contractor}</span>
-                <span class="block text-[9px] text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
+              <div class="mb-2.5 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2.5 py-1">
+                <span class="block text-xs font-bold text-slate-800 truncate">${g.contractor}</span>
+                <span class="block text-[11px] font-medium text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
               </div>
             `;
           });
         }
 
-        let historyHtml = '';
-        if (aHist.length === 0) {
-          historyHtml = '<div class="text-[10px] text-slate-400 italic">Aucun enregistrement.</div>';
+        const anomalies = aHist.filter(r => Number(r.quantity) === 0 || (customMaxQty !== null && Number(r.quantity) > customMaxQty));
+        let anomaliesHtml = '';
+        if (anomalies.length === 0) {
+          anomaliesHtml = '<div class="text-xs text-slate-400 italic mt-2">Aucune anomalie signalée.</div>';
         } else {
-          aHist.forEach(r => {
-            historyHtml += `
-              <div class="mb-2 flex justify-between items-start gap-1">
-                <div class="min-w-0">
-                  <span class="block font-mono text-[9px] font-bold text-amber-700">${r.sapRef}</span>
-                  <span class="block text-[9px] text-slate-600 truncate">${r.contractor}</span>
+          anomalies.forEach(r => {
+            const isZero = Number(r.quantity) === 0;
+            anomaliesHtml += `
+              <div class="mb-2.5 flex justify-between items-start gap-2 bg-white p-2 rounded-lg border ${isZero ? 'border-rose-200' : 'border-amber-200'} shadow-sm">
+                <div class="min-w-0 flex-1">
+                  <span class="block font-mono text-[10px] font-bold ${isZero ? 'text-rose-700' : 'text-amber-700'}">${r.sapRef}</span>
+                  <span class="block text-[10px] font-medium text-slate-600 truncate">${r.contractor}</span>
                 </div>
-                <span class="font-mono text-[10px] font-black ${Number(r.quantity) === 0 ? 'text-rose-600' : 'text-emerald-700'} bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                <span class="font-mono text-[11px] font-black ${isZero ? 'text-rose-600 bg-rose-50' : 'text-amber-600 bg-amber-50'} px-2 py-1 rounded border ${isZero ? 'border-rose-100' : 'border-amber-100'}">
                   ${r.quantity}
                 </span>
               </div>
@@ -1885,14 +1882,14 @@
             </div>
 
             <div id="drawer_${cleanAgentId}" class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50">
-              <div class="grid grid-cols-2 divide-x divide-slate-100">
-                <div class="p-4 max-h-64 overflow-y-auto custom-scrollbar">
-                  <span class="block text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-2">Plan de Tournée</span>
+              <div class="grid grid-cols-2 divide-x divide-slate-200">
+                <div class="p-4 max-h-72 overflow-y-auto custom-scrollbar">
+                  <span class="block text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">Plan de Tournée</span>
                   ${missionsHtml}
                 </div>
-                <div class="p-4 max-h-64 overflow-y-auto custom-scrollbar">
-                  <span class="block text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-2">Dernières Saisies</span>
-                  ${historyHtml}
+                <div class="p-4 max-h-72 overflow-y-auto custom-scrollbar">
+                  <span class="block text-xs font-bold text-rose-500 uppercase tracking-wider mb-3">Ruptures & Alertes</span>
+                  ${anomaliesHtml}
                 </div>
               </div>
             </div>
@@ -2062,11 +2059,11 @@
             
             <div class="flex gap-1.5 items-stretch">
               <div class="bg-slate-50 text-slate-700 px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center items-center">
-                <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Réf SAP</span>
+                <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Mission</span>
                 <span class="truncate max-w-[80px] text-orange-600">${p.sapRef}</span>
               </div>
               <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border flex-1 flex flex-col justify-center items-center">
-                <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Quantité</span>
+                <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">${isRupture ? 'À Traiter' : 'Compté'}</span>
                 <span>${qty}</span>
               </div>
             </div>
@@ -2080,7 +2077,7 @@
         });
 
         marker.on('click', () => {
-          openMapListingDetail(p.id);
+          openMapListingDetailByCoords(p.lat, p.lng);
         });
 
         markersLayer.addLayer(marker);
