@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-200">
+<html lang="fr" class="h-full bg-slate-100">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision Inventaire - Monitoring Manager</title>
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
-  <meta name="theme-color" content="#e2e8f0">
+  <meta name="theme-color" content="#f1f5f9">
 
   <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -53,7 +53,7 @@
     }
   </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-200">
+<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100">
 
   <!-- MODALE D'AUTHENTIFICATION ADMIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
@@ -159,12 +159,12 @@
             <div class="relative">
               <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
                 <option value="TODAY">☀️ Aujourd'hui</option>
-                <option value="CURRENT_WEEK">📆 Cette semaine</option>
+                <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
                 <option value="NEXT_WEEK">▶ Semaine prochaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
                 <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
                 <option value="ALL">🌐 Tout l'historique</option>
-                <option value="CUSTOM" selected>⚙️ Période personnalisée...</option>
+                <option value="CUSTOM">⚙️ Période personnalisée...</option>
               </select>
             </div>
 
@@ -414,10 +414,6 @@
               <p class="text-xs text-slate-500 mt-0.5">La carte se focalise automatiquement sur l'activité en temps réel du jour.</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="toggleMapSelectionFilter()" id="btnMapSelectionFilter" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer">
-                <i data-lucide="filter" class="w-3.5 h-3.5 text-orange-600"></i>
-                <span id="mapFilterBtnText">Toute la période</span>
-              </button>
               <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1 cursor-pointer">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5"></i><span>Recentrer</span>
               </button>
@@ -432,16 +428,14 @@
         <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
         <section id="viewTourneesAdmin" class="hidden relative">
           
-          <div class="sticky top-0 z-30 bg-slate-200 pt-2 pb-4 border-b border-slate-300 shadow-sm mb-6 -mt-2"
-               ondragover="event.preventDefault(); event.stopPropagation();"
-               ondrop="handleExcelFileDrop(event)">
+          <div class="sticky top-0 z-30 bg-slate-100 pt-2 pb-4 border-b border-slate-300 shadow-sm mb-6 -mt-2">
             
             <div class="flex items-center justify-between mb-4">
               <div>
                 <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
                 </h3>
-                <p class="text-xs text-slate-500 mt-0.5">Glissez-déposez pour replanifier. Déposez un fichier Excel ici pour l'importer.</p>
+                <p class="text-xs text-slate-500 mt-0.5">Glissez-déposez pour replanifier. L'agenda affiche la Période Active sélectionnée à gauche.</p>
               </div>
               <div class="flex items-center gap-2">
                 <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer">
@@ -486,6 +480,7 @@
 
           </div>
 
+          <!-- NOUVEAU TABLEAU DE BORD KPI HORIZONTAL (TOP) -->
           <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-2 relative">
             <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
               <div class="flex justify-between items-center text-xs mb-3">
@@ -530,6 +525,7 @@
             </div>
           </div>
 
+          <!-- CALENDRIER PLEINE LARGEUR -->
           <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 w-full">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
               <div class="flex items-center">
@@ -540,6 +536,7 @@
             <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
           </div>
           
+          <!-- AVANCEMENT AGENT SOUS LE CALENDRIER -->
           <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm space-y-3">
             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-2">Avancement par Collaborateur</span>
             <div id="agentCompletionList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[180px] overflow-y-auto custom-scrollbar pr-1"></div>
@@ -630,22 +627,6 @@
     </div>
   </div>
 
-  <!-- NOUVELLE MODALE IMPORT EXCEL -->
-  <div id="importModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
-    <div class="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i> Importation Planning
-        </h3>
-        <button onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      <div id="importModalContent" class="text-sm text-slate-700 space-y-3"></div>
-      <div id="importModalFooter" class="pt-3 border-t border-slate-100 flex gap-2 justify-end"></div>
-    </div>
-  </div>
-
   <!-- JAVASCRIPT PRINCIPAL -->
   <script>
     if ('serviceWorker' in navigator) {
@@ -679,7 +660,6 @@
     let activeView = localStorage.getItem("mon_active_view") || 'global';
     let map = null;
     let markersLayer = null;
-    let windowMapSites = []; 
 
     let selectedAgents = [];
     let selectedContractors = [];
@@ -702,39 +682,15 @@
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
+    // SECURITE GLOBALE DRAG & DROP
     document.addEventListener('dragend', () => {
       document.body.classList.remove('is-dragging');
     });
-
-    function handleExcelFileDrop(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        const file = e.dataTransfer.files[0];
-        if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
-          processExcelFile(file);
-        } else {
-          openImportModalError(`<div class="p-3 text-center text-rose-600 font-bold">Format de fichier non supporté. Veuillez utiliser un fichier Excel (.xlsx, .xls, .csv).</div>`);
-        }
-      }
-    }
 
     async function safeSetStorage(key, data) {
       try {
         await localforage.setItem(key, data);
       } catch (e) {}
-    }
-
-    function addWorkingDays(startDate, days) {
-      let d = new Date(startDate);
-      let added = 0;
-      while (added < days) {
-        d.setDate(d.getDate() + 1);
-        if (d.getDay() !== 0 && d.getDay() !== 6 && !isBelgianHoliday(d)) {
-          added++;
-        }
-      }
-      return d;
     }
 
     function getISOWeekNumber(d) {
@@ -884,15 +840,7 @@
       initMultiSelects();
       populateAdminDropdown();
       populateTourneeAdminDropdowns();
-      
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      if (sInput && !sInput.value) {
-          const now = new Date();
-          sInput.value = normalizeDateYMD(now);
-          if (eInput) eInput.value = normalizeDateYMD(addWorkingDays(now, 6));
-      }
-      onSmartPeriodChange('CUSTOM');
+      onSmartPeriodChange('TODAY');
 
       const qtyInput = document.getElementById("cfgMaxQty");
       const qtyDisplay = document.getElementById("cfgMaxQtyDisplay");
@@ -1124,17 +1072,6 @@
     function closeTourneeDetailsModal() {
       document.getElementById("tourneeDetailsModal").classList.add("hidden");
     }
-    
-    function closeImportModal() {
-      document.getElementById("importModal").classList.add("hidden");
-    }
-    
-    function openImportModalError(msgHtml) {
-      document.getElementById("importModalContent").innerHTML = msgHtml;
-      document.getElementById("importModalFooter").innerHTML = `<button onclick="closeImportModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Fermer</button>`;
-      document.getElementById("importModal").classList.remove("hidden");
-      lucide.createIcons();
-    }
 
     function populateTourneeAdminDropdowns() {
       const agentSel = document.getElementById("adminAssignAgent");
@@ -1273,10 +1210,7 @@
           const sheetName = workbook.SheetNames[0]; 
           const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
           
-          if (jsonRows.length <= 1) { 
-            openImportModalError(`<div class="p-3 text-center text-rose-600 font-bold">Le fichier Excel est vide ou invalide.</div>`);
-            return; 
-          }
+          if (jsonRows.length <= 1) { alert("Le fichier Excel est vide ou invalide."); return; }
 
           const headers = jsonRows[0].map(h => String(h || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
           const dateIdx = headers.findIndex(h => h.includes('date'));
@@ -1288,7 +1222,6 @@
           const ordreIdx = headers.findIndex(h => h.includes('ordre') || h.includes('seq'));
 
           const bulkItems = [];
-          let errors = [];
           let missingAgents = new Set();
           let missingSaps = new Set();
 
@@ -1296,96 +1229,50 @@
             const row = jsonRows[i];
             if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) continue;
             
-            const rawSap = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
-            const rawAgent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
-            const rawContractor = String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim();
-            const rawTrade = String(row[tradeIdx !== -1 ? tradeIdx : 4] || '').trim();
-            
-            if (!rawSap || !rawAgent) continue; 
+            const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
+            const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
+            if (!sapRef || !agent) continue; 
 
-            let rowErrors = [];
+            const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
+            const agentExists = availableAgents.includes(agent);
 
-            const agentMatch = availableAgents.find(a => a.toLowerCase() === rawAgent.toLowerCase());
-            if (!agentMatch) rowErrors.push(`Agent <b>"${rawAgent}"</b>`);
+            if (!catItem) missingSaps.add(sapRef);
+            if (!agentExists) missingAgents.add(agent);
 
-            const contractorMatch = availableContractors.find(c => c.toLowerCase() === rawContractor.toLowerCase());
-            if (!contractorMatch) rowErrors.push(`Entrepreneur <b>"${rawContractor}"</b>`);
-
-            const tradeMatch = availableTrades.find(t => t.toLowerCase() === rawTrade.toLowerCase());
-            if (!tradeMatch) rowErrors.push(`Métier <b>"${rawTrade}"</b>`);
-
-            const catItem = catalog.find(item => String(item.sapRef).trim().toUpperCase() === rawSap.toUpperCase());
-            if (!catItem) rowErrors.push(`Réf SAP <b>"${rawSap}"</b>`);
-
-            if (rowErrors.length > 0) {
-                errors.push({ line: i + 1, msg: `${rowErrors.join(', ')} introuvable(s)` });
-            } else {
-                let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
-                if (typeof rawDate === 'number') {
-                    const utc_days  = Math.floor(rawDate - 25569);
-                    const utc_value = utc_days * 86400;
-                    rawDate = new Date(utc_value * 1000);
-                }
-                let formattedDate = normalizeDateYMD(rawDate || new Date());
-                
-                let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) { rawTranche = 'APRES_MIDI'; } 
-                else { rawTranche = 'MATIN'; }
-
-                bulkItems.push({
-                  date: formattedDate,
-                  tranche: rawTranche,
-                  agent: agentMatch,
-                  contractor: contractorMatch,
-                  trade: tradeMatch,
-                  sapRef: catItem.sapRef,
-                  designation: catItem.designation,
-                  ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
-                });
+            let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
+            if (typeof rawDate === 'number') {
+                const utc_days  = Math.floor(rawDate - 25569);
+                const utc_value = utc_days * 86400;
+                rawDate = new Date(utc_value * 1000);
             }
+            
+            let formattedDate = normalizeDateYMD(rawDate || new Date());
+            let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) { rawTranche = 'APRES_MIDI'; } 
+            else { rawTranche = 'MATIN'; }
+
+            bulkItems.push({
+              date: formattedDate,
+              tranche: rawTranche,
+              agent: agent,
+              contractor: String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim(),
+              trade: String(row[tradeIdx !== -1 ? tradeIdx : 4] || '').trim(),
+              sapRef: sapRef,
+              designation: catItem ? catItem.designation : 'Article inconnu (Forcé via Import)',
+              ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
+            });
           }
 
-          if (errors.length > 0) {
-              let errorHtml = `
-                <div class="bg-rose-50 border border-rose-200 p-3 rounded-xl">
-                  <h4 class="font-bold text-rose-800 text-xs mb-2 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${errors.length} erreur(s) bloquante(s)</h4>
-                  <ul class="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar text-[11px] text-rose-700 pl-1">
-                    ${errors.map(e => `<li><span class="font-black">Ligne ${e.line} :</span> ${e.msg}</li>`).join('')}
-                  </ul>
-                </div>
-                <p class="text-xs text-slate-500 italic mt-2">L'importation est bloquée. Veuillez corriger ces données dans votre fichier Excel et recommencer.</p>
-              `;
-              openImportModalError(errorHtml);
-              return;
-          }
+          if (bulkItems.length === 0) { alert("Aucune ligne valide trouvée dans le fichier."); return; }
 
-          if (bulkItems.length === 0) { 
-              openImportModalError(`<div class="p-3 text-center text-rose-600 font-bold">Aucune tâche valide n'a été trouvée dans le fichier.</div>`);
-              return; 
-          }
-
-          let confirmHtml = `
-              <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
-                  <h4 class="font-bold text-emerald-800 text-xs mb-1 flex items-center gap-1.5"><i data-lucide="check-circle" class="w-4 h-4"></i> Fichier vérifié avec succès</h4>
-                  <p class="text-[11px] text-emerald-700">L'analyse a détecté <b>${bulkItems.length}</b> tâche(s) prête(s) à être importée(s).</p>
-              </div>
-              <p class="text-xs text-slate-700 font-bold pt-2 border-t border-slate-100">Voulez-vous confirmer l'importation de masse au planning ?</p>
-          `;
+          let confirmMsg = `Préparation de l'import : ${bulkItems.length} tâche(s) détectée(s).\n\n`;
+          if (missingAgents.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
+          if (missingSaps.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
+          confirmMsg += `\nVoulez-vous continuer l'importation de masse ?`;
           
-          document.getElementById("importModalContent").innerHTML = confirmHtml;
-          document.getElementById("importModalFooter").innerHTML = `
-              <button onclick="closeImportModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Annuler</button>
-              <button id="btnConfirmImport" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer</button>
-          `;
-          document.getElementById("importModal").classList.remove("hidden");
-          lucide.createIcons();
-          
-          document.getElementById("btnConfirmImport").onclick = () => {
-              closeImportModal();
-              uploadBulkTournees(bulkItems);
-          };
+          if(confirm(confirmMsg)) uploadBulkTournees(bulkItems);
 
-        } catch (err) { openImportModalError(`<div class="p-3 text-center text-rose-600 font-bold">Erreur de lecture du fichier : ${err}</div>`); }
+        } catch (err) { alert("Erreur lors de la lecture du fichier Excel : " + err); }
       };
       reader.readAsArrayBuffer(file);
       const inputEl = document.getElementById('excelFileInput');
@@ -1408,6 +1295,7 @@
 
       applyFilters();
       if(navigator.onLine) setTimeout(syncMonitoringData, 100);
+      alert(`${bulkItems.length} tâche(s) ajoutée(s) au planning !`);
     }
 
     let draggedGroupPayload = null;
@@ -1416,6 +1304,7 @@
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
       e.dataTransfer.effectAllowed = 'move';
+      // FIX DRAG: Le délai permet au navigateur de valider la cible de glissement avant de désactiver les clics
       setTimeout(() => {
         document.body.classList.add('is-dragging');
       }, 10);
@@ -1549,14 +1438,16 @@
         let overdueHtml = '';
         overdueGroups.forEach(g => {
           overdueHtml += `
-            <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition flex flex-col justify-between h-[68px]">
-              <div class="flex justify-between items-center mb-1 border-b border-amber-100 pb-1">
-                <span class="font-black text-[11px] text-slate-800 truncate pr-1">${g.agent}</span>
-                <span class="font-mono text-[9px] text-amber-800 font-bold bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 shadow-xs">${formatDateFrench(g.date).substring(0,6)}</span>
-              </div>
-              <div class="flex items-center justify-between text-[10px] leading-tight truncate gap-2">
-                <strong class="text-slate-700 truncate flex-1">${g.contractor}</strong>
-                <span class="font-medium text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200 shrink-0">${g.trade}</span>
+            <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
+              <div>
+                <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1">
+                  <span class="font-bold text-[11px] truncate">${g.agent}</span>
+                  <span class="font-mono text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <strong class="truncate leading-tight flex-1 text-[10px]">${g.contractor}</strong>
+                  <span class="text-[9px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded truncate border border-orange-100">${g.trade}</span>
+                </div>
               </div>
             </div>
           `;
@@ -1615,6 +1506,7 @@
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
+           // FIX : Suppression totale des attributs si jour dépassé
            const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
            const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
@@ -1844,13 +1736,13 @@
                    <div class="min-w-0 pr-2">
                      <div class="flex gap-2 items-center mb-0.5">
                         <span class="font-mono font-bold text-[11px] ${isZero ? 'text-rose-700' : 'text-slate-800'}">${h.sapRef}</span>
-                        <span class="text-[8px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${h.user}</span>
+                        <span class="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${h.user}</span>
                      </div>
                      <p class="text-[10px] text-slate-600 truncate">${h.designation}</p>
                    </div>
                    <div class="flex flex-col items-end justify-center shrink-0 pl-2">
                       <span class="text-[8px] font-bold uppercase text-slate-400 mb-0.5">Quantité</span>
-                      <span class="font-mono font-black text-xs px-2 py-0.5 rounded-lg ${isZero ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'}">${h.quantity}</span>
+                      <span class="font-mono font-black text-sm px-2 py-0.5 rounded-lg ${isZero ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'}">${h.quantity}</span>
                    </div>
                  </div>
                `;
@@ -1864,6 +1756,435 @@
 
       const modalEl = document.getElementById("tourneeDetailsModal");
       if (modalEl) modalEl.classList.remove("hidden");
+    }
+
+    function openTourneeGroupModal(groupId) {
+      const allGroups = buildTourneeGroups(cachedTournees || []);
+      const g = allGroups.find(x => x.id === groupId);
+      if (!g) return;
+
+      const titleEl = document.getElementById("modalTourneeTitle");
+      if (titleEl) titleEl.innerText = `${g.contractor} - ${g.trade}`;
+      
+      const subTitleEl = document.getElementById("modalTourneeSubtitle");
+      if (subTitleEl) subTitleEl.innerText = `${g.agent} • ${formatDateFrench(g.date)} (${g.tranche}) • ${g.items.length} article(s)`;
+
+      const contentEl = document.getElementById("modalTourneeContent");
+      if (contentEl) {
+        let contentHtml = '';
+        const sortedItems = g.items.sort((a,b) => (Number(a.ordre)||0) - (Number(b.ordre)||0));
+        
+        sortedItems.forEach(t => {
+          const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+          contentHtml += `
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div class="min-w-0 pr-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-orange-600">${t.sapRef}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                  <span class="text-[9px] text-slate-400 font-mono">Ordre: ${t.ordre || 1}</span>
+                </div>
+                <p class="text-[11px] text-slate-700 truncate mt-0.5">${t.designation || 'Sans libellé'}</p>
+              </div>
+              <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          `;
+        });
+        contentEl.innerHTML = contentHtml;
+      }
+
+      const modalEl = document.getElementById("tourneeDetailsModal");
+      if (modalEl) modalEl.classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function getPeriodFilteredTournees() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      return (cachedTournees || []).filter(item => {
+        const itDate = parseItemDate(item.date);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
+      });
+    }
+
+    function renderAgentsView(periodHistory) {
+      const container = document.getElementById("agentsAccordionContainer");
+      if (!container) return;
+
+      let agentsToDisplay = availableAgents;
+      if (filterOnlyActiveAgents) {
+        agentsToDisplay = availableAgents.filter(agent => periodHistory.some(r => r.user === agent) || getPeriodFilteredTournees().some(t => t.agent === agent));
+      }
+
+      if (agentsToDisplay.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-3xl">Aucun agent actif sur cette période.</div>`;
+        return;
+      }
+
+      const periodTournees = getPeriodFilteredTournees();
+      const periodGroups = buildTourneeGroups(periodTournees);
+
+      let agentsHtml = '';
+
+      agentsToDisplay.forEach(agent => {
+        const aHist = periodHistory.filter(r => r.user === agent);
+        const aPcs = aHist.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+        const aZero = aHist.filter(r => Number(r.quantity) === 0).length;
+        
+        const aGrp = periodGroups.filter(g => g.agent === agent);
+        const aGrpTotal = aGrp.length;
+        const aGrpDone = aGrp.filter(g => g.isDone).length;
+        const aGrpPct = aGrpTotal > 0 ? Math.round((aGrpDone / aGrpTotal) * 100) : 0;
+        
+        const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
+        const isOpen = !!openDrawers[agent];
+
+        let missionsHtml = '';
+        if (aGrpTotal === 0) {
+          missionsHtml = '<div class="text-xs text-slate-400 italic mt-2">Aucune mission assignée.</div>';
+        } else {
+          aGrp.forEach(g => {
+            missionsHtml += `
+              <div class="mb-2.5 border-l-2 ${g.isDone ? 'border-emerald-400' : 'border-orange-400'} pl-2.5 py-1">
+                <span class="block text-xs font-bold text-slate-800 truncate">${g.contractor}</span>
+                <span class="block text-[11px] font-medium text-slate-500 truncate">${g.trade} • ${formatDateFrench(g.date)}</span>
+              </div>
+            `;
+          });
+        }
+
+        const anomalies = aHist.filter(r => Number(r.quantity) === 0 || (customMaxQty !== null && Number(r.quantity) > customMaxQty));
+        let anomaliesHtml = '';
+        if (anomalies.length === 0) {
+          anomaliesHtml = '<div class="text-xs text-slate-400 italic mt-2">Aucune anomalie signalée.</div>';
+        } else {
+          anomalies.forEach(r => {
+            const isZero = Number(r.quantity) === 0;
+            anomaliesHtml += `
+              <div class="mb-2.5 flex justify-between items-start gap-2 bg-white p-2 rounded-lg border ${isZero ? 'border-rose-200' : 'border-amber-200'} shadow-sm">
+                <div class="min-w-0 flex-1">
+                  <span class="block font-mono text-[10px] font-bold ${isZero ? 'text-rose-700' : 'text-amber-700'}">${r.sapRef}</span>
+                  <span class="block text-[10px] font-medium text-slate-600 truncate">${r.contractor}</span>
+                </div>
+                <span class="font-mono text-[11px] font-black ${isZero ? 'text-rose-600 bg-rose-50' : 'text-amber-600 bg-amber-50'} px-2 py-1 rounded border ${isZero ? 'border-rose-100' : 'border-amber-100'}">
+                  ${r.quantity}
+                </span>
+              </div>
+            `;
+          });
+        }
+
+        agentsHtml += `
+          <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm h-fit transition-all">
+            <div onclick="toggleAgentDrawer('${agent}')" class="p-5 cursor-pointer hover:bg-slate-50 transition">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-4">
+                  <div class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-lg border border-orange-200">
+                    ${agent.substring(0, 2).toUpperCase()}
+                  </div>
+                  <h4 class="font-black text-slate-900 text-base tracking-wide">${agent}</h4>
+                </div>
+                <i id="icon_${cleanAgentId}" data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-6 h-6 text-slate-400"></i>
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Missions</span>
+                  <span class="font-mono text-sm font-black ${aGrpPct === 100 ? 'text-emerald-600' : 'text-slate-700'}">${aGrpDone}/${aGrpTotal}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Pièces</span>
+                  <span class="font-mono text-sm font-black text-orange-600">${aPcs}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center shadow-inner">
+                  <span class="text-[10px] text-slate-500 font-bold uppercase mb-1">Ruptures</span>
+                  <span class="font-mono text-sm font-black ${aZero > 0 ? 'text-rose-600' : 'text-slate-400'}">${aZero}</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="drawer_${cleanAgentId}" class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50">
+              <div class="grid grid-cols-2 divide-x divide-slate-200">
+                <div class="p-4 max-h-72 overflow-y-auto custom-scrollbar">
+                  <span class="block text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">Plan de Tournée</span>
+                  ${missionsHtml}
+                </div>
+                <div class="p-4 max-h-72 overflow-y-auto custom-scrollbar">
+                  <span class="block text-xs font-bold text-rose-500 uppercase tracking-wider mb-3">Ruptures & Alertes</span>
+                  ${anomaliesHtml}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = agentsHtml;
+      lucide.createIcons();
+    }
+
+    function toggleAgentDrawer(agent) {
+      openDrawers[agent] = !openDrawers[agent];
+      const cleanAgentId = agent.replace(/[^a-zA-Z0-9]/g, '_');
+      const drawer = document.getElementById(`drawer_${cleanAgentId}`);
+      const icon = document.getElementById(`icon_${cleanAgentId}`);
+      
+      if (drawer) {
+        if (openDrawers[agent]) {
+          drawer.classList.remove('hidden');
+          drawer.classList.add('block');
+          if (icon) {
+            icon.setAttribute('data-lucide', 'chevron-up');
+            lucide.createIcons();
+          }
+        } else {
+          drawer.classList.add('hidden');
+          drawer.classList.remove('block');
+          if (icon) {
+            icon.setAttribute('data-lucide', 'chevron-down');
+            lucide.createIcons();
+          }
+        }
+      }
+    }
+
+    function renderCompletionMetrics() {
+      const periodTournees = getPeriodFilteredTournees();
+      const periodGroups = buildTourneeGroups(periodTournees);
+      
+      const totalMissions = periodGroups.length;
+      const doneMissions = periodGroups.filter(g => g.isDone).length;
+      const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
+      
+      safeSetText("kpiMissionsPct", `${missionsPct}%`);
+      safeSetWidth("kpiMissionsBar", missionsPct);
+      safeSetText("kpiMissionsDone", doneMissions);
+      safeSetText("kpiMissionsTotal", totalMissions);
+      
+      const totalLines = periodTournees.length;
+      const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
+      const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
+      
+      safeSetText("globalCompletionPct", `${linesPct}%`);
+      safeSetWidth("globalCompletionBar", linesPct);
+      safeSetText("kpiDoneTasks", doneLines);
+      safeSetText("kpiPendingTasks", totalLines - doneLines);
+
+      const todayStr = normalizeDateYMD(new Date());
+      const allGroups = buildTourneeGroups(cachedTournees || []);
+      const overdueMissions = allGroups.filter(g => !g.isDone && g.date < todayStr).length;
+      const totalActiveMissions = allGroups.length;
+      const slaScore = totalActiveMissions > 0 ? Math.round(((totalActiveMissions - overdueMissions) / totalActiveMissions) * 100) : 100;
+      
+      safeSetText("kpiOverdueMissionsCount", overdueMissions);
+      safeSetText("kpiSlaScore", `${slaScore}%`);
+
+      const badgePilotage = document.getElementById("kpiPeriodLabel");
+      if (badgePilotage) {
+        const sInput = document.getElementById("filterStartDate");
+        const eInput = document.getElementById("filterEndDate");
+        const sDate = sInput ? sInput.value : "";
+        const eDate = eInput ? eInput.value : "";
+        
+        let txt = "Période Active";
+        if (sDate && eDate) {
+          const d = new Date(sDate + "T00:00:00");
+          const iso = getISOWeekNumber(d);
+          const dE = new Date(eDate + "T00:00:00");
+          if ((dE - d) / 86400000 === 6) {
+             txt = `S${String(iso.week).padStart(2, '0')} ${iso.year}`;
+          } else {
+             txt = `${formatDateDMY(sDate)} - ${formatDateDMY(eDate)}`;
+          }
+        }
+        badgePilotage.innerText = txt;
+      }
+
+      const agentListContainer = document.getElementById("agentCompletionList");
+      if (!agentListContainer) return;
+
+      const activeAgentsThisPeriod = availableAgents.filter(agent => periodTournees.some(t => t.agent === agent));
+      if (activeAgentsThisPeriod.length === 0) {
+        agentListContainer.innerHTML = `<div class="text-xs text-slate-400 italic text-center py-6">Aucune tâche planifiée sur cette période.</div>`;
+        return;
+      }
+
+      let agentListHtml = '';
+      activeAgentsThisPeriod.forEach(agent => {
+        const aGroups = periodGroups.filter(g => g.agent === agent);
+        const aTotalGroups = aGroups.length;
+        const aDoneGroups = aGroups.filter(g => g.isDone).length;
+        const aPct = aTotalGroups > 0 ? Math.round((aDoneGroups / aTotalGroups) * 100) : 0;
+
+        agentListHtml += `
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-slate-900">${agent}</span>
+              <span class="font-mono text-[10px] font-black ${aPct === 100 ? 'text-emerald-600' : 'text-slate-500'}">${aDoneGroups}/${aTotalGroups} missions (${aPct}%)</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-orange-500 h-full rounded-full transition-all" style="width: ${aPct}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      agentListContainer.innerHTML = agentListHtml;
+    }
+
+    function renderMap() {
+      const mapDiv = document.getElementById("mapContainer");
+      if (!mapDiv) return;
+
+      if (!map) {
+        map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+      }
+
+      markersLayer.clearLayers();
+      
+      const todayStr = normalizeDateYMD(new Date());
+      
+      // EXCLUSIVEMENT AUJOURD'HUI
+      const todaysTournees = cachedTournees.filter(t => normalizeDateYMD(t.date) === todayStr);
+      const todaysHistory = cachedHistory.filter(h => normalizeDateYMD(h.timestamp) === todayStr);
+      
+      // Dictionnaire de géocodage
+      const coordsDict = {};
+      cachedHistory.forEach(h => {
+          if (h.contractor && h.lat && h.lng && !isNaN(h.lat) && !isNaN(h.lng)) {
+              coordsDict[h.contractor] = { lat: h.lat, lng: h.lng };
+          }
+      });
+
+      const mapData = {};
+      
+      todaysTournees.forEach(t => {
+          const c = t.contractor;
+          if (!mapData[c]) mapData[c] = { contractor: c, agents: new Set(), trades: new Set(), plannedTasks: [], historyScans: [], lat: null, lng: null };
+          mapData[c].plannedTasks.push(t);
+          mapData[c].agents.add(t.agent);
+          mapData[c].trades.add(t.trade);
+      });
+
+      todaysHistory.forEach(h => {
+          const c = h.contractor;
+          if (!mapData[c]) mapData[c] = { contractor: c, agents: new Set(), trades: new Set(), plannedTasks: [], historyScans: [], lat: null, lng: null };
+          mapData[c].historyScans.push(h);
+          mapData[c].agents.add(h.user);
+          mapData[c].trades.add(h.trade);
+          if (h.lat && h.lng && !isNaN(h.lat) && !isNaN(h.lng)) {
+              mapData[c].lat = h.lat;
+              mapData[c].lng = h.lng;
+          }
+      });
+
+      let mappedCount = 0;
+
+      Object.values(mapData).forEach(md => {
+          if (!md.lat || !md.lng) {
+              if (coordsDict[md.contractor]) {
+                  md.lat = coordsDict[md.contractor].lat;
+                  md.lng = coordsDict[md.contractor].lng;
+              }
+          }
+          
+          if (!md.lat || !md.lng) return; 
+          mappedCount++;
+
+          const totalMissions = md.plannedTasks.length;
+          const doneMissions = md.plannedTasks.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
+          const isAllDone = totalMissions > 0 && doneMissions === totalMissions;
+          
+          const qty = md.historyScans.reduce((sum, h) => sum + Number(h.quantity), 0);
+          const hasRupture = md.historyScans.some(h => Number(h.quantity) === 0);
+          
+          let markerColor = "#f97316"; 
+          if (hasRupture) markerColor = "#e11d48"; 
+          else if (totalMissions > 0 && isAllDone) markerColor = "#10b981"; 
+          else if (totalMissions === 0 && md.historyScans.length > 0) markerColor = "#3b82f6"; 
+
+          let missionText = 'Hors Mission';
+          let missionColor = 'text-amber-600';
+          if (totalMissions > 0) {
+             missionText = `${doneMissions} / ${totalMissions} lignes`;
+             missionColor = isAllDone ? 'text-emerald-600' : 'text-slate-700';
+          }
+
+          let iconHtml = '<i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-400"></i>';
+          if (totalMissions > 0) {
+             iconHtml = isAllDone 
+                ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>'
+                : '<i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>';
+          }
+
+          const marker = L.circleMarker([md.lat, md.lng], {
+            radius: 8,
+            fillColor: markerColor,
+            color: "#ffffff",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+          });
+
+          const agentStr = Array.from(md.agents).join(', ');
+          const tradeStr = Array.from(md.trades).join(', ');
+          const statusBadge = hasRupture ? '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-rose-100 text-rose-800 border border-rose-200">RUPTURE</span>' : (md.historyScans.length > 0 ? '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200">COMPTÉ</span>' : '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-slate-100 text-slate-500 border border-slate-200">EN ATTENTE</span>');
+
+          const tooltipHtml = `
+            <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[250px] overflow-hidden border border-slate-200 p-2.5">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
+                <div class="flex items-center gap-1 min-w-0">
+                  <span class="font-black text-slate-800 text-[11px] uppercase truncate">👤 ${agentStr}</span>
+                </div>
+                ${statusBadge}
+              </div>
+              
+              <div class="mb-2 leading-tight">
+                <p class="font-bold text-slate-900 text-xs truncate">${md.contractor}</p>
+                <p class="text-[10px] font-semibold text-slate-600 truncate">${tradeStr}</p>
+              </div>
+              
+              <div class="flex gap-1.5 items-stretch">
+                <div class="bg-slate-50 text-slate-700 px-2 py-1.5 rounded-xl shadow-inner border border-slate-200 flex-[1.2] flex flex-col justify-center items-center text-center">
+                  <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Avancement</span>
+                  <div class="flex items-center gap-1">
+                      <span class="text-[10px] font-black ${missionColor}">${missionText}</span>
+                      ${iconHtml}
+                  </div>
+                </div>
+                <div class="${hasRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl shadow-inner border flex-1 flex flex-col justify-center items-center text-center">
+                  <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Articles Comptés</span>
+                  <span class="text-sm font-black leading-none mt-0.5">${md.historyScans.length}</span>
+                  <span class="text-[7px] font-medium opacity-75 mt-0.5">(${qty} pcs)</span>
+                </div>
+              </div>
+            </div>
+          `;
+
+          marker.bindTooltip(tooltipHtml, {
+            direction: 'top',
+            className: 'custom-map-tooltip',
+            offset: [0, -10]
+          });
+
+          marker.on('click', () => {
+            openMapListingDetailByContractor(md.contractor, todayStr);
+          });
+
+          markersLayer.addLayer(marker);
+      });
+
+      const countLabel = document.getElementById("mapPointsCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${mappedCount} site(s) aujourd'hui`;
+      }
     }
 
     function resetMapToBelgium() {
@@ -2051,8 +2372,6 @@
 
       if (mode === 'CUSTOM') {
         if (customBox) customBox.classList.remove("hidden");
-        if (sInput && sInput.value) updateWeekBadge(sInput.value);
-        applyFilters();
         return;
       }
       if (customBox) customBox.classList.add("hidden");
