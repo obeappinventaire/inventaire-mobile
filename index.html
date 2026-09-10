@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-100">
+<html lang="fr" class="h-full bg-slate-200">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inventaire Chantier PWA</title>
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
-  <meta name="theme-color" content="#f1f5f9">
+  <meta name="theme-color" content="#e2e8f0">
   <link rel="manifest" href="manifest.json">
 
   <!-- SCRIPTS & CDN -->
@@ -27,7 +27,7 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100 overflow-hidden">
+<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-200 overflow-hidden">
 
   <!-- BANDEAU MISE À JOUR PWA -->
   <div id="pwaUpdateBanner" class="hidden bg-orange-600 text-white px-4 py-2 text-xs flex items-center justify-between shrink-0 z-30 shadow-md">
@@ -36,20 +36,20 @@
   </div>
 
   <!-- EN-TÊTE MOBILE -->
-  <header class="bg-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0 z-20 relative">
+  <header class="bg-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 z-20 relative">
     <div class="absolute inset-x-0 top-1 flex justify-center pointer-events-none">
       <span class="text-[6px] font-medium text-slate-400 tracking-widest uppercase leading-none">CO2H2O 2026 copyright</span>
     </div>
     <div class="flex items-end space-x-2.5 h-7 relative z-10">
-      <img src="app_icon_co2h2o.png" alt="Logo" class="w-8 h-8 object-contain drop-shadow-sm">
+      <img src="app_icon_co2h2o.png" alt="Logo" class="w-6 h-6 object-contain drop-shadow-sm">
       <h1 id="headerAgentName" class="text-base font-bold text-orange-600 tracking-wide truncate max-w-[150px] leading-none pb-0.5">--</h1>
     </div>
     <div class="flex items-center space-x-3 relative z-10">
-      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-1.5 rounded-xl hover:bg-slate-200 transition cursor-pointer relative flex items-center justify-center">
+      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-1.5 rounded-xl hover:bg-slate-300 transition cursor-pointer relative flex items-center justify-center">
         <i id="syncIcon" data-lucide="refresh-cw" class="w-6 h-6 text-emerald-600 transition-colors"></i>
         <span id="pendingBadge" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white font-mono font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-slate-100">0</span>
       </button>
-      <button onclick="openConfigModal()" title="Paramètres" class="p-1.5 rounded-xl text-slate-500 hover:bg-slate-200 transition cursor-pointer flex items-center justify-center">
+      <button onclick="openConfigModal()" title="Paramètres" class="p-1.5 rounded-xl text-slate-500 hover:bg-slate-300 transition cursor-pointer flex items-center justify-center">
         <i data-lucide="settings" class="w-6 h-6"></i>
       </button>
     </div>
@@ -158,7 +158,7 @@
   </main>
 
   <!-- BARRE DE NAVIGATION INFÉRIEURE -->
-  <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-1.5 flex justify-around items-center z-20 shadow-lg pb-safe">
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-1.5 flex justify-around items-center z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-0.5 text-emerald-600 font-bold text-[9px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-5 h-5"></i>
       <span>Comptage</span>
@@ -214,7 +214,7 @@
         <button onclick="saveAgentConfig()" class="w-full h-12 bg-orange-400 hover:bg-orange-500 active:bg-orange-600 text-white font-bold rounded-2xl text-sm shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
           <i data-lucide="user-check" class="w-5 h-5"></i> Activer ce profil
         </button>
-        <button onclick="logoutMobileAgentStep1()" class="w-full h-12 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+        <button onclick="showLogoutModal()" class="w-full h-12 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
           <i data-lucide="log-out" class="w-4 h-4 text-slate-400"></i> Se déconnecter
         </button>
       </div>
@@ -222,15 +222,57 @@
       <hr class="border-slate-100 my-1">
 
       <div class="space-y-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-        <button onclick="sendSupportEmail()" class="w-full h-12 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+        <button onclick="sendSupportEmail()" class="w-full h-12 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="mail" class="w-5 h-5 text-slate-400"></i> Support Technique
         </button>
-        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+        <button onclick="showResetModal()" class="w-full h-12 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="rotate-cw" class="w-5 h-5 text-rose-500"></i> Vider cache & réparer
         </button>
       </div>
       <div class="mt-2 text-center">
         <span class="text-[8px] font-medium text-slate-400 tracking-widest uppercase">CO2H2O 2026 copyright</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE DECONNEXION -->
+  <div id="logoutModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl flex flex-col gap-5 transform transition-all text-center">
+      <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner">
+        <i data-lucide="log-out" class="w-8 h-8"></i>
+      </div>
+      <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Se déconnecter ?</h2>
+          <p class="text-sm font-medium text-slate-500 mt-2">Les saisies non envoyées resteront en mémoire.</p>
+      </div>
+      <div class="flex gap-3 mt-2">
+          <button onclick="closeLogoutModal()" class="flex-1 h-14 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center active:scale-95 cursor-pointer">
+            Annuler
+          </button>
+          <button onclick="confirmLogout()" class="flex-1 h-14 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-black rounded-2xl text-sm shadow-lg transition-all flex items-center justify-center cursor-pointer">
+            Confirmer
+          </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE RESET CACHE -->
+  <div id="resetModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl flex flex-col gap-5 transform transition-all text-center">
+      <div class="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner">
+        <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+      </div>
+      <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Vider le cache ?</h2>
+          <p class="text-sm font-medium text-slate-500 mt-2">Cette action effacera la mémoire et forcera le retéléchargement complet. Continuer ?</p>
+      </div>
+      <div class="flex gap-3 mt-2">
+          <button onclick="closeResetModal()" class="flex-1 h-14 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center active:scale-95 cursor-pointer">
+            Annuler
+          </button>
+          <button onclick="confirmReset()" id="btnConfirmReset" class="flex-1 h-14 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-black rounded-2xl text-sm shadow-lg transition-all flex items-center justify-center cursor-pointer">
+            Vider
+          </button>
       </div>
     </div>
   </div>
@@ -243,15 +285,15 @@
           <i data-lucide="check-circle" class="w-8 h-8"></i>
         </div>
         <h2 class="text-xl font-black text-slate-900 tracking-tight">Saisie enregistrée !</h2>
-        <p class="text-sm font-medium text-slate-500 mt-1">Voulez-vous passer à l'article suivant ?</p>
+        <p class="text-sm font-medium text-slate-500 mt-1">Ok pour passer à l'article suivant ?</p>
       </div>
       <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex flex-col gap-1.5">
         <span class="font-mono font-black text-orange-600 text-sm" id="nextTaskModalSap">--</span>
         <p class="text-xs font-bold text-slate-700 leading-snug truncate" id="nextTaskModalDesig">--</p>
       </div>
-      <div class="flex flex-col gap-2.5 mt-2">
-        <button onclick="confirmNextTask()" class="w-full h-14 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black rounded-2xl text-sm shadow-[0_4px_15px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer">
-          <i data-lucide="play" class="w-5 h-5 fill-current"></i> Oui, continuer
+      <div class="flex flex-col gap-3 mt-2 items-center">
+        <button onclick="confirmNextTask()" class="w-20 h-20 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-2xl shadow-[0_4px_20px_rgba(16,185,129,0.3)] flex items-center justify-center transition cursor-pointer border border-emerald-600">
+          <i data-lucide="check-square" class="w-10 h-10 text-white"></i>
         </button>
         <button onclick="cancelNextTask()" class="w-full h-12 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
           Non, voir l'historique
@@ -415,11 +457,15 @@ Version Web App : v4.0`
       await syncMobileData();
     });
 
-    async function hardResetApp() {
-      if (!confirm("⚠️ Attention : Cette action va vider le cache et forcer le retéléchargement complet de l'application. Continuer ?")) {
-        return;
-      }
-      document.getElementById("btnHardReset").innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-slate-400"></i> Nettoyage...';
+    function showResetModal() {
+        document.getElementById("resetModal").classList.remove("hidden");
+    }
+    function closeResetModal() {
+        document.getElementById("resetModal").classList.add("hidden");
+    }
+
+    async function confirmReset() {
+      document.getElementById("btnConfirmReset").innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
       try {
         await localforage.clear(); 
         localStorage.clear(); 
@@ -506,11 +552,15 @@ Version Web App : v4.0`
       renderHistory();
     }
 
-    function logoutMobileAgentStep1() {
-      if (confirm("Se déconnecter ? Les saisies non envoyées resteront en mémoire.")) { 
+    function showLogoutModal() {
+        document.getElementById("logoutModal").classList.remove("hidden");
+    }
+    function closeLogoutModal() {
+        document.getElementById("logoutModal").classList.add("hidden");
+    }
+    function confirmLogout() {
         localStorage.removeItem("mob_current_agent"); 
         window.location.reload(true); 
-      }
     }
 
     function updatePendingBadge() {
@@ -743,13 +793,19 @@ Version Web App : v4.0`
       
       switchMobileTab('comptage');
       
-      // AUTO-FOCUS SUR LE CHAMP QUANTITÉ POUR L'ENCHAINEMENT
-      const qtyInput = document.getElementById("inputQuantity");
-      if (qtyInput) qtyInput.focus();
-
+      // AUTO-FOCUS & SCROLL GESTION POUR LE CLAVIER
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
-        if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+        if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'auto' });
+        
+        const qtyInput = document.getElementById("inputQuantity");
+        if (qtyInput) {
+            qtyInput.focus();
+            // Force le maintien de la vue en haut après la sortie du clavier
+            setTimeout(() => {
+                if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 300);
+        }
       }, 50);
     }
 
@@ -926,7 +982,7 @@ Version Web App : v4.0`
       const r = new S(); 
       r.lang = 'fr-FR'; 
       const btn = document.getElementById("micBtn"); 
-      btn.className = "h-14 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
+      btn.className = "h-14 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
       
       r.onresult = e => { 
         const m = e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); 
