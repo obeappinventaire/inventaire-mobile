@@ -20,9 +20,6 @@
     body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
     button, input, select { touch-action: manipulation; }
     
-    /* Force le centrage du texte dans les selects (Fix Safari/iOS) */
-    select { text-align: center; text-align-last: center; }
-
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
@@ -35,32 +32,41 @@
     <button onclick="window.location.reload(true)" class="px-2.5 py-1 bg-white text-orange-700 font-bold rounded-lg text-[10px] shadow-2xs cursor-pointer">Appliquer</button>
   </div>
 
-  <!-- EN-TÊTE MOBILE (HAUTEUR REDUITE) -->
-  <header class="bg-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0 z-20">
-    <div class="flex items-end space-x-2.5 h-7">
-      <img src="app_icon_co2h2o.png" alt="Logo" class="w-7 h-7 object-contain drop-shadow-sm">
-      <h1 id="headerAgentName" class="text-base font-black text-black tracking-wide truncate max-w-[150px] leading-none pb-0.5">--</h1>
-    </div>
+  <!-- EN-TÊTE MOBILE -->
+  <header class="bg-slate-100 px-5 py-4 flex items-center justify-between shrink-0 z-20">
     <div class="flex items-center space-x-3">
-      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-1.5 rounded-xl hover:bg-slate-200 transition cursor-pointer relative flex items-center justify-center">
-        <i id="syncIcon" data-lucide="refresh-cw" class="w-5 h-5 text-emerald-600 transition-colors"></i>
-        <span id="pendingBadge" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white font-mono font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-slate-100">0</span>
+      <div class="flex items-center justify-center">
+        <!-- Logo -->
+        <img src="app_icon_co2h2o.png" alt="Logo" class="w-8 h-8 object-contain drop-shadow-sm">
+      </div>
+      <div class="flex flex-col justify-center">
+        <!-- Copyright très discret sans augmenter la hauteur -->
+        <span class="text-[6px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">© CO2H2O srlu</span>
+        <!-- Nom agent en gras orange -->
+        <h1 id="headerAgentName" class="text-lg font-bold text-orange-600 tracking-wide truncate max-w-[150px] leading-none">--</h1>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <div id="syncDot" class="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse" title="Statut réseau"></div>
+      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-2 rounded-xl text-slate-500 hover:bg-slate-200 transition cursor-pointer relative flex items-center justify-center">
+        <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+        <span id="pendingBadge" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white font-mono font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-100">0</span>
       </button>
-      <button onclick="openConfigModal()" title="Paramètres" class="p-1.5 rounded-xl text-slate-500 hover:bg-slate-200 transition cursor-pointer flex items-center justify-center">
-        <i data-lucide="settings" class="w-5 h-5"></i>
+      <button onclick="openConfigModal()" title="Paramètres" class="p-2 rounded-xl text-slate-500 hover:bg-slate-200 transition cursor-pointer flex items-center justify-center">
+        <i data-lucide="settings" class="w-6 h-6"></i>
       </button>
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL (ESPACEMENT pb-[65vh] POUR REMONTER LA QUANTITÉ TOUT EN HAUT) -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[65vh]" id="mainScrollArea">
+  <!-- CONTENU PRINCIPAL -->
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col justify-between pb-24" id="mainScrollArea">
     
-    <div class="space-y-4 h-full">
+    <div class="space-y-4">
       <!-- ONGLET 1 : COMPTAGE -->
-      <section id="tabComptage" class="flex flex-col justify-center min-h-[calc(100dvh-130px)] space-y-4">
+      <section id="tabComptage" class="space-y-4">
         
         <!-- BANDEAU MISSION ACTIVE -->
-        <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative shrink-0">
+        <div id="activeMissionBanner" class="hidden bg-white border border-slate-200 border-l-4 border-l-orange-500 p-3 rounded-xl shadow-sm space-y-1 relative">
           <div class="flex justify-between items-center">
             <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="target" class="w-3.5 h-3.5 text-orange-500"></i> Tâche Assignée
@@ -69,31 +75,32 @@
               ✕ Quitter
             </button>
           </div>
-          <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 break-words whitespace-normal line-clamp-2">--</p>
+          <p id="missionBannerInfo" class="text-xs font-bold text-slate-800 truncate">--</p>
         </div>
 
-        <!-- PARAMÈTRES DE SAISIE -->
-        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3 shrink-0">
+        <!-- PARAMÈTRES DE SAISIE (Liserés Dynamiques) -->
+        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[10px] text-center font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
-              <select id="selectContractor" onchange="updateBorderColor(this)" class="w-full text-center bg-slate-50 border-2 border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors shadow-sm"></select>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Entrepreneur</label>
+              <select id="selectContractor" onchange="updateBorderColor(this)" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors shadow-sm"></select>
             </div>
             <div>
-              <label class="block text-[10px] text-center font-bold text-slate-500 uppercase mb-1">Métier</label>
-              <select id="selectTrade" onchange="updateBorderColor(this)" class="w-full text-center bg-slate-50 border-2 border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors shadow-sm"></select>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Métier</label>
+              <select id="selectTrade" onchange="updateBorderColor(this)" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors shadow-sm"></select>
             </div>
           </div>
         </div>
 
-        <!-- RECHERCHE ACTIVE -->
-        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-3 shrink-0" id="searchSection">
+        <!-- RECHERCHE ACTIVE (SANS BOUTON OK, CROIX LIÉE) -->
+        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="searchSection">
           <div class="relative" id="searchContainer">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+            <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
             
-            <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value); updateBorderColor(this)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-2.5 pl-9 pr-9 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
+            <input type="text" id="sapSearchInput" onfocus="handleSearchFocus()" oninput="onSapSearchInput(this.value); updateBorderColor(this)" placeholder="Réf SAP ou libellé..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 pl-11 pr-10 text-sm text-slate-800 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm">
             
-            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-2.5 text-slate-400 hover:text-slate-600 transition cursor-pointer bg-slate-100 rounded-full p-0.5">
+            <!-- BOUTON CROIX DE RECHERCHE -->
+            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 transition cursor-pointer bg-slate-100 rounded-full p-0.5">
               <i data-lucide="x" class="w-4 h-4"></i>
             </button>
 
@@ -101,41 +108,42 @@
           </div>
 
           <!-- ZONE DE SÉLECTION COMPACTE -->
-          <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-200 p-3 rounded-xl shadow-sm transition-all relative flex items-start gap-2.5 mt-2">
-            <div class="bg-emerald-200 p-1 rounded-lg text-emerald-800 shrink-0 mt-0.5">
-               <i data-lucide="check" class="w-3 h-3"></i>
+          <div id="selectedArticleCard" class="hidden bg-emerald-50 border border-emerald-200 p-2 rounded-xl shadow-sm transition-all relative flex items-center gap-2.5 mt-2">
+            <div class="bg-emerald-200 p-1.5 rounded-lg text-emerald-800 shrink-0">
+               <i data-lucide="check" class="w-4 h-4"></i>
             </div>
             <div class="flex-1 min-w-0 pr-6 flex flex-col justify-center">
-               <div class="flex items-center gap-2 flex-wrap">
-                 <span id="cardSapRef" class="font-mono font-bold text-emerald-900 text-sm break-words">--</span>
-                 <span id="cardSupplierRef" class="font-mono text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300 break-words line-clamp-1">--</span>
+               <div class="flex items-center gap-2">
+                 <span id="cardSapRef" class="font-mono font-bold text-emerald-900 text-sm">--</span>
+                 <span id="cardSupplierRef" class="font-mono text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300">--</span>
                </div>
-               <p id="cardDesignation" class="text-xs text-slate-700 break-words whitespace-normal leading-snug mt-1">--</p>
+               <p id="cardDesignation" class="text-[10px] text-slate-700 truncate leading-tight mt-0.5">--</p>
             </div>
-            <button onclick="clearSearch()" class="absolute top-2 right-2 p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-200 rounded-full transition cursor-pointer" title="Annuler la sélection">
+            <!-- CROIX DE L'ARTICLE LIÉE -->
+            <button onclick="clearSearch()" class="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-200 rounded-full transition cursor-pointer" title="Annuler la sélection">
               <i data-lucide="x" class="w-4 h-4"></i>
             </button>
           </div>
 
-          <!-- BOUTONS SANS TEXTE -->
-          <div class="grid grid-cols-2 gap-3 pt-1">
-            <button onclick="toggleVoiceSearch()" id="micBtn" class="h-14 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm">
-              <i data-lucide="mic" class="w-6 h-6 text-indigo-500"></i>
+          <!-- BOUTONS SANS TEXTE (ICONES UNIQUEMENT) -->
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <button onclick="toggleVoiceSearch()" id="micBtn" class="h-16 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm">
+              <i data-lucide="mic" class="w-7 h-7 text-indigo-500"></i>
             </button>
-            <button onclick="openScanModal()" class="h-14 bg-orange-300 border border-orange-400 hover:bg-orange-400 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-md">
-              <i data-lucide="camera" class="w-6 h-6 text-orange-900"></i>
+            <button onclick="openScanModal()" class="h-16 bg-orange-300 border border-orange-400 hover:bg-orange-400 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-md">
+              <i data-lucide="camera" class="w-7 h-7 text-orange-900"></i>
             </button>
           </div>
         </div>
 
         <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
-        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4 shrink-0" id="quantitySection">
+        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs space-y-4" id="quantitySection">
           <div class="relative w-full">
-            <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-16 text-center font-black text-3xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-emerald-50 focus:text-emerald-800 font-mono shadow-inner transition-all">
+            <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-20 text-center font-black text-4xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-400 focus:bg-emerald-50 focus:text-emerald-800 font-mono shadow-inner transition-all">
           </div>
 
-          <button onclick="submitInventoryEntry()" class="w-full h-14 bg-emerald-200 hover:bg-emerald-300 active:bg-emerald-400 rounded-2xl shadow-md flex items-center justify-center transition cursor-pointer border border-emerald-300">
-            <i data-lucide="check-square" class="w-7 h-7 text-emerald-900"></i>
+          <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-200 hover:bg-emerald-300 active:bg-emerald-400 rounded-2xl shadow-md flex items-center justify-center transition cursor-pointer border border-emerald-300">
+            <i data-lucide="check-square" class="w-8 h-8 text-emerald-900"></i>
           </button>
         </div>
       </section>
@@ -146,7 +154,10 @@
           <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saisies de la session</h2>
           <span id="historyCount" class="text-xs font-mono font-bold text-emerald-700">0 ligne(s)</span>
         </div>
-        <div id="historyListContainer" class="space-y-3"></div>
+        <div id="historyListContainer" class="space-y-3 pb-8"></div>
+        <div class="text-center pb-4">
+          <span class="text-[9px] text-slate-400 italic">L'historique est nettoyé localement après 3 heures.</span>
+        </div>
       </section>
 
       <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
@@ -158,92 +169,90 @@
       </section>
     </div>
 
-    <!-- COPYRIGHT DISCRET TOUT EN BAS -->
-    <div class="mt-8 mb-4 text-center shrink-0">
-      <span class="text-[9px] font-medium text-slate-400 tracking-widest uppercase">&copy; made by CO2H2O srlu</span>
-    </div>
-
   </main>
 
-  <!-- BARRE DE NAVIGATION INFÉRIEURE (HAUTEUR RÉDUITE) -->
-  <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-1.5 flex justify-around items-center z-20 shadow-lg pb-safe">
-    <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-0.5 text-emerald-600 font-bold text-[9px] transition cursor-pointer">
-      <i data-lucide="calculator" class="w-4 h-4"></i>
+  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
+  <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-20 shadow-lg">
+    <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer">
+      <i data-lucide="calculator" class="w-5 h-5"></i>
       <span>Comptage</span>
     </button>
-    <button onclick="switchMobileTab('historique')" id="navHistorique" class="flex flex-col items-center space-y-0.5 text-slate-400 font-bold text-[9px] transition cursor-pointer">
-      <i data-lucide="history" class="w-4 h-4"></i>
+    <button onclick="switchMobileTab('historique')" id="navHistorique" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer">
+      <i data-lucide="history" class="w-5 h-5"></i>
       <span>Historique</span>
     </button>
-    <button onclick="switchMobileTab('tournee')" id="navTournee" class="flex flex-col items-center space-y-0.5 text-slate-400 font-bold text-[9px] transition cursor-pointer">
-      <i data-lucide="route" class="w-4 h-4"></i>
+    <button onclick="switchMobileTab('tournee')" id="navTournee" class="flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer">
+      <i data-lucide="route" class="w-5 h-5"></i>
       <span>Ma Tournée</span>
     </button>
   </nav>
 
-  <!-- MODALE SCAN CAMÉRA (ERGONOMIE MOBILE REVISITÉE POUR GAUCHER/DROITIER) -->
-  <div id="scanModal" class="fixed inset-0 bg-black z-50 flex flex-col hidden">
-    <!-- Vidéo plein écran -->
-    <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden bg-black">
-      <video id="scanVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
-      <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-orange-400/80 animate-pulse shadow-sm"></div>
-      <div id="ocrStatus" class="absolute top-10 left-1/2 -translate-x-1/2 text-center text-xs text-white font-mono bg-slate-900/60 px-4 py-1.5 rounded-full backdrop-blur-md">Prêt pour la capture</div>
-    </div>
-    
-    <!-- Dock de contrôle inférieur -->
-    <div class="h-32 bg-slate-950 pb-8 pt-4 px-8 flex items-center justify-between shrink-0">
-      <button onclick="closeScanModal()" class="w-14 h-14 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-white active:scale-95 transition shadow-lg cursor-pointer">
+  <!-- MODALE SCAN CAMÉRA -->
+  <div id="scanModal" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-between p-4 hidden">
+    <div class="w-full flex justify-between items-center text-white py-2 px-2">
+      <span class="text-xs font-bold uppercase tracking-wider text-orange-400">Scanner Code-Barres / OCR</span>
+      <button onclick="closeScanModal()" class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center text-white cursor-pointer shadow-lg">
         <i data-lucide="x" class="w-6 h-6"></i>
       </button>
-      
-      <button onclick="captureAndOCR()" class="w-20 h-20 bg-orange-500 hover:bg-orange-400 active:scale-95 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] border-4 border-orange-200 transition flex items-center justify-center cursor-pointer">
-        <i data-lucide="camera" class="w-8 h-8 text-white"></i>
-      </button>
-      
-      <div class="w-14 h-14"></div>
+    </div>
+    <div class="relative w-full max-w-xs aspect-[4/3] bg-black rounded-2xl overflow-hidden border-2 border-orange-400 shadow-2xl flex items-center justify-center">
+      <video id="scanVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+      <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-orange-400/80 animate-pulse shadow-sm"></div>
     </div>
     <canvas id="scanCanvas" class="hidden"></canvas>
+    <div class="w-full max-w-xs py-4 space-y-2">
+      <button onclick="captureAndOCR()" class="w-full h-16 bg-orange-300 hover:bg-orange-400 rounded-2xl shadow-lg transition flex items-center justify-center cursor-pointer border border-orange-400">
+        <i data-lucide="camera" class="w-8 h-8 text-orange-900"></i>
+      </button>
+      <div id="ocrStatus" class="text-center text-xs text-white/80 font-mono pt-2">Prêt pour la capture</div>
+    </div>
   </div>
 
-  <!-- MODALE CONFIGURATION PROFIL & SUPPORT (ÉPURÉE) -->
+  <!-- MODALE CONFIGURATION PROFIL & ACCÈS -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
-    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-[32px] p-6 shadow-2xl text-center flex flex-col gap-4">
+    <div class="bg-white border border-slate-200 w-full max-w-sm rounded-[32px] p-6 shadow-2xl text-center flex flex-col gap-5">
       <div>
-        <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-inner border border-orange-100">
-          <i data-lucide="user-cog" class="w-6 h-6"></i>
+        <div class="w-14 h-14 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner border border-orange-100">
+          <i data-lucide="user-cog" class="w-7 h-7"></i>
         </div>
         <h2 class="text-xl font-black text-slate-900 tracking-tight">Profil Collaborateur</h2>
+        <p class="text-xs text-slate-500 mt-1.5 px-4 leading-relaxed">Sélectionnez votre nom pour synchroniser votre tournée et vos saisies.</p>
       </div>
-      
       <div class="text-left">
-        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Agent de terrain</label>
+        <!-- L'étiquette "AGENT DE TERRAIN" a été supprimée ici -->
         <div class="relative">
-          <select id="configAgentSelect" class="w-full text-center bg-slate-50 border-2 border-slate-200 rounded-2xl h-14 pl-4 pr-10 text-sm font-bold text-slate-800 appearance-none focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors shadow-sm cursor-pointer"></select>
+          <select id="configAgentSelect" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl h-14 pl-4 pr-10 text-sm font-bold text-slate-800 appearance-none focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors shadow-sm cursor-pointer"></select>
           <i data-lucide="chevron-down" class="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
         </div>
       </div>
-      
-      <div class="space-y-2.5">
-        <button onclick="saveAgentConfig()" class="w-full h-12 bg-orange-400 hover:bg-orange-500 active:bg-orange-600 text-white font-bold rounded-2xl text-sm shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
+      <div class="space-y-3">
+        <button onclick="saveAgentConfig()" class="w-full h-14 bg-orange-400 hover:bg-orange-500 active:bg-orange-600 text-white font-bold rounded-2xl text-sm shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
           <i data-lucide="user-check" class="w-5 h-5"></i> Activer ce profil
         </button>
-        <button onclick="logoutMobileAgentStep1()" class="w-full h-12 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+        <button onclick="logoutMobileAgentStep1()" class="w-full h-12 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
           <i data-lucide="log-out" class="w-4 h-4 text-slate-400"></i> Se déconnecter
         </button>
       </div>
 
-      <hr class="border-slate-100 my-1">
-
-      <!-- BOUTONS D'ACTION SUPPORT & RESET (NATURELS ET DIRECTS) -->
-      <div class="space-y-2.5">
-        <button onclick="sendSupportEmail()" class="w-full h-12 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 active:scale-95 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
-          <i data-lucide="mail" class="w-5 h-5"></i> Support & Feedback
-        </button>
-        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 active:scale-95 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
-          <i data-lucide="rotate-cw" class="w-5 h-5"></i> Dépannage système
+      <!-- DÉPANNAGE ET SUPPORT (Visuel harmonisé) -->
+      <div class="mt-2 p-4 bg-rose-50/30 border border-slate-200 rounded-2xl text-left">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="settings-2" class="w-4 h-4 text-slate-500"></i>
+          <span class="text-[10px] font-black uppercase tracking-wider text-slate-600">Dépannage & Support</span>
+        </div>
+        <p class="text-[10px] text-slate-500 mb-3 leading-relaxed">
+          Un problème technique ?<br>
+          Contactez : <a href="mailto:obeappinventaire@gmail.com" class="font-bold text-orange-600 underline">obeappinventaire@gmail.com</a>
+        </p>
+        <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-10 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+          <i data-lucide="rotate-cw" class="w-4 h-4"></i> Forcer la réparation
         </button>
       </div>
       
+      <!-- COPYRIGHT RÉINTÉGRÉ ICI -->
+      <div class="mt-1 text-center">
+        <span class="text-[9px] font-medium text-slate-400 tracking-widest uppercase">made by CO2H2O srlu</span>
+      </div>
     </div>
   </div>
 
@@ -278,46 +287,6 @@
     let isSyncing = false; 
     let openTourneeGroups = {}; 
 
-    // --- ENVOI D'EMAIL SUPPORT NATIF ---
-    function sendSupportEmail() {
-      const agent = currentAgent || "Non_renseigne";
-      const subject = encodeURIComponent(`[Support] Application Inventaire - Agent: ${agent}`);
-      const body = encodeURIComponent(
-`Bonjour l'équipe,
-
-Voici ma demande (Bug / Amélioration) :
-
-
-
----
-Infos techniques (ne pas modifier) :
-Agent : ${agent}
-Date : ${new Date().toLocaleString('fr-FR')}
-Version Web App : v4.0`
-      );
-      window.location.href = `mailto:support@votredomaine.com?subject=${subject}&body=${body}`;
-    }
-
-    // --- DÉTECTEUR DOUBLE TAP GLOBAL POUR RETOUR À ZERO ---
-    let lastTouchTime = 0;
-    document.body.addEventListener('touchstart', function(e) {
-      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.closest('button') || e.target.closest('.custom-scrollbar')) {
-        return;
-      }
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTouchTime;
-      if (tapLength < 300 && tapLength > 50) {
-        switchMobileTab('comptage');
-        resetComptageForm();
-        document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
-        if (document.activeElement) {
-          document.activeElement.blur();
-        }
-        e.preventDefault();
-      }
-      lastTouchTime = currentTime;
-    }, { passive: false });
-
     async function safeSetStorage(key, data) { 
       try { 
         await localforage.setItem(key, data); 
@@ -332,6 +301,29 @@ Version Web App : v4.0`
     let mediaStream = null;
     let barcodeDetector = null;
     let scanLoopActive = false;
+
+    // GESTION DU DOUBLE-TAP POUR RESET GLOBAL
+    let lastTap = 0;
+    document.addEventListener('touchend', function(e) {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      
+      // Bloque l'effet sur les inputs ou boutons pour ne pas gêner l'utilisation normale
+      const targetTag = e.target.tagName.toLowerCase();
+      if (targetTag === 'button' || targetTag === 'input' || targetTag === 'select' || e.target.closest('button')) {
+        lastTap = currentTime;
+        return;
+      }
+
+      if (tapLength < 300 && tapLength > 0) {
+        e.preventDefault();
+        switchMobileTab('comptage');
+        resetComptageForm();
+        document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+        closeKeyboard();
+      }
+      lastTap = currentTime;
+    });
 
     function updateBorderColor(el) {
       if(!el) return;
@@ -385,7 +377,7 @@ Version Web App : v4.0`
       if (!confirm("⚠️ Attention : Cette action va vider le cache et forcer le retéléchargement complet de l'application. Continuer ?")) {
         return;
       }
-      document.getElementById("btnHardReset").innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Nettoyage...';
+      document.getElementById("btnHardReset").innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Nettoyage...';
       try {
         await localforage.clear(); 
         localStorage.clear(); 
@@ -506,12 +498,11 @@ Version Web App : v4.0`
       return str.split(' ')[0];
     }
 
-    // Centrage sécurisé du champ quantité au dessus du clavier
     function handleQuantityFocus() {
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
         if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          qtySec.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
       }, 300);
     }
@@ -531,13 +522,16 @@ Version Web App : v4.0`
     }
     
     function closeKeyboard() { 
-      document.getElementById('sapSearchInput').blur(); 
+      const input = document.getElementById('sapSearchInput');
+      if (input) input.blur(); 
     }
 
     function clearSearch() {
       resetComptageForm();
       const input = document.getElementById("sapSearchInput");
       if (input) {
+        input.value = "";
+        updateBorderColor(input);
         input.blur();
       }
     }
@@ -545,14 +539,10 @@ Version Web App : v4.0`
     async function syncMobileData() {
       if (!navigator.onLine || isSyncing) return;
       isSyncing = true;
-      
-      const syncIcon = document.getElementById("syncIcon");
+      const dot = document.getElementById("syncDot");
       const syncBtn = document.getElementById("syncBtn");
       
-      if (syncIcon) {
-         syncIcon.classList.remove("text-emerald-600");
-         syncIcon.classList.add("text-orange-500", "animate-spin");
-      }
+      if (dot) dot.className = "w-3.5 h-3.5 rounded-full bg-amber-500 animate-spin"; 
       if (syncBtn) syncBtn.classList.add("opacity-70", "pointer-events-none");
 
       let recentlyProcessedHistory = [];
@@ -643,11 +633,7 @@ Version Web App : v4.0`
         console.warn("Background sync error", err);
       } finally {
         isSyncing = false;
-        
-        if (syncIcon) {
-           syncIcon.classList.remove("text-orange-500", "animate-spin");
-           syncIcon.classList.add("text-emerald-600");
-        }
+        if (dot) dot.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse"; 
         if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
     }
@@ -716,6 +702,7 @@ Version Web App : v4.0`
       if (sapInput) {
         sapInput.value = "";
         updateBorderColor(sapInput);
+        sapInput.blur();
       }
       
       const card = document.getElementById("selectedArticleCard");
@@ -764,6 +751,7 @@ Version Web App : v4.0`
             } 
           } 
         } catch (e) {
+          // Silence error loop
         } 
       }
       requestAnimationFrame(detectBarcodeLoop);
@@ -780,7 +768,6 @@ Version Web App : v4.0`
 
     async function captureAndOCR() {
       if (navigator.vibrate) navigator.vibrate(40);
-      
       const v = document.getElementById("scanVideo");
       const c = document.getElementById("scanCanvas"); 
       if (!v.srcObject) return;
@@ -817,7 +804,7 @@ Version Web App : v4.0`
       const r = new S(); 
       r.lang = 'fr-FR'; 
       const btn = document.getElementById("micBtn"); 
-      btn.className = "h-14 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
+      btn.className = "h-16 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse shadow-sm"; 
       
       r.onresult = e => { 
         const m = e.results[0][0].transcript.replace(/\s+/g,'').match(/\d{5,8}/); 
@@ -846,7 +833,7 @@ Version Web App : v4.0`
       }; 
       
       r.onerror = r.onend = () => { 
-        btn.className = "h-14 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm"; 
+        btn.className = "h-16 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl flex items-center justify-center transition cursor-pointer shadow-sm"; 
       }; 
       
       r.start(); 
@@ -911,13 +898,10 @@ Version Web App : v4.0`
       document.getElementById("selectedArticleCard").classList.remove("hidden");
       
       if (inputSap) inputSap.blur();
-
-      // REMONTEE DE LA ZONE DE QUANTITE AU DESSUS DU CLAVIER
+      
       setTimeout(() => {
-        const qtySec = document.getElementById('quantitySection');
-        if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        const section = document.getElementById('searchSection');
+        if(section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 150);
     }
 
@@ -1003,14 +987,25 @@ Version Web App : v4.0`
       }
     }
 
+    function getArchiveText(timestamp) {
+      const now = new Date();
+      const histDate = new Date(timestamp);
+      const diffMs = (histDate.getTime() + (3 * 60 * 60 * 1000)) - now.getTime();
+      if (diffMs <= 0) return "ARCHIVAGE IMMINENT";
+      const diffMins = Math.floor(diffMs / 60000);
+      const h = Math.floor(diffMins / 60);
+      const m = diffMins % 60;
+      if (h > 0) return `ARCHIVAGE DANS ${h}H${String(m).padStart(2, '0')}`;
+      return `ARCHIVAGE DANS ${m} MIN`;
+    }
+
     function renderHistory() {
       const container = document.getElementById("historyListContainer"); 
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
       const now = new Date(); 
-      const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
-      const threeHoursAgo = new Date(now.getTime() - ARCHIVE_LIMIT_MS);
+      const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000));
       
       const sessionHist = sessionHistory.filter(h => String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
@@ -1019,18 +1014,16 @@ Version Web App : v4.0`
         .filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === agentLower && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
-      let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
-        const histDate = new Date(h.timestamp); 
-        return histDate >= threeHoursAgo; 
-      });
-
-      fullHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      // Tri chronologique strict (le plus récent en haut)
+      let fullHistory = [...pendingFiltered, ...sessionHist]
+        .filter(h => new Date(h.timestamp) >= threeHoursAgo)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       
       const countLabel = document.getElementById("historyCount");
       if (countLabel) countLabel.innerText = `${fullHistory.length} ligne(s)`;
       
       if (fullHistory.length === 0) { 
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-sm bg-white rounded-2xl shadow-sm border border-slate-200"><p class="font-bold text-slate-500">Aucune saisie récente.</p></div>`; 
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 italic text-sm bg-white rounded-2xl"><p class="font-bold text-slate-500">Aucune saisie active pour aujourd'hui.</p></div>`; 
         return; 
       }
       
@@ -1042,50 +1035,39 @@ Version Web App : v4.0`
             ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-xs">⏳ ATTENTE</span>'
             : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ ENREGISTRÉ</span>';
         
-        const histDate = new Date(h.timestamp);
-        const timeStr = histDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        const ageMs = now.getTime() - histDate.getTime();
-        const remainingMs = ARCHIVE_LIMIT_MS - ageMs;
-        const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
-        let archiveText = "";
-        if (remainingMins > 60) {
-           archiveText = `Archivage dans ${Math.floor(remainingMins/60)}h${String(remainingMins%60).padStart(2,'0')}`;
-        } else {
-           archiveText = `Archivage dans ${remainingMins} min`;
-        }
+        const timeStr = new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const archiveText = getArchiveText(h.timestamp);
 
-        // ACCESSIBILITE : FLEX WRAP ET SHRINK 0 SUR LES ICONES
         html += `
           <div class="bg-white border ${borderClass} p-4 rounded-3xl shadow-sm space-y-3 text-xs cursor-default select-none transition-all">
             <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
               <div class="flex items-center gap-2">
-                <span class="font-mono font-black text-orange-800 text-sm break-words">${h.sapRef}</span>
+                <span class="font-mono font-black text-orange-800 text-sm">${h.sapRef}</span>
                 ${statusBadge}
               </div>
-              <div class="flex flex-col items-end shrink-0">
-                <span class="text-[10px] font-bold text-slate-600 flex items-center gap-1">
+              <div class="text-right">
+                <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1 shrink-0 justify-end">
                   <i data-lucide="clock" class="w-3 h-3"></i> ${timeStr}
                 </span>
-                <span class="text-[8px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5 whitespace-nowrap">${archiveText}</span>
+                <span class="text-[8px] font-bold text-slate-400 block mt-0.5">${archiveText}</span>
               </div>
             </div>
-            <p class="font-bold text-slate-900 text-sm leading-tight break-words whitespace-normal">${h.designation}</p>
+            <p class="font-bold text-slate-900 text-sm leading-tight break-words">${h.designation}</p>
             
-            <div class="flex gap-2 pt-1 items-stretch flex-wrap">
-              <div class="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl shadow-inner border border-slate-200 flex flex-col justify-center flex-1 min-w-[120px]">
-                <span class="text-xs font-bold text-slate-800 break-words whitespace-normal">${h.contractor}</span>
-                <span class="text-[10px] font-semibold text-slate-500 break-words whitespace-normal">${h.trade}</span>
+            <div class="flex gap-2 pt-1 items-stretch">
+              <div class="bg-slate-100 text-slate-700 px-2 py-1.5 rounded-xl shadow-inner border border-slate-200 flex flex-col justify-center w-[40%] shrink-0 min-w-0">
+                <span class="truncate text-xs font-bold text-slate-800">${h.contractor}</span>
+                <span class="truncate text-[10px] font-semibold text-slate-500">${h.trade}</span>
               </div>
               
-              <div class="flex gap-2 shrink-0">
-                <div class="bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center">
+              <div class="flex gap-2 flex-1">
+                <div class="bg-emerald-100 text-emerald-800 px-2 py-1.5 rounded-xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center flex-1">
                   ${h.quantity} <span class="text-[10px] ml-1 opacity-70">PCS</span>
                 </div>
-                <button onclick="editHistoryItem('${h.id}')" class="px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
+                <button onclick="editHistoryItem('${h.id}')" class="w-12 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform flex items-center justify-center">
                   <i data-lucide="edit-3" class="w-5 h-5"></i>
                 </button>
-                <button onclick="deleteHistoryItem('${h.id}')" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
+                <button onclick="deleteHistoryItem('${h.id}')" class="w-12 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform flex items-center justify-center">
                   <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
               </div>
@@ -1093,9 +1075,6 @@ Version Web App : v4.0`
           </div>
         `;
       });
-
-      html += `<div class="text-center text-[10px] text-slate-400 mt-5 pb-2 px-4 leading-snug">Les saisies vieilles de plus de 3 heures sont archivées de votre vue pour libérer de l'espace sur l'appareil.</div>`;
-
       container.innerHTML = html;
       lucide.createIcons();
     }
@@ -1266,14 +1245,14 @@ Version Web App : v4.0`
                   <span class="font-bold text-slate-700 text-xs uppercase">${dateStr} - ${g.tranche || 'MATIN'}</span>
                 </div>
                 ${isDone 
-                  ? '<span class="px-2 py-1 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ TERMINÉ</span>' 
-                  : '<span class="px-2 py-1 rounded text-[10px] font-black bg-amber-400 text-white shadow-xs tracking-wider">À FAIRE</span>'}
+                  ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ TERMINÉ</span>' 
+                  : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400 text-white shadow-xs tracking-wide">À FAIRE</span>'}
               </div>
               
               <div class="flex items-center justify-between mb-3">
-                <div class="flex-1 min-w-0 flex flex-col justify-center">
-                  <p class="font-black text-slate-900 text-sm leading-tight break-words whitespace-normal">${g.contractor}</p>
-                  <p class="text-[11px] font-bold text-orange-600 break-words whitespace-normal mt-0.5">${g.trade}</p>
+                <div class="flex-1 min-w-0">
+                  <p class="font-black text-slate-900 text-sm leading-tight truncate">${g.contractor}</p>
+                  <p class="text-[11px] font-semibold text-slate-500 truncate mt-0.5">${g.trade}</p>
                 </div>
                 <div class="shrink-0 ml-3 bg-slate-50 p-1.5 rounded-full text-slate-400 border border-slate-100 shadow-sm">
                    <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5"></i>
@@ -1300,11 +1279,11 @@ Version Web App : v4.0`
            cardHtml += `
              <div ${isItemDone ? '' : `onclick="selectTourneeTask('${t.id}')"`} class="flex items-center justify-between p-2.5 rounded-xl ${isItemDone ? 'bg-emerald-50 border border-emerald-100 opacity-60' : 'bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-orange-300 active:scale-95 transition'}">
                 <div class="min-w-0 pr-2 flex-1">
-                   <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                   <div class="flex items-center gap-2 mb-0.5">
                      <span class="font-mono font-black text-[11px] text-orange-600">${t.sapRef}</span>
                      ${isItemDone ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>' : ''}
                    </div>
-                   <div class="text-[10px] font-medium text-slate-600 break-words whitespace-normal leading-snug">${t.designation}</div>
+                   <div class="text-[10px] font-medium text-slate-600 truncate leading-snug">${t.designation}</div>
                 </div>
                 ${!isItemDone ? '<div class="shrink-0 bg-orange-50 p-1.5 rounded-lg text-orange-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></div>' : ''}
              </div>
@@ -1351,7 +1330,7 @@ Version Web App : v4.0`
         
         const n = document.getElementById("nav" + x); 
         if (n) {
-          n.className = "flex flex-col items-center space-y-0.5 text-slate-400 font-bold text-[9px] transition cursor-pointer"; 
+          n.className = "flex flex-col items-center space-y-1 text-slate-400 font-bold text-[10px] transition cursor-pointer"; 
         }
       }); 
       
@@ -1363,7 +1342,7 @@ Version Web App : v4.0`
       
       const aN = document.getElementById("nav" + a); 
       if (aN) {
-        aN.className = "flex flex-col items-center space-y-0.5 text-emerald-600 font-bold text-[9px] transition cursor-pointer"; 
+        aN.className = "flex flex-col items-center space-y-1 text-emerald-600 font-bold text-[10px] transition cursor-pointer"; 
       }
       
       if (t === 'historique') {
