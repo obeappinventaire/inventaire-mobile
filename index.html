@@ -151,21 +151,15 @@
 
       <!-- ONGLET 3 : LA FILE D'ATTENTE (MISSIONS GROUPÉES) -->
       <section id="tabTournee" class="hidden space-y-4">
-        <div class="flex justify-between items-center px-1 border-b border-slate-200 pb-2">
-          <h2 id="tourneeDebugHeader" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Comptages Assignés</h2>
-        </div>
+        <!-- Remplacement de l'en-tête par un KPI dynamique -->
+        <div id="tourneeDebugHeader" class="pb-2 border-b border-slate-200"></div>
         <div id="tourneeListContainer" class="space-y-3 pb-8"></div>
       </section>
     </div>
 
-    <!-- COPYRIGHT DISCRET TOUT EN BAS -->
-    <div class="mt-8 mb-4 text-center shrink-0">
-      <span class="text-[9px] font-medium text-slate-400 tracking-widest uppercase">&copy; made by CO2H2O srlu</span>
-    </div>
-
   </main>
 
-  <!-- BARRE DE NAVIGATION INFÉRIEURE (HAUTEUR RÉDUITE) -->
+  <!-- BARRE DE NAVIGATION INFÉRIEURE -->
   <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-1.5 flex justify-around items-center z-20 shadow-lg pb-safe">
     <button onclick="switchMobileTab('comptage')" id="navComptage" class="flex flex-col items-center space-y-0.5 text-emerald-600 font-bold text-[9px] transition cursor-pointer">
       <i data-lucide="calculator" class="w-4 h-4"></i>
@@ -181,7 +175,7 @@
     </button>
   </nav>
 
-  <!-- MODALE SCAN CAMÉRA (ERGONOMIE MOBILE REVISITÉE POUR GAUCHER/DROITIER) -->
+  <!-- MODALE SCAN CAMÉRA -->
   <div id="scanModal" class="fixed inset-0 bg-black z-50 flex flex-col hidden">
     <!-- Vidéo plein écran -->
     <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden bg-black">
@@ -205,7 +199,7 @@
     <canvas id="scanCanvas" class="hidden"></canvas>
   </div>
 
-  <!-- MODALE CONFIGURATION PROFIL & SUPPORT (ÉPURÉE) -->
+  <!-- MODALE CONFIGURATION PROFIL & SUPPORT -->
   <div id="configModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white border border-slate-200 w-full max-w-sm rounded-[32px] p-6 shadow-2xl text-center flex flex-col gap-4">
       <div>
@@ -234,7 +228,6 @@
 
       <hr class="border-slate-100 my-1">
 
-      <!-- BOUTONS D'ACTION SUPPORT & RESET (NATURELS ET DIRECTS) -->
       <div class="space-y-2.5">
         <button onclick="sendSupportEmail()" class="w-full h-12 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 active:scale-95 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="mail" class="w-5 h-5"></i> Support & Feedback
@@ -244,6 +237,10 @@
         </button>
       </div>
       
+      <!-- COPYRIGHT DÉPLACÉ ICI -->
+      <div class="mt-2 text-center">
+        <span class="text-[8px] font-medium text-slate-300 tracking-widest uppercase">&copy; made by CO2H2O srlu</span>
+      </div>
     </div>
   </div>
 
@@ -506,7 +503,6 @@ Version Web App : v4.0`
       return str.split(' ')[0];
     }
 
-    // Centrage sécurisé du champ quantité au dessus du clavier
     function handleQuantityFocus() {
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
@@ -1055,7 +1051,6 @@ Version Web App : v4.0`
            archiveText = `Archivage dans ${remainingMins} min`;
         }
 
-        // ACCESSIBILITE : FLEX WRAP ET SHRINK 0 SUR LES ICONES
         html += `
           <div class="bg-white border ${borderClass} p-4 rounded-3xl shadow-sm space-y-3 text-xs cursor-default select-none transition-all">
             <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -1240,7 +1235,22 @@ Version Web App : v4.0`
       const agentTournees = (cachedTournees || []).filter(t => String(t.agent || "").trim().toLowerCase() === String(currentAgent || "").trim().toLowerCase());
       
       if (tHeader) {
-        tHeader.innerHTML = `COMPTAGES ASSIGNÉS <span class="text-orange-600 font-mono">(${agentTournees.length} à vous / ${cachedTournees.length} totales)</span>`;
+        const totalT = agentTournees.length;
+        const doneT = agentTournees.filter(t => String(t.statut).trim().toUpperCase() === 'VALIDE').length;
+        const remainingT = totalT - doneT;
+
+        tHeader.innerHTML = `
+          <div class="flex gap-2 w-full pt-1">
+            <div class="flex-1 bg-orange-50 text-orange-800 px-3 py-2.5 rounded-2xl border border-orange-200 flex flex-col items-center justify-center shadow-sm">
+              <span class="text-xl font-black leading-none">${remainingT}</span>
+              <span class="text-[9px] font-bold uppercase mt-1 opacity-80">À traiter</span>
+            </div>
+            <div class="flex-1 bg-slate-50 text-slate-600 px-3 py-2.5 rounded-2xl border border-slate-200 flex flex-col items-center justify-center shadow-sm">
+              <span class="text-xl font-black leading-none">${totalT}</span>
+              <span class="text-[9px] font-bold uppercase mt-1 opacity-80">Au Total</span>
+            </div>
+          </div>
+        `;
       }
 
       const groupedTasks = buildTourneeGroups(agentTournees);
@@ -1266,8 +1276,8 @@ Version Web App : v4.0`
                   <span class="font-bold text-slate-700 text-xs uppercase">${dateStr} - ${g.tranche || 'MATIN'}</span>
                 </div>
                 ${isDone 
-                  ? '<span class="px-2 py-1 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ TERMINÉ</span>' 
-                  : '<span class="px-2 py-1 rounded text-[10px] font-black bg-amber-400 text-white shadow-xs tracking-wider">À FAIRE</span>'}
+                  ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>' 
+                  : '<i data-lucide="clock-4" class="w-5 h-5 text-amber-500"></i>'}
               </div>
               
               <div class="flex items-center justify-between mb-3">
