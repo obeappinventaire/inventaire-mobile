@@ -37,9 +37,10 @@
 
   <!-- EN-TÊTE MOBILE -->
   <header class="bg-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0 z-20">
-    <div class="flex items-end space-x-2.5 h-7">
-      <img src="app_icon_co2h2o.png" alt="Logo" class="w-7 h-7 object-contain drop-shadow-sm">
-      <h1 id="headerAgentName" class="text-base font-light text-slate-800 tracking-wide truncate max-w-[150px] leading-none pb-0.5">--</h1>
+    <div class="flex items-end space-x-2.5 h-7 relative">
+      <img src="app_icon_co2h2o.png" alt="Logo" class="w-8 h-8 object-contain drop-shadow-sm">
+      <span class="absolute -top-1 left-9 text-[6px] font-medium text-slate-400 tracking-widest uppercase leading-none">&copy; made by CO2H2O srlu</span>
+      <h1 id="headerAgentName" class="text-base font-bold text-orange-600 tracking-wide truncate max-w-[150px] leading-none pb-0.5">--</h1>
     </div>
     <div class="flex items-center space-x-3">
       <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-1.5 rounded-xl hover:bg-slate-200 transition cursor-pointer relative flex items-center justify-center">
@@ -124,15 +125,14 @@
         </div>
 
         <!-- QUANTITÉ COMPTÉE & ENREGISTREMENT -->
-        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs shrink-0" id="quantitySection">
-          <div class="flex items-center gap-3">
-            <div class="relative flex-1">
-              <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-16 text-center font-black text-3xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 focus:bg-orange-50 focus:text-orange-900 font-mono shadow-inner transition-all">
-            </div>
-            <button onclick="submitInventoryEntry()" class="w-20 h-16 bg-emerald-400 hover:bg-emerald-500 active:bg-emerald-600 rounded-2xl shadow-md flex items-center justify-center transition cursor-pointer border border-emerald-500 shrink-0">
-              <i data-lucide="check-square" class="w-10 h-10 text-white"></i>
-            </button>
+        <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-xs space-y-4 shrink-0" id="quantitySection">
+          <div class="relative w-full">
+            <input type="number" id="inputQuantity" oninput="updateBorderColor(this)" placeholder="0" min="0" onfocus="handleQuantityFocus()" class="w-full h-20 text-center font-black text-4xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-orange-500 focus:bg-orange-50 focus:text-orange-900 font-mono shadow-inner transition-all">
           </div>
+
+          <button onclick="submitInventoryEntry()" class="w-full h-16 bg-emerald-200 hover:bg-emerald-300 active:bg-emerald-400 rounded-2xl shadow-md flex items-center justify-center transition cursor-pointer border border-emerald-300">
+            <i data-lucide="check-square" class="w-8 h-8 text-emerald-900"></i>
+          </button>
         </div>
       </section>
 
@@ -222,9 +222,9 @@
       <hr class="border-slate-100 my-1">
 
       <div class="space-y-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-        <a href="mailto:obeappinventaire@gmail.com" class="w-full h-12 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+        <button onclick="sendSupportEmail()" class="w-full h-12 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="mail" class="w-5 h-5 text-slate-400"></i> Support Technique
-        </a>
+        </button>
         <button id="btnHardReset" onclick="hardResetApp()" class="w-full h-12 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="rotate-cw" class="w-5 h-5 text-slate-400"></i> Vider cache & réparer
         </button>
@@ -301,14 +301,37 @@
     let barcodeDetector = null;
     let scanLoopActive = false;
 
+    function sendSupportEmail() {
+      const agent = currentAgent || "Non_renseigne";
+      const subject = encodeURIComponent(`[Support] Application Inventaire - Agent: ${agent}`);
+      const body = encodeURIComponent(
+`Bonjour l'équipe,
+
+Voici ma demande (Bug / Amélioration) :
+
+
+
+---
+Infos techniques (ne pas modifier) :
+Agent : ${agent}
+Date : ${new Date().toLocaleString('fr-FR')}
+Version Web App : v4.0`
+      );
+      window.location.href = `mailto:obeappinventaire@gmail.com?subject=${subject}&body=${body}`;
+    }
+
     function updateBorderColor(el) {
       if(!el) return;
       if (el.value && String(el.value).trim() !== "") {
-        el.classList.remove('border-slate-200', 'border-slate-300');
+        el.classList.remove('border-slate-200', 'border-slate-300', 'border-transparent');
         el.classList.add('border-orange-500');
       } else {
         el.classList.remove('border-orange-500');
-        el.classList.add('border-slate-300');
+        if(el.tagName === 'SELECT') {
+            el.classList.add('border-transparent');
+        } else {
+            el.classList.add('border-slate-300');
+        }
       }
     }
 
@@ -490,7 +513,7 @@
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
         if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 300);
     }
@@ -657,13 +680,11 @@
       const tSel = document.getElementById("selectTrade");
       if (cSel) {
         cSel.setAttribute("disabled", "disabled");
-        cSel.classList.add("bg-slate-200", "pointer-events-none");
-        updateBorderColor(cSel);
+        cSel.classList.add("bg-slate-200", "pointer-events-none", "border-orange-500");
       }
       if (tSel) {
         tSel.setAttribute("disabled", "disabled");
-        tSel.classList.add("bg-slate-200", "pointer-events-none");
-        updateBorderColor(tSel);
+        tSel.classList.add("bg-slate-200", "pointer-events-none", "border-orange-500");
       }
       
       const b = document.getElementById("activeMissionBanner");
@@ -904,7 +925,7 @@
       setTimeout(() => {
         const qtySec = document.getElementById('quantitySection');
         if (qtySec) {
-          qtySec.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 150);
     }
@@ -1246,7 +1267,7 @@
       const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(currentAgentLower) || currentAgentLower.includes("admin") || currentAgentLower === "superviseur";
       
       const agentTournees = (cachedTournees || []).filter(t => {
-         if (isAdmin) return true;
+         if (isAdmin) return true; 
          return String(t.agent || "").trim().toLowerCase() === currentAgentLower;
       });
       
