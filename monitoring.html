@@ -417,7 +417,7 @@
               <button onclick="resetMapToBelgium()" class="text-xs font-bold text-orange-700 bg-white hover:bg-orange-50 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1 cursor-pointer">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5"></i><span>Recentrer</span>
               </button>
-              <span class="text-xs font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 shadow-sm" id="mapPointsCountLabel">0 point(s) aujourd'hui</span>
+              <span class="text-xs font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 shadow-sm" id="mapPointsCountLabel">0 site(s) aujourd'hui</span>
             </div>
           </div>
           <div class="bg-white border border-slate-200 p-2 rounded-2xl shadow-sm">
@@ -1506,7 +1506,7 @@
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
-           // FIX : Suppression totale des attributs si jour dépassé
+           // FIX : Suppression totale des attributs de drop si jour dépassé
            const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
            const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
@@ -1690,38 +1690,60 @@
       lucide.createIcons();
     }
 
-    function openMapListingDetailByCoords(lat, lng) {
-      const todayStr = normalizeDateYMD(new Date());
-      const items = cachedHistory.filter(h => h.lat === lat && h.lng === lng && normalizeDateYMD(h.timestamp) === todayStr);
-      
-      if (items.length === 0) return;
+    function openMapListingDetailByContractor(contractor, todayStr) {
+      // Regroupe les tâches prévues aujourd'hui et les saisies aujourd'hui pour cet entrepreneur
+      const tTasks = cachedTournees.filter(t => t.contractor === contractor && normalizeDateYMD(t.date) === todayStr);
+      const hScans = cachedHistory.filter(h => h.contractor === contractor && normalizeDateYMD(h.timestamp) === todayStr);
+
+      if (tTasks.length === 0 && hScans.length === 0) return;
 
       const titleEl = document.getElementById("modalTourneeTitle");
-      if (titleEl) titleEl.innerText = `Point de Saisie : ${items[0].contractor}`;
+      if (titleEl) titleEl.innerText = `Site : ${contractor}`;
       
       const subTitleEl = document.getElementById("modalTourneeSubtitle");
-      if (subTitleEl) subTitleEl.innerText = `${items.length} article(s) traité(s) aujourd'hui à cet emplacement`;
+      if (subTitleEl) subTitleEl.innerText = `Aujourd'hui • ${tTasks.length} planifié(s), ${hScans.length} scanné(s)`;
 
       const contentEl = document.getElementById("modalTourneeContent");
       if (contentEl) {
-        let html = '<div class="space-y-3">';
-        items.forEach(item => {
-          html += `
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-              <div class="flex justify-between items-start mb-1">
-                 <span class="font-black text-slate-800 text-sm">${item.user}</span>
-                 <span class="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">${item.trade}</span>
-              </div>
-              <p class="text-xs text-slate-700 font-medium mb-2">${item.designation}</p>
-              <div class="flex justify-between items-center border-t border-slate-200 pt-2">
-                 <span class="text-xs font-mono font-bold text-orange-600">${item.sapRef}</span>
-                 <span class="px-2 py-1 rounded-lg ${Number(item.quantity) === 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'} text-xs font-mono font-black border ${Number(item.quantity) === 0 ? 'border-rose-300' : 'border-emerald-300'}">
-                   ${item.quantity} PCS
-                 </span>
-              </div>
-            </div>
-          `;
-        });
+        let html = '<div class="space-y-4">';
+
+        if (tTasks.length > 0) {
+           html += `<div><h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1">Missions Planifiées</h4>`;
+           tTasks.sort((a,b) => (a.ordre||0) - (b.ordre||0)).forEach(t => {
+               const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+               html += `
+                 <div class="flex items-center justify-between p-2 mb-1.5 rounded-lg ${isDone ? 'bg-emerald-50 border border-emerald-100' : 'bg-slate-50 border border-slate-200'}">
+                   <div class="min-w-0 pr-2">
+                     <span class="font-mono font-bold text-orange-600 text-[11px]">${t.sapRef}</span>
+                     <p class="text-[10px] text-slate-600 truncate">${t.designation || 'Sans libellé'}</p>
+                   </div>
+                   <span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? 'VALIDÉ' : 'À FAIRE'}</span>
+                 </div>
+               `;
+           });
+           html += `</div>`;
+        }
+
+        if (hScans.length > 0) {
+           html += `<div><h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1">Saisies Réalisées</h4>`;
+           hScans.forEach(h => {
+               const isZero = Number(h.quantity) === 0;
+               html += `
+                 <div class="flex items-center justify-between p-2 mb-1.5 rounded-lg bg-white border ${isZero ? 'border-rose-200' : 'border-slate-200'}">
+                   <div class="min-w-0 pr-2">
+                     <div class="flex gap-1 items-center">
+                        <span class="font-mono font-bold text-[11px] ${isZero ? 'text-rose-600' : 'text-slate-800'}">${h.sapRef}</span>
+                        <span class="text-[8px] font-bold text-slate-400 bg-slate-100 px-1 rounded">${h.user}</span>
+                     </div>
+                     <p class="text-[10px] text-slate-500 truncate">${h.designation}</p>
+                   </div>
+                   <span class="font-mono font-black text-xs ${isZero ? 'text-rose-600' : 'text-emerald-700'}">${h.quantity}</span>
+                 </div>
+               `;
+           });
+           html += `</div>`;
+        }
+
         html += '</div>';
         contentEl.innerHTML = html;
       }
@@ -2006,7 +2028,7 @@
       agentListContainer.innerHTML = agentListHtml;
     }
 
-    function renderMap(list) {
+    function renderMap() {
       const mapDiv = document.getElementById("mapContainer");
       if (!mapDiv) return;
 
@@ -2021,81 +2043,141 @@
 
       markersLayer.clearLayers();
       
-      // RESTRICTION "LIVE" : Uniquement l'activité d'aujourd'hui est affichée
       const todayStr = normalizeDateYMD(new Date());
-      const todaysList = list.filter(item => normalizeDateYMD(item.timestamp) === todayStr);
       
-      const pointsWithGps = todaysList.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng));
+      // EXCLUSIVEMENT AUJOURD'HUI
+      const todaysTournees = cachedTournees.filter(t => normalizeDateYMD(t.date) === todayStr);
+      const todaysHistory = cachedHistory.filter(h => normalizeDateYMD(h.timestamp) === todayStr);
       
+      // Dictionnaire de géocodage (Apprentissage automatique via l'historique complet)
+      const coordsDict = {};
+      cachedHistory.forEach(h => {
+          if (h.contractor && h.lat && h.lng && !isNaN(h.lat) && !isNaN(h.lng)) {
+              coordsDict[h.contractor] = { lat: h.lat, lng: h.lng };
+          }
+      });
+
+      const mapData = {};
+      
+      todaysTournees.forEach(t => {
+          const c = t.contractor;
+          if (!mapData[c]) mapData[c] = { contractor: c, agents: new Set(), trades: new Set(), plannedTasks: [], historyScans: [], lat: null, lng: null };
+          mapData[c].plannedTasks.push(t);
+          mapData[c].agents.add(t.agent);
+          mapData[c].trades.add(t.trade);
+      });
+
+      todaysHistory.forEach(h => {
+          const c = h.contractor;
+          if (!mapData[c]) mapData[c] = { contractor: c, agents: new Set(), trades: new Set(), plannedTasks: [], historyScans: [], lat: null, lng: null };
+          mapData[c].historyScans.push(h);
+          mapData[c].agents.add(h.user);
+          mapData[c].trades.add(h.trade);
+          if (h.lat && h.lng && !isNaN(h.lat) && !isNaN(h.lng)) {
+              mapData[c].lat = h.lat;
+              mapData[c].lng = h.lng;
+          }
+      });
+
+      let mappedCount = 0;
+
+      Object.values(mapData).forEach(md => {
+          if (!md.lat || !md.lng) {
+              if (coordsDict[md.contractor]) {
+                  md.lat = coordsDict[md.contractor].lat;
+                  md.lng = coordsDict[md.contractor].lng;
+              }
+          }
+          
+          if (!md.lat || !md.lng) return; 
+          mappedCount++;
+
+          const totalMissions = md.plannedTasks.length;
+          const doneMissions = md.plannedTasks.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
+          const isAllDone = totalMissions > 0 && doneMissions === totalMissions;
+          
+          const qty = md.historyScans.reduce((sum, h) => sum + Number(h.quantity), 0);
+          const hasRupture = md.historyScans.some(h => Number(h.quantity) === 0);
+          
+          let markerColor = "#f97316"; 
+          if (hasRupture) markerColor = "#e11d48"; 
+          else if (totalMissions > 0 && isAllDone) markerColor = "#10b981"; 
+          else if (totalMissions === 0 && md.historyScans.length > 0) markerColor = "#3b82f6"; 
+
+          let missionText = 'Hors Mission';
+          let missionColor = 'text-amber-600';
+          if (totalMissions > 0) {
+             missionText = `${doneMissions} / ${totalMissions} lignes`;
+             missionColor = isAllDone ? 'text-emerald-600' : 'text-slate-700';
+          }
+
+          let iconHtml = '<i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-400"></i>';
+          if (totalMissions > 0) {
+             iconHtml = isAllDone 
+                ? '<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>'
+                : '<i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>';
+          }
+
+          const marker = L.circleMarker([md.lat, md.lng], {
+            radius: 8,
+            fillColor: markerColor,
+            color: "#ffffff",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+          });
+
+          const agentStr = Array.from(md.agents).join(', ');
+          const tradeStr = Array.from(md.trades).join(', ');
+          const statusBadge = hasRupture ? '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-rose-100 text-rose-800 border border-rose-200">RUPTURE</span>' : (md.historyScans.length > 0 ? '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200">COMPTÉ</span>' : '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-slate-100 text-slate-500 border border-slate-200">EN ATTENTE</span>');
+
+          const tooltipHtml = `
+            <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[250px] overflow-hidden border border-slate-200 p-2.5">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
+                <div class="flex items-center gap-1 min-w-0">
+                  <span class="font-black text-slate-800 text-[11px] uppercase truncate">👤 ${agentStr}</span>
+                </div>
+                ${statusBadge}
+              </div>
+              
+              <div class="mb-2 leading-tight">
+                <p class="font-bold text-slate-900 text-xs truncate">${md.contractor}</p>
+                <p class="text-[10px] font-semibold text-slate-600 truncate">${tradeStr}</p>
+              </div>
+              
+              <div class="flex gap-1.5 items-stretch">
+                <div class="bg-slate-50 text-slate-700 px-2 py-1.5 rounded-xl shadow-inner border border-slate-200 flex-[1.2] flex flex-col justify-center items-center text-center">
+                  <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Avancement</span>
+                  <div class="flex items-center gap-1">
+                      <span class="text-[10px] font-black ${missionColor}">${missionText}</span>
+                      ${iconHtml}
+                  </div>
+                </div>
+                <div class="${hasRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl shadow-inner border flex-1 flex flex-col justify-center items-center">
+                  <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Qté Comptée</span>
+                  <span class="text-sm font-black leading-none mt-0.5">${qty}</span>
+                </div>
+              </div>
+            </div>
+          `;
+
+          marker.bindTooltip(tooltipHtml, {
+            direction: 'top',
+            className: 'custom-map-tooltip',
+            offset: [0, -10]
+          });
+
+          marker.on('click', () => {
+            openMapListingDetailByContractor(md.contractor, todayStr);
+          });
+
+          markersLayer.addLayer(marker);
+      });
+
       const countLabel = document.getElementById("mapPointsCountLabel");
       if (countLabel) {
-        countLabel.innerText = `${pointsWithGps.length} point(s) aujourd'hui`;
+        countLabel.innerText = `${mappedCount} site(s) aujourd'hui`;
       }
-
-      pointsWithGps.forEach(p => {
-        const qty = Number(p.quantity);
-        const isRupture = qty === 0;
-        const markerColor = isRupture ? "#e11d48" : "#f97316";
-
-        // Calcul de l'avancement de la mission pour cet emplacement spécifique, ce jour-ci
-        const groupTasks = cachedTournees.filter(t => t.agent === p.user && t.contractor === p.contractor && t.trade === p.trade && t.date === todayStr);
-        const totalMissions = groupTasks.length;
-        const doneMissions = groupTasks.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
-        const isAllDone = totalMissions > 0 && doneMissions === totalMissions;
-
-        let missionText = 'Hors Mission';
-        let missionColor = 'text-amber-600';
-        if (totalMissions > 0) {
-           missionText = `${doneMissions} / ${totalMissions} lignes`;
-           missionColor = isAllDone ? 'text-emerald-600' : 'text-slate-700';
-        }
-
-        const marker = L.circleMarker([p.lat, p.lng], {
-          radius: 8,
-          fillColor: markerColor,
-          color: "#ffffff",
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.9
-        });
-
-        const tooltipHtml = `
-          <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[250px] overflow-hidden border border-slate-200 p-2.5">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
-              <span class="font-black text-slate-800 text-[11px] uppercase truncate">👤 ${p.user}</span>
-              <span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 ${isRupture ? 'bg-rose-100 text-rose-800 border-rose-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}">${isRupture ? 'RUPTURE' : 'COMPTÉ'}</span>
-            </div>
-            
-            <div class="mb-2 leading-tight">
-              <p class="font-bold text-slate-900 text-xs truncate">${p.contractor}</p>
-              <p class="text-[10px] font-semibold text-slate-600 truncate">${p.trade} • <span class="font-mono text-orange-600 font-bold">${p.sapRef}</span></p>
-            </div>
-            
-            <div class="flex gap-1.5 items-stretch">
-              <div class="bg-slate-50 text-slate-700 px-2 py-1.5 rounded-xl shadow-inner border border-slate-200 flex-[1.2] flex flex-col justify-center items-center text-center">
-                <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Avancement</span>
-                <span class="text-[10px] font-black ${missionColor}">${missionText}</span>
-              </div>
-              <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl shadow-inner border flex-1 flex flex-col justify-center items-center">
-                <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Qté Article</span>
-                <span class="text-sm font-black leading-none mt-0.5">${qty}</span>
-              </div>
-            </div>
-          </div>
-        `;
-
-        marker.bindTooltip(tooltipHtml, {
-          direction: 'top',
-          className: 'custom-map-tooltip',
-          offset: [0, -10]
-        });
-
-        marker.on('click', () => {
-          openMapListingDetailByCoords(p.lat, p.lng);
-        });
-
-        markersLayer.addLayer(marker);
-      });
     }
 
     function resetMapToBelgium() {
@@ -2392,7 +2474,7 @@
       renderKPIs(filtered); 
       renderTable(filtered); 
       renderAgentsView(periodData); 
-      renderMap(mapFilterOnSelection ? filtered : periodData);
+      renderMap(); // APPEL MODIFIÉ POUR FORCER LE LIVE TRACKING DU JOUR J
       renderWallPlanning(); 
       renderCompletionMetrics(); 
     }
