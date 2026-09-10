@@ -200,12 +200,12 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE DE DROITE (FOND PLUS GRIS) -->
+    <!-- ZONE PRINCIPALE DE DROITE -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-100">
       
       <div class="space-y-6 flex-1">
         
-        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE (COCKPIT EXPERT) ================= -->
+        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
         <section id="viewGlobal" class="space-y-6">
           <div>
             <div class="flex justify-between items-center mb-2 px-1 max-w-6xl">
@@ -233,6 +233,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4 max-w-6xl">
+              <!-- VISUEL 1 : JAUGE DE SANTÉ STOCK -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col justify-center space-y-2">
                 <div class="flex justify-between items-end">
                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Santé du Stock Audité</span>
@@ -249,6 +250,7 @@
                 </div>
               </div>
 
+              <!-- VISUEL 2 : TOP 3 HOTSPOTS ANOMALIES -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
                 <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-3 border-b border-slate-100 pb-1">Palmarès Ruptures & Alertes (Hotspots)</span>
                 <div id="kpiTopAnomalies" class="space-y-2"></div>
@@ -419,7 +421,6 @@
         <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
         <section id="viewTourneesAdmin" class="hidden relative">
           
-          <!-- EN-TÊTE FIXE (STICKY) POUR L'AGENDA -->
           <div class="sticky top-0 z-30 bg-slate-100 pt-2 pb-4 border-b border-slate-300 shadow-sm mb-6 -mt-2">
             
             <div class="flex items-center justify-between mb-4">
@@ -443,7 +444,6 @@
               </div>
             </div>
 
-            <!-- ZONE BUFFER OPÉRATIONNEL & FILTRE AGENT MULTI-CHOIX -->
             <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl shadow-sm p-4 flex flex-col max-h-[220px]">
               <div class="flex items-center justify-between border-b border-amber-200/50 pb-2 mb-3 shrink-0">
                 <span class="font-bold text-amber-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
@@ -475,18 +475,16 @@
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            <!-- GRILLE DE L'AGENDA (9 COLONNES) -->
             <div class="lg:col-span-9 bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
                 <div class="flex items-center">
-                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions (Période ciblée)</span>
+                   <span class="font-bold text-slate-700 uppercase tracking-wide">Agenda des Missions</span>
                    <span id="agendaWeekBadge" class="ml-3 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded"></span>
                 </div>
               </div>
               <div id="wallPlanningGrid" class="flex flex-nowrap items-stretch gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
             </div>
 
-            <!-- COCKPIT DE COMPLÉTION DATA (3 COLONNES) -->
             <div class="lg:col-span-3 space-y-4">
               <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm space-y-5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -536,7 +534,6 @@
                 </div>
               </div>
 
-              <!-- BLOC : AVANCEMENT PAR AGENT -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm space-y-3">
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-100 pb-2">Avancement / Agent</span>
                 <div id="agentCompletionList" class="space-y-2.5 max-h-[180px] overflow-y-auto custom-scrollbar pr-1"></div>
@@ -565,19 +562,19 @@
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Agent :</label>
-            <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-50 text-xs">
+            <select id="adminAssignAgent" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Agent --</option>
             </select>
           </div>
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Entr. :</label>
-            <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-50 text-xs">
+            <select id="adminAssignContractor" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Entrepreneur --</option>
             </select>
           </div>
           <div>
             <label class="block font-bold text-slate-500 uppercase mb-0.5">Métier :</label>
-            <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-50 text-xs">
+            <select id="adminAssignTrade" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="">-- Métier --</option>
             </select>
           </div>
@@ -590,10 +587,10 @@
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <input type="date" id="adminAssignDate" onchange="validateAssignDate(this)" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono text-slate-800 focus:outline-none focus:border-orange-50 text-xs">
+            <input type="date" id="adminAssignDate" onchange="validateAssignDate(this)" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
           </div>
           <div>
-            <select id="adminAssignTranche" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-50 text-xs">
+            <select id="adminAssignTranche" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800 focus:outline-none focus:border-orange-500 text-xs">
               <option value="MATIN">Matin</option>
               <option value="APRES_MIDI">Après-midi</option>
             </select>
@@ -604,7 +601,7 @@
             <label class="font-bold text-slate-500 uppercase">Catalogue Google Sheets :</label>
             <span id="adminCatalogCount" class="text-[10px] font-mono text-orange-700 font-bold">0 article(s)</span>
           </div>
-          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Recherche multicritères..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-50 font-medium">
+          <input type="text" id="adminCatalogSearch" oninput="renderAdminCatalogPicker(this.value)" placeholder="Recherche multicritères..." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-1.5 px-3 text-xs text-slate-800 focus:outline-none focus:border-orange-500 font-medium">
           <div id="adminCatalogPickerList" class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50"></div>
         </div>
       </div>
@@ -837,8 +834,6 @@
       initMultiSelects();
       populateAdminDropdown();
       populateTourneeAdminDropdowns();
-      
-      // OUVRE L'APPLICATION SUR "AUJOURD'HUI" PAR DÉFAUT
       onSmartPeriodChange('TODAY');
 
       const qtyInput = document.getElementById("cfgMaxQty");
@@ -1304,8 +1299,11 @@
       e.dataTransfer.setData('text/plain', groupId);
     }
 
-    async function handleDropOnDay(e, targetDateStr, targetTranche) {
-      e.preventDefault();
+    function handleDropOnDay(e, targetDateStr, targetTranche) {
+      if (e) {
+         e.preventDefault();
+         e.stopPropagation();
+      }
       if (!draggedGroupPayload) return;
 
       const targetDateObj = new Date(targetDateStr + "T00:00:00");
@@ -1326,16 +1324,17 @@
         }
       });
 
-      await localforage.setItem("offline_tournees", cachedTournees);
-      applyFilters(); 
-      draggedGroupPayload = null;
-
-      if (itemsToUpdate.length > 0) {
-        const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
-        pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
-        await localforage.setItem("offline_pending_sync", pendingSyncQueue);
-        if(navigator.onLine) setTimeout(syncMonitoringData, 100);
-      }
+      localforage.setItem("offline_tournees", cachedTournees).then(() => {
+        applyFilters(); 
+        draggedGroupPayload = null;
+        if (itemsToUpdate.length > 0) {
+          const syncId = "SYNC-" + Date.now().toString(36) + Math.random().toString(36).substring(2);
+          pendingSyncQueue.push({ _syncId: syncId, action: "UPDATE_TOURNEES_DATES", items: itemsToUpdate, user: currentAdmin, token: adminToken });
+          localforage.setItem("offline_pending_sync", pendingSyncQueue).then(() => {
+             if(navigator.onLine) setTimeout(syncMonitoringData, 100);
+          });
+        }
+      });
     }
 
     function buildTourneeGroups(tourneesList) {
@@ -1487,20 +1486,37 @@
         };
 
         const isBlocked = dayObj.getDay() === 0 || dayObj.getDay() === 6 || isBelgianHoliday(dayObj);
-        const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'w-64 min-w-[200px] flex-1';
+        const colClass = isBlocked ? 'w-10 shrink-0 bg-slate-100/60 items-center justify-center border-none' : 'min-w-[280px] flex-1 shrink-0';
         
         let innerContentHtml = '';
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-300 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
            innerContentHtml = `
-            <div onclick="openManualAssignModal('${dateStr}', 'MATIN')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'MATIN')" class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-sky-50 hover:bg-sky-100 border border-sky-200 border-dashed cursor-pointer">
-              <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider mb-2 text-center border-b border-sky-200/50 pb-1">Matin</span>
-              <div class="flex flex-wrap gap-1.5 flex-1 content-start" onclick="event.stopPropagation()">${renderGroupCards(matinGroups)}</div>
+            <div class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-sky-50/50 border border-sky-200 border-dashed"
+                 ondragover="event.preventDefault(); this.classList.add('bg-sky-100')"
+                 ondragleave="this.classList.remove('bg-sky-100')"
+                 ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('bg-sky-100'); handleDropOnDay(event, '${dateStr}', 'MATIN')">
+              <div class="flex items-center justify-between border-b border-sky-200/50 pb-1 mb-2">
+                 <span class="text-[9px] font-black text-sky-600 uppercase tracking-wider">Matin</span>
+                 <button onclick="openManualAssignModal('${dateStr}', 'MATIN')" class="text-sky-500 hover:text-sky-700 p-0.5 transition cursor-pointer bg-white rounded-md shadow-sm border border-sky-100" title="Ajouter une tâche"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <div class="flex flex-wrap gap-1.5 flex-1 content-start">
+                 ${renderGroupCards(matinGroups)}
+              </div>
             </div>
-            <div onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" ondragover="event.preventDefault()" ondrop="handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')" class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-amber-50 hover:bg-amber-100 border border-amber-200 border-dashed cursor-pointer mt-2">
-              <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider mb-2 text-center border-b border-amber-200/50 pb-1">Après-midi</span>
-              <div class="flex flex-wrap gap-1.5 flex-1 content-start" onclick="event.stopPropagation()">${renderGroupCards(apresMidiGroups)}</div>
+
+            <div class="flex-1 min-h-[140px] rounded-xl p-2 flex flex-col transition bg-amber-50/50 border border-amber-200 border-dashed mt-2"
+                 ondragover="event.preventDefault(); this.classList.add('bg-amber-100')"
+                 ondragleave="this.classList.remove('bg-amber-100')"
+                 ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('bg-amber-100'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')">
+              <div class="flex items-center justify-between border-b border-amber-200/50 pb-1 mb-2">
+                 <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider">Après-midi</span>
+                 <button onclick="openManualAssignModal('${dateStr}', 'APRES_MIDI')" class="text-amber-500 hover:text-amber-700 p-0.5 transition cursor-pointer bg-white rounded-md shadow-sm border border-amber-100" title="Ajouter une tâche"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <div class="flex flex-wrap gap-1.5 flex-1 content-start">
+                 ${renderGroupCards(apresMidiGroups)}
+              </div>
             </div>
            `;
         }
@@ -1527,6 +1543,7 @@
       });
       
       gridContainer.innerHTML = gridHtml;
+      lucide.createIcons();
     }
 
     function toggleFilterDropdown(id) {
@@ -1609,148 +1626,7 @@
       safeSetText("kpiAgentsZeroStock", zeroS);
       safeSetText("kpiAgentsAtypicalStock", atypS);
       
-      safeSetText("kpiZeroStock", zeroS);
-      safeSetText("kpiAtypicalStock", atypS);
-
       lucide.createIcons();
-    }
-
-    function renderTable(list) {
-      const tbody = document.getElementById("supervisionTableBody");
-      if (!tbody) return;
-
-      const alertZeroEl = document.getElementById("cfgAlertZero");
-      const alertZero = alertZeroEl ? alertZeroEl.checked : false;
-      
-      const countLabel = document.getElementById("tableCountLabel");
-      if (countLabel) {
-        countLabel.innerText = `${list.length} saisie(s) répertoriée(s)`;
-      }
-
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
-        return;
-      }
-
-      let html = '';
-      list.forEach(item => {
-        const q = Number(item.quantity);
-        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
-        const bgClass = isAlert ? 'bg-amber-50/60' : '';
-        const textClass = q === 0 ? 'text-rose-600' : 'text-emerald-700';
-
-        html += `
-          <tr class="hover:bg-slate-50 transition ${bgClass}">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
-            <td class="p-3 font-bold text-slate-900">${item.user}</td>
-            <td class="p-3 text-slate-700">${item.contractor}</td>
-            <td class="p-3 text-slate-500">${item.trade}</td>
-            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
-            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
-            <td class="p-3 text-center font-mono font-black ${textClass} text-sm">${q}</td>
-            <td class="p-3 text-right whitespace-nowrap">
-              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-            </td>
-          </tr>
-        `;
-      });
-      tbody.innerHTML = html;
-      lucide.createIcons();
-    }
-
-    function openMapListingDetail(idStr) {
-      const item = cachedHistory.find(h => h.id === idStr);
-      if (!item) return;
-
-      const titleEl = document.getElementById("modalTourneeTitle");
-      if (titleEl) titleEl.innerText = `Détail Saisie : ${item.user}`;
-      
-      const subTitleEl = document.getElementById("modalTourneeSubtitle");
-      if (subTitleEl) subTitleEl.innerText = `${formatDateDMY(item.timestamp, true)} • Réf: ${item.sapRef}`;
-
-      const contentEl = document.getElementById("modalTourneeContent");
-      if (contentEl) {
-        contentEl.innerHTML = `
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-200 pb-2">
-               <span class="font-black text-slate-800 text-sm">${item.contractor}</span>
-               <span class="text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">${item.trade}</span>
-            </div>
-            <p class="text-sm text-slate-700 font-medium">${item.designation}</p>
-            <div class="flex justify-between items-center pt-3 border-t border-slate-200">
-               <span class="px-3 py-1.5 rounded-lg ${Number(item.quantity) === 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'} text-sm font-mono font-black border ${Number(item.quantity) === 0 ? 'border-rose-300' : 'border-emerald-300'}">
-                 ${item.quantity} PCS
-               </span>
-               <div class="flex gap-2">
-                 <button onclick="editTableItem('${item.id}', ${item.quantity}); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-white border border-slate-300 shadow-sm rounded-lg hover:bg-slate-100 text-slate-600 font-bold flex items-center gap-1.5 transition">
-                   Modifier
-                 </button>
-                 <button onclick="deleteTableItem('${item.id}'); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-rose-50 border border-rose-200 shadow-sm rounded-lg hover:bg-rose-100 text-rose-600 font-bold flex items-center gap-1.5 transition">
-                   Supprimer
-                 </button>
-               </div>
-            </div>
-          </div>
-        `;
-      }
-
-      const modalEl = document.getElementById("tourneeDetailsModal");
-      if (modalEl) modalEl.classList.remove("hidden");
-    }
-
-    function openTourneeGroupModal(groupId) {
-      const allGroups = buildTourneeGroups(cachedTournees || []);
-      const g = allGroups.find(x => x.id === groupId);
-      if (!g) return;
-
-      const titleEl = document.getElementById("modalTourneeTitle");
-      if (titleEl) titleEl.innerText = `${g.contractor} - ${g.trade}`;
-      
-      const subTitleEl = document.getElementById("modalTourneeSubtitle");
-      if (subTitleEl) subTitleEl.innerText = `${g.agent} • ${formatDateFrench(g.date)} (${g.tranche}) • ${g.items.length} article(s)`;
-
-      const contentEl = document.getElementById("modalTourneeContent");
-      if (contentEl) {
-        let contentHtml = '';
-        const sortedItems = g.items.sort((a,b) => (Number(a.ordre)||0) - (Number(b.ordre)||0));
-        
-        sortedItems.forEach(t => {
-          const isDone = String(t.statut).toUpperCase() === 'VALIDE';
-          contentHtml += `
-            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="font-mono font-bold text-orange-600">${t.sapRef}</span>
-                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
-                  <span class="text-[9px] text-slate-400 font-mono">Ordre: ${t.ordre || 1}</span>
-                </div>
-                <p class="text-[11px] text-slate-700 truncate mt-0.5">${t.designation || 'Sans libellé'}</p>
-              </div>
-              <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-            </div>
-          `;
-        });
-        contentEl.innerHTML = contentHtml;
-      }
-
-      const modalEl = document.getElementById("tourneeDetailsModal");
-      if (modalEl) modalEl.classList.remove("hidden");
-      lucide.createIcons();
-    }
-
-    function getPeriodFilteredTournees() {
-      const sDateVal = document.getElementById("filterStartDate").value;
-      const eDateVal = document.getElementById("filterEndDate").value;
-      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
-      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
-
-      return (cachedTournees || []).filter(item => {
-        const itDate = parseItemDate(item.date);
-        if (sDate && itDate && itDate < sDate) return false;
-        if (eDate && itDate && itDate > eDate) return false;
-        return true;
-      });
     }
 
     function renderAgentsView(periodHistory) {
@@ -1898,33 +1774,19 @@
       const doneMissions = periodGroups.filter(g => g.isDone).length;
       const missionsPct = totalMissions > 0 ? Math.round((doneMissions / totalMissions) * 100) : 0;
       
-      const elMissionsPct = document.getElementById("kpiMissionsPct");
-      if (elMissionsPct) elMissionsPct.innerText = `${missionsPct}%`;
-
-      const elMissionsBar = document.getElementById("kpiMissionsBar");
-      if (elMissionsBar) elMissionsBar.style.width = `${missionsPct}%`;
-
-      const elMissionsDone = document.getElementById("kpiMissionsDone");
-      if (elMissionsDone) elMissionsDone.innerText = doneMissions;
-
-      const elMissionsTotal = document.getElementById("kpiMissionsTotal");
-      if (elMissionsTotal) elMissionsTotal.innerText = totalMissions;
+      safeSetText("kpiMissionsPct", `${missionsPct}%`);
+      safeSetWidth("kpiMissionsBar", missionsPct);
+      safeSetText("kpiMissionsDone", doneMissions);
+      safeSetText("kpiMissionsTotal", totalMissions);
       
       const totalLines = periodTournees.length;
       const doneLines = periodTournees.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
       const linesPct = totalLines > 0 ? Math.round((doneLines / totalLines) * 100) : 0;
       
-      const elGlobalCompletionPct = document.getElementById("globalCompletionPct");
-      if (elGlobalCompletionPct) elGlobalCompletionPct.innerText = `${linesPct}%`;
-
-      const elGlobalCompletionBar = document.getElementById("globalCompletionBar");
-      if (elGlobalCompletionBar) elGlobalCompletionBar.style.width = `${linesPct}%`;
-
-      const elKpiDoneTasks = document.getElementById("kpiDoneTasks");
-      if (elKpiDoneTasks) elKpiDoneTasks.innerText = doneLines;
-
-      const elKpiPendingTasks = document.getElementById("kpiPendingTasks");
-      if (elKpiPendingTasks) elKpiPendingTasks.innerText = totalLines - doneLines;
+      safeSetText("globalCompletionPct", `${linesPct}%`);
+      safeSetWidth("globalCompletionBar", linesPct);
+      safeSetText("kpiDoneTasks", doneLines);
+      safeSetText("kpiPendingTasks", totalLines - doneLines);
 
       const todayStr = normalizeDateYMD(new Date());
       const allGroups = buildTourneeGroups(cachedTournees || []);
@@ -1932,11 +1794,8 @@
       const totalActiveMissions = allGroups.length;
       const slaScore = totalActiveMissions > 0 ? Math.round(((totalActiveMissions - overdueMissions) / totalActiveMissions) * 100) : 100;
       
-      const elOverdueCount = document.getElementById("kpiOverdueMissionsCount");
-      if (elOverdueCount) elOverdueCount.innerText = overdueMissions;
-
-      const elSlaScore = document.getElementById("kpiSlaScore");
-      if (elSlaScore) elSlaScore.innerText = `${slaScore}%`;
+      safeSetText("kpiOverdueMissionsCount", overdueMissions);
+      safeSetText("kpiSlaScore", `${slaScore}%`);
 
       const badgePilotage = document.getElementById("kpiPeriodLabel");
       if (badgePilotage) {
@@ -1990,338 +1849,6 @@
       agentListContainer.innerHTML = agentListHtml;
     }
 
-    function applyFilters() {
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      const sDateVal = sInput ? sInput.value : "";
-      const eDateVal = eInput ? eInput.value : "";
-      
-      let periodLabel = "Tout l'historique";
-      if (sDateVal && eDateVal) {
-        periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
-      } else if (sDateVal) {
-        periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
-      } else if (eDateVal) {
-        periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
-      }
-      
-      const badgeGlobal = document.getElementById("periodBadgeGlobal");
-      if (badgeGlobal) badgeGlobal.innerText = periodLabel;
-
-      const badgeAgents = document.getElementById("periodBadgeAgents");
-      if (badgeAgents) badgeAgents.innerText = periodLabel;
-
-      const periodData = getPeriodFilteredHistory();
-      const filtered = getFilteredHistory();
-
-      renderKPIs(filtered); 
-      renderTable(filtered); 
-      renderAgentsView(periodData); 
-      renderMap(mapFilterOnSelection ? filtered : periodData);
-      renderWallPlanning(); 
-      renderCompletionMetrics(); 
-    }
-
-    function toggleActiveAgentsFilter() {
-      filterOnlyActiveAgents = !filterOnlyActiveAgents;
-      updateActiveAgentsButtonUI();
-      applyFilters();
-    }
-
-    function updateMaxQtyThreshold(val) {
-      if (val === "" || val === null) {
-        customMaxQty = null;
-        localStorage.removeItem("mon_cfg_max_qty");
-        const display = document.getElementById("cfgMaxQtyDisplay");
-        if (display) display.innerText = "--";
-      } else {
-        const parsed = Number(val);
-        if (!isNaN(parsed) && parsed >= 0) {
-          customMaxQty = parsed;
-          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
-          const display = document.getElementById("cfgMaxQtyDisplay");
-          if (display) display.innerText = customMaxQty;
-        }
-      }
-      applyFilters();
-    }
-
-    function populateAdminDropdown() {
-      const adminSel = document.getElementById("authAdminSelect");
-      if (adminSel) {
-        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
-        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
-      }
-    }
-
-    function toggleFilterDropdown(id) {
-      const otherIds = ['dropdownAgents', 'dropdownContractors', 'dropdownTrades', 'articleDropdownList', 'dropdownAgendaAgents'];
-      otherIds.forEach(otherId => {
-        if (otherId !== id) {
-          const el = document.getElementById(otherId);
-          if (el) el.classList.add("hidden");
-        }
-      });
-      const target = document.getElementById(id);
-      if (target) target.classList.toggle("hidden");
-    }
-
-    function initMultiSelects() {
-      const makeCheckboxes = (containerId, list, selectedArr, type) => {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        
-        let html = '';
-        list.forEach(item => {
-          const isChecked = selectedArr.includes(item) ? 'checked' : '';
-          html += `
-            <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
-              <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${isChecked} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
-              <span class="truncate">${item}</span>
-            </label>
-          `;
-        });
-        el.innerHTML = html;
-      };
-      
-      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
-      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
-      makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
-      initAgendaMultiSelect();
-    }
-
-    function onCheckboxChange(type) {
-      activeKpiFilter = null;
-      if (type === 'agents') {
-        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
-        const label = document.getElementById("btnLabelAgents");
-        if (label) label.innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
-      } else if (type === 'contractors') {
-        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
-        const label = document.getElementById("btnLabelContractors");
-        if (label) label.innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
-      } else if (type === 'trades') {
-        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
-        const label = document.getElementById("btnLabelTrades");
-        if (label) label.innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
-      }
-      applyFilters();
-    }
-
-    function selectAll(type, check) {
-      activeKpiFilter = null;
-      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => {
-        b.checked = check;
-      });
-      onCheckboxChange(type);
-    }
-
-    function getDistinctArticlesOnPeriod() {
-      const periodList = getPeriodFilteredHistory() || [];
-      const mapArticles = new Map();
-      
-      for (let i = 0; i < periodList.length; i++) {
-        const item = periodList[i];
-        const ref = String(item.sapRef || "").trim();
-        if (!ref) continue;
-        
-        if (!mapArticles.has(ref)) {
-          mapArticles.set(ref, {
-            sapRef: ref,
-            designation: item.designation || 'Sans désignation',
-            count: 1
-          });
-        } else {
-          mapArticles.get(ref).count++;
-        }
-      }
-      return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
-    }
-
-    function showArticleSuggestions() {
-      const input = document.getElementById("articleTagInput");
-      onArticleTagInput(input ? input.value : "");
-    }
-
-    function onArticleTagInput(query) {
-      const dd = document.getElementById("articleDropdownList");
-      if (!dd) return;
-      
-      const q = String(query || "").trim().toLowerCase();
-      const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
-
-      if (filtered.length === 0) {
-        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`;
-        dd.classList.remove("hidden");
-        return;
-      }
-
-      let html = '';
-      filtered.forEach(a => {
-        html += `
-          <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
-            <div class="min-w-0 pr-2">
-              <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
-              <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
-            </div>
-            <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
-          </div>
-        `;
-      });
-      dd.innerHTML = html;
-      dd.classList.remove("hidden");
-    }
-
-    function toggleArticleTag(sapRef) {
-      if (selectedArticleTags.includes(sapRef)) {
-        selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
-      } else {
-        selectedArticleTags.push(sapRef);
-      }
-      renderArticleTagsUI();
-      applyFilters();
-      
-      const input = document.getElementById("articleTagInput");
-      if (input) input.value = ""; 
-      
-      const dd = document.getElementById("articleDropdownList");
-      if (dd) dd.classList.add("hidden");
-    }
-
-    function removeArticleTag(sapRef) {
-      selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
-      renderArticleTagsUI();
-      applyFilters();
-    }
-
-    function renderArticleTagsUI() {
-      const container = document.getElementById("selectedArticleTagsContainer");
-      if (!container) return;
-      
-      let html = '';
-      selectedArticleTags.forEach(ref => {
-        html += `
-          <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
-            <span class="truncate max-w-[260px]">${ref}</span>
-            <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
-            </button>
-          </span>
-        `;
-      });
-      container.innerHTML = html;
-      lucide.createIcons();
-    }
-
-    function resetFiltersToAll() {
-      activeKpiFilter = null;
-      selectAll('agents', false);
-      selectAll('contractors', false);
-      selectAll('trades', false);
-      selectedArticleTags = [];
-      renderArticleTagsUI();
-      applyFilters();
-    }
-
-    function filterByKpi(type) {
-      activeKpiFilter = type;
-      switchView('global');
-      applyFilters();
-    }
-
-    function onSmartPeriodChange(mode) {
-      const now = new Date();
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      const customBox = document.getElementById("customDateRangeBox");
-
-      if (mode === 'CUSTOM') {
-        if (customBox) customBox.classList.remove("hidden");
-        return;
-      }
-      if (customBox) customBox.classList.add("hidden");
-
-      if (mode === 'ALL') {
-        if (sInput) sInput.value = "";
-        if (eInput) eInput.value = "";
-      } else if (mode === 'TODAY') {
-        const dStr = normalizeDateYMD(now);
-        if (sInput) sInput.value = dStr;
-        if (eInput) eInput.value = dStr;
-      } else if (mode === 'CURRENT_WEEK') {
-        const day = now.getDay() || 7;
-        const monday = new Date(now);
-        monday.setDate(now.getDate() - day + 1);
-        const sunday = new Date(monday);
-        sunday.setDate(sunday.getDate() + 6);
-        if (sInput) sInput.value = normalizeDateYMD(monday);
-        if (eInput) eInput.value = normalizeDateYMD(sunday);
-      } else if (mode === 'PREV_WEEK') {
-        const day = now.getDay() || 7;
-        const prevMonday = new Date(now);
-        prevMonday.setDate(now.getDate() - day - 6);
-        const prevSunday = new Date(prevMonday);
-        prevSunday.setDate(prevMonday.getDate() + 6);
-        if (sInput) sInput.value = normalizeDateYMD(prevMonday);
-        if (eInput) eInput.value = normalizeDateYMD(prevSunday);
-      } else if (mode === 'NEXT_WEEK') {
-        const day = now.getDay() || 7;
-        const nextMonday = new Date(now);
-        nextMonday.setDate(now.getDate() - day + 8);
-        const nextSunday = new Date(nextMonday);
-        nextSunday.setDate(nextMonday.getDate() + 6);
-        if (sInput) sInput.value = normalizeDateYMD(nextMonday);
-        if (eInput) eInput.value = normalizeDateYMD(nextSunday);
-      } else if (mode === 'CURRENT_MONTH') {
-        if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
-        if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-      }
-      
-      if (sInput) {
-        updateWeekBadge(sInput.value);
-      }
-      applyFilters();
-    }
-
-    function toggleMapSelectionFilter() {
-      mapFilterOnSelection = !mapFilterOnSelection;
-      const btnText = document.getElementById("mapFilterBtnText");
-      if (btnText) {
-        btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
-      }
-      applyFilters();
-    }
-
-    function getPeriodFilteredHistory() {
-      const sInput = document.getElementById("filterStartDate");
-      const eInput = document.getElementById("filterEndDate");
-      
-      const sDateVal = sInput ? sInput.value : "";
-      const eDateVal = eInput ? eInput.value : "";
-      
-      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
-      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
-
-      return (cachedHistory || []).filter(item => {
-        const itDate = parseItemDate(item.timestamp);
-        if (sDate && itDate && itDate < sDate) return false;
-        if (eDate && itDate && itDate > eDate) return false;
-        return true;
-      });
-    }
-
-    function getFilteredHistory() {
-      return getPeriodFilteredHistory().filter(item => {
-        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
-        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
-        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
-        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) return false;
-        if (activeKpiFilter === 'ZERO' && Number(item.quantity) !== 0) return false;
-        if (activeKpiFilter === 'HIGH' && (customMaxQty === null || Number(item.quantity) <= customMaxQty)) return false;
-        return true;
-      });
-    }
-
     function renderTable(list) {
       const tbody = document.getElementById("supervisionTableBody");
       if (!tbody) return;
@@ -2364,6 +1891,82 @@
       });
       tbody.innerHTML = html;
       lucide.createIcons();
+    }
+
+    function renderMap(list) {
+      const mapDiv = document.getElementById("mapContainer");
+      if (!mapDiv) return;
+
+      if (!map) {
+        map = L.map('mapContainer').setView(BELGIUM_CENTER, BELGIUM_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+      }
+
+      markersLayer.clearLayers();
+      const pointsWithGps = list.filter(item => item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng));
+      
+      const countLabel = document.getElementById("mapPointsCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${pointsWithGps.length} point(s) GPS`;
+      }
+
+      pointsWithGps.forEach(p => {
+        const qty = Number(p.quantity);
+        const isRupture = qty === 0;
+        const markerColor = isRupture ? "#e11d48" : "#f97316";
+
+        const marker = L.circleMarker([p.lat, p.lng], {
+          radius: 8,
+          fillColor: markerColor,
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        });
+
+        const tooltipHtml = `
+          <div class="bg-white rounded-2xl shadow-xl flex flex-col w-[230px] overflow-hidden border border-slate-200 p-2.5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
+              <div class="flex items-center gap-1 min-w-0">
+                <span class="font-black text-slate-800 text-[11px] uppercase truncate">👤 ${p.user}</span>
+              </div>
+              <span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 ${isRupture ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}">${isRupture ? 'RUPTURE' : 'COMPTÉ'}</span>
+            </div>
+            
+            <div class="mb-2 leading-tight">
+              <p class="font-bold text-slate-900 text-xs truncate">${p.contractor}</p>
+              <p class="text-[9px] font-semibold text-slate-500 truncate">${p.trade} • 📅 ${formatDateDMY(p.timestamp)}</p>
+            </div>
+            
+            <div class="flex gap-1.5 items-stretch">
+              <div class="bg-slate-50 text-slate-700 px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border border-slate-200 flex-1 flex flex-col justify-center items-center">
+                <span class="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Réf SAP</span>
+                <span class="truncate max-w-[80px] text-orange-600">${p.sapRef}</span>
+              </div>
+              <div class="${isRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl text-[10px] font-black shadow-inner border flex-1 flex flex-col justify-center items-center">
+                <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Quantité</span>
+                <span>${qty}</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        marker.bindTooltip(tooltipHtml, {
+          direction: 'top',
+          className: 'custom-map-tooltip',
+          offset: [0, -10]
+        });
+
+        marker.on('click', () => {
+          openMapListingDetail(p.id);
+        });
+
+        markersLayer.addLayer(marker);
+      });
     }
 
     function resetMapToBelgium() {
