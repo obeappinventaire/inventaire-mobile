@@ -222,7 +222,7 @@
       <hr class="border-slate-100 my-1">
 
       <div class="space-y-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-        <button onclick="sendSupportEmail()" class="w-full h-12 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+        <button onclick="sendSupportEmail()" class="w-full h-12 bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <i data-lucide="mail" class="w-5 h-5 text-slate-400"></i> Support Technique
         </button>
         <button onclick="showResetModal()" class="w-full h-12 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 active:scale-95 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
@@ -291,12 +291,13 @@
         <span class="font-mono font-black text-orange-600 text-sm" id="nextTaskModalSap">--</span>
         <p class="text-xs font-bold text-slate-700 leading-snug truncate" id="nextTaskModalDesig">--</p>
       </div>
-      <div class="flex flex-col gap-3 mt-2 items-center">
-        <button onclick="confirmNextTask()" class="w-20 h-20 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-2xl shadow-[0_4px_20px_rgba(16,185,129,0.3)] flex items-center justify-center transition cursor-pointer border border-emerald-600">
-          <i data-lucide="check-square" class="w-10 h-10 text-white"></i>
+      
+      <div class="flex flex-row justify-center gap-4 mt-2 items-center">
+        <button onclick="cancelNextTask()" title="Voir l'historique" class="w-14 h-14 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 rounded-2xl shadow-sm transition-all flex items-center justify-center active:scale-95 cursor-pointer">
+          <i data-lucide="history" class="w-6 h-6"></i>
         </button>
-        <button onclick="cancelNextTask()" class="w-full h-12 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
-          Non, voir l'historique
+        <button onclick="confirmNextTask()" title="Article suivant" class="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-2xl shadow-[0_4px_15px_rgba(16,185,129,0.3)] flex items-center justify-center transition cursor-pointer border border-emerald-600">
+          <i data-lucide="check-square" class="w-6 h-6 text-white"></i>
         </button>
       </div>
     </div>
@@ -753,7 +754,7 @@ Version Web App : v4.0`
       }
     }
 
-    function selectTourneeTask(tourneeId) {
+    function selectTourneeTask(tourneeId, autoFocusQty = false) {
       const t = cachedTournees.find(x => String(x.id).trim() === String(tourneeId).trim());
       if (!t || String(t.statut || '').trim().toUpperCase() === 'VALIDE') return;
       
@@ -793,13 +794,11 @@ Version Web App : v4.0`
       
       switchMobileTab('comptage');
       
-      // AUTO-FOCUS SYNCHRONE DU CLAVIER
-      const qtyInput = document.getElementById("inputQuantity");
-      if (qtyInput) {
-          qtyInput.focus();
+      if (autoFocusQty) {
+          const qtyInput = document.getElementById("inputQuantity");
+          if (qtyInput) qtyInput.focus();
       }
-      
-      // DOUBLE SCROLL : AVANT ET PENDANT L'OUVERTURE DU CLAVIER POUR ASSURER LA VISIBILITÉ
+
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
         if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'auto' });
@@ -823,8 +822,14 @@ Version Web App : v4.0`
       if(navigator.vibrate) navigator.vibrate(40);
       document.getElementById("nextTaskModal").classList.add("hidden");
       
+      const qtyInput = document.getElementById("inputQuantity");
+      if (qtyInput) {
+          qtyInput.value = "";
+          updateBorderColor(qtyInput);
+      }
+      
       if (pendingNextTask) {
-        selectTourneeTask(pendingNextTask.id);
+        selectTourneeTask(pendingNextTask.id, true);
         pendingNextTask = null;
       }
     }
@@ -1165,7 +1170,6 @@ Version Web App : v4.0`
       renderTournee(); 
       renderHistory(); 
 
-      // WORKFLOW D'ENCHAINEMENT INTELLIGENT
       let nextTask = null;
       if (currentTaskContext) {
           const sameGroupTasks = cachedTournees.filter(t => 
@@ -1208,19 +1212,20 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
+      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
 
-      // APPLICATION STRICTE DE LA LIMITE DES 3H POUR TOUS LES UTILISATEURS
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => String(h.user).toLowerCase() === agentLower); 
+      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
       
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === agentLower && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
       let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
+        if (isAdmin) return true;
         const histDate = new Date(h.timestamp); 
         return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
       });
@@ -1251,10 +1256,12 @@ Version Web App : v4.0`
         const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
         let archiveText = "";
         
-        if (remainingMins > 60) {
-           archiveText = `${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
+        if (isAdmin) {
+            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
+        } else if (remainingMins > 60) {
+           archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
         } else {
-           archiveText = `${remainingMins} MIN`;
+           archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
         }
 
         html += `
@@ -1552,8 +1559,8 @@ Version Web App : v4.0`
             <div class="${isOpen ? 'block' : 'hidden'} border-t border-slate-100 bg-slate-50/50 p-3 space-y-2 relative">
                 <div class="flex justify-between items-center mb-2 px-1">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Sélectionner un article</span>
-                    <button onclick="closeTourneeGroupAndGoComptage('${g.id}', event)" class="text-[9px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-md transition cursor-pointer border border-rose-200 flex items-center gap-1 shadow-sm">
-                        <i data-lucide="x" class="w-3 h-3"></i> Quitter
+                    <button onclick="closeTourneeGroupAndGoComptage('${g.id}', event)" class="text-[9px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md transition cursor-pointer border border-slate-200 flex items-center gap-1 shadow-sm">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Retour Comptage
                     </button>
                 </div>
         `;
