@@ -137,8 +137,8 @@
         <div class="mt-auto pt-6 space-y-4">
           <div class="bg-slate-900/40 border border-slate-700/50 p-3.5 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-400"></i> Période Active
+              <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Période Active
               </span>
               <span id="weekBadgeLabel" class="text-sm font-bold bg-orange-100 text-orange-800 px-3 py-0.5 rounded border border-orange-300 shadow-sm">--</span>
             </div>
@@ -200,12 +200,12 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE DE DROITE -->
+    <!-- ZONE PRINCIPALE DE DROITE (FOND GRIS CLAIR bg-slate-100) -->
     <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-100">
       
       <div class="space-y-6 flex-1">
         
-        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE ================= -->
+        <!-- ================= ONGLET 1 : ACTIVITÉ GLOBALE (COCKPIT EXPERT) ================= -->
         <section id="viewGlobal" class="space-y-6">
           <div>
             <div class="flex justify-between items-center mb-2 px-1 max-w-6xl">
@@ -233,7 +233,6 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4 max-w-6xl">
-              <!-- VISUEL 1 : JAUGE DE SANTÉ STOCK -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col justify-center space-y-2">
                 <div class="flex justify-between items-end">
                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Santé du Stock Audité</span>
@@ -250,7 +249,6 @@
                 </div>
               </div>
 
-              <!-- VISUEL 2 : TOP 3 HOTSPOTS ANOMALIES -->
               <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
                 <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-3 border-b border-slate-100 pb-1">Palmarès Ruptures & Alertes (Hotspots)</span>
                 <div id="kpiTopAnomalies" class="space-y-2"></div>
@@ -1543,7 +1541,6 @@
       });
       
       gridContainer.innerHTML = gridHtml;
-      lucide.createIcons();
     }
 
     function toggleFilterDropdown(id) {
@@ -1627,6 +1624,144 @@
       safeSetText("kpiAgentsAtypicalStock", atypS);
       
       lucide.createIcons();
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById("supervisionTableBody");
+      if (!tbody) return;
+
+      const alertZeroEl = document.getElementById("cfgAlertZero");
+      const alertZero = alertZeroEl ? alertZeroEl.checked : false;
+      
+      const countLabel = document.getElementById("tableCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${list.length} saisie(s) répertoriée(s)`;
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      list.forEach(item => {
+        const q = Number(item.quantity);
+        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
+        const bgClass = isAlert ? 'bg-amber-50/60' : '';
+        const textClass = q === 0 ? 'text-rose-600' : 'text-emerald-700';
+
+        html += `
+          <tr class="hover:bg-slate-50 transition ${bgClass}">
+            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
+            <td class="p-3 font-bold text-slate-900">${item.user}</td>
+            <td class="p-3 text-slate-700">${item.contractor}</td>
+            <td class="p-3 text-slate-500">${item.trade}</td>
+            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
+            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
+            <td class="p-3 text-center font-mono font-black ${textClass} text-sm">${q}</td>
+            <td class="p-3 text-right whitespace-nowrap">
+              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+              <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function openMapListingDetail(idStr) {
+      const item = cachedHistory.find(h => h.id === idStr);
+      if (!item) return;
+
+      const titleEl = document.getElementById("modalTourneeTitle");
+      if (titleEl) titleEl.innerText = `Détail Saisie : ${item.user}`;
+      
+      const subTitleEl = document.getElementById("modalTourneeSubtitle");
+      if (subTitleEl) subTitleEl.innerText = `${formatDateDMY(item.timestamp, true)} • Réf: ${item.sapRef}`;
+
+      const contentEl = document.getElementById("modalTourneeContent");
+      if (contentEl) {
+        contentEl.innerHTML = `
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+               <span class="font-black text-slate-800 text-sm">${item.contractor}</span>
+               <span class="text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">${item.trade}</span>
+            </div>
+            <p class="text-sm text-slate-700 font-medium">${item.designation}</p>
+            <div class="flex justify-between items-center pt-3 border-t border-slate-200">
+               <span class="px-3 py-1.5 rounded-lg ${Number(item.quantity) === 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'} text-sm font-mono font-black border ${Number(item.quantity) === 0 ? 'border-rose-300' : 'border-emerald-300'}">
+                 ${item.quantity} PCS
+               </span>
+               <div class="flex gap-2">
+                 <button onclick="editTableItem('${item.id}', ${item.quantity}); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-white border border-slate-300 shadow-sm rounded-lg hover:bg-slate-100 text-slate-600 font-bold flex items-center gap-1.5 transition">
+                   Modifier
+                 </button>
+                 <button onclick="deleteTableItem('${item.id}'); closeTourneeDetailsModal();" class="px-3 py-1.5 bg-rose-50 border border-rose-200 shadow-sm rounded-lg hover:bg-rose-100 text-rose-600 font-bold flex items-center gap-1.5 transition">
+                   Supprimer
+                 </button>
+               </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const modalEl = document.getElementById("tourneeDetailsModal");
+      if (modalEl) modalEl.classList.remove("hidden");
+    }
+
+    function openTourneeGroupModal(groupId) {
+      const allGroups = buildTourneeGroups(cachedTournees || []);
+      const g = allGroups.find(x => x.id === groupId);
+      if (!g) return;
+
+      const titleEl = document.getElementById("modalTourneeTitle");
+      if (titleEl) titleEl.innerText = `${g.contractor} - ${g.trade}`;
+      
+      const subTitleEl = document.getElementById("modalTourneeSubtitle");
+      if (subTitleEl) subTitleEl.innerText = `${g.agent} • ${formatDateFrench(g.date)} (${g.tranche}) • ${g.items.length} article(s)`;
+
+      const contentEl = document.getElementById("modalTourneeContent");
+      if (contentEl) {
+        let contentHtml = '';
+        const sortedItems = g.items.sort((a,b) => (Number(a.ordre)||0) - (Number(b.ordre)||0));
+        
+        sortedItems.forEach(t => {
+          const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+          contentHtml += `
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div class="min-w-0 pr-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-orange-600">${t.sapRef}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${t.statut}</span>
+                  <span class="text-[9px] text-slate-400 font-mono">Ordre: ${t.ordre || 1}</span>
+                </div>
+                <p class="text-[11px] text-slate-700 truncate mt-0.5">${t.designation || 'Sans libellé'}</p>
+              </div>
+              <button onclick="deleteTourneeAdminItem('${t.id}')" class="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          `;
+        });
+        contentEl.innerHTML = contentHtml;
+      }
+
+      const modalEl = document.getElementById("tourneeDetailsModal");
+      if (modalEl) modalEl.classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function getPeriodFilteredTournees() {
+      const sDateVal = document.getElementById("filterStartDate").value;
+      const eDateVal = document.getElementById("filterEndDate").value;
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      return (cachedTournees || []).filter(item => {
+        const itDate = parseItemDate(item.date);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
+      });
     }
 
     function renderAgentsView(periodHistory) {
@@ -1849,50 +1984,6 @@
       agentListContainer.innerHTML = agentListHtml;
     }
 
-    function renderTable(list) {
-      const tbody = document.getElementById("supervisionTableBody");
-      if (!tbody) return;
-
-      const alertZeroEl = document.getElementById("cfgAlertZero");
-      const alertZero = alertZeroEl ? alertZeroEl.checked : false;
-      
-      const countLabel = document.getElementById("tableCountLabel");
-      if (countLabel) {
-        countLabel.innerText = `${list.length} saisie(s) répertoriée(s)`;
-      }
-
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Aucune saisie trouvée.</td></tr>`;
-        return;
-      }
-
-      let html = '';
-      list.forEach(item => {
-        const q = Number(item.quantity);
-        const isAlert = (alertZero && q === 0) || (customMaxQty !== null && q > customMaxQty);
-        const bgClass = isAlert ? 'bg-amber-50/60' : '';
-        const textClass = q === 0 ? 'text-rose-600' : 'text-emerald-700';
-
-        html += `
-          <tr class="hover:bg-slate-50 transition ${bgClass}">
-            <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDateDMY(item.timestamp, true)}</td>
-            <td class="p-3 font-bold text-slate-900">${item.user}</td>
-            <td class="p-3 text-slate-700">${item.contractor}</td>
-            <td class="p-3 text-slate-500">${item.trade}</td>
-            <td class="p-3 font-mono font-bold text-amber-700">${item.sapRef}</td>
-            <td class="p-3 text-slate-800 truncate max-w-[220px]" title="${item.designation}">${item.designation}</td>
-            <td class="p-3 text-center font-mono font-black ${textClass} text-sm">${q}</td>
-            <td class="p-3 text-right whitespace-nowrap">
-              <button onclick="editTableItem('${item.id}', ${item.quantity})" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition cursor-pointer" title="Modifier"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-              <button onclick="deleteTableItem('${item.id}')" class="p-1.5 hover:bg-rose-50 rounded-lg text-slate-500 hover:text-rose-600 transition ml-1 cursor-pointer" title="Supprimer"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-            </td>
-          </tr>
-        `;
-      });
-      tbody.innerHTML = html;
-      lucide.createIcons();
-    }
-
     function renderMap(list) {
       const mapDiv = document.getElementById("mapContainer");
       if (!mapDiv) return;
@@ -1973,6 +2064,321 @@
       if (map) {
         map.setView(BELGIUM_CENTER, BELGIUM_ZOOM);
       }
+    }
+
+    function initMultiSelects() {
+      const makeCheckboxes = (containerId, list, selectedArr, type) => {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        
+        let html = '';
+        list.forEach(item => {
+          const isChecked = selectedArr.includes(item) ? 'checked' : '';
+          html += `
+            <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+              <input type="checkbox" value="${item}" onchange="onCheckboxChange('${type}')" ${isChecked} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-0">
+              <span class="truncate">${item}</span>
+            </label>
+          `;
+        });
+        el.innerHTML = html;
+      };
+      
+      makeCheckboxes("checkboxesAgents", availableAgents, selectedAgents, 'agents');
+      makeCheckboxes("checkboxesContractors", availableContractors, selectedContractors, 'contractors');
+      makeCheckboxes("checkboxesTrades", availableTrades, selectedTrades, 'trades');
+      initAgendaMultiSelect();
+    }
+
+    function populateAdminDropdown() {
+      const adminSel = document.getElementById("authAdminSelect");
+      if (adminSel) {
+        const listAdmins = adminAgents.length > 0 ? adminAgents : ["Admin", "Superviseur"];
+        adminSel.innerHTML = '<option value="">-- Choisir Superviseur --</option>' + listAdmins.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+    }
+
+    function onCheckboxChange(type) {
+      activeKpiFilter = null;
+      if (type === 'agents') {
+        selectedAgents = Array.from(document.querySelectorAll("#checkboxesAgents input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelAgents");
+        if (label) label.innerText = selectedAgents.length === 0 ? "Tous les agents" : `${selectedAgents.length} agent(s)`;
+      } else if (type === 'contractors') {
+        selectedContractors = Array.from(document.querySelectorAll("#checkboxesContractors input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelContractors");
+        if (label) label.innerText = selectedContractors.length === 0 ? "Tous les entrepreneurs" : `${selectedContractors.length} entrepreneur(s)`;
+      } else if (type === 'trades') {
+        selectedTrades = Array.from(document.querySelectorAll("#checkboxesTrades input:checked")).map(i => i.value);
+        const label = document.getElementById("btnLabelTrades");
+        if (label) label.innerText = selectedTrades.length === 0 ? "Tous les métiers" : `${selectedTrades.length} métier(s)`;
+      }
+      applyFilters();
+    }
+
+    function selectAll(type, check) {
+      activeKpiFilter = null;
+      document.querySelectorAll(`#checkboxes${type.charAt(0).toUpperCase() + type.slice(1)} input`).forEach(b => {
+        b.checked = check;
+      });
+      onCheckboxChange(type);
+    }
+
+    function getDistinctArticlesOnPeriod() {
+      const periodList = getPeriodFilteredHistory() || [];
+      const mapArticles = new Map();
+      
+      for (let i = 0; i < periodList.length; i++) {
+        const item = periodList[i];
+        const ref = String(item.sapRef || "").trim();
+        if (!ref) continue;
+        
+        if (!mapArticles.has(ref)) {
+          mapArticles.set(ref, {
+            sapRef: ref,
+            designation: item.designation || 'Sans désignation',
+            count: 1
+          });
+        } else {
+          mapArticles.get(ref).count++;
+        }
+      }
+      return Array.from(mapArticles.values()).sort((a, b) => a.sapRef.localeCompare(b.sapRef));
+    }
+
+    function showArticleSuggestions() {
+      const input = document.getElementById("articleTagInput");
+      onArticleTagInput(input ? input.value : "");
+    }
+
+    function onArticleTagInput(query) {
+      const dd = document.getElementById("articleDropdownList");
+      if (!dd) return;
+      
+      const q = String(query || "").trim().toLowerCase();
+      const filtered = getDistinctArticlesOnPeriod().filter(a => a.sapRef.toLowerCase().includes(q) || a.designation.toLowerCase().includes(q));
+
+      if (filtered.length === 0) {
+        dd.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Aucun article trouvé.</div>`;
+        dd.classList.remove("hidden");
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(a => {
+        html += `
+          <div data-ref="${a.sapRef.replace(/"/g, '&quot;')}" onclick="toggleArticleTag(this.dataset.ref)" class="p-2 hover:bg-orange-50 rounded-xl cursor-pointer flex items-center justify-between text-xs transition">
+            <div class="min-w-0 pr-2">
+              <span class="font-mono font-bold text-amber-700">${a.sapRef}</span>
+              <span class="text-slate-700 ml-1.5 truncate inline-block max-w-[340px]">${a.designation}</span>
+            </div>
+            <span class="text-[10px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">${a.count} saisie(s)</span>
+          </div>
+        `;
+      });
+      dd.innerHTML = html;
+      dd.classList.remove("hidden");
+    }
+
+    function toggleArticleTag(sapRef) {
+      if (selectedArticleTags.includes(sapRef)) {
+        selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      } else {
+        selectedArticleTags.push(sapRef);
+      }
+      renderArticleTagsUI();
+      applyFilters();
+      
+      const input = document.getElementById("articleTagInput");
+      if (input) input.value = ""; 
+      
+      const dd = document.getElementById("articleDropdownList");
+      if (dd) dd.classList.add("hidden");
+    }
+
+    function removeArticleTag(sapRef) {
+      selectedArticleTags = selectedArticleTags.filter(r => r !== sapRef);
+      renderArticleTagsUI();
+      applyFilters();
+    }
+
+    function renderArticleTagsUI() {
+      const container = document.getElementById("selectedArticleTagsContainer");
+      if (!container) return;
+      
+      let html = '';
+      selectedArticleTags.forEach(ref => {
+        html += `
+          <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs">
+            <span class="truncate max-w-[260px]">${ref}</span>
+            <button onclick="removeArticleTag('${ref}')" class="text-orange-600 hover:text-rose-600 ml-0.5">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </span>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function resetFiltersToAll() {
+      activeKpiFilter = null;
+      selectAll('agents', false);
+      selectAll('contractors', false);
+      selectAll('trades', false);
+      selectedArticleTags = [];
+      renderArticleTagsUI();
+      applyFilters();
+    }
+
+    function filterByKpi(type) {
+      activeKpiFilter = type;
+      switchView('global');
+      applyFilters();
+    }
+
+    function onSmartPeriodChange(mode) {
+      const now = new Date();
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const customBox = document.getElementById("customDateRangeBox");
+
+      if (mode === 'CUSTOM') {
+        if (customBox) customBox.classList.remove("hidden");
+        return;
+      }
+      if (customBox) customBox.classList.add("hidden");
+
+      if (mode === 'ALL') {
+        if (sInput) sInput.value = "";
+        if (eInput) eInput.value = "";
+      } else if (mode === 'TODAY') {
+        const dStr = normalizeDateYMD(now);
+        if (sInput) sInput.value = dStr;
+        if (eInput) eInput.value = dStr;
+      } else if (mode === 'CURRENT_WEEK') {
+        const day = now.getDay() || 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - day + 1);
+        const sunday = new Date(monday);
+        sunday.setDate(sunday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(monday);
+        if (eInput) eInput.value = normalizeDateYMD(sunday);
+      } else if (mode === 'PREV_WEEK') {
+        const day = now.getDay() || 7;
+        const prevMonday = new Date(now);
+        prevMonday.setDate(now.getDate() - day - 6);
+        const prevSunday = new Date(prevMonday);
+        prevSunday.setDate(prevMonday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(prevMonday);
+        if (eInput) eInput.value = normalizeDateYMD(prevSunday);
+      } else if (mode === 'NEXT_WEEK') {
+        const day = now.getDay() || 7;
+        const nextMonday = new Date(now);
+        nextMonday.setDate(now.getDate() - day + 8);
+        const nextSunday = new Date(nextMonday);
+        nextSunday.setDate(nextMonday.getDate() + 6);
+        if (sInput) sInput.value = normalizeDateYMD(nextMonday);
+        if (eInput) eInput.value = normalizeDateYMD(nextSunday);
+      } else if (mode === 'CURRENT_MONTH') {
+        if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+        if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+      }
+      
+      if (sInput) {
+        updateWeekBadge(sInput.value);
+      }
+      applyFilters();
+    }
+
+    function toggleMapSelectionFilter() {
+      mapFilterOnSelection = !mapFilterOnSelection;
+      const btnText = document.getElementById("mapFilterBtnText");
+      if (btnText) {
+        btnText.innerText = mapFilterOnSelection ? "Afficher uniquement la sélection" : "Afficher toute la période";
+      }
+      applyFilters();
+    }
+
+    function getPeriodFilteredHistory() {
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      
+      const sDateVal = sInput ? sInput.value : "";
+      const eDateVal = eInput ? eInput.value : "";
+      
+      const sDate = sDateVal ? new Date(sDateVal + "T00:00:00") : null;
+      const eDate = eDateVal ? new Date(eDateVal + "T23:59:59") : null;
+
+      return (cachedHistory || []).filter(item => {
+        const itDate = parseItemDate(item.timestamp);
+        if (sDate && itDate && itDate < sDate) return false;
+        if (eDate && itDate && itDate > eDate) return false;
+        return true;
+      });
+    }
+
+    function getFilteredHistory() {
+      return getPeriodFilteredHistory().filter(item => {
+        if (selectedAgents.length > 0 && !selectedAgents.includes(item.user)) return false;
+        if (selectedContractors.length > 0 && !selectedContractors.includes(item.contractor)) return false;
+        if (selectedTrades.length > 0 && !selectedTrades.includes(item.trade)) return false;
+        if (selectedArticleTags.length > 0 && !selectedArticleTags.includes(String(item.sapRef).trim())) return false;
+        if (activeKpiFilter === 'ZERO' && Number(item.quantity) !== 0) return false;
+        if (activeKpiFilter === 'HIGH' && (customMaxQty === null || Number(item.quantity) <= customMaxQty)) return false;
+        return true;
+      });
+    }
+
+    function applyFilters() {
+      const sInput = document.getElementById("filterStartDate");
+      const eInput = document.getElementById("filterEndDate");
+      const sDateVal = sInput ? sInput.value : "";
+      const eDateVal = eInput ? eInput.value : "";
+      
+      let periodLabel = "Tout l'historique";
+      if (sDateVal && eDateVal) {
+        periodLabel = `Du ${formatDateDMY(sDateVal)} au ${formatDateDMY(eDateVal)}`;
+      } else if (sDateVal) {
+        periodLabel = `À partir du ${formatDateDMY(sDateVal)}`;
+      } else if (eDateVal) {
+        periodLabel = `Jusqu'au ${formatDateDMY(eDateVal)}`;
+      }
+      
+      safeSetText("periodBadgeGlobal", periodLabel);
+      safeSetText("periodBadgeAgents", periodLabel);
+
+      const periodData = getPeriodFilteredHistory();
+      const filtered = getFilteredHistory();
+
+      renderKPIs(filtered); 
+      renderTable(filtered); 
+      renderAgentsView(periodData); 
+      renderMap(mapFilterOnSelection ? filtered : periodData);
+      renderWallPlanning(); 
+      renderCompletionMetrics(); 
+    }
+
+    function toggleActiveAgentsFilter() {
+      filterOnlyActiveAgents = !filterOnlyActiveAgents;
+      updateActiveAgentsButtonUI();
+      applyFilters();
+    }
+
+    function updateMaxQtyThreshold(val) {
+      if (val === "" || val === null) {
+        customMaxQty = null;
+        localStorage.removeItem("mon_cfg_max_qty");
+        safeSetText("cfgMaxQtyDisplay", "--");
+      } else {
+        const parsed = Number(val);
+        if (!isNaN(parsed) && parsed >= 0) {
+          customMaxQty = parsed;
+          localStorage.setItem("mon_cfg_max_qty", customMaxQty);
+          safeSetText("cfgMaxQtyDisplay", customMaxQty);
+        }
+      }
+      applyFilters();
     }
 
     function exportTableToCSV() {
