@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-100">
+<html lang="fr" class="h-full bg-slate-200">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supervision Inventaire - Monitoring Manager</title>
   <link rel="icon" type="image/png" href="app_icon_co2h2o.png">
   <link rel="apple-touch-icon" href="app_icon_co2h2o.png">
-  <meta name="theme-color" content="#f1f5f9">
+  <meta name="theme-color" content="#e2e8f0">
 
   <!-- SCRIPTS & FEUILLES DE STYLE CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -53,7 +53,7 @@
     }
   </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-100">
+<body class="h-full text-slate-800 flex flex-col font-sans select-none antialiased bg-slate-200">
 
   <!-- MODALE D'AUTHENTIFICATION ADMIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
@@ -158,8 +158,9 @@
 
             <div class="relative">
               <select id="smartPeriodSelect" onchange="onSmartPeriodChange(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs">
+                <option value="DEFAULT_PLANNING" selected>📅 Planning (+6j ouvrés)</option>
                 <option value="TODAY">☀️ Aujourd'hui</option>
-                <option value="CURRENT_WEEK" selected>📆 Cette semaine</option>
+                <option value="CURRENT_WEEK">📆 Cette semaine</option>
                 <option value="NEXT_WEEK">▶ Semaine prochaine</option>
                 <option value="PREV_WEEK">◀ Semaine précédente</option>
                 <option value="CURRENT_MONTH">📅 Ce mois-ci</option>
@@ -213,8 +214,8 @@
       </div>
     </aside>
 
-    <!-- ZONE PRINCIPALE DE DROITE (FOND GRIS CLAIR bg-slate-100) -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-100">
+    <!-- ZONE PRINCIPALE DE DROITE -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 flex flex-col bg-slate-200">
       
       <div class="space-y-6 flex-1">
         
@@ -428,14 +429,16 @@
         <!-- ================= ONGLET 4 : AGENDA ET MISSIONS ================= -->
         <section id="viewTourneesAdmin" class="hidden relative">
           
-          <div class="sticky top-0 z-30 bg-slate-100 pt-2 pb-4 border-b border-slate-300 shadow-sm mb-6 -mt-2">
+          <div class="sticky top-0 z-30 bg-slate-200 pt-2 pb-4 border-b border-slate-300 shadow-sm mb-6 -mt-2"
+               ondragover="event.preventDefault(); event.stopPropagation();"
+               ondrop="handleExcelFileDrop(event)">
             
             <div class="flex items-center justify-between mb-4">
               <div>
                 <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <i data-lucide="calendar-range" class="w-4 h-4 text-orange-600"></i> Planning Semaine & Missions
                 </h3>
-                <p class="text-xs text-slate-500 mt-0.5">Glissez-déposez pour replanifier. L'agenda affiche la Période Active sélectionnée à gauche.</p>
+                <p class="text-xs text-slate-500 mt-0.5">Glissez-déposez pour replanifier. Déposez un fichier Excel ici pour l'importer.</p>
               </div>
               <div class="flex items-center gap-2">
                 <button onclick="downloadMasterdataExcelTemplate()" class="text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer">
@@ -480,7 +483,7 @@
 
           </div>
 
-          <!-- NOUVEAU TABLEAU DE BORD KPI HORIZONTAL (TOP) -->
+          <!-- TABLEAU DE BORD KPI HORIZONTAL (TOP) -->
           <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-2 relative">
             <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
               <div class="flex justify-between items-center text-xs mb-3">
@@ -660,6 +663,7 @@
     let activeView = localStorage.getItem("mon_active_view") || 'global';
     let map = null;
     let markersLayer = null;
+    let windowMapSites = []; 
 
     let selectedAgents = [];
     let selectedContractors = [];
@@ -682,15 +686,39 @@
     const BELGIUM_CENTER = [50.64, 4.67];
     const BELGIUM_ZOOM = 8;
 
-    // SECURITE GLOBALE DRAG & DROP
     document.addEventListener('dragend', () => {
       document.body.classList.remove('is-dragging');
     });
+
+    function handleExcelFileDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+          processExcelFile(file);
+        } else {
+          alert("Format de fichier non supporté. Veuillez utiliser un fichier Excel.");
+        }
+      }
+    }
 
     async function safeSetStorage(key, data) {
       try {
         await localforage.setItem(key, data);
       } catch (e) {}
+    }
+
+    function addWorkingDays(startDate, days) {
+      let d = new Date(startDate);
+      let added = 0;
+      while (added < days) {
+        d.setDate(d.getDate() + 1);
+        if (d.getDay() !== 0 && d.getDay() !== 6 && !isBelgianHoliday(d)) {
+          added++;
+        }
+      }
+      return d;
     }
 
     function getISOWeekNumber(d) {
@@ -840,7 +868,7 @@
       initMultiSelects();
       populateAdminDropdown();
       populateTourneeAdminDropdowns();
-      onSmartPeriodChange('TODAY');
+      onSmartPeriodChange('DEFAULT_PLANNING');
 
       const qtyInput = document.getElementById("cfgMaxQty");
       const qtyDisplay = document.getElementById("cfgMaxQtyDisplay");
@@ -1201,6 +1229,7 @@
       if (files.length > 0) processExcelFile(files[0]);
     }
 
+    // VALIDATION STRICTE A L'IMPORT EXCEL
     function processExcelFile(file) {
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -1222,55 +1251,71 @@
           const ordreIdx = headers.findIndex(h => h.includes('ordre') || h.includes('seq'));
 
           const bulkItems = [];
-          let missingAgents = new Set();
-          let missingSaps = new Set();
+          let errors = [];
 
           for (let i = 1; i < jsonRows.length; i++) {
             const row = jsonRows[i];
             if (!row || row.length === 0 || row.every(cell => cell === null || cell === undefined || cell === '')) continue;
             
-            const sapRef = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
-            const agent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
-            if (!sapRef || !agent) continue; 
-
-            const catItem = catalog.find(item => String(item.sapRef).trim() === sapRef);
-            const agentExists = availableAgents.includes(agent);
-
-            if (!catItem) missingSaps.add(sapRef);
-            if (!agentExists) missingAgents.add(agent);
-
-            let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
-            if (typeof rawDate === 'number') {
-                const utc_days  = Math.floor(rawDate - 25569);
-                const utc_value = utc_days * 86400;
-                rawDate = new Date(utc_value * 1000);
-            }
+            const rawSap = String(row[sapIdx !== -1 ? sapIdx : 5] || '').trim();
+            const rawAgent = String(row[agentIdx !== -1 ? agentIdx : 2] || '').trim();
+            const rawContractor = String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim();
+            const rawTrade = String(row[tradeIdx !== -1 ? tradeIdx : 4] || '').trim();
             
-            let formattedDate = normalizeDateYMD(rawDate || new Date());
-            let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) { rawTranche = 'APRES_MIDI'; } 
-            else { rawTranche = 'MATIN'; }
+            if (!rawSap || !rawAgent) continue; 
 
-            bulkItems.push({
-              date: formattedDate,
-              tranche: rawTranche,
-              agent: agent,
-              contractor: String(row[contractorIdx !== -1 ? contractorIdx : 3] || '').trim(),
-              trade: String(row[tradeIdx !== -1 ? tradeIdx : 4] || '').trim(),
-              sapRef: sapRef,
-              designation: catItem ? catItem.designation : 'Article inconnu (Forcé via Import)',
-              ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
-            });
+            let rowErrors = [];
+
+            const agentMatch = availableAgents.find(a => a.toLowerCase() === rawAgent.toLowerCase());
+            if (!agentMatch) rowErrors.push(`Agent "${rawAgent}"`);
+
+            const contractorMatch = availableContractors.find(c => c.toLowerCase() === rawContractor.toLowerCase());
+            if (!contractorMatch) rowErrors.push(`Entrepreneur "${rawContractor}"`);
+
+            const tradeMatch = availableTrades.find(t => t.toLowerCase() === rawTrade.toLowerCase());
+            if (!tradeMatch) rowErrors.push(`Métier "${rawTrade}"`);
+
+            const catItem = catalog.find(item => String(item.sapRef).trim().toUpperCase() === rawSap.toUpperCase());
+            if (!catItem) rowErrors.push(`Réf SAP "${rawSap}"`);
+
+            if (rowErrors.length > 0) {
+                errors.push(`Ligne ${i + 1} : ${rowErrors.join(', ')} non reconnu(s)`);
+            } else {
+                let rawDate = row[dateIdx !== -1 ? dateIdx : 0];
+                if (typeof rawDate === 'number') {
+                    const utc_days  = Math.floor(rawDate - 25569);
+                    const utc_value = utc_days * 86400;
+                    rawDate = new Date(utc_value * 1000);
+                }
+                let formattedDate = normalizeDateYMD(rawDate || new Date());
+                
+                let rawTranche = String(row[trancheIdx !== -1 ? trancheIdx : 1] || 'MATIN').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if (rawTranche.includes('APRES') || rawTranche.includes('APREM')) { rawTranche = 'APRES_MIDI'; } 
+                else { rawTranche = 'MATIN'; }
+
+                bulkItems.push({
+                  date: formattedDate,
+                  tranche: rawTranche,
+                  agent: agentMatch,
+                  contractor: contractorMatch,
+                  trade: tradeMatch,
+                  sapRef: catItem.sapRef,
+                  designation: catItem.designation,
+                  ordre: Number(row[ordreIdx !== -1 ? ordreIdx : 6] || i)
+                });
+            }
+          }
+
+          if (errors.length > 0) {
+              alert(`🚨 ÉCHEC DE L'IMPORTATION\n\nDes données de votre fichier Excel ne correspondent pas à la base de données. Veuillez les corriger :\n\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? '\n...et autres erreurs.' : ''}`);
+              return;
           }
 
           if (bulkItems.length === 0) { alert("Aucune ligne valide trouvée dans le fichier."); return; }
 
-          let confirmMsg = `Préparation de l'import : ${bulkItems.length} tâche(s) détectée(s).\n\n`;
-          if (missingAgents.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingAgents.size} Agent(s) inconnu(s) (${Array.from(missingAgents).slice(0,3).join(', ')}...)\n`;
-          if (missingSaps.size > 0) confirmMsg += `⚠️ AVERTISSEMENT : ${missingSaps.size} Réf(s) SAP hors catalogue.\n`;
-          confirmMsg += `\nVoulez-vous continuer l'importation de masse ?`;
-          
-          if(confirm(confirmMsg)) uploadBulkTournees(bulkItems);
+          if(confirm(`Importation de ${bulkItems.length} tâche(s) certifiée(s). Continuer ?`)) {
+              uploadBulkTournees(bulkItems);
+          }
 
         } catch (err) { alert("Erreur lors de la lecture du fichier Excel : " + err); }
       };
@@ -1304,7 +1349,6 @@
       draggedGroupPayload = groupId;
       e.dataTransfer.setData('text/plain', groupId);
       e.dataTransfer.effectAllowed = 'move';
-      // FIX DRAG: Le délai permet au navigateur de valider la cible de glissement avant de désactiver les clics
       setTimeout(() => {
         document.body.classList.add('is-dragging');
       }, 10);
@@ -1438,16 +1482,14 @@
         let overdueHtml = '';
         overdueGroups.forEach(g => {
           overdueHtml += `
-            <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2.5 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition text-xs flex flex-col justify-between h-[80px]">
-              <div>
-                <div class="flex justify-between items-center border-b border-amber-100 pb-1 mb-1">
-                  <span class="font-bold text-[11px] truncate">${g.agent}</span>
-                  <span class="font-mono text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">${formatDateFrench(g.date).substring(0,6)}</span>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1">
-                  <strong class="truncate leading-tight flex-1 text-[10px]">${g.contractor}</strong>
-                  <span class="text-[9px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded truncate border border-orange-100">${g.trade}</span>
-                </div>
+            <div draggable="true" ondragstart="handleGroupDragStart(event, '${g.id}')" onclick="openTourneeGroupModal('${g.id}')" class="task-card p-2 rounded-xl border bg-white border-amber-300 text-slate-800 cursor-grab active:cursor-grabbing shadow-sm hover:shadow transition flex flex-col justify-between h-[68px]">
+              <div class="flex justify-between items-center mb-1 border-b border-amber-100 pb-1">
+                <span class="font-black text-[11px] text-slate-800 truncate pr-1">${g.agent}</span>
+                <span class="font-mono text-[9px] text-amber-800 font-bold bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 shadow-xs">${formatDateFrench(g.date).substring(0,6)}</span>
+              </div>
+              <div class="flex items-center justify-between text-[10px] leading-tight truncate gap-2">
+                <strong class="text-slate-700 truncate flex-1">${g.contractor}</strong>
+                <span class="font-medium text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200 shrink-0">${g.trade}</span>
               </div>
             </div>
           `;
@@ -1506,7 +1548,6 @@
         if (isBlocked) {
            innerContentHtml = `<div class="flex-1 flex items-center justify-center text-slate-400 transform -rotate-90 text-[10px] font-black tracking-widest whitespace-nowrap">NON OUVRÉ</div>`;
         } else {
-           // FIX : Suppression totale des attributs si jour dépassé
            const dropAttrsMatin = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active')" ondragleave="this.classList.remove('dropzone-active')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active'); handleDropOnDay(event, '${dateStr}', 'MATIN')"`;
            const dropAttrsAprem = isPast ? '' : `ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dropzone-active-pm')" ondragleave="this.classList.remove('dropzone-active-pm')" ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('dropzone-active-pm'); handleDropOnDay(event, '${dateStr}', 'APRES_MIDI')"`;
 
@@ -2048,61 +2089,83 @@
       }
 
       markersLayer.clearLayers();
+      window.currentMapSites = [];
       
       const todayStr = normalizeDateYMD(new Date());
-      
-      // EXCLUSIVEMENT AUJOURD'HUI
       const todaysTournees = cachedTournees.filter(t => normalizeDateYMD(t.date) === todayStr);
       const todaysHistory = cachedHistory.filter(h => normalizeDateYMD(h.timestamp) === todayStr);
-      
-      // Dictionnaire de géocodage
-      const coordsDict = {};
-      cachedHistory.forEach(h => {
-          if (h.contractor && h.lat && h.lng && !isNaN(h.lat) && !isNaN(h.lng)) {
-              coordsDict[h.contractor] = { lat: h.lat, lng: h.lng };
-          }
-      });
 
-      const mapData = {};
-      
-      todaysTournees.forEach(t => {
-          const c = t.contractor;
-          if (!mapData[c]) mapData[c] = { contractor: c, agents: new Set(), trades: new Set(), plannedTasks: [], historyScans: [], lat: null, lng: null };
-          mapData[c].plannedTasks.push(t);
-          mapData[c].agents.add(t.agent);
-          mapData[c].trades.add(t.trade);
-      });
+      const DISTANCE_THRESHOLD = 2500; // 2.5 km en mètres
 
-      todaysHistory.forEach(h => {
-          const c = h.contractor;
-          if (!mapData[c]) mapData[c] = { contractor: c, agents: new Set(), trades: new Set(), plannedTasks: [], historyScans: [], lat: null, lng: null };
-          mapData[c].historyScans.push(h);
-          mapData[c].agents.add(h.user);
-          mapData[c].trades.add(h.trade);
-          if (h.lat && h.lng && !isNaN(h.lat) && !isNaN(h.lng)) {
-              mapData[c].lat = h.lat;
-              mapData[c].lng = h.lng;
-          }
-      });
+      function addOrMergeToSite(item, isHistory) {
+          const c = item.contractor || (isHistory ? item.user : item.agent) || 'Inconnu';
+          let itemLat = isHistory ? parseFloat(item.lat) : null;
+          let itemLng = isHistory ? parseFloat(item.lng) : null;
 
-      let mappedCount = 0;
-
-      Object.values(mapData).forEach(md => {
-          if (!md.lat || !md.lng) {
-              if (coordsDict[md.contractor]) {
-                  md.lat = coordsDict[md.contractor].lat;
-                  md.lng = coordsDict[md.contractor].lng;
+          if (isNaN(itemLat) || isNaN(itemLng) || !itemLat || !itemLng) {
+              const histRef = cachedHistory.find(h => h.contractor === c && h.lat && h.lng && !isNaN(parseFloat(h.lat)));
+              if (histRef) {
+                  itemLat = parseFloat(histRef.lat);
+                  itemLng = parseFloat(histRef.lng);
+              } else {
+                  return; 
               }
           }
-          
-          if (!md.lat || !md.lng) return; 
-          mappedCount++;
 
+          let targetSite = null;
+          for (let site of window.currentMapSites) {
+              if (site.contractor === c) {
+                  const dist = L.latLng(site.lat, site.lng).distanceTo(L.latLng(itemLat, itemLng));
+                  if (dist <= DISTANCE_THRESHOLD) {
+                      targetSite = site;
+                      break;
+                  }
+              }
+          }
+
+          if (!targetSite) {
+              targetSite = {
+                  contractor: c,
+                  lat: itemLat,
+                  lng: itemLng,
+                  plannedTasks: [],
+                  historyScans: [],
+                  agents: new Set(),
+                  trades: new Set()
+              };
+              window.currentMapSites.push(targetSite);
+          }
+
+          if (isHistory) {
+              if(!targetSite.historyScans.find(h => h.id === item.id)) {
+                 targetSite.historyScans.push(item);
+              }
+              if(item.user) targetSite.agents.add(item.user);
+              if(item.trade) targetSite.trades.add(item.trade);
+          } else {
+              if(!targetSite.plannedTasks.find(t => t.id === item.id)) {
+                 targetSite.plannedTasks.push(item);
+              }
+              if(item.agent) targetSite.agents.add(item.agent);
+              if(item.trade) targetSite.trades.add(item.trade);
+          }
+      }
+
+      todaysHistory.forEach(h => addOrMergeToSite(h, true));
+      todaysTournees.forEach(t => addOrMergeToSite(t, false));
+
+      const countLabel = document.getElementById("mapPointsCountLabel");
+      if (countLabel) {
+        countLabel.innerText = `${window.currentMapSites.length} site(s) aujourd'hui`;
+      }
+
+      window.currentMapSites.forEach((md, index) => {
           const totalMissions = md.plannedTasks.length;
           const doneMissions = md.plannedTasks.filter(t => String(t.statut).toUpperCase() === 'VALIDE').length;
           const isAllDone = totalMissions > 0 && doneMissions === totalMissions;
           
-          const qty = md.historyScans.reduce((sum, h) => sum + Number(h.quantity), 0);
+          const totalPieces = md.historyScans.reduce((sum, h) => sum + Number(h.quantity), 0);
+          const totalArticles = md.historyScans.length;
           const hasRupture = md.historyScans.some(h => Number(h.quantity) === 0);
           
           let markerColor = "#f97316"; 
@@ -2133,8 +2196,8 @@
             fillOpacity: 0.9
           });
 
-          const agentStr = Array.from(md.agents).join(', ');
-          const tradeStr = Array.from(md.trades).join(', ');
+          const agentStr = Array.from(md.agents).join(', ') || 'Inconnu';
+          const tradeStr = Array.from(md.trades).join(', ') || 'Multi-métiers';
           const statusBadge = hasRupture ? '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-rose-100 text-rose-800 border border-rose-200">RUPTURE</span>' : (md.historyScans.length > 0 ? '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200">COMPTÉ</span>' : '<span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide shrink-0 bg-slate-100 text-slate-500 border border-slate-200">EN ATTENTE</span>');
 
           const tooltipHtml = `
@@ -2161,8 +2224,8 @@
                 </div>
                 <div class="${hasRupture ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} px-2 py-1.5 rounded-xl shadow-inner border flex-1 flex flex-col justify-center items-center text-center">
                   <span class="text-[8px] font-bold uppercase mb-0.5 opacity-80">Articles Comptés</span>
-                  <span class="text-sm font-black leading-none mt-0.5">${md.historyScans.length}</span>
-                  <span class="text-[7px] font-medium opacity-75 mt-0.5">(${qty} pcs)</span>
+                  <span class="text-sm font-black leading-none mt-0.5">${totalArticles}</span>
+                  <span class="text-[7px] font-medium opacity-75 mt-0.5">(${totalPieces} pcs)</span>
                 </div>
               </div>
             </div>
@@ -2175,7 +2238,7 @@
           });
 
           marker.on('click', () => {
-            openMapListingDetailByContractor(md.contractor, todayStr);
+            openMapListingDetailByIndex(index);
           });
 
           markersLayer.addLayer(marker);
@@ -2185,6 +2248,71 @@
       if (countLabel) {
         countLabel.innerText = `${mappedCount} site(s) aujourd'hui`;
       }
+    }
+
+    function openMapListingDetailByIndex(idx) {
+      const md = window.currentMapSites[idx];
+      if (!md) return;
+
+      const tTasks = md.plannedTasks;
+      const hScans = md.historyScans;
+
+      const titleEl = document.getElementById("modalTourneeTitle");
+      if (titleEl) titleEl.innerText = `Site : ${md.contractor}`;
+      
+      const subTitleEl = document.getElementById("modalTourneeSubtitle");
+      if (subTitleEl) subTitleEl.innerText = `Aujourd'hui • ${tTasks.length} planifié(s), ${hScans.length} scanné(s)`;
+
+      const contentEl = document.getElementById("modalTourneeContent");
+      if (contentEl) {
+        let html = '<div class="space-y-4">';
+
+        if (tTasks.length > 0) {
+           html += `<div><h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1">Missions Planifiées</h4>`;
+           tTasks.sort((a,b) => (a.ordre||0) - (b.ordre||0)).forEach(t => {
+               const isDone = String(t.statut).toUpperCase() === 'VALIDE';
+               html += `
+                 <div class="flex items-center justify-between p-2 mb-1.5 rounded-lg ${isDone ? 'bg-emerald-50 border border-emerald-100' : 'bg-slate-50 border border-slate-200'}">
+                   <div class="min-w-0 pr-2">
+                     <span class="font-mono font-bold text-orange-600 text-[11px]">${t.sapRef}</span>
+                     <p class="text-[10px] text-slate-600 truncate">${t.designation || 'Sans libellé'}</p>
+                   </div>
+                   <span class="px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${isDone ? 'VALIDÉ' : 'À FAIRE'}</span>
+                 </div>
+               `;
+           });
+           html += `</div>`;
+        }
+
+        if (hScans.length > 0) {
+           html += `<div><h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1">Saisies Réalisées</h4>`;
+           hScans.forEach(h => {
+               const isZero = Number(h.quantity) === 0;
+               html += `
+                 <div class="flex items-center justify-between p-2 mb-1.5 rounded-lg bg-white border ${isZero ? 'border-rose-300 border-l-4 border-l-rose-500' : 'border-emerald-200 border-l-4 border-l-emerald-500'}">
+                   <div class="min-w-0 pr-2">
+                     <div class="flex gap-2 items-center mb-0.5">
+                        <span class="font-mono font-bold text-[11px] ${isZero ? 'text-rose-700' : 'text-slate-800'}">${h.sapRef}</span>
+                        <span class="text-[8px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${h.user}</span>
+                     </div>
+                     <p class="text-[10px] text-slate-600 truncate">${h.designation}</p>
+                   </div>
+                   <div class="flex flex-col items-end justify-center shrink-0 pl-2">
+                      <span class="text-[8px] font-bold uppercase text-slate-400 mb-0.5">Quantité</span>
+                      <span class="font-mono font-black text-xs px-2 py-0.5 rounded-lg ${isZero ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'}">${h.quantity}</span>
+                   </div>
+                 </div>
+               `;
+           });
+           html += `</div>`;
+        }
+
+        html += '</div>';
+        contentEl.innerHTML = html;
+      }
+
+      const modalEl = document.getElementById("tourneeDetailsModal");
+      if (modalEl) modalEl.classList.remove("hidden");
     }
 
     function resetMapToBelgium() {
@@ -2410,6 +2538,11 @@
       } else if (mode === 'CURRENT_MONTH') {
         if (sInput) sInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth(), 1));
         if (eInput) eInput.value = normalizeDateYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+      } else if (mode === 'DEFAULT_PLANNING') {
+        const dStrStart = normalizeDateYMD(now);
+        const dEnd = addWorkingDays(now, 6);
+        if (sInput) sInput.value = dStrStart;
+        if (eInput) eInput.value = normalizeDateYMD(dEnd);
       }
       
       if (sInput) {
