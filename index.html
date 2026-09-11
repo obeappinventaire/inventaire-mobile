@@ -277,6 +277,48 @@
     </div>
   </div>
 
+  <!-- MODALE SUPPRESSION (HISTORIQUE) -->
+  <div id="deleteModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl flex flex-col gap-5 transform transition-all text-center">
+      <div class="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner">
+        <i data-lucide="trash-2" class="w-8 h-8"></i>
+      </div>
+      <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Supprimer la saisie ?</h2>
+          <p class="text-sm font-medium text-slate-500 mt-2">Cette action retirera l'article de votre historique et mettra à jour la file d'attente de la tournée.</p>
+      </div>
+      <div class="flex gap-3 mt-2">
+          <button onclick="closeDeleteModal()" class="flex-1 h-14 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center active:scale-95 cursor-pointer">
+            Annuler
+          </button>
+          <button onclick="confirmDelete()" class="flex-1 h-14 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-black rounded-2xl text-sm shadow-lg transition-all flex items-center justify-center cursor-pointer">
+            Supprimer
+          </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- MODALE MODIFICATION QUANTITÉ (HISTORIQUE) -->
+  <div id="editModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl flex flex-col gap-5 transform transition-all text-center">
+      <div class="w-16 h-16 bg-indigo-100 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner">
+        <i data-lucide="edit-3" class="w-8 h-8"></i>
+      </div>
+      <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Modifier la quantité</h2>
+      </div>
+      <input type="number" id="editQuantityInput" placeholder="0" min="0" class="w-full h-16 text-center font-black text-3xl bg-slate-50 border-2 border-slate-300 rounded-2xl focus:outline-none focus:border-indigo-500 focus:bg-indigo-50 focus:text-indigo-900 font-mono shadow-inner transition-all">
+      <div class="flex gap-3 mt-2">
+          <button onclick="closeEditModal()" class="flex-1 h-14 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition-all flex items-center justify-center active:scale-95 cursor-pointer">
+            Annuler
+          </button>
+          <button onclick="confirmEdit()" class="flex-1 h-14 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-black rounded-2xl text-sm shadow-lg transition-all flex items-center justify-center cursor-pointer">
+            Enregistrer
+          </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODALE ENCHAINEMENT TACHE -->
   <div id="nextTaskModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl flex flex-col gap-5 transform transition-all">
@@ -352,8 +394,9 @@
     let openTourneeGroups = {}; 
     let pendingNextTask = null;
     let syncDebounceTimer = null;
+    let pendingDeleteId = null;
+    let pendingEditId = null;
 
-    // FONCTION DE DEBOUNCE POUR LA SYNCHRONISATION
     function triggerBackgroundSync(forceImmediat = false) {
         if (!navigator.onLine) return;
         if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
@@ -474,13 +517,15 @@ Version Web App : v4.0`
     });
 
     function showResetModal() {
+        if(navigator.vibrate) navigator.vibrate(40);
         document.getElementById("resetModal").classList.remove("hidden");
     }
     function closeResetModal() {
+        if(navigator.vibrate) navigator.vibrate(40);
         document.getElementById("resetModal").classList.add("hidden");
     }
-
     async function confirmReset() {
+      if(navigator.vibrate) navigator.vibrate(40);
       document.getElementById("btnConfirmReset").innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
       try {
         await localforage.clear(); 
@@ -502,6 +547,47 @@ Version Web App : v4.0`
         console.warn(e);
       }
       window.location.href = window.location.pathname + '?reset=' + Date.now();
+    }
+
+    function showLogoutModal() {
+        if(navigator.vibrate) navigator.vibrate(40);
+        document.getElementById("logoutModal").classList.remove("hidden");
+    }
+    function closeLogoutModal() {
+        if(navigator.vibrate) navigator.vibrate(40);
+        document.getElementById("logoutModal").classList.add("hidden");
+    }
+    function confirmLogout() {
+        if(navigator.vibrate) navigator.vibrate(40);
+        localStorage.removeItem("mob_current_agent"); 
+        window.location.reload(true); 
+    }
+
+    function showDeleteModal(id) {
+        if(navigator.vibrate) navigator.vibrate(40);
+        pendingDeleteId = id;
+        document.getElementById("deleteModal").classList.remove("hidden");
+    }
+    function closeDeleteModal() {
+        if(navigator.vibrate) navigator.vibrate(40);
+        pendingDeleteId = null;
+        document.getElementById("deleteModal").classList.add("hidden");
+    }
+
+    function showEditModal(id, currentQty) {
+        if(navigator.vibrate) navigator.vibrate(40);
+        pendingEditId = id;
+        const input = document.getElementById("editQuantityInput");
+        input.value = currentQty;
+        document.getElementById("editModal").classList.remove("hidden");
+        setTimeout(() => input.focus(), 100);
+    }
+    function closeEditModal() {
+        if(navigator.vibrate) navigator.vibrate(40);
+        pendingEditId = null;
+        const input = document.getElementById("editQuantityInput");
+        input.blur();
+        document.getElementById("editModal").classList.add("hidden");
     }
 
     function initMobileDropdowns() {
@@ -566,17 +652,6 @@ Version Web App : v4.0`
       cancelActiveMission(); 
       renderTournee(); 
       renderHistory();
-    }
-
-    function showLogoutModal() {
-        document.getElementById("logoutModal").classList.remove("hidden");
-    }
-    function closeLogoutModal() {
-        document.getElementById("logoutModal").classList.add("hidden");
-    }
-    function confirmLogout() {
-        localStorage.removeItem("mob_current_agent"); 
-        window.location.reload(true); 
     }
 
     function updatePendingBadge() {
@@ -663,16 +738,17 @@ Version Web App : v4.0`
 
         let recentlyProcessedHistory = [];
         let recentlyProcessedTourneeUpdates = [];
+        let recentlyProcessedDeletes = [];
+        let recentlyProcessedEdits = [];
 
         if (pendingSyncQueue.length > 0) {
           const queueCopy = [...pendingSyncQueue];
           for (const item of queueCopy) {
-            if (item.action === "CREATE") {
-              recentlyProcessedHistory.push(item);
-            }
-            if (item.action === "UPDATE_TOURNEE_STATUS") {
-              recentlyProcessedTourneeUpdates.push(item);
-            }
+            if (item.action === "CREATE") recentlyProcessedHistory.push(item);
+            if (item.action === "UPDATE_TOURNEE_STATUS") recentlyProcessedTourneeUpdates.push(item);
+            if (item.action === "DELETE_INVENTORY") recentlyProcessedDeletes.push(item.id);
+            if (item.action === "UPDATE_INVENTORY") recentlyProcessedEdits.push(item);
+            
             try {
               const response = await fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
@@ -741,6 +817,22 @@ Version Web App : v4.0`
           if (data.history) {
             const nA = String(currentAgent || "").trim().toLowerCase();
             let serverHistory = data.history.filter(h => String(h.user || "").trim().toLowerCase() === nA);
+            
+            // ANTI GHOST-DATA: Filtre les éléments récemment supprimés non encore gérés par le serveur
+            const pendingDeleteIds = new Set([
+              ...recentlyProcessedDeletes,
+              ...pendingSyncQueue.filter(q => q.action === "DELETE_INVENTORY").map(q => q.id)
+            ]);
+            serverHistory = serverHistory.filter(sh => !pendingDeleteIds.has(sh.id));
+
+            // ANTI GHOST-DATA: Applique les éditions en cours
+            const pendingEditsMap = new Map();
+            recentlyProcessedEdits.forEach(e => pendingEditsMap.set(e.id, e.quantity));
+            pendingSyncQueue.filter(q => q.action === "UPDATE_INVENTORY").forEach(q => pendingEditsMap.set(q.id, q.quantity));
+            serverHistory.forEach(sh => {
+                if (pendingEditsMap.has(sh.id)) sh.quantity = pendingEditsMap.get(sh.id);
+            });
+
             let pendingHistToMerge = [...recentlyProcessedHistory];
             pendingSyncQueue.forEach(q => { 
               if (q.action === "CREATE") pendingHistToMerge.push(q); 
@@ -816,7 +908,6 @@ Version Web App : v4.0`
           }
       }
 
-      // DOUBLE SCROLL POUR CONTOURNER LE COMPORTEMENT NATIF DU CLAVIER
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
         if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'auto' });
@@ -1188,18 +1279,30 @@ Version Web App : v4.0`
       renderTournee(); 
       renderHistory(); 
 
-      // WORKFLOW D'ENCHAINEMENT INTELLIGENT
       let nextTask = null;
       if (currentTaskContext) {
-          const sameGroupTasks = cachedTournees.filter(t => 
-              t.contractor === currentTaskContext.contractor && 
-              t.trade === currentTaskContext.trade && 
-              t.tranche === currentTaskContext.tranche && 
-              t.date === currentTaskContext.date &&
-              String(t.agent).trim().toLowerCase() === String(currentAgent).trim().toLowerCase()
-          );
+          const ctxDate = convertExcelDate(String(currentTaskContext.date || "").trim());
+          const ctxTranche = String(currentTaskContext.tranche || "MATIN").trim().toUpperCase();
+          const ctxContractor = String(currentTaskContext.contractor || "").trim();
+          const ctxTrade = String(currentTaskContext.trade || "").trim();
+          const currentAgentLower = String(currentAgent || "").trim().toLowerCase();
+
+          const sameGroupTasks = cachedTournees.filter(t => {
+              const tDate = convertExcelDate(String(t.date || "").trim());
+              const tTranche = String(t.tranche || "MATIN").trim().toUpperCase();
+              const tContractor = String(t.contractor || "").trim();
+              const tTrade = String(t.trade || "").trim();
+              const tAgent = String(t.agent || "").trim().toLowerCase();
+
+              return tContractor === ctxContractor && 
+                     tTrade === ctxTrade && 
+                     tTranche === ctxTranche && 
+                     tDate === ctxDate &&
+                     tAgent === currentAgentLower;
+          });
+
           sameGroupTasks.sort((a, b) => (Number(a.ordre) || 0) - (Number(b.ordre) || 0));
-          nextTask = sameGroupTasks.find(t => String(t.statut).toUpperCase() !== 'VALIDE');
+          nextTask = sameGroupTasks.find(t => String(t.statut).trim().toUpperCase() !== 'VALIDE');
       }
 
       if (nextTask) {
@@ -1229,18 +1332,20 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
+      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
 
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => String(h.user).toLowerCase() === agentLower); 
+      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
       
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === agentLower && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
       let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
+        if (isAdmin) return true;
         const histDate = new Date(h.timestamp); 
         return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
       });
@@ -1271,10 +1376,12 @@ Version Web App : v4.0`
         const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
         let archiveText = "";
         
-        if (remainingMins > 60) {
-           archiveText = `${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
+        if (isAdmin) {
+            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
+        } else if (remainingMins > 60) {
+           archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
         } else {
-           archiveText = `${remainingMins} MIN`;
+           archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
         }
 
         html += `
@@ -1306,10 +1413,10 @@ Version Web App : v4.0`
                 <div class="bg-emerald-100 text-emerald-800 px-3 py-2 rounded-xl text-base font-black font-mono shadow-inner border border-emerald-200 flex justify-center items-center flex-1">
                   ${h.quantity} <span class="text-[10px] ml-1 opacity-70">PCS</span>
                 </div>
-                <button onclick="editHistoryItem('${h.id}')" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
+                <button onclick="showEditModal('${h.id}', '${h.quantity}')" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 shadow-sm border border-slate-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
                   <i data-lucide="edit-3" class="w-5 h-5"></i>
                 </button>
-                <button onclick="deleteHistoryItem('${h.id}')" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
+                <button onclick="showDeleteModal('${h.id}')" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm border border-rose-200 active:scale-95 transition-transform flex items-center justify-center shrink-0">
                   <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -1323,17 +1430,20 @@ Version Web App : v4.0`
       lucide.createIcons();
     }
 
-    async function editHistoryItem(id) {
+    async function confirmEdit() {
+      if (!pendingEditId) return;
       if (navigator.vibrate) navigator.vibrate(40); 
+      
+      const id = pendingEditId;
+      const qtyInput = document.getElementById("editQuantityInput").value;
+      const newQty = parseInt(qtyInput, 10); 
+      
+      closeEditModal();
+      
+      if (isNaN(newQty) || newQty < 0) return;
       
       const item = sessionHistory.find(h => h.id === id); 
       if (!item) return; 
-      
-      const qtyPrompt = prompt("Modifier la quantité :", item.quantity); 
-      if (qtyPrompt === null) return; 
-      
-      const newQty = parseInt(qtyPrompt, 10); 
-      if (isNaN(newQty) || newQty < 0) return;
       
       item.quantity = newQty; 
       await safeSetStorage("mob_session_history", sessionHistory);
@@ -1359,10 +1469,12 @@ Version Web App : v4.0`
       triggerBackgroundSync();
     }
 
-    async function deleteHistoryItem(id) {
+    async function confirmDelete() {
+      if (!pendingDeleteId) return;
       if (navigator.vibrate) navigator.vibrate(40); 
       
-      if (!confirm("Supprimer cette saisie ?")) return;
+      const id = pendingDeleteId;
+      closeDeleteModal();
       
       const item = sessionHistory.find(h => h.id === id); 
       sessionHistory = sessionHistory.filter(h => h.id !== id); 
