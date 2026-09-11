@@ -276,7 +276,7 @@
       </div>
     </div>
   </div>
-
+  
   <!-- MODALE SUPPRESSION (HISTORIQUE) -->
   <div id="deleteModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
     <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl flex flex-col gap-5 transform transition-all text-center">
@@ -578,7 +578,7 @@ Version Web App : v4.0`
         if(navigator.vibrate) navigator.vibrate(40);
         pendingEditId = id;
         const input = document.getElementById("editQuantityInput");
-        input.value = currentQty;
+        input.value = ""; 
         document.getElementById("editModal").classList.remove("hidden");
         setTimeout(() => input.focus(), 100);
     }
@@ -606,10 +606,10 @@ Version Web App : v4.0`
       const cSel = document.getElementById("selectContractor");
       const tSel = document.getElementById("selectTrade");
       if (cSel && availableContractors.length > 0) {
-        cSel.innerHTML = availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
+        cSel.innerHTML = '<option value="">-- Choisir --</option>' + availableContractors.map(c => `<option value="${c}">${c}</option>`).join('');
       }
       if (tSel && availableTrades.length > 0) {
-        tSel.innerHTML = availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
+        tSel.innerHTML = '<option value="">-- Choisir --</option>' + availableTrades.map(t => `<option value="${t}">${t}</option>`).join('');
       }
     }
 
@@ -974,11 +974,13 @@ Version Web App : v4.0`
       if (c) {
         c.removeAttribute("disabled");
         c.classList.remove("bg-slate-200", "pointer-events-none");
+        c.value = "";
         updateBorderColor(c);
       }
       if (t) {
         t.removeAttribute("disabled");
         t.classList.remove("bg-slate-200", "pointer-events-none");
+        t.value = "";
         updateBorderColor(t);
       }
       const banner = document.getElementById("activeMissionBanner");
@@ -1212,17 +1214,22 @@ Version Web App : v4.0`
         return;
       } 
       if (!selectedArticle) {
-        alert("Sélectionnez un article");
+        alert("Sélectionnez un article.");
         return;
       }
       
+      const contractor = activeMissionContext ? activeMissionContext.contractor : document.getElementById("selectContractor").value;
+      const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
+      
+      if (!contractor || !trade) {
+        alert("Veuillez sélectionner un Entrepreneur et un Métier.");
+        return;
+      }
+
       if (navigator.vibrate) navigator.vibrate([40, 50, 40]);
       
       const qInputStr = document.getElementById("inputQuantity").value;
       const q = parseInt(qInputStr, 10) || 0;
-      
-      const contractor = activeMissionContext ? activeMissionContext.contractor : document.getElementById("selectContractor").value;
-      const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
       const tourneeId = activeMissionContext ? activeMissionContext.id : null;
 
       const n = new Date(); 
@@ -1316,7 +1323,8 @@ Version Web App : v4.0`
                   document.getElementById("congratsModal").classList.remove("hidden");
               }, 150);
           } else {
-              cancelActiveMission();
+              // Saisie libre : conserve entrepreneur et métier, nettoie uniquement article & quantité
+              resetComptageForm();
               switchMobileTab('historique');
               setTimeout(() => {
                   document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1332,21 +1340,21 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
-      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
 
+      // RÈGLE STRICTE DES 3H POUR TOUT LE MONDE SANS EXCEPTION
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
+      const sessionHist = sessionHistory.filter(h => String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
       
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === agentLower && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
       let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
-        if (isAdmin) return true;
         const histDate = new Date(h.timestamp); 
+        if (isNaN(histDate.getTime())) return false;
         return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
       });
 
@@ -1369,19 +1377,20 @@ Version Web App : v4.0`
             : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">✓ ENREGISTRÉ</span>';
         
         const histDate = new Date(h.timestamp);
-        const timeStr = histDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeStr = !isNaN(histDate.getTime()) ? histDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--";
         
-        const ageMs = now.getTime() - histDate.getTime();
-        const remainingMs = ARCHIVE_LIMIT_MS - ageMs;
-        const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
         let archiveText = "";
-        
-        if (isAdmin) {
-            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
-        } else if (remainingMins > 60) {
-           archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
+        if (!isNaN(histDate.getTime())) {
+          const ageMs = now.getTime() - histDate.getTime();
+          const remainingMs = ARCHIVE_LIMIT_MS - ageMs;
+          const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
+          if (remainingMins > 60) {
+             archiveText = `${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
+          } else {
+             archiveText = `${remainingMins} MIN`;
+          }
         } else {
-           archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
+          archiveText = "--";
         }
 
         html += `
@@ -1392,8 +1401,8 @@ Version Web App : v4.0`
                 <div class="shrink-0">${statusBadge}</div>
               </div>
               
-              <div class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 max-w-[45%]">
-                <span class="text-[8px] text-slate-500 font-bold tracking-wider uppercase truncate">DANS ${archiveText}</span>
+              <div class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                <span class="text-[8px] text-slate-500 font-bold tracking-wider uppercase whitespace-nowrap">DANS ${archiveText}</span>
                 <i data-lucide="clock" class="w-3 h-3 text-slate-400 shrink-0"></i>
                 <span class="text-[10px] font-black text-slate-600 shrink-0">${timeStr}</span>
               </div>
@@ -1402,10 +1411,10 @@ Version Web App : v4.0`
             <p class="font-medium text-slate-500 text-[10px] leading-relaxed truncate">${h.designation}</p>
             
             <div class="flex flex-row items-center gap-1.5 w-full overflow-hidden mt-1 mb-2">
-                <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.contractor}</span>
-                <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.trade}</span>
+                <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.contractor || '--'}</span>
+                <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.trade || '--'}</span>
                 <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%] inline-flex items-center gap-1">
-                  <i data-lucide="user" class="w-2.5 h-2.5 shrink-0"></i><span class="truncate">${String(h.user).toUpperCase()}</span>
+                  <i data-lucide="user" class="w-2.5 h-2.5 shrink-0"></i><span class="truncate">${String(h.user || '').toUpperCase()}</span>
                 </span>
             </div>
             
@@ -1435,8 +1444,8 @@ Version Web App : v4.0`
       if (navigator.vibrate) navigator.vibrate(40); 
       
       const id = pendingEditId;
-      const qtyInput = document.getElementById("editQuantityInput").value;
-      const newQty = parseInt(qtyInput, 10); 
+      const qtyInput = document.getElementById("editQuantityInput").value.trim();
+      const newQty = qtyInput === "" ? 0 : parseInt(qtyInput, 10); 
       
       closeEditModal();
       
