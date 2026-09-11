@@ -578,7 +578,7 @@ Version Web App : v4.0`
         if(navigator.vibrate) navigator.vibrate(40);
         pendingEditId = id;
         const input = document.getElementById("editQuantityInput");
-        input.value = currentQty;
+        input.value = ""; 
         document.getElementById("editModal").classList.remove("hidden");
         setTimeout(() => input.focus(), 100);
     }
@@ -818,14 +818,12 @@ Version Web App : v4.0`
             const nA = String(currentAgent || "").trim().toLowerCase();
             let serverHistory = data.history.filter(h => String(h.user || "").trim().toLowerCase() === nA);
             
-            // ANTI GHOST-DATA: Filtre les éléments récemment supprimés non encore gérés par le serveur
             const pendingDeleteIds = new Set([
               ...recentlyProcessedDeletes,
               ...pendingSyncQueue.filter(q => q.action === "DELETE_INVENTORY").map(q => q.id)
             ]);
             serverHistory = serverHistory.filter(sh => !pendingDeleteIds.has(sh.id));
 
-            // ANTI GHOST-DATA: Applique les éditions en cours
             const pendingEditsMap = new Map();
             recentlyProcessedEdits.forEach(e => pendingEditsMap.set(e.id, e.quantity));
             pendingSyncQueue.filter(q => q.action === "UPDATE_INVENTORY").forEach(q => pendingEditsMap.set(q.id, q.quantity));
@@ -1332,20 +1330,18 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
-      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
 
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
+      const sessionHist = sessionHistory.filter(h => String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
       
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
       let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
-        if (isAdmin) return true;
         const histDate = new Date(h.timestamp); 
         return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
       });
@@ -1376,12 +1372,10 @@ Version Web App : v4.0`
         const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
         let archiveText = "";
         
-        if (isAdmin) {
-            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
-        } else if (remainingMins > 60) {
-           archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
+        if (remainingMins > 60) {
+           archiveText = `${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
         } else {
-           archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
+           archiveText = `${remainingMins} MIN`;
         }
 
         html += `
@@ -1402,11 +1396,8 @@ Version Web App : v4.0`
             <p class="font-medium text-slate-500 text-[10px] leading-relaxed truncate">${h.designation}</p>
             
             <div class="flex flex-row items-center gap-1.5 w-full overflow-hidden mt-1 mb-2">
-                <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.contractor}</span>
-                <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.trade}</span>
-                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%] inline-flex items-center gap-1">
-                  <i data-lucide="user" class="w-2.5 h-2.5 shrink-0"></i><span class="truncate">${String(h.user).toUpperCase()}</span>
-                </span>
+                <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[50%]">${h.contractor}</span>
+                <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[50%]">${h.trade}</span>
             </div>
             
             <div class="flex gap-2 justify-end w-full pt-1">
