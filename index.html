@@ -173,6 +173,22 @@
     </button>
   </nav>
 
+  <!-- MODALE AVERTISSEMENT (Erreurs de saisie) -->
+  <div id="warningModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl flex flex-col gap-5 transform transition-all text-center">
+      <div class="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner">
+        <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+      </div>
+      <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Action requise</h2>
+          <p id="warningModalMessage" class="text-sm font-medium text-slate-500 mt-2">--</p>
+      </div>
+      <button onclick="closeWarningModal()" class="w-full h-14 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black rounded-2xl text-sm shadow-[0_4px_15px_rgba(245,158,11,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer mt-2">
+        <i data-lucide="check" class="w-5 h-5"></i> Compris
+      </button>
+    </div>
+  </div>
+
   <!-- MODALE SCAN CAMÉRA -->
   <div id="scanModal" class="fixed inset-0 bg-black z-50 flex flex-col hidden">
     <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden bg-black">
@@ -397,6 +413,18 @@
     let pendingDeleteId = null;
     let pendingEditId = null;
 
+    // GESTIONNAIRE D'AVERTISSEMENT CENTRALISÉ (Remplace les alert() basiques)
+    function showWarning(msg) {
+        if(navigator.vibrate) navigator.vibrate([20, 50, 20]);
+        document.getElementById("warningModalMessage").innerText = msg;
+        document.getElementById("warningModal").classList.remove("hidden");
+    }
+
+    function closeWarningModal() {
+        document.getElementById("warningModal").classList.add("hidden");
+    }
+
+    // DEBOUNCE SYNCHRONISATION (Évite de geler l'application en cas de clics frénétiques)
     function triggerBackgroundSync(forceImmediat = false) {
         if (!navigator.onLine) return;
         if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
@@ -642,7 +670,7 @@ Version Web App : v4.0`
     function saveAgentConfig() {
       const sel = document.getElementById("configAgentSelect").value;
       if (!sel) { 
-        alert("Sélectionnez un profil."); 
+        showWarning("Veuillez sélectionner un profil."); 
         return; 
       }
       currentAgent = sel; 
@@ -751,7 +779,7 @@ Version Web App : v4.0`
             try {
               const response = await fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
-                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+                redirect: "follow",
                 body: JSON.stringify(item) 
               });
               
@@ -817,12 +845,14 @@ Version Web App : v4.0`
             const nA = String(currentAgent || "").trim().toLowerCase();
             let serverHistory = data.history.filter(h => String(h.user || "").trim().toLowerCase() === nA);
             
+            // ANTI GHOST-DATA: Filtre les éléments récemment supprimés non encore gérés par le serveur
             const pendingDeleteIds = new Set([
               ...recentlyProcessedDeletes,
               ...pendingSyncQueue.filter(q => q.action === "DELETE_INVENTORY").map(q => q.id)
             ]);
             serverHistory = serverHistory.filter(sh => !pendingDeleteIds.has(sh.id));
 
+            // ANTI GHOST-DATA: Applique les éditions en cours
             const pendingEditsMap = new Map();
             recentlyProcessedEdits.forEach(e => pendingEditsMap.set(e.id, e.quantity));
             pendingSyncQueue.filter(q => q.action === "UPDATE_INVENTORY").forEach(q => pendingEditsMap.set(q.id, q.quantity));
@@ -850,11 +880,15 @@ Version Web App : v4.0`
         console.warn("Synchronisation interrompue :", globalErr);
       } finally {
         isSyncing = false;
-        if (syncIcon) {
-           syncIcon.classList.remove("text-orange-500", "animate-spin");
-           syncIcon.classList.add("text-emerald-600");
+        
+        // CORRECTION DU BUG "SPINNER INFINI": On récupère le bouton FRAÎCHEMENT généré par lucide pour l'éteindre
+        const currentSyncIcon = document.getElementById("syncIcon");
+        if (currentSyncIcon) {
+           currentSyncIcon.classList.remove("text-orange-500", "animate-spin");
+           currentSyncIcon.classList.add("text-emerald-600");
         }
-        if (syncBtn) syncBtn.classList.remove("opacity-70", "pointer-events-none");
+        const currentSyncBtn = document.getElementById("syncBtn");
+        if (currentSyncBtn) currentSyncBtn.classList.remove("opacity-70", "pointer-events-none");
       }
     }
 
@@ -951,6 +985,11 @@ Version Web App : v4.0`
         const mainArea = document.getElementById('mainScrollArea');
         if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
       }, 50);
+    }
+
+    function showCongratsModal() {
+        if(navigator.vibrate) navigator.vibrate([30, 50, 30]);
+        document.getElementById("congratsModal").classList.remove("hidden");
     }
 
     function closeCongratsModal() {
@@ -1122,6 +1161,10 @@ Version Web App : v4.0`
           }
         } else {
           onSapSearchInput(v); 
+          setTimeout(() => {
+            const searchSec = document.getElementById('searchSection');
+            if (searchSec) searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
         }
       }; 
       
@@ -1195,9 +1238,9 @@ Version Web App : v4.0`
 
       if (!skipScroll) {
         setTimeout(() => {
-          const searchSec = document.getElementById('searchSection');
-          if (searchSec) {
-            searchSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const qtySec = document.getElementById('quantitySection');
+          if (qtySec) {
+            qtySec.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         }, 150);
       }
@@ -1206,12 +1249,12 @@ Version Web App : v4.0`
     async function submitInventoryEntry() {
       
       if (!currentAgent) {
-        alert("Configurez l'agent");
+        showWarning("Veuillez configurer votre profil agent dans les paramètres.");
         openConfigModal();
         return;
       } 
       if (!selectedArticle) {
-        alert("Sélectionnez un article.");
+        showWarning("Veuillez rechercher et sélectionner un article.");
         return;
       }
       
@@ -1219,7 +1262,7 @@ Version Web App : v4.0`
       const trade = activeMissionContext ? activeMissionContext.trade : document.getElementById("selectTrade").value;
       
       if (!contractor || !trade) {
-        alert("Veuillez sélectionner un Entrepreneur et un Métier.");
+        showWarning("Veuillez sélectionner un Entrepreneur et un Métier.");
         return;
       }
 
@@ -1316,11 +1359,11 @@ Version Web App : v4.0`
       } else {
           if (currentTaskContext) {
               setTimeout(() => {
-                  if(navigator.vibrate) navigator.vibrate([30, 50, 30]);
-                  document.getElementById("congratsModal").classList.remove("hidden");
+                  showCongratsModal();
               }, 150);
           } else {
-              cancelActiveMission();
+              // Saisie libre : conserve entrepreneur et métier, nettoie uniquement article & quantité
+              resetComptageForm();
               switchMobileTab('historique');
               setTimeout(() => {
                   document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1336,16 +1379,15 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
-      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
 
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
+      const sessionHist = sessionHistory.filter(h => String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
       
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === agentLower && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
       let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
@@ -1397,8 +1439,8 @@ Version Web App : v4.0`
                 <div class="shrink-0">${statusBadge}</div>
               </div>
               
-              <div class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                <span class="text-[8px] text-slate-500 font-bold tracking-wider uppercase whitespace-nowrap">DANS ${archiveText}</span>
+              <div class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 max-w-[45%]">
+                <span class="text-[8px] text-slate-500 font-bold tracking-wider uppercase truncate">DANS ${archiveText}</span>
                 <i data-lucide="clock" class="w-3 h-3 text-slate-400 shrink-0"></i>
                 <span class="text-[10px] font-black text-slate-600 shrink-0">${timeStr}</span>
               </div>
