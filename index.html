@@ -45,7 +45,7 @@
       <h1 id="headerAgentName" class="text-base font-bold text-orange-600 tracking-wide truncate max-w-[150px] leading-none pb-0.5">--</h1>
     </div>
     <div class="flex items-center space-x-3 relative z-10">
-      <button id="syncBtn" onclick="syncMobileData()" title="Actualiser et Synchroniser" class="p-1.5 rounded-xl hover:bg-slate-300 transition cursor-pointer relative flex items-center justify-center">
+      <button id="syncBtn" onclick="triggerBackgroundSync(true)" title="Actualiser et Synchroniser" class="p-1.5 rounded-xl hover:bg-slate-300 transition cursor-pointer relative flex items-center justify-center">
         <i id="syncIcon" data-lucide="refresh-cw" class="w-6 h-6 text-emerald-600 transition-colors"></i>
         <span id="pendingBadge" class="hidden absolute -top-1 -right-1 bg-rose-600 text-white font-mono font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-slate-100">0</span>
       </button>
@@ -59,7 +59,7 @@
   <main class="flex-1 overflow-y-auto custom-scrollbar p-4 pb-[85vh]" id="mainScrollArea">
     
     <div class="space-y-4 h-full">
-      <!-- ONGLET 1 : COMPTAGE (Corrigé: justify-start au lieu de justify-center pour éviter le chevauchement) -->
+      <!-- ONGLET 1 : COMPTAGE -->
       <section id="tabComptage" class="flex flex-col justify-start min-h-[calc(100dvh-130px)] space-y-4">
         
         <!-- BANDEAU MISSION ACTIVE -->
@@ -351,6 +351,21 @@
     let isSyncing = false; 
     let openTourneeGroups = {}; 
     let pendingNextTask = null;
+    let syncDebounceTimer = null;
+
+    // FONCTION DE DEBOUNCE POUR LA SYNCHRONISATION
+    function triggerBackgroundSync(forceImmediat = false) {
+        if (!navigator.onLine) return;
+        if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+        
+        if (forceImmediat) {
+            syncMobileData();
+        } else {
+            syncDebounceTimer = setTimeout(() => {
+                syncMobileData();
+            }, 2000);
+        }
+    }
 
     let lastTouchTime = 0;
     document.body.addEventListener('touchstart', function(e) {
@@ -455,7 +470,7 @@ Version Web App : v4.0`
 
       renderHistory(); 
       renderTournee(); 
-      await syncMobileData();
+      triggerBackgroundSync(true);
     });
 
     function showResetModal() {
@@ -794,21 +809,23 @@ Version Web App : v4.0`
       
       switchMobileTab('comptage');
       
-      // AUTO-FOCUS & SCROLL GESTION POUR LE CLAVIER
+      if (autoFocusQty) {
+          const qtyInput = document.getElementById("inputQuantity");
+          if (qtyInput) {
+              qtyInput.focus();
+          }
+      }
+
+      // DOUBLE SCROLL POUR CONTOURNER LE COMPORTEMENT NATIF DU CLAVIER
       setTimeout(() => {
         const mainArea = document.getElementById('mainScrollArea');
         if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'auto' });
-        
-        if (autoFocusQty) {
-            const qtyInput = document.getElementById("inputQuantity");
-            if (qtyInput) {
-                qtyInput.focus();
-                setTimeout(() => {
-                    if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
-                }, 300);
-            }
-        }
       }, 50);
+      
+      setTimeout(() => {
+        const mainArea = document.getElementById('mainScrollArea');
+        if (mainArea) mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 300);
     }
 
     function showNextTaskModal(task) {
@@ -1204,9 +1221,7 @@ Version Web App : v4.0`
           }
       }
 
-      if (navigator.onLine) {
-        setTimeout(syncMobileData, 100);
-      }
+      triggerBackgroundSync();
     }
 
     function renderHistory() {
@@ -1214,20 +1229,18 @@ Version Web App : v4.0`
       if (!container) return;
       
       const agentLower = String(currentAgent || "").trim().toLowerCase();
-      const isAdmin = availableAdmins.map(a => String(a).toLowerCase()).includes(agentLower) || agentLower.includes("admin") || agentLower === "superviseur";
 
       const now = new Date(); 
       const ARCHIVE_LIMIT_MS = 3 * 60 * 60 * 1000;
       
-      const sessionHist = sessionHistory.filter(h => isAdmin ? true : String(h.user).toLowerCase() === agentLower); 
+      const sessionHist = sessionHistory.filter(h => String(h.user).toLowerCase() === agentLower); 
       const pendingIds = new Set(sessionHist.map(h => h.id));
       
       const pendingFiltered = pendingSyncQueue
-        .filter(p => p.action === 'CREATE' && (isAdmin ? true : String(p.user).toLowerCase() === agentLower) && !pendingIds.has(p.id))
+        .filter(p => p.action === 'CREATE' && String(p.user).toLowerCase() === agentLower && !pendingIds.has(p.id))
         .map(p => ({ ...p, isPending: true }));
 
       let fullHistory = [...pendingFiltered, ...sessionHist].filter(h => { 
-        if (isAdmin) return true;
         const histDate = new Date(h.timestamp); 
         return (now.getTime() - histDate.getTime()) <= ARCHIVE_LIMIT_MS; 
       });
@@ -1258,34 +1271,32 @@ Version Web App : v4.0`
         const remainingMins = Math.max(0, Math.floor(remainingMs / (60 * 1000)));
         let archiveText = "";
         
-        if (isAdmin) {
-            archiveText = `SAISI PAR: ${String(h.user).toUpperCase()}`;
-        } else if (remainingMins > 60) {
-           archiveText = `ARCHIVAGE DANS ${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
+        if (remainingMins > 60) {
+           archiveText = `${Math.floor(remainingMins/60)}H${String(remainingMins%60).padStart(2,'0')}`;
         } else {
-           archiveText = `ARCHIVAGE DANS ${remainingMins} MIN`;
+           archiveText = `${remainingMins} MIN`;
         }
 
         html += `
           <div class="bg-white border ${borderClass} p-4 rounded-3xl shadow-sm space-y-3 text-xs cursor-default select-none transition-all">
-            <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-              <div class="flex items-center gap-2">
-                <span class="font-mono font-black text-orange-800 text-sm break-words">${h.sapRef}</span>
-                ${statusBadge}
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 w-full overflow-hidden">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <span class="font-mono font-black text-orange-800 text-sm truncate">${h.sapRef}</span>
+                <div class="shrink-0">${statusBadge}</div>
               </div>
               
-              <div class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                <span class="text-[8px] text-slate-500 font-bold tracking-wider uppercase whitespace-nowrap">${archiveText}</span>
-                <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
-                <span class="text-[10px] font-black text-slate-600">${timeStr}</span>
+              <div class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 max-w-[45%]">
+                <span class="text-[8px] text-slate-500 font-bold tracking-wider uppercase truncate">DANS ${archiveText}</span>
+                <i data-lucide="clock" class="w-3 h-3 text-slate-400 shrink-0"></i>
+                <span class="text-[10px] font-black text-slate-600 shrink-0">${timeStr}</span>
               </div>
             </div>
             
             <p class="font-medium text-slate-500 text-[10px] leading-relaxed truncate">${h.designation}</p>
             
             <div class="flex flex-row items-center gap-1.5 w-full overflow-hidden mt-1 mb-2">
-                <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[50%]">${h.contractor}</span>
-                <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[50%]">${h.trade}</span>
+                <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.contractor}</span>
+                <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%]">${h.trade}</span>
                 <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[9px] font-bold truncate max-w-[33%] inline-flex items-center gap-1">
                   <i data-lucide="user" class="w-2.5 h-2.5 shrink-0"></i><span class="truncate">${String(h.user).toUpperCase()}</span>
                 </span>
@@ -1345,9 +1356,7 @@ Version Web App : v4.0`
       updatePendingBadge(); 
       renderHistory(); 
       
-      if (navigator.onLine) {
-        syncMobileData();
-      }
+      triggerBackgroundSync();
     }
 
     async function deleteHistoryItem(id) {
@@ -1394,9 +1403,7 @@ Version Web App : v4.0`
       renderHistory(); 
       renderTournee(); 
       
-      if (navigator.onLine) {
-        syncMobileData();
-      }
+      triggerBackgroundSync();
     }
 
     function formatTourneeDate(dStr) {
